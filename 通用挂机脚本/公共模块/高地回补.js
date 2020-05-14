@@ -1,6 +1,6 @@
 var supplyModeArray = [
 {
-	name : '艾夏岛医院,资深护士回补',
+	name : '艾夏岛医院资深护士回补',
 	func : (cb)=>{
 		var map = cga.GetMapName();
 		var path = [
@@ -24,20 +24,18 @@ var supplyModeArray = [
 		}
 		cga.walkList(path, ()=>{
 			cga.TurnTo(37, 43);
-			setTimeout(cb, 5000);
+			setTimeout(cb, 5000, null);
 		});
 	},
-	isLogBack : ()=>{
-		var map = cga.GetMapName();
-		var mapindex = cga.GetMapIndex().index3;
-		return (map == '布拉基姆高地' || map == '盖雷布伦森林' || map == '艾夏岛' || mapindex == 59539) ? false : true;
-	},
-	isInitialSupply : ()=>{
+	isLogBack : (map, mapindex)=>{
 		return false;
+	},
+	isAvailable : (map, mapindex)=>{
+		return (map == '布拉基姆高地' || map == '盖雷布伦森林' || map == '艾夏岛' || mapindex == 59539) ? true : false;
 	},
 },
 {
-	name : '艾夏岛医院,普通护士回补',
+	name : '艾夏岛医院普通护士回补',
 	func : (cb)=>{
 		var map = cga.GetMapName();
 		var path = [
@@ -61,16 +59,14 @@ var supplyModeArray = [
 		}
 		cga.walkList(path, ()=>{
 			cga.TurnTo(37, 46);
-			setTimeout(cb, 5000);
+			setTimeout(cb, 5000, null);
 		});
 	},
-	isLogBack : ()=>{
-		var map = cga.GetMapName();
-		var mapindex = cga.GetMapIndex().index3;
-		return (map == '布拉基姆高地' || map == '盖雷布伦森林' || map == '艾夏岛' || mapindex == 59539) ? false : true;
-	},
-	isInitialSupply : ()=>{
+	isLogBack : (map, mapindex)=>{
 		return false;
+	},
+	isAvailable : (map, mapindex)=>{
+		return (map == '布拉基姆高地' || map == '盖雷布伦森林' || map == '艾夏岛' || mapindex == 59539) ? true : false;
 	},
 },
 {
@@ -80,10 +76,10 @@ var supplyModeArray = [
 			setTimeout(cb, 5000);
 		});
 	},
-	isLogBack : ()=>{
+	isLogBack : (map, mapindex)=>{
 		return true;
 	},
-	isInitialSupply : ()=>{
+	isAvailable : (map, mapindex)=>{
 		return true;
 	},
 },
@@ -96,11 +92,11 @@ var thisobj = {
 	func : (cb)=>{
 		thisobj.object.func(cb);
 	},
-	isLogBack : ()=>{
-		return thisobj.object.isLogBack();
+	isLogBack : (map, mapindex)=>{
+		return thisobj.object.isLogBack(map, mapindex);
 	},
-	isInitialSupply : ()=>{
-		return thisobj.object.isInitialSupply();
+	isAvailable : (map, mapindex)=>{
+		return thisobj.object.isAvailable(map, mapindex);
 	},
 	translate : (pair)=>{
 		if(pair.field == 'supplyMode'){

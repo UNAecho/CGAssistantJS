@@ -75,7 +75,16 @@ module.exports = function(callback){
 	
 	cga.MOVE_GOLD_TOBANK = 1;
 	cga.MOVE_GOLD_FROMBANK =  2;
-	cga.MOVE_GOLD_DROP = 3;
+	cga.MOVE_GOLD_DROP = 3
+	
+	cga.PET_STATE_READY = 1;
+	cga.PET_STATE_BATTLE = 2;
+	cga.PET_STATE_REST = 3;
+	cga.PET_STATE_WALK = 16;
+	
+	cga.UI_DIALOG_TRADE = 1;
+	cga.UI_DIALOG_BATTLE_SKILL = 2;
+
 
 	//延迟x毫秒
 	cga.delay = (millis) => new Promise((resolve, reject) => {
@@ -113,7 +122,7 @@ module.exports = function(callback){
 	}
 	
 	cga.isTeamLeaderEx = ()=>{
-		return (cga.isTeamLeader == true || !cga.getTeamPlayers().length);
+		return (cga.isTeamLeader == true || cga.getTeamPlayers().length <= 1);
 	}
 	
 	cga.getMapInfo = () => {
@@ -122,7 +131,65 @@ module.exports = function(callback){
 		info.name = cga.GetMapName();
 		return info;
 	};
+	
+	cga.getOrientation = (x, y) => {
+		const p = cga.GetMapXY();
+		const xy = Math.max(-1, Math.min(1, x - p.x)).toString() + Math.max(-1, Math.min(1, y - p.y)).toString();
+		switch (xy) {
+			case '10':
+				return 0;
+			case '11':
+				return 1;
+			case '01':
+				return 2;
+			case '-11':
+				return 3;
+			case '-10':
+				return 4;
+			case '-1-1':
+				return 5;
+			case '0-1':
+				return 6;
+			case '1-1':
+				return 7;
+			default:
+		}
+		return -1;
+	}
+	
+	cga.getOrientationPosition = (orientation, offset)=>{
+		const current = cga.GetMapXY();
+		switch (orientation) {
+			case 0:
+				return [current.x + offset, current.y];
+			case 1:
+				return [current.x + offset, current.y + offset];
+			case 2:
+				return [current.x, current.y + offset];
+			case 3:
+				return [current.x - offset, current.y + offset];
+			case 4:
+				return [current.x - offset, current.y];
+			case 5:
+				return [current.x - offset, current.y - offset];
+			case 6:
+				return [current.x, current.y - offset];
+			case 7:
+				return [current.x + offset, current.y - offset];
+			default:
+				return new Error('无效参数');
+		}
+	}
 		
+	cga.turnDir = cga.turnOrientation = (orientation, offset = 2) => {
+		var pos = cga.getOrientationPosition(orientation, offset);
+		cga.TurnTo(pos[0], pos[1]);
+	}
+	
+	cga.turnTo = (x, y)=>{
+		cga.turnOrientation(cga.getOrientation(x, y));
+	}
+	
 	//判断是否在战斗状态
 	cga.isInBattle = function(){
 		return (cga.GetWorldStatus() == 10) ? true : false;
@@ -135,7 +202,7 @@ module.exports = function(callback){
 	
 	//将字符串转义为windows下合法的文件名
 	cga.FileNameEscape = (str)=>{
-		return str.replace(/[\\/:\*\?"<>|]/g, (c)=>{return {'\\':'%5C','/':'%2F',':':'%3A','*':'%2A','?':'%3F','"':'%22','<':'%3C','>':'%3E','|':'%7C'}[c];});
+		return str.replace(/[\\/:\*\?"<>|]/g, (c)=>{return {"\\":'%5C','/':'%2F',':':'%3A','*':'%2A','?':'%3F','"':'%22','<':'%3C','>':'%3E','|':'%7C'}[c];});
 	}
 
 	//FileNameEscape的反向操作，反转义
@@ -194,6 +261,8 @@ module.exports = function(callback){
 			return;
 		}
 		
+		var beginTime = (new Date()).getTime();
+		
 		var handler = (err, results)=>{
 			if(results){
 				cb(null, results);
@@ -202,8 +271,23 @@ module.exports = function(callback){
 			
 			var craftStatus = cga.GetCraftStatus();
 			
+			var curTime = (new Date()).getTime();
+			
 			if(err){
 				if(craftStatus == 0 || craftStatus == 2){
+					cga.manipulateItemEx(options, cb);
+					return;
+				}
+				
+				//强制重试
+				var isImmediate = cga.GetImmediateDoneWorkState();
+				if(isImmediate != 2 && curTime > beginTime + 1000 * 120)
+				{
+					cga.manipulateItemEx(options, cb);
+					return;
+				}
+				else if(isImmediate == 2 && curTime > beginTime + 1000 * 5)
+				{
 					cga.manipulateItemEx(options, cb);
 					return;
 				}
@@ -277,6 +361,8 @@ module.exports = function(callback){
 		cga.StartWork(info.skill.index, info.craft.index);
 		cga.CraftItem(info.skill.index, info.craft.index, 0, itemArray);
 		
+		var beginTime = (new Date()).getTime();
+		
 		var handler = (err, results)=>{
 			if(results){
 				cb(null, results);
@@ -285,8 +371,23 @@ module.exports = function(callback){
 			
 			var craftStatus = cga.GetCraftStatus();
 			
+			var curTime = (new Date()).getTime();
+			
 			if(err){
 				if(craftStatus == 0 || craftStatus == 2){
+					cga.craftItemEx(options, cb);
+					return;
+				}
+				
+				//强制重试
+				var isImmediate = cga.GetImmediateDoneWorkState();
+				if(isImmediate != 2 && curTime > beginTime + 1000 * 120)
+				{
+					cga.craftItemEx(options, cb);
+					return;
+				}
+				else if(isImmediate == 2 && curTime > beginTime + 1000 * 5)
+				{
 					cga.craftItemEx(options, cb);
 					return;
 				}
@@ -311,37 +412,33 @@ module.exports = function(callback){
 			return item.pos >= 0 && item.pos < 8;
 		});
 	}
-	
+		
 	//获取装备耐久，返回数组[当前耐久,最大耐久]
 	cga.getEquipEndurance = (item)=>{
-		var regex = item.attr.match(/\$4耐久 (\d+)\/(\d+)/);
-		if(regex && regex.length >= 3){
-			return [parseInt(regex[1]), parseInt(regex[2])];
+
+		if(item.attr){
+			var regex = item.attr.match(/\$4耐久 (\d+)\/(\d+)/);
+			if(regex && regex.length >= 3){
+				return [parseInt(regex[1]), parseInt(regex[2])];
+			}
+		}
+		if(item.info){
+			regex = item.info.match(/\$4耐久 (\d+)\/(\d+)/);
+			if(regex && regex.length >= 3){
+				return [parseInt(regex[1]), parseInt(regex[2])];
+			}
+		}
+		if(item.info2){
+			regex = item.info2.match(/\$4耐久 (\d+)\/(\d+)/);
+			if(regex && regex.length >= 3){
+				return [parseInt(regex[1]), parseInt(regex[2])];
+			}
 		}
 		return null;
 	}
-
-	//转向指定方向
-	//参数： 方向, 0=右上，2=右下, 4=左下，6=左上
-	cga.turnDir = function(dir){
-		var xy = cga.GetMapXY();
-		var x = xy.x;
-		var y = xy.y;
-		switch(dir){
-			case 0: cga.TurnTo(x+2, y);break;
-			case 1: cga.TurnTo(x+2, y+2);break;
-			case 2: cga.TurnTo(x, y+2);break;
-			case 3: cga.TurnTo(x-2, y+2);break;
-			case 4: cga.TurnTo(x-2, y);break;
-			case 5: cga.TurnTo(x-2, y-2);break;
-			case 6: cga.TurnTo(x, y-2);break;
-			case 7: cga.TurnTo(x+2, y-2);break;
-			default: throw new Error('Invalid direction');
-		}
-	}
 	
 	cga.travel = {};
-	
+		
 	cga.travel.falan = {};
 	
 	cga.travel.falan.xy2name = (x, y, mapname)=>{
@@ -361,6 +458,10 @@ module.exports = function(callback){
 			return 'M3';
 		if(x == 46 && y == 16 && mapname == '市场一楼 - 宠物交易区')
 			return 'M1';
+		if(x == 151 && y == 122 && mapname == '法兰城')
+			return 'B1';
+		if(x == 155 && y == 122 && mapname == '法兰城')
+			return 'B2';
 		return null;
 	}
 	
@@ -377,6 +478,8 @@ module.exports = function(callback){
 			case 'W2': return true;
 			case 'M1': return true;//市场
 			case 'M3': return true;
+			case 'B1': return true;//桥头
+			case 'B2': return true;
 			case 'C': return true;//里谢里雅堡
 		}
 		return false;
@@ -391,14 +494,22 @@ module.exports = function(callback){
 				cga.travel.falan.toCastle(cb);
 				return;
 			}
-
+			if(stone == 'B1'){
+				cga.walkList([
+				[151, 122]
+				], cb);
+				return;
+			}
+			if(stone == 'B1'){
+				cga.walkList([
+				[155, 122]
+				], cb);
+				return;
+			}
 			var curStone = cga.travel.falan.xy2name(curXY.x, curXY.y, curMap);
 			if(curStone) {
 				var turn = false;
 				if(stone == 'M1' || stone == 'M3') {
-					turn = true;
-				}
-				else if(stone.length >= 2 && curStone.charAt(1) == stone.charAt(1)) {
 					if(curStone == stone){
 						cb(null);
 						return;
@@ -406,6 +517,12 @@ module.exports = function(callback){
 					turn = true;
 				}
 				else if(stone.length >= 2 && curStone.charAt(1) == stone.charAt(1)) {
+					if(curStone.charAt(0) == 'S' && stone.charAt(0) == 'B'){
+						cga.walkList([
+						stone == 'B1' ? [151, 122] : [155, 122]
+						], cb);
+						return;
+					}
 					if(curStone == stone){
 						cb(null);
 						return;
@@ -490,14 +607,19 @@ module.exports = function(callback){
 				[40, 98, '法兰城'],
 				[162, 130]
 			];
+			const walkOutOfCastle_3 = [
+				[41, 98, '法兰城'],
+			];
 			if(stone == 'M1')
 				walks = walkOutOfCastle_2;
 			else if(stone == 'M3')
 				walks = walkOutOfCastle_1;
+			else if(stone.length >= 2 && stone.charAt(0) == 'B')
+				walks = walkOutOfCastle_3; 
 			else if(stone.length == 1)
 				walks = walkOutOfCastle_2;
 			else if(stone.length >= 2 && stone.charAt(1) == '1')
-				walks = walkOutOfCastle_1; 
+				walks = walkOutOfCastle_1;
 			else
 				walks = walkOutOfCastle_2;
 
@@ -578,7 +700,7 @@ module.exports = function(callback){
 	//前往到法兰城东医院
 	//参数1：回调函数function(result), result 为true或false
 	cga.travel.falan.toEastHospital = (cb)=>{
-		cga.travel.falan.toStone('E', (r)=>{
+		cga.travel.falan.toStone('E', ()=>{
 			cga.walkList([
 			[221, 83, '医院']
 			], cb);
@@ -596,36 +718,25 @@ module.exports = function(callback){
 	}
 	
 	//前往到法兰城银行
-	//参数1：回调函数function(result), result 为true或false
-	cga.travel.falan.toBank = function(cb){
+	cga.travel.falan.toBank = (cb)=>{
 		
-		if(cga.GetMapName() == '银行'){
-			cga.walkList([
-				[11, 8],
-			], (r)=>{
-				cga.TurnTo(12, 8);
-				cb(true);
-			});
+		if(cga.GetMapIndex().index3 == 1121){
+			cb(null);
 			return;
 		}
 		
 		cga.travel.falan.toStone('E', (r)=>{
 			cga.walkList([
 			[238, 111, '银行'],
-			[11, 8],
-			], (r)=>{
-				cga.TurnTo(12, 8);
-				cb(true);
-			});
+			], cb);
 		});
 	}
 	
 	//从法兰城到里谢里雅堡，启动地点：登出到法兰城即可
-	//参数1：回调函数function(result), result 为true或false
 	cga.travel.falan.toCastle = (cb)=>{
 		
 		if(cga.GetMapName() == '里谢里雅堡'){
-			cb(true);
+			cb(null);
 			return;
 		}
 		
@@ -724,6 +835,29 @@ module.exports = function(callback){
 			});
 		});	
 	}
+	
+	cga.travel.camp = {};
+
+	cga.travel.camp.getRegion = (mapname, mapXY)=>{
+		if(mapname == '肯吉罗岛')
+		{
+			if(mapXY.x <= 316 && mapXY.y >= 325)
+			{
+				return '矮人城镇域';
+			}
+			if(mapXY.x >= 355 && mapXY.x <= 516 && mapXY.y <= 181)
+			{
+				return '沼泽洞穴出口域';
+			}
+			if(mapXY.x < 355 && mapXY.y <= 212)
+			{
+				return '沼泽洞穴出口域';
+			}
+			
+			return '圣骑士营地域';
+		}
+		return null;
+	}
 
 	cga.travel.falan.toCamp = (cb, noWarp)=>{
 		var warp = ()=>{
@@ -775,7 +909,31 @@ module.exports = function(callback){
 			cb(null);
 			return;
 		}
-
+		var mapindex = cga.GetMapIndex().index3;
+		if(mapindex == 44692){
+			cga.walkList([
+				[0, 20, '圣骑士营地'],
+			], cb);
+			return;
+		}
+		if(mapindex == 44693){
+			cga.walkList([
+				[30, 37, '圣骑士营地'],
+			], cb);
+			return;
+		}
+		if(mapindex == 44698){
+			cga.walkList([
+				[3, 23, '圣骑士营地'],
+			], cb);
+			return;
+		}
+		if(mapindex == 44699){
+			cga.walkList([
+				[0, 14, '圣骑士营地'],
+			], cb);
+			return;
+		}
 		if(mapname == '辛希亚探索指挥部' && cga.GetMapIndex().index3 == 27101){
 			cga.walkList([[8, 21]], warp);
 			return;
@@ -790,7 +948,7 @@ module.exports = function(callback){
 
 	cga.travel.falan.toFashionStore = cga.travel.falan.toFabricStore = (cb)=>{
 		if(cga.GetMapName()=='流行商店'){
-			cb(true);
+			cb(null);
 			return;
 		}
 		
@@ -812,7 +970,7 @@ module.exports = function(callback){
 	
 	cga.travel.falan.toKatieStore = cga.travel.falan.toAssessStore = (cb)=>{
 		if(cga.GetMapName()=='凯蒂夫人的店'){
-			cb(true);
+			cb(null);
 			return;
 		}
 		
@@ -826,7 +984,29 @@ module.exports = function(callback){
 			cga.travel.falan.toStone('C', ()=>{
 				cga.walkList([
 					[65, 53, '法兰城'],
-					[117, 112, '流行商店'],
+					[196, 78, '凯蒂夫人的店'],
+				], cb);
+			});
+		}
+	}
+	
+	cga.travel.falan.toDameiStore = cga.travel.falan.toCrystalStore = (cb)=>{
+		if(cga.GetMapName()=='达美姊妹的店'){
+			cb(null);
+			return;
+		}
+		
+		if(cga.GetMapName() == '法兰城'){
+			cga.travel.falan.toStone('W1', function(r){
+				cga.walkList([
+					[94, 78, '达美姊妹的店'],
+				], cb);
+			});
+		} else {
+			cga.travel.falan.toStone('C', ()=>{
+				cga.walkList([
+					[17, 53, '法兰城'],
+					[94, 78, '达美姊妹的店'],
 				], cb);
 			});
 		}
@@ -837,7 +1017,7 @@ module.exports = function(callback){
 		if(mine == '铜'){
 			mineExchange = (cb2)=>{
 				cga.walkList([[26, 5]], ()=>{
-					cga.TurnTo(26, 4);
+					cga.turnTo(26, 4);
 					cb2(null);
 				});
 			}
@@ -845,7 +1025,7 @@ module.exports = function(callback){
 		if(mine == '铁'){
 			mineExchange = (cb2)=>{
 				cga.walkList([[28, 6]], ()=>{
-					cga.TurnTo(28, 5);
+					cga.turnTo(28, 5);
 					cb2(null);
 				});
 			}
@@ -853,7 +1033,7 @@ module.exports = function(callback){
 		if(mine == '银'){
 			mineExchange = (cb2)=>{
 				cga.walkList([[29, 6]], ()=>{
-					cga.TurnTo(30, 5);
+					cga.turnTo(30, 5);
 					cb2(null);
 				});
 			}
@@ -861,7 +1041,7 @@ module.exports = function(callback){
 		if(mine == '纯银'){
 			mineExchange = (cb2)=>{
 				cga.walkList([[27, 7]], ()=>{
-					cga.TurnTo(27, 5);
+					cga.turnTo(27, 5);
 					cb2(null);
 				});
 			}
@@ -869,7 +1049,7 @@ module.exports = function(callback){
 		if(mine == '金'){
 			mineExchange = (cb2)=>{
 				cga.walkList([[24, 6]], ()=>{
-					cga.TurnTo(24, 5);
+					cga.turnTo(24, 5);
 					cb2(null);
 				});
 			}
@@ -877,7 +1057,7 @@ module.exports = function(callback){
 		if(mine == '白金'){
 			mineExchange = (cb2)=>{
 				cga.walkList([[29, 6]], ()=>{
-					cga.TurnTo(30, 7);
+					cga.turnTo(30, 7);
 					cb2(null);
 				});
 			}
@@ -885,7 +1065,7 @@ module.exports = function(callback){
 		if(mine == '幻之钢'){
 			mineExchange = (cb2)=>{
 				cga.walkList([[26, 10]], ()=>{
-					cga.TurnTo(28, 10);
+					cga.turnTo(28, 10);
 					cb2(null);
 				});
 			}
@@ -893,7 +1073,7 @@ module.exports = function(callback){
 		if(mine == '幻之银'){
 			mineExchange = (cb2)=>{
 				cga.walkList([[27, 9]], ()=>{
-					cga.TurnTo(28, 8);
+					cga.turnTo(28, 8);
 					cb2(null);
 				});
 			}
@@ -901,7 +1081,7 @@ module.exports = function(callback){
 		if(mine == '勒格耐席鉧'){
 			mineExchange = (cb2)=>{
 				cga.walkList([[23, 7]], ()=>{
-					cga.TurnTo(22, 6);
+					cga.turnTo(22, 6);
 					cb2(null);
 				});
 			}
@@ -909,7 +1089,7 @@ module.exports = function(callback){
 		if(mine == '奥利哈钢'){
 			mineExchange = (cb2)=>{
 				cga.walkList([[26, 12]], ()=>{
-					cga.TurnTo(27, 12);
+					cga.turnTo(27, 12);
 					cb2(null);
 				});
 			}
@@ -950,6 +1130,119 @@ module.exports = function(callback){
 			});
 		}
 	}
+	
+	cga.travel.falan.toNewMineStore = (mine, cb)=>{
+		var mineExchange = null;
+		if(mine == '铜'){
+			mineExchange = (cb2)=>{
+				cga.walkList([[35, 46]], ()=>{
+					cga.turnTo(35, 45);
+					cb2(null);
+				});
+			}
+		}
+		if(mine == '铁'){
+			mineExchange = (cb2)=>{
+				cga.walkList([[32, 47]], ()=>{
+					cga.turnTo(31, 47);
+					cb2(null);
+				});
+			}
+		}
+		if(mine == '银'){
+			mineExchange = (cb2)=>{
+				cga.walkList([[42, 51]], ()=>{
+					cga.turnTo(41, 51);
+					cb2(null);
+				});
+			}
+		}
+		if(mine == '纯银'){
+			mineExchange = (cb2)=>{
+				cga.walkList([[37, 49]], ()=>{
+					cga.turnTo(37, 48);
+					cb2(null);
+				});
+			}
+		}
+		if(mine == '金'){
+			mineExchange = (cb2)=>{
+				cga.walkList([[40, 50]], ()=>{
+					cga.turnTo(39, 49);
+					cb2(null);
+				});
+			}
+		}
+		if(mine == '白金'){
+			mineExchange = (cb2)=>{
+				cga.walkList([[38, 43]], ()=>{
+					cga.turnTo(39, 44);
+					cb2(null);
+				});
+			}
+		}
+		if(mine == '幻之钢'){
+			mineExchange = (cb2)=>{
+				cga.walkList([[26, 10]], ()=>{
+					cga.turnTo(28, 10);
+					cb2(null);
+				});
+			}
+		}
+		if(mine == '幻之银'){
+			mineExchange = (cb2)=>{
+				cga.walkList([[37, 44]], ()=>{
+					cga.turnTo(38, 45);
+					cb2(null);
+				});
+			}
+		}
+		if(mine == '勒格耐席鉧'){
+			mineExchange = (cb2)=>{
+				cga.walkList([[33, 46]], ()=>{
+					cga.turnTo(33, 45);
+					cb2(null);
+				});
+			}
+		}
+		if(mine == '奥利哈钢'){
+			mineExchange = (cb2)=>{
+				cga.walkList([[44, 48]], ()=>{
+					cga.turnTo(43, 48);
+					cb2(null);
+				});
+			}
+		}
+		if(mine == '铝'){
+			mineExchange = (cb2)=>{
+				cga.walkList([[38, 54]], ()=>{
+					cga.turnTo(38, 53);
+					cb2(null);
+				});
+			}
+		}
+		if(cga.GetMapName()=='画廊'){
+			if(mineExchange){
+				mineExchange(cb);
+			}else{
+				cb(null);
+			}
+			return;
+		}
+		
+		cga.travel.newisland.toStone('B', ()=>{
+			cga.walkList([
+				[144, 120, '武器工房'],
+				[28, 21, '画廊'],
+			], ()=>{
+				if(mineExchange){
+					mineExchange(cb);
+				}else{
+					cb(null);
+				}
+			});
+		});
+	}
 
 	//从法兰城到新城
 	cga.travel.falan.toNewIsland = (cb)=>{
@@ -977,7 +1270,7 @@ module.exports = function(callback){
 											], cb);
 										});
 									} else {
-										cb(false);
+										cb(new Error('对话失败'));
 									}
 								});
 							});
@@ -1048,40 +1341,48 @@ module.exports = function(callback){
 			});
 		}
 		
-		cga.travel.falan.toTeleRoom('伊尔村', (r)=>{
-			cga.walkList([
+		if(cga.GetMapName() != '伊尔村'){
+			cga.travel.falan.toTeleRoom('伊尔村', ()=>{
+				cga.walkList([
 				[12, 17, '村长的家'],
 				[6, 13, '伊尔村'],
-				[58, 71],
-			], (r)=>{
-				cga.TurnTo(60, 71);
-				cga.AsyncWaitNPCDialog(()=>{
-					cga.ClickNPCDialog(4, -1);
-					cga.AsyncWaitMovement({map:'伊尔'}, ()=>{
-						cga.walkList([
-							[30, 21, '港湾管理处'],
-							[23, 25],
-						], ()=>{
-							cga.TurnTo(23, 23);
+				], ()=>{
+					cga.travel.falan.toAKLF(cb);
+				});
+			});
+			return;
+		}
+		
+		cga.walkList([
+			[58, 71],
+		], ()=>{
+			cga.turnTo(60, 71);
+			cga.AsyncWaitNPCDialog(()=>{
+				cga.ClickNPCDialog(4, -1);
+				cga.AsyncWaitMovement({map:'伊尔'}, ()=>{
+					cga.walkList([
+						[30, 21, '港湾管理处'],
+						[23, 25],
+					], ()=>{
+						cga.TurnTo(23, 23);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(32, -1);
 							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(32, -1);
-								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(4, -1);
-									cga.AsyncWaitMovement({map:'往阿凯鲁法栈桥'}, ()=>{
-										cga.walkList([
-											[51, 50],
-										], retry);
-									});
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitMovement({map:'往阿凯鲁法栈桥'}, ()=>{
+									cga.walkList([
+										[51, 50],
+									], retry);
 								});
 							});
 						});
 					});
-				}, 1000);	
-			});
+				});
+			}, 1000);	
 		});
 	}
 	
-	//从法兰城到阿凯鲁法
+	//从法兰城到哥拉尔
 	cga.travel.falan.toGelaer = (cb)=>{
 		
 		if(cga.GetMapName() == '哥拉尔'){
@@ -1092,8 +1393,8 @@ module.exports = function(callback){
 		var stage3 = ()=>{
 			cga.walkList([
 				[84, 55],
-			], (r)=>{
-				cga.TurnTo(84, 53);
+			], ()=>{
+				cga.turnTo(84, 53);
 				cga.AsyncWaitNPCDialog(()=>{
 					cga.ClickNPCDialog(4, -1);
 					cga.AsyncWaitMovement({map:'哥拉尔镇 港湾管理处'}, ()=>{
@@ -1135,42 +1436,50 @@ module.exports = function(callback){
 			});
 		}
 		
-		cga.travel.falan.toTeleRoom('伊尔村', (r)=>{
-			cga.walkList([
+		if(cga.GetMapName() != '伊尔村'){
+			cga.travel.falan.toTeleRoom('伊尔村', ()=>{
+				cga.walkList([
 				[12, 17, '村长的家'],
 				[6, 13, '伊尔村'],
-				[58, 71],
-			], (r)=>{
-				cga.TurnTo(60, 71);
-				cga.AsyncWaitNPCDialog(()=>{
-					cga.ClickNPCDialog(4, -1);
-					cga.AsyncWaitMovement({map:'伊尔'}, ()=>{
-						cga.walkList([
-							[30, 21, '港湾管理处'],
-							[25, 25],
-						], ()=>{
-							cga.TurnTo(25, 23);
+				], ()=>{
+					cga.travel.falan.toGelaer(cb);
+				});
+			});
+			return;
+		}
+		
+		cga.walkList([
+			[58, 71],
+		], ()=>{
+			cga.turnTo(60, 71);
+			cga.AsyncWaitNPCDialog(()=>{
+				cga.ClickNPCDialog(4, -1);
+				cga.AsyncWaitMovement({map:'伊尔'}, ()=>{
+					cga.walkList([
+						[30, 21, '港湾管理处'],
+						[25, 25],
+					], ()=>{
+						cga.TurnTo(25, 23);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(32, -1);
 							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(32, -1);
-								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(4, -1);
-									cga.AsyncWaitMovement({map:'往哥拉尔栈桥'}, ()=>{
-										cga.walkList([
-											[51, 50],
-										], retry);
-									});
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitMovement({map:'往哥拉尔栈桥'}, ()=>{
+									cga.walkList([
+										[51, 50],
+									], retry);
 								});
 							});
 						});
 					});
-				}, 1000);	
-			});
+				});
+			}, 1000);	
 		});
 	}
 	
 	cga.travel.AKLF = {};
 	
-	cga.travel.AKLF.isSettled = true;
+	cga.travel.AKLF.isSettled = false;
 	
 	cga.travel.AKLF.toFalan = (cb)=>{
 		if(cga.GetMapName() != '阿凯鲁法村'){
@@ -1322,7 +1631,7 @@ module.exports = function(callback){
 	}
 	
 	cga.travel.falan.toTeleRoom = (villageName, cb)=>{
-		var mapname = cga.GetMapName();
+		
 		switch(villageName){
 			case '亚留特村':
 				cga.travel.falan.toTeleRoomTemplate('亚留特村', [43, 23], [43, 22], [44, 22], cb);
@@ -1335,9 +1644,6 @@ module.exports = function(callback){
 				break;
 			case '维诺亚村':
 				cga.travel.falan.toTeleRoomTemplate('维诺亚村', [9, 22], [9, 23], [8, 22], cb);
-				break;
-			case '奇利村':
-				cga.travel.falan.toTeleRoomTemplate('奇利村', [9, 33], [8, 33], [8, 32], cb);
 				break;
 			case '奇利村':
 				cga.travel.falan.toTeleRoomTemplate('奇利村', [9, 33], [8, 33], [8, 32], cb);
@@ -1355,6 +1661,7 @@ module.exports = function(callback){
 				cga.travel.falan.toTeleRoomTemplate('蒂娜村', [25, 4], [25, 5], [26, 4], cb);
 				break;
 			case '魔法大学':
+				var mapname = cga.GetMapName();
 				if(mapname == '魔法大学'){
 					cb(null);
 					return;
@@ -1563,7 +1870,7 @@ module.exports = function(callback){
 	cga.travel.gelaer = {};
 	
 	//定居？
-	cga.travel.gelaer.isSettled = true;
+	cga.travel.gelaer.isSettled = false;
 	
 	cga.travel.gelaer.xy2name = function(x, y, mapname){
 		if(x == 120 && y == 107 && mapname == '哥拉尔镇')
@@ -1584,44 +1891,59 @@ module.exports = function(callback){
 	cga.travel.gelaer.toStoneInternal = (stone, cb)=>{
 		var curXY = cga.GetMapXY();
 		var curMap = cga.GetMapName();
-		const desiredMap = ['哥拉尔镇'];
 		if(curMap == '哥拉尔镇'){			
-			var curStone = cga.travel.gelaer.xy2name(curXY.x, curXY.y);
+			var curStone = cga.travel.gelaer.xy2name(curXY.x, curXY.y, curMap);
 			if(curStone !== null) {
-				var turn = false;
-				if(stone.length >= 2 && curStone.charAt(1) == stone.charAt(1)) {
-					if(curStone == stone){
-						cb(null);
-						return;
-					}
-					turn = true;
-				} else if(stone.length < 2){
-					if(curStone.charAt(0) == stone.charAt(0)){
-						cb(null);
-						return;
-					}
-					turn = true;
-				}
-				if(turn){
-					switch(curStone){
-						case 'N':cga.turnDir(6);break;
-						case 'S':cga.turnDir(0);break;
-					}
-					cga.AsyncWaitMovement({map:desiredMap, delay:1000, timeout:5000}, (err, reason)=>{
-						if(err){
-							cb(err, reason);
-							return;
-						}
-						cga.travel.gelaer.toStoneInternal(stone, cb);
-					});
+				if(curStone == stone){
+					cb(null);
 					return;
 				}
+				
+				var desiredTarget = undefined;
+				switch(curStone){
+					case 'N':
+						cga.turnDir(6);
+						desiredTarget = [118, 214];
+						break;
+					case 'S':
+						cga.turnDir(0);
+						desiredTarget = [120, 107];
+						break;
+				}
+				cga.AsyncWaitMovement({x : desiredTarget[0], y : desiredTarget[1], delay:1000, timeout:5000}, (err, reason)=>{
+					if(err){
+						cb(err, reason);
+						return;
+					}
+					cga.travel.gelaer.toStoneInternal(stone, cb);
+				});
+				return;
+			} else if(!cga.travel.gelaer.isSettle){
+				var northPath = cga.calculatePath(curXY.x, curXY.y, 118, 214, null, null, null, []);
+				northPath = PF.Util.expandPath(northPath);
+				
+				var southPath = cga.calculatePath(curXY.x, curXY.y, 120, 107, null, null, null, []);
+				southPath = PF.Util.expandPath(southPath);
+				
+				var path = northPath;
+				var target = [118, 214];
+
+				if(path.length > southPath.length)
+				{
+					path = southPath;
+					target = [120, 107];
+				}
+				
+				cga.walkList([target], ()=>{
+					cga.travel.gelaer.toStoneInternal(stone, cb);
+				});
+				return;
 			}
 		}
 
 		if(cga.travel.gelaer.isSettled){
 			cga.LogBack();
-			cga.AsyncWaitMovement({map:desiredMap, delay:1000, timeout:5000}, (err, reason)=>{
+			cga.AsyncWaitMovement({map:'哥拉尔镇', delay:1000, timeout:5000}, (err, reason)=>{
 				if(err){
 					cb(err, reason);
 					return;
@@ -1642,15 +1964,96 @@ module.exports = function(callback){
 	}
 	
 	//前往到哥拉尔医院
-	cga.travel.gelaer.toHospital = (cb)=>{
+	cga.travel.gelaer.toHospital = (cb, isPro)=>{
+		if(cga.GetMapName() != '哥拉尔镇'){
+			cb(new Error('必须从哥拉尔镇启动'));
+			return;
+		}
 		cga.travel.gelaer.toStone('N', ()=>{
 			cga.walkList([
-				[165, 91, '医院']
-				[29, 27],
+				[165, 91, '医院'],
+				isPro ? [28, 25] : [29, 26],
 			], ()=>{
-				cga.TurnTo(30, 26);
+				if(isPro)
+					cga.turnTo(28, 24);
+				else
+					cga.turnTo(30, 26);
 				cb(true);
 			});
+		});
+	}
+
+	//前往到哥拉尔银行
+	cga.travel.gelaer.toBank = (cb)=>{
+		if(cga.GetMapName() != '哥拉尔镇'){
+			cb(new Error('必须从哥拉尔镇启动'));
+			return;
+		}
+		cga.travel.gelaer.toStone('N', ()=>{
+			cga.walkList([
+				[167, 66, '银行'],
+				[25, 10],
+			], ()=>{
+				cga.turnDir(0);
+				cb(null);
+			});
+		});
+	}
+
+	//前往鲁米那斯村
+	cga.travel.gelaer.toLumi = (cb)=>{
+		if(cga.GetMapName() != '哥拉尔镇'){
+			cb(new Error('必须从哥拉尔镇启动'));
+			return;
+		}
+		cga.travel.gelaer.toStone('N', ()=>{
+			cga.walkList([
+				[176,105,'库鲁克斯岛'],
+				[477,525],
+			], ()=>{
+				cga.turnTo(477, 526);
+				cga.AsyncWaitNPCDialog(()=>{
+					cga.ClickNPCDialog(4, 0);
+					cga.AsyncWaitMovement({x : 476, y : 528, delay:1000, timeout:5000}, ()=>{
+						cga.walkList([
+						[322, 883,'鲁米那斯']
+						], ()=>{
+							cb(null);
+						});
+					});
+				});
+			});
+		});
+	}
+	
+	cga.travel.lumi = {};
+	
+	cga.travel.lumi.toStore = (cb)=>{
+		if(cga.GetMapName() != '鲁米那斯'){
+			cb(new Error('必须从鲁米那斯启动'));
+			return;
+		}
+		cga.walkList([
+			[88, 51,'杂货店'],
+			[11, 12],
+		], ()=>{
+			cga.turnTo(13, 12);
+			cb(null);
+		});
+	}
+	
+	cga.travel.lumi.toHospital = (cb, isPro)=>{
+		if(cga.GetMapName() != '鲁米那斯'){
+			cb(new Error('必须从鲁米那斯启动'));
+			return;
+		}
+		cga.walkList(
+		[
+			[87, 35, '医院'],
+			isPro == true ? [17, 5] : [17, 16],
+		], ()=>{
+			cga.turnDir(0);
+			cb(null);
 		});
 	}
 
@@ -1777,39 +2180,79 @@ module.exports = function(callback){
 			
 			var path = finder.findPath(frompos[0], frompos[1], topos[0], topos[1], grid);
 			
-			var joint = PF.Util.compressPath(path);
-			for(var i in joint){
-				joint[i][0] += walls.x_bottom;
-				joint[i][1] += walls.y_bottom;
-				if(joint[i][0] == targetX && joint[i][1] == targetY){
-					joint[i][2] = targetMap;
-					joint[i][3] = dstX;
-					joint[i][4] = dstY;
+			if(path.length)
+			{
+				var joint = PF.Util.compressPath(path);
+				for(var i in joint){
+					joint[i][0] += walls.x_bottom;
+					joint[i][1] += walls.y_bottom;
+					if(joint[i][0] == targetX && joint[i][1] == targetY){
+						joint[i][2] = targetMap;
+						joint[i][3] = dstX;
+						joint[i][4] = dstY;
+					}
+					joint[i][5] = true;
 				}
-				joint[i][5] = true;
-			}
 
-			//console.log('result joints');
+				//console.log('result joints');
+					
+				//console.log(joint);
+
+				newList = joint.concat(newList);
 				
-			//console.log(joint);
-
-			newList = joint.concat(newList);
-			
-			console.log('新寻路列表:');			
-			console.log(newList);
-			
-		} else {
-			console.log('错误：寻路失败！');
-			newList.unshift([targetX, targetY, targetMap, null, null, true]);
+				console.log('新寻路列表:');			
+				console.log(newList);
+				
+				return newList;
+			}
 		}
 		
-		return newList;
+		console.error(new Error('错误：寻路失败！'));
+		return [];
 	}
 	
 	cga.getMapXY = ()=>{
 		var f = cga.GetMapXYFloat();
 		return {x: parseInt(f.x/64.0), y:parseInt(f.y/64.0)};
 	}
+	
+	cga.NoRollbackMap = [
+	'艾尔莎岛',
+	'艾夏岛',
+	'利夏岛',
+	'法兰城',
+	'里谢里雅堡',
+	'医院',
+	'工房',
+	'村长的家',
+	'曙光骑士团营地',
+	'辛希亚探索指挥部',
+	'圣骑士营地',
+	'哥拉尔镇',
+	'鲁米那斯',
+	'阿凯鲁法村',
+	'坎那贝拉村',
+	'加纳村',
+	'奇利村',
+	'杰诺瓦镇',
+	'伊尔村',
+	'伊尔',
+	'维诺亚村',
+	'乌克兰村',
+	'亚留特村',
+	'圣拉鲁卡村',
+	'地下工房',
+	'阿巴尼斯村',
+	'魔法大学',
+	'魔法大学内部',
+	'杂货店',
+	'启程之间',
+	'追忆之路',
+	'港湾管理处',
+	'往哥拉尔栈桥',
+	'往伊尔栈桥',
+	'哥拉尔 港湾管理处',
+	];
 	
 	cga.walkList = (list, cb)=>{
 		
@@ -1859,10 +2302,94 @@ module.exports = function(callback){
 			console.log('当前地图序号: ' + curmapindex);
 			console.log('当前坐标: (%d, %d)', curpos.x, curpos.y);
 			console.log('目标坐标: (%d, %d)', targetX, targetY);
-			console.log('目标地图');
-			console.log(targetMap);
+			if(targetMap)
+			{
+				console.log('目标地图');
+				console.log(targetMap);
+			}
 			
-			var end = ()=>{
+			var end = (arg)=>{
+				
+				if(cga.NoRollbackMap.find((n)=>{
+					return n == curmap;
+				}) != undefined)
+				{
+					cga.isMoveThinking = false;
+					cb(null);
+					return;
+				}
+				
+				/*var faceDir = cga.GetPlayerInfo().direction;
+				var facedPos = cga.getOrientationPosition(faceDir, 1);
+				var npc = cga.findNPCEx((u)=>{
+					return u.xpos == facedPos[0] && u.ypos == facedPos[1];
+				});
+				
+				if(npc)
+				{
+					console.log('方向'+faceDir+'发现NPC，为防止说话触发NPC对话，转向一次');
+					console.log(npc);
+					cga.turnDir((faceDir + 1) % 7);
+					setTimeout(end, 500, arg);
+					return;
+				}
+				
+				var facedPos2 = cga.getOrientationPosition(faceDir, 2);
+				var npc2 = cga.findNPCEx((u)=>{
+					return u.xpos == facedPos2[0] && u.ypos == facedPos2[1];
+				});
+				
+				if(npc2)
+				{
+					console.log('方向'+faceDir+'发现NPC，为防止说话触发NPC对话，转向一次');
+					console.log(npc2);
+					cga.turnDir((faceDir + 1) % 7);
+					setTimeout(end, 500, arg);
+					return;
+				}
+				
+				cga.waitForChatInput((msg, val)=>{
+					if(msg.indexOf('遇敌防卡住') >= 0)
+					{
+						if(cga.isInNormalState())
+						{
+							if(arg.map)
+							{
+								var curmap = cga.GetMapName();
+								var curmapindex = cga.GetMapIndex().index3;
+								if(curmap == arg.map || curmapindex == arg.map)
+								{
+									cga.isMoveThinking = false;
+									cb(null);
+									return false;
+								}
+							} else if(arg.pos)
+							{
+								var curpos = cga.GetMapXY();
+								if(curpos.x == arg.pos[0] && curpos.y == arg.pos[1])
+								{
+									cga.isMoveThinking = false;
+									cb(null);
+									return false;
+								}
+							}
+							console.log('坐标错误，回滚到最后一个路径点');
+							var curpos = cga.GetMapXY();
+							var endpos = walkedList.pop();
+							newList = cga.calculatePath(curpos.x, curpos.y, endpos[0], endpos[1], endpos[2], null, null, newList);
+							walkCb();
+							return false;
+						}
+						//battle?
+						setTimeout(end, 1000, arg);
+						return false;
+					}
+					
+					return true;
+				});
+				
+				cga.SayWords('遇敌防卡住', 0, 3, 1);*/
+				
 				var waitBattle2 = ()=>{
 					if(!cga.isInNormalState()){
 						setTimeout(waitBattle2, 1500);
@@ -1940,7 +2467,7 @@ module.exports = function(callback){
 								
 								if(newList.length == 0){
 									console.log('寻路结束1');
-									end();
+									end({ map : targetMap });
 									return;
 								}
 								
@@ -1951,7 +2478,7 @@ module.exports = function(callback){
 								
 								if(newList.length == 0){
 									console.log('寻路结束2');
-									end();
+									end({ map : targetMap });
 									return;
 								}
 								
@@ -2001,10 +2528,10 @@ module.exports = function(callback){
 					cb(err, reason);
 					return;
 				}
-								
+
 				if(newList.length == 0){
 					console.log('寻路结束3');
-					end();
+					end( {pos : [targetX, targetY], map : targetMap} );
 					return;
 				}
 				
@@ -2052,18 +2579,27 @@ module.exports = function(callback){
 		return skill != undefined ? skill : null;
 	}
 	
-	cga.findNPCEx = function(filter){
+	cga.findCrate = function(filter){
 		var unit = cga.GetMapUnits().find((u)=>{
-			if(u.valid == 0)
-				return false;
-			if((u.type != 2 && u.type != 1) || u.model_id == 0)
-				return false;
-			return filter(u);
+			if(u.valid == 2 && u.type == 2 && u.model_id != 0 && (u.flags & 1024) != 0)
+				return filter(u);
+			
+			return false;
 		});
 		
 		return unit != undefined ? unit : null;
 	}
 	
+	cga.findNPCEx = function(filter){
+		var unit = cga.GetMapUnits().find((u)=>{
+			if(u.valid == 2 && u.type == 1 && u.model_id != 0 && (u.flags & 4096) != 0)
+				return filter(u);
+			
+			return false;
+		});
+		
+		return unit != undefined ? unit : null;
+	}
 
 	cga.findNPC = function(name){
 		return cga.findNPCEx((u)=>{
@@ -2082,9 +2618,9 @@ module.exports = function(callback){
 	//参数2：是否包括装备栏
 	cga.getItemCount = function(filter){
 		var includeEquipment = arguments[1] === true ? true : false;
-		var items = cga.getInventoryItems();
+		var items = cga.GetItemsInfo();
 		var count = 0;
-		if(filter.charAt(0) == '#'){
+		if(typeof filter == 'string' && filter.charAt(0) == '#'){
 			var itemid = parseInt(filter.substring(1));
 			items.forEach((item)=>{
 				if(!includeEquipment && item.pos < 8)
@@ -2098,6 +2634,14 @@ module.exports = function(callback){
 				if(!includeEquipment && item.pos < 8)
 					return false;
 				if(item.itemid == itemid)
+					count += item.count > 0 ? item.count : 1;
+			});
+		} else if(typeof filter == 'function'){
+			var itemid = filter;
+			items.forEach((item)=>{
+				if(!includeEquipment && item.pos < 8)
+					return false;
+				if(filter(item) == true)
 					count += item.count > 0 ? item.count : 1;
 			});
 		} else {
@@ -2182,7 +2726,7 @@ module.exports = function(callback){
 					console.log('第'+(index+1)+'阶段请求重新执行。');
 					objThis.doNext(index, cb);
 				} else  {
-					throw new Error('invalid input');
+					throw new Error('无效参数');
 				}
 			});
 		}
@@ -2196,136 +2740,14 @@ module.exports = function(callback){
 	}
 	
 	//等待NPC出现
-	cga.task.waitForNPC = function(name, cb2){
-		var waitNpc = ()=>{
-			if(cga.findNPC(name) == false){
-				setTimeout(waitNpc, 10000);
-				cga.SayWords('', 0, 3, 1);
-				return;
-			}
-			
-			cb2(true);
+	cga.task.waitForNPC = (filter, cb)=>{
+		if(!cga.findNPC(filter)){
+			setTimeout(cga.task.waitForNPC, 10000, filter, cb);
+			cga.SayWords('', 0, 3, 1);
+			return;
 		}
-		waitNpc();
-	}
-	
-	cga.task.joinJobBattleCommon = function(jobname, cb) {
-		return cga.task.Task('就职' + jobname, [
-		{
-			intro: '1.到法兰城的东医院[224.87]内找护士买“止痛药”',
-			workFunc: function(cb2){
-				cga.travel.falan.toEastHospital(function(r){
-					var npc = cga.findNPC('药剂师波洛姆');
-					if(npc == null){
-						cb2(false);
-						return;
-					}
-					cga.walkList([
-					[npc.xpos-1, npc.ypos]
-					], (r)=>{
-						cga.TurnTo(npc.xpos, npc.ypos);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(0, 0);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.BuyNPCStore([{index:1, count:1}]);
-								cga.AsyncWaitNPCDialog((err, dlg)=>{
-									if(dlg.message.indexOf('请保重') >= 0){
-										cb2(true);
-										return;
-									}
-								});
-							});
-						});
-					});
-				});
-			}
-		},
-		{
-			intro: '2.接著再到公会[73.60]，把止痛药交给安布伦后他会给你一张“通行证” ',
-			workFunc: function(cb2){
-				cga.travel.falan.toStone('W1', ()=>{
-					cga.walkList([
-						[73, 60, '职业公会'],
-						[8, 6]
-					], (r)=>{
-						cga.TurnTo(10, 6);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(4, 0);
-							cga.AsyncWaitNPCDialog(()=>{
-								cb2(true);
-							});
-						});
-					});
-				});
-			}
-		},
-		{
-			intro: '3、出西门进国营第24坑道（351.146），在一楼左方找哈鲁迪亚说话就可以进入试练洞窟。直闯6F大厅，和波洛米亚（23.15）交谈后就可以拿到推荐信。',
-			workFunc: (cb2)=>{
-				cga.travel.falan.toStone('W1', (r)=>{
-					cga.walkList([
-						[22, 87, '芙蕾雅'],
-						[351, 145, '国营第24坑道 地下1楼'],
-						[9, 15],
-					], (r)=>{
-						cga.TurnTo(9, 13);
-						cga.AsyncWaitNPCDialog((dlg)=>{
-							cga.ClickNPCDialog(1, 0);
-							cga.AsyncWaitMovement({x: 7, y: 15}, ()=>{
-								cga.walkList([
-									[9, 5, '试炼之洞窟 第1层'],
-									[33, 31, '试炼之洞窟 第2层'],
-									[22, 42, '试炼之洞窟 第3层'],
-									[42, 34, '试炼之洞窟 第4层'],
-									[27, 12, '试炼之洞窟 第5层'],
-									[39, 36, '试炼之洞窟 大厅'],
-									[23, 20],
-								], (r)=>{
-									var job = cga.GetPlayerInfo().job;
-									if(job == '游民'){
-										cga.walkList([
-										[23, 17]
-										], (r)=>{
-											cga.turnDir(6);
-											cga.AsyncWaitNPCDialog(function(){
-												cga.ClickNPCDialog(1, 0);
-												setTimeout(cb2, 1000, true);
-											});
-										});
-									} else {
-										cga.walkList([
-										[22, 12],
-										[23, 12],
-										], (r)=>{
-											cga.SayWords(jobname, 0, 0, 0);
-											cga.AsyncWaitNPCDialog(function(){
-												if(dlg2.message.indexOf('那就拿去吧') >= 0){
-													cga.ClickNPCDialog(1, 0);
-													setTimeout(cb2, 1000, true);
-												}
-											});
-										});
-									}
-								});
-							});
-						});
-					});
-				});
-			}	
-		}
-		],
-		[//任务阶段是否完成
-			function(){//止痛药
-				return (cga.getItemCount('#18233') > 0) ? true : false;
-			},
-			function(){//试炼洞穴通行证
-				return (cga.getItemCount('#18100') > 0) ? true : false;
-			},
-			function(){
-				return false;
-			}
-		]
-		);
+		
+		cb(null);
 	}
 
 	cga.gather = {};
@@ -2486,7 +2908,6 @@ module.exports = function(callback){
 	//鉴定背包中所有的物品
 	cga.assessAllItems = (cb)=>{
 		var item = cga.findAssessableItem();
-		var times = 0;
 		if(item)
 		{
 			cga.manipulateItemEx({
@@ -2494,7 +2915,6 @@ module.exports = function(callback){
 				itempos : item.pos,
 				immediate : true,
 			}, (err, results)=>{
-
 				setTimeout(cga.assessAllItems, 500, cb);
 			})
 		} else {
@@ -2617,10 +3037,21 @@ module.exports = function(callback){
 			var items = cga.getSellStoneItem();
 			if(items.length > 0){
 				cga.DropItem(items[0].itempos);
-				setTimeout(cga.cleanInventory, 500, count, cb);
+				if(cb)
+					setTimeout(cga.cleanInventory, 500, count, cb);
 			} else {
 				cb(new Error('没有可以扔的物品了'));
 			}
+		} else {
+			cb(null);
+		}
+	}
+	
+	cga.cleanInventoryEx = (filter, cb)=>{
+		var items = cga.getInventoryItems().filter(filter);
+		if(items.length > 0){
+			cga.DropItem(items[0].pos);
+			setTimeout(cga.cleanInventory, 500, count, filter, cb);
 		} else {
 			cb(null);
 		}
@@ -2707,6 +3138,25 @@ module.exports = function(callback){
 		}
 		
 		return -1;
+	}
+
+	cga.getInventoryEmptySlotCount = () =>{
+		
+		var items = cga.GetItemsInfo();
+
+		var arr = [];
+
+		for(var i = 0; i < items.length; ++i){
+			arr[items[i].pos-8] = items[i];
+		}
+		var count = 0;
+		
+		for(var i = 0; i < 20; ++i){
+			if(!arr[i])
+				count ++;
+		}
+		
+		return count;
 	}
 
 	cga.saveToBankOnce = (filter, maxcount, cb)=>{
@@ -2844,10 +3294,45 @@ module.exports = function(callback){
 				console.log(e);
 			}
 			
-			setTimeout(move, 50);
+			setTimeout(move, 100);
 		}
 		
 		move();
+	}
+	
+	cga.parseBuyStoreMsg = (dlg)=>{
+		
+		if(!dlg.message)
+			return null;
+		
+		var reg = new RegExp(/([^|\n]+)/g)
+		var match = dlg.message.match(reg);
+		
+		if(match.length < 5)
+			return null;
+		
+		var storeItemCount = (match.length - 5) / 6;
+		
+		var obj = {
+			storeid : match[0],
+			name : match[1],
+			welcome : match[2],
+			insuff_funds : match[3],
+			insuff_inventory : match[4],
+			items : []
+		}
+		for(var i = 0; i < storeItemCount; ++i){
+			obj.items.push({
+				index : i,
+				name : match[5 + 6 * i + 0],
+				image_id : match[5 + 6 * i + 1],
+				cost : match[5 + 6 * i + 2],
+				attr : match[5 + 6 * i + 3],
+				unk1 : match[5 + 6 * i + 4],
+				max_buy : match[5 + 6 * i + 5],
+			});
+		}
+		return obj;
 	}
 	
 	cga.getTeamPlayers = ()=>{
@@ -2907,7 +3392,7 @@ module.exports = function(callback){
 						strip = strip.replace(/\\n/g,"|");
 						var reg = new RegExp(/([^|\n]+)/g)
 						var match = strip.match(reg);
-						console.log(match);
+						//console.log(match);
 						for(var j = 0; j < match.length; ++j){
 							if(match[j] == name){
 								console.log(j);
@@ -2960,7 +3445,7 @@ module.exports = function(callback){
 							console.log(strip);
 							var reg = new RegExp(/([^|\n]+)/g)
 							var match = strip.match(reg);
-							console.log(match);
+							//console.log(match);
 							for(var j = 0; j < match.length; ++j){
 								if(match[j] == teamplayers[i].name){
 									cga.ClickNPCDialog(0, j / 2);
@@ -3015,6 +3500,9 @@ module.exports = function(callback){
 				var msgheader = fromTeammate.name + ': ';
 				if(r.msg.indexOf(msgheader) >= 0){
 					var msg = r.msg.substr(r.msg.indexOf(msgheader) + msgheader.length);
+					
+					if (msg.indexOf('[交易]') == 0)
+						msg = msg.substr('[交易]' .length);
 					listen = cb(fromTeammate, msg);
 				}
 			}
@@ -3022,6 +3510,144 @@ module.exports = function(callback){
 			if(listen == true)
 				cga.waitTeammateSay(cb);
 		}, 1000);
+	}
+	
+	cga.waitTeammateSayNextStage = (teammates, cb)=>{
+	
+		var teammate_state = {};
+		var teammate_ready = 0;
+
+		cga.waitTeammateSay((player, msg)=>{
+
+			if(msg == '1' && teammate_state[player.name] !== true){
+				teammate_state[player.name] = true;
+				teammate_ready ++;
+			}
+
+			if((teammates.length && teammate_ready >= teammates.length) || (!teammates.length && teammate_ready == 1)){
+				//all teammates are ready
+				cb(true);
+				return false;
+			}
+			
+			return true;
+		});
+	}
+	
+	cga.waitTeammateSayNextStage2 = (teammates, cb)=>{
+		var teammate_state = {};
+		var teammate_ready = 0;
+		var teammate_notready = 0;
+
+		cga.waitTeammateSay((player, msg)=>{
+
+			if(teammate_state[player.name] !== true && teammate_state[player.name] !== false){
+				if(msg == '1'){
+					teammate_state[player.name] = true;
+					teammate_ready ++;
+				} else if(msg == '2'){
+					teammate_state[player.name] = false;
+					teammate_notready ++;
+				}
+			}
+
+			if((teammates.length && teammate_ready >= teammates.length) || (!teammates.length && teammate_ready == 1)){
+				//all teammates are ready
+				cb(true);
+				return false;
+			}
+			
+			if((teammates.length && teammate_ready + teammate_notready >= teammates.length) || (!teammates.length && teammate_ready + teammate_notready == 1)){
+				//some teammates are not ready
+				cb(false);
+				return false;
+			}
+			
+			return true;
+		});
+	}
+	
+	cga.walkTeammateToPosition = (posArray, cb) =>{
+		
+		console.log('cga.walkTeammateToPosition stage1');
+		
+		if(cga.getTeamPlayers().length == 0)
+		{
+			cb(null);
+			return;
+		}
+		
+		var index = 0;
+		
+		var walk = ()=>{
+			console.log('cga.walkTeammateToPosition walk');
+			
+			cga.AsyncWalkTo(posArray[index][0], posArray[index][1], null, null, null, checkTeammateAtPosition);
+		}
+		
+		var checkTeammateAtPosition = (err)=>{
+			
+			console.log('checkTeammateAtPosition 0');
+			
+			if(!cga.isInNormalState())
+			{
+				console.log('checkTeammateAtPosition 1');
+				setTimeout(checkTeammateAtPosition, 1000);
+				return;
+			}
+			
+			var teamplayers = cga.getTeamPlayers();
+			var someoneNotInPosArray = false;
+			for(var i in teamplayers) {
+				var isInPosArray = false;
+				for(var j in posArray) {
+					if(teamplayers[i].xpos == posArray[j][0] && teamplayers[i].ypos == posArray[j][1]) {
+						isInPosArray = true;
+						break;
+					}
+				}
+				
+				if(!isInPosArray){
+					someoneNotInPosArray = true;
+					break;
+				}
+			}
+			
+			if(someoneNotInPosArray){
+				console.log('someoneNotInPosArray');
+				
+				index ++;
+				if(index > posArray.length - 1)
+					index = 0;
+				walk();
+				return;
+			}
+			
+			cga.waitForChatInput((msg, val)=>{
+				if(msg.indexOf('遇敌防卡住') >= 0)
+				{
+					//restart the walk procedure
+					if(!cga.isInNormalState())
+					{
+						console.log('waitForChatInput 0');
+						setTimeout(checkTeammateAtPosition, 1000);
+					}
+					else
+					{
+						console.log('waitForChatInput 1');
+						//or we are at position
+						cb(null);
+					}
+					return false;
+				}
+				
+				return true;
+			});
+			
+			cga.SayWords('遇敌防卡住', 0, 3, 1);
+		}
+		
+		walk();
 	}
 	
 	cga.waitForChatInput = (cb)=>{
@@ -3179,94 +3805,144 @@ module.exports = function(callback){
 		setTimeout(cga.waitForMultipleLocation, 1000, arr);
 	}
 	
+	cga.cachedMapTileMatrix = null;
+	cga.cachedMapTileMatrixTime = 0;
+	
 	cga.buildMapTileMatrix = ()=>{
-		var wall = cga.GetMapTileTable(true);
-		var matrix = [];
-		for(var y = 0; y < wall.y_size; ++y){
-			if(!matrix[y])
-				matrix[y] = [];
-			for(var x = 0; x < wall.x_size; ++x){
-				matrix[y][x] = wall.cell[x + y * wall.x_size];
+		var curtime = (new Date()).getTime();
+		if(1 || cga.cachedMapTileMatrix == null || curtime > cga.cachedMapTileMatrixTime + 200)
+		{
+			var wall = cga.GetMapTileTable(true);
+			var matrix = [];
+			for(var y = 0; y < wall.y_size; ++y){
+				if(!matrix[y])
+					matrix[y] = [];
+				for(var x = 0; x < wall.x_size; ++x){
+					matrix[y][x] = wall.cell[x + y * wall.x_size];
+				}
 			}
+			
+			cga.cachedMapTileMatrix = curtime;
+			cga.cachedMapTileMatrix = {matrix : matrix, x_bottom : wall.x_bottom, y_bottom : wall.y_bottom, x_size : wall.x_size, y_size : wall.y_size};
 		}
-		return {matrix : matrix, x_bottom : wall.x_bottom, y_bottom : wall.y_bottom, x_size : wall.x_size, y_size : wall.y_size};
+		return cga.cachedMapTileMatrix;
 	}
+	
+	cga.cachedMapCollisionRawMatrix = null;
+	cga.cachedMapCollisionRawMatrixTime = 0;
 	
 	cga.buildMapCollisionRawMatrix = ()=>{
-		var wall = cga.GetMapCollisionTableRaw(true);
-		var matrix = [];
-		for(var y = 0; y < wall.y_size; ++y){
-			if(!matrix[y])
-				matrix[y] = [];
-			for(var x = 0; x < wall.x_size; ++x){
-				matrix[y][x] = wall.cell[x + y * wall.x_size];
+		var curtime = (new Date()).getTime();
+		if(1 || cga.cachedMapCollisionRawMatrix == null || curtime > cga.cachedMapCollisionRawMatrixTime + 200)
+		{
+			var wall = cga.GetMapCollisionTableRaw(true);
+			var matrix = [];
+			for(var y = 0; y < wall.y_size; ++y){
+				if(!matrix[y])
+					matrix[y] = [];
+				for(var x = 0; x < wall.x_size; ++x){
+					matrix[y][x] = wall.cell[x + y * wall.x_size];
+				}
 			}
+			
+			cga.cachedMapCollisionRawMatrixTime = curtime;
+			cga.cachedMapCollisionRawMatrix = {matrix : matrix, x_bottom : wall.x_bottom, y_bottom : wall.y_bottom, x_size : wall.x_size, y_size : wall.y_size};
 		}
-		return {matrix : matrix, x_bottom : wall.x_bottom, y_bottom : wall.y_bottom, x_size : wall.x_size, y_size : wall.y_size};
+		
+		return cga.cachedMapCollisionRawMatrix;
 	}
 	
+	cga.cachedMapCollisionMatrix = null;
+	cga.cachedMapCollisionMatrixTime = 0;
+	
 	cga.buildMapCollisionMatrix = (exitIsBlocked)=>{
-		var wall = cga.GetMapCollisionTable(true);
-		var objs = null;
-		if(exitIsBlocked == true)
-			objs = cga.GetMapObjectTable(true);
-		var matrix = [];
-		for(var y = 0; y < wall.y_size; ++y){
-			if(!matrix[y])
-				matrix[y] = [];
-			for(var x = 0; x < wall.x_size; ++x){
-				matrix[y][x] = wall.cell[x + y * wall.x_size] == 1 ? 1 : 0;
-				if(exitIsBlocked == true){
-					if(objs.cell[x + y * objs.x_size] & 0xff){
-						matrix[y][x] = 1;
+		var curtime = (new Date()).getTime();
+		if(1 || cga.cachedMapCollisionMatrix == null || curtime > cga.cachedMapCollisionMatrixTime + 200)
+		{
+			var wall = cga.GetMapCollisionTable(true);
+			var objs = null;
+			if(exitIsBlocked == true)
+				objs = cga.GetMapObjectTable(true);
+			var matrix = [];
+			for(var y = 0; y < wall.y_size; ++y){
+				if(!matrix[y])
+					matrix[y] = [];
+				for(var x = 0; x < wall.x_size; ++x){
+					matrix[y][x] = wall.cell[x + y * wall.x_size] == 1 ? 1 : 0;
+					if(exitIsBlocked == true){
+						if(objs.cell[x + y * objs.x_size] & 0xff){
+							matrix[y][x] = 1;
+						}
 					}
 				}
 			}
+		
+			cga.cachedMapCollisionMatrixTime = curtime;
+			cga.cachedMapCollisionMatrix = {matrix : matrix, x_bottom : wall.x_bottom, y_bottom : wall.y_bottom, x_size : wall.x_size, y_size : wall.y_size};
 		}
-		return {matrix : matrix, x_bottom : wall.x_bottom, y_bottom : wall.y_bottom, x_size : wall.x_size, y_size : wall.y_size};
+		
+		return cga.cachedMapCollisionMatrix;
 	}
+	
+	cga.cachedMapObjectMatrix = null;
+	cga.cachedMapObjectMatrixTime = 0;
 	
 	cga.buildMapObjectMatrix = ()=>{
-		var wall = cga.GetMapObjectTable(true);
-		var matrix = [];
-		for(var y = 0; y < wall.y_size; ++y){
-			if(!matrix[y])
-				matrix[y] = [];
-			for(var x = 0; x < wall.x_size; ++x){
-				matrix[y][x] = wall.cell[x + y * wall.x_size] & 0xff;
+		var curtime = (new Date()).getTime();
+		if(1 || cga.cachedMapObjectMatrix == null || curtime > cga.cachedMapObjectMatrixTime + 200)
+		{
+			var wall = cga.GetMapObjectTable(true);
+			var matrix = [];
+			for(var y = 0; y < wall.y_size; ++y){
+				if(!matrix[y])
+					matrix[y] = [];
+				for(var x = 0; x < wall.x_size; ++x){
+					matrix[y][x] = wall.cell[x + y * wall.x_size] & 0xff;
+				}
 			}
+			
+			cga.cachedMapObjectMatrixTime = curtime;
+			cga.cachedMapObjectMatrix = {matrix : matrix, x_bottom : wall.x_bottom, y_bottom : wall.y_bottom, x_size : wall.x_size, y_size : wall.y_size};
 		}
-		return {matrix : matrix, x_bottom : wall.x_bottom, y_bottom : wall.y_bottom, x_size : wall.x_size, y_size : wall.y_size};
+		
+		return cga.cachedMapObjectMatrix;
 	}
 	
+	cga.cachedMapObjects = null;
+	cga.cachedMapObjectsTime = 0;
+	
 	cga.getMapObjects = ()=>{
-		var wall = cga.GetMapObjectTable(true);
-		var objs = [];
-		for(var y = 0; y < wall.y_size; ++y){
-			for(var x = 0; x < wall.x_size; ++x){
-				if((wall.cell[x + y * wall.x_size] & 0xff) != 0)
-					objs.push({
-						x:x,
-						y:y,
-						mapx:x+wall.x_bottom,
-						mapy:y+wall.y_bottom,
-						cell:wall.cell[x + y * wall.x_size] & 0xff,
-						rawcell:wall.cell[x + y * wall.x_size]
-					});
+		var curtime = (new Date()).getTime();
+		if(1 || cga.cachedMapObjects == null || curtime > cga.cachedMapObjectsTime + 200)
+		{
+			var wall = cga.GetMapObjectTable(true);
+			var objs = [];
+			for(var y = 0; y < wall.y_size; ++y){
+				for(var x = 0; x < wall.x_size; ++x){
+					if((wall.cell[x + y * wall.x_size] & 0xff) != 0)
+						objs.push({
+							x:x,
+							y:y,
+							mapx:x+wall.x_bottom,
+							mapy:y+wall.y_bottom,
+							cell:wall.cell[x + y * wall.x_size] & 0xff,
+							rawcell:wall.cell[x + y * wall.x_size]
+						});
+				}
 			}
+			
+			cga.cachedMapObjectsTime = curtime;
+			cga.cachedMapObjects = objs;
 		}
-		return objs;
+		
+		return cga.cachedMapObjects;
 	}
 
-	cga.findPlayerUnit = (name)=>{
-		var units = cga.GetMapUnits();
-
-		for(var i = 0; i < units.length; ++i){
-			if(units[i].type == 8 && units[i].unit_name == name){
-				return units[i];
-			}
-		}
-		return null;
+	cga.findPlayerUnit = (filter)=>{
+		var found = cga.GetMapUnits().find((u)=>{
+			return u.valid == 2 && u.type == 8 && (u.flags & 256) != 0 && ((typeof filter == 'function' && filter(u)) || (typeof filter == 'string' && filter == u.unit_name)) ;
+		});
+		return found != undefined ? found : null;
 	}
 		
 	cga.downloadMapEx = (xfrom, yfrom, xsize, ysize, cb)=>{
@@ -3568,14 +4244,7 @@ module.exports = function(callback){
 					return false;
 				
 				console.log('waitSysMsg='+msg);
-				
-				var timeout_trade = (typeof timeout == 'number') ? timeout : 30000;
-				if( (new Date()).getTime() > beginTime + timeout_trade){
-					tradeFinished = true;
-					cga.DoRequest(cga.REQUEST_TYPE_TRADE_REFUSE);
-					return false;
-				}
-								
+												
 				if(msg.indexOf('交易完成') >= 0){
 					tradeFinished = true;
 					resolve({
@@ -3589,7 +4258,7 @@ module.exports = function(callback){
 					tradeFinished = true;
 					resolve({
 						success: false,
-						received: receivedStuffs,
+						received: [],
 						reason : 'refused'
 					});
 					return false;
@@ -3598,7 +4267,7 @@ module.exports = function(callback){
 					tradeFinished = true;
 					resolve({
 						success: false,
-						received: receivedStuffs,
+						received: [],
 						reason : 'no target'
 					});
 					return false;
@@ -3656,9 +4325,21 @@ module.exports = function(callback){
 			var waitTradeState = () => {
 
 				cga.AsyncWaitTradeState((err, state) => {
-					
+
 					if(tradeFinished)
 						return;
+										
+					var timeout_trade = (typeof timeout == 'number') ? timeout : 30000;
+					if( (new Date()).getTime() > beginTime + timeout_trade){
+						tradeFinished = true;
+						cga.DoRequest(cga.REQUEST_TYPE_TRADE_REFUSE);
+						resolve({
+							success: false,
+							received: [],
+							reason : 'refused'
+						});
+						return;
+					}
 					
 					console.log('AsyncWaitTradeState='+state);
 					
@@ -3812,6 +4493,39 @@ module.exports = function(callback){
 			return true;
 		
 		return false;
+	}
+
+	cga.needDoctor = ()=>{
+		var playerinfo = cga.GetPlayerInfo();
+		var pets = cga.GetPetsInfo();
+		
+		if( playerinfo.health > 0)
+			return true;
+
+		for(var i = 0;i < pets.length; ++i){
+			if(pets[i].health > 0)
+				return true;
+		}
+		
+		return false;
+	}
+
+	cga.waitForBattleEnd = (cb, timeout = 30000)=>{
+		
+		cga.AsyncWaitBattleAction((err, result) => {
+			if(err){
+				cb(err);
+				return;
+			}
+			if(result == cga.FL_BATTLE_ACTION_END)
+			{
+				setTimeout(cb, 1000, null, true);
+			}
+			else
+			{
+				cga.waitForBattleEnd(cb, timeout);
+			}
+		}, timeout);
 	}
 
 	return cga;

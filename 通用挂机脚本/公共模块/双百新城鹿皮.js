@@ -3,6 +3,7 @@ var configTable = global.configTable;
 
 var socket = null;
 
+//购买原材料需求的4倍（即造4件的量）
 const MATERIALS_MULTIPLE_TIMES = 4;
 
 var thisobj = {
@@ -63,22 +64,11 @@ var thisobj = {
 			});
 		},
 		state : 'gathering',
-		gather_total_times : 0,
 	},
 	check_done : (result)=>{
 		if(thisobj.object.gatherCount === null)
 			return false;
-		
-		if(result !== undefined){
-			console.log(thisobj.object.gather_total_times);
-			if(thisobj.object.gather_total_times < 25){
-				thisobj.object.gather_total_times ++;
-			} else {
-				cga.LogOut();
-				return false;
-			}
-		}
-		
+				
 		return cga.getItemCount('鹿皮') >= thisobj.object.gatherCount;
 	},
 	translate : (pair)=>{
@@ -127,7 +117,7 @@ var thisobj = {
 		socket = require('socket.io-client')('http://localhost:'+thisobj.serverPort, { reconnection: true });
 
 		socket.on('connect', ()=>{
-			console.log('connect');
+			console.log('成功连接到双百节点');
 			socket.emit('register', {
 				state : thisobj.object.state,
 				player_name : cga.GetPlayerInfo().name,
@@ -180,7 +170,7 @@ var thisobj = {
 		});
 
 		socket.on('disconnect', ()=>{
-			console.log('disconnect');
+			console.log('退出双百节点');
 		});
 	}
 }

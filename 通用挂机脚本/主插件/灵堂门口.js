@@ -1,5 +1,6 @@
 var Async = require('async');
 var supplyMode = require('./../公共模块/灵堂回补');
+var supplyCastle = require('./../公共模块/里堡回补');
 var teamMode = require('./../公共模块/组队模式');
 var logbackEx = require('./../公共模块/登出防卡住');
 
@@ -11,6 +12,18 @@ var interrupt = require('./../公共模块/interrupt');
 var moveThinkInterrupt = new interrupt();
 var playerThinkInterrupt = new interrupt();
 var playerThinkRunning = false;
+
+var supplyArray = [supplyMode, supplyCastle];
+
+var getSupplyObject = (map, mapindex)=>{
+	if(typeof map != 'string')
+		map = cga.GetMapName();
+	if(typeof mapindex != 'number')
+		mapindex = cga.GetMapIndex().index3;
+	return supplyArray.find((s)=>{
+		return s.isAvailable(map, mapindex);
+	})
+}
 
 var moveThink = (arg)=>{
 
@@ -32,12 +45,19 @@ var playerThink = ()=>{
 		return true;
 	
 	var playerinfo = cga.GetPlayerInfo();
+	var items = cga.GetItemsInfo();
 	var ctx = {
 		playerinfo : playerinfo,
 		petinfo : playerinfo.petid >= 0 ? cga.GetPetInfo(playerinfo.petid) : null,
 		teamplayers : cga.getTeamPlayers(),
-		result : null,
 		dangerlevel : thisobj.getDangerLevel(),
+		inventory : items.filter((item)=>{
+			return item.pos >= 8 && item.pos < 100;
+		}),
+		equipment : items.filter((item)=>{
+			return item.pos >= 0 && item.pos < 8;
+		}),
+		result : null,
 	}
 
 	teamMode.think(ctx);
@@ -54,10 +74,18 @@ var playerThink = ()=>{
 			interruptFromMoveThink = true;
 		}
 
-		if(ctx.result == 'supply' && supplyMode.isLogBack())
-			ctx.result = 'logback';
+		var supplyObject = null;
+
+		if(ctx.result == 'supply')
+		{
+			var map = cga.GetMapName();
+			var mapindex = cga.GetMapIndex().index3;
+			supplyObject = getSupplyObject(map, mapindex);
+			if(supplyObject && supplyObject.isLogBack(map, mapindex))
+				ctx.result = 'logback';
+		}
 		
-		if( ctx.result == 'supply' )
+		if( ctx.result == 'supply' && supplyObject)
 		{
 			if(interruptFromMoveThink)
 			{
@@ -76,7 +104,7 @@ var playerThink = ()=>{
 				return false;
 			}
 		}
-		else if( ctx.result == 'logback' )
+		else if( ctx.result == 'logback' || ctx.result == 'logback_forced' )
 		{
 			if(interruptFromMoveThink)
 			{
@@ -94,6 +122,12 @@ var playerThink = ()=>{
 				});
 				return false;
 			}
+		}
+	} else {
+		if( ctx.result == 'logback_forced' )
+		{
+			logbackEx.func(loop);
+			return false;
 		}
 	}
 
@@ -121,6 +155,7 @@ var loop = ()=>{
 	if(isleader && teamMode.is_enough_teammates()){
 		if(map == '灵堂')
 		{
+			playerThinkInterrupt.hasInterrupt();//restore interrupt state
 			console.log('playerThink on');
 			playerThinkRunning = true;
 			
@@ -136,6 +171,7 @@ var loop = ()=>{
 					[23, 19, '灵堂'],
 					[30, 49],
 				], ()=>{
+					playerThinkInterrupt.hasInterrupt();//restore interrupt state
 					console.log('playerThink on');
 					playerThinkRunning = true;
 					cga.freqMove(0);
@@ -149,6 +185,7 @@ var loop = ()=>{
 				[23, 19, '灵堂'],
 				[30, 49],
 			], ()=>{
+				playerThinkInterrupt.hasInterrupt();//restore interrupt state
 				console.log('playerThink on');
 				playerThinkRunning = true;
 				cga.freqMove(4);
@@ -156,6 +193,7 @@ var loop = ()=>{
 			return;
 		}
 	} else if(!isleader){
+		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 		console.log('playerThink on');
 		playerThinkRunning = true;
 		return;
@@ -163,16 +201,10 @@ var loop = ()=>{
 
 	if(cga.needSupplyInitial())
 	{
-		if(supplyMode.isInitialSupply())
+		var supplyObject = getSupplyObject(map, mapindex);
+		if(supplyObject)
 		{
-			supplyMode.func(loop);
-			return;
-		}
-		else
-		{
-			cga.travel.falan.toCastleHospital(()=>{
-				setTimeout(loop, 3000);
-			});
+			supplyObject.func(loop);
 			return;
 		}
 	}
@@ -218,7 +250,7 @@ var thisobj = {
 		return true;
 	},
 	inputcb : (cb)=>{
-		Async.series([supplyMode.inputcb, teamMode.inputcb], cb);
+		Async.series([teamMode.inputcb], cb);
 	},
 	execute : ()=>{
 		playerThinkTimer();

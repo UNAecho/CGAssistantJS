@@ -1,6 +1,33 @@
 var cga = global.cga;
 var configTable = global.configTable;
 
+var repairLocArray = [
+{
+	name : '新城登入点',
+	walker : (cb)=>{
+		cga.travel.newisland.toStone('X', ()=>{
+			cga.walkList([
+			[143, 110]
+			], cb);
+		});
+	},
+	//武修和防修的面向方向
+	dir : [6, 2];
+},
+{
+	name : '新城登入点',
+	walker : (cb)=>{
+		cga.travel.falan.toStone('M3', ()=>{
+			cga.walkList([
+			[82, 8]
+			], cb);
+		});
+	},
+	//武修和防修的面向方向
+	dir : [0, 0];
+}
+]
+
 const repairFilter = (eq) => {
 	if (eq.type >= 0 && eq.type <= 14 && eq.level <= 10) {
 		const durability = cga.getEquipEndurance(eq);
@@ -41,10 +68,12 @@ const putdownEquipments = (cb)=>{
 	var items = cga.getEquipItems().filter(repairFilter);
 	if(items.length){
 		var emptyslot = cga.findInventoryEmptySlot();
-		if(emptyslot == -1)
-			throw new Error('物品栏没有空位');
+		if(emptyslot == -1){
+			cb(new Error('物品栏没有空位'));
+			return;
+		}
 		cga.MoveItem(items[0].pos, emptyslot, -1)
-		setTimeout(putdownEquipments, 500, cb);
+		setTimeout(putdownEquipments, 1000, cb);
 		return;
 	}
 	
@@ -52,17 +81,18 @@ const putdownEquipments = (cb)=>{
 }
 
 const putupEquipments = (equipped, cb)=>{
+	var currentEquip = cga.getEquipItems();
 	var item = cga.getInventoryItems().find((eq)=>{
 		return equipped.find((eq2)=>{
 			return eq2.name == eq.name;
-		}) != undefined && cga.getEquipItems().find((eq2)=>{
+		}) != undefined && currentEquip.find((eq2)=>{
 			return eq2.name == eq.name;
 		}) == undefined;
 	});
 	
 	if(item != undefined){
 		cga.UseItem(item.pos)
-		setTimeout(putupEquipments, 500, equipped, cb);
+		setTimeout(putupEquipments, 1000, equipped, cb);
 		return;
 	}
 	
@@ -83,6 +113,8 @@ const repairLoop = (flags, failure, cb)=>{
 		setTimeout(cb, 1000);
 		return;
 	}
+	
+	cga.turnDir(words == '修理武器' ? thisobj.repairLocation.dir[0] : thisobj.repairLocation.dir[1]);
 	
 	var tradePlayerName = '';
 	cga.waitTrade({
@@ -137,7 +169,7 @@ const repairLoop = (flags, failure, cb)=>{
 	cga.SayWords(words, 0, 3, 1);
 }
 
-module.exports = {
+var thisobj = {
 	prepare : (cb)=>{
 		var items = cga.getEquipItems().filter(repairFilter);
 		if(!items.length){
@@ -145,34 +177,72 @@ module.exports = {
 			return;
 		}
 		
-		cga.travel.falan.toStone('M3', ()=>{
-			cga.walkList([
-			[82, 8]
-			], ()=>{
-				cga.TurnTo(84, 8);
+		if(cga.getTeamPlayers().length){
+			cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+			setTimeout(thisobj.prepare, 1000, cb);
+			return;
+		}
+				
+		thisobj.repairLocation.walker(()=>{
+			setTimeout(()=>{
+				cga.EnableFlags(cga.ENABLE_FLAG_TRADE, true);
+				cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, false);
 				setTimeout(()=>{
-					cga.EnableFlags(cga.ENABLE_FLAG_TRADE, true);
-					cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, false);
-					setTimeout(()=>{
-						var equipped = cga.getEquipItems();
-						putdownEquipments(()=>{
-							repairLoop(0, 0, ()=>{
-								putupEquipments(equipped, ()=>{
-									cga.EnableFlags(cga.ENABLE_FLAG_TRADE, false);
-									cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, true);
-									cb(null);
-								});
+					var equipped = cga.getEquipItems();
+					putdownEquipments(()=>{
+						repairLoop(0, 0, ()=>{
+							putupEquipments(equipped, ()=>{
+								cga.EnableFlags(cga.ENABLE_FLAG_TRADE, false);
+								cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, true);
+								cb(null);
 							});
 						});
-					}, 1000);
+					});
 				}, 1000);
-			});
+			}, 1000);
 		});
 	},
 	loadconfig : (obj, cb)=>{
+		
+		for(var i in repairLocArray){
+			if(repairLocArray[i].name == obj.repairLocation){
+				configTable.repairLocation = repairLocArray[i].name;
+				thisobj.repairLocation = repairLocArray[i];
+				break;
+			}
+		}
+		
+		if(thisobj.repairLocation === undefined){
+			console.error('读取配置：修理地点失败！默认使用新城登入点修理！');
+			thisobj.repairLocation = repairLocArray[0];
+		}
+		
 		return true;
 	},
 	inputcb : (cb)=>{
-		cb(null);
+		var sayString = '【修理装备】请选择修理地点:';
+		for(var i in repairLocArray){
+			if(i != 0)
+				sayString += ', ';
+			sayString += '('+ (parseInt(i)+1) + ')' + repairLocArray[i].name;
+		}
+		cga.sayLongWords(sayString, 0, 3, 1);
+		cga.waitForChatInput((msg, index)=>{
+			if(index !== null && index >= 1 && repairLocArray[index - 1]){
+				configTable.repairLocation = repairLocArray[index - 1].name;
+				thisobj.repairLocation = repairLocArray[index - 1];
+				
+				var sayString2 = '当前已选择:[' + thisobj.repairLocation.name + ']。';
+				cga.sayLongWords(sayString2, 0, 3, 1);
+				
+				cb(null);
+				
+				return false;
+			}
+			
+			return true;
+		});
 	}
 };
+
+module.exports = thisobj;

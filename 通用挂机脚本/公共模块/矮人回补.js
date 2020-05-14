@@ -1,70 +1,54 @@
 var supplyModeArray = [
 {
-	name : '法兰西医资深护士回补',
+	name : '矮人城镇资深护士回补',
 	func : (cb)=>{
 		var map = cga.GetMapName();
 		
 		var path = [
-			[8, 33],
-			[7, 33],
-			[8, 33],
-			[7, 33],
-			[8, 33],
+			[163, 95],
 		];
-		if(map == '芙蕾雅'){
-			path.unshift([82, 83, '医院']);
-			path.unshift([378, 195, '法兰城']);
-		}
-		else if(map == '法兰城'){
-			path.unshift([82, 83, '医院']);
+		
+		if(map == '肯吉罗岛'){
+			path.unshift([231, 434, '矮人城镇']);
 		}
 		
 		cga.walkList(path, ()=>{
-			cga.TurnTo(6, 31);
+			cga.turnDir(0);
 			setTimeout(cb, 5000);
 		});
 	},
-	isLogBack : ()=>{
-		var map = cga.GetMapName();
-		var mapindex = cga.GetMapIndex().index3;
-		return (map == '芙蕾雅' || map.indexOf('诅咒的迷宫') >= 0) ? false : true;
-	},
-	isInitialSupply : ()=>{
+	isLogBack : (map, mapindex)=>{
 		return false;
+	},
+	isAvailable : (map, mapindex)=>{
+		var mapXY = cga.GetMapXY();
+		return (cga.travel.camp.getRegion(map, mapXY) == '矮人城镇域' || map == '矮人城镇') ? true : false;
 	},
 },
 {
-	name : '法兰西医普通护士回补',
+	name : '矮人城镇普通护士回补',
 	func : (cb)=>{
 		var map = cga.GetMapName();
 		
 		var path = [
-			[9, 31],
-			[8, 31],
-			[9, 31],
-			[8, 31],
-			[9, 31],
+			[163, 94],
 		];
-		if(map == '芙蕾雅'){
-			path.unshift([82, 83, '医院']);
-			path.unshift([378, 195, '法兰城']);
-		}
-		else if(map == '法兰城'){
-			path.unshift([82, 83, '医院']);
+		
+		if(map == '肯吉罗岛'){
+			path.unshift([231, 434, '矮人城镇']);
 		}
 		
 		cga.walkList(path, ()=>{
-			cga.TurnTo(9, 29);
+			cga.turnDir(0);
 			setTimeout(cb, 5000);
 		});
 	},
-	isLogBack : ()=>{
-		var map = cga.GetMapName();
-		var mapindex = cga.GetMapIndex().index3;
-		return (map == '芙蕾雅' || map.indexOf('诅咒的迷宫') >= 0) ? false : true;
-	},
-	isInitialSupply : ()=>{
+	isLogBack : (map, mapindex)=>{
 		return false;
+	},
+	isAvailable : (map, mapindex)=>{
+		var mapXY = cga.GetMapXY();
+		return (cga.travel.camp.getRegion(map, mapXY) == '矮人城镇域' || map == '矮人城镇') ? true : false;
 	},
 },
 {
@@ -74,13 +58,13 @@ var supplyModeArray = [
 			setTimeout(cb, 5000);
 		});
 	},
-	isLogBack : ()=>{
+	isLogBack : (map, mapindex)=>{
 		return true;
 	},
-	isInitialSupply : ()=>{
+	isAvailable : (map, mapindex)=>{
 		return true;
 	},
-},
+}
 ]
 
 var cga = global.cga;
@@ -90,11 +74,11 @@ var thisobj = {
 	func : (cb)=>{
 		thisobj.object.func(cb);
 	},
-	isLogBack : ()=>{
-		return thisobj.object.isLogBack();
+	isLogBack : (map, mapindex)=>{
+		return thisobj.object.isLogBack(map, mapindex);
 	},
-	isInitialSupply : ()=>{
-		return thisobj.object.isInitialSupply();
+	isAvailable : (map, mapindex)=>{
+		return thisobj.object.isAvailable(map, mapindex);
 	},
 	translate : (pair)=>{
 		if(pair.field == 'supplyMode'){
@@ -122,7 +106,7 @@ var thisobj = {
 		return true;
 	},
 	inputcb : (cb)=>{
-		var sayString = '【诅咒插件】请选择回补方式:';
+		var sayString = '【矮人回补】请选择回补方式:';
 		for(var i in supplyModeArray){
 			if(i != 0)
 				sayString += ', ';

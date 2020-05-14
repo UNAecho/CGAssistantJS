@@ -1,5 +1,6 @@
 var Async = require('async');
-var sellStore = require('./../公共模块/里堡卖石');
+var supplyCastle = require('./../公共模块/里堡回补');
+var sellCastle = require('./../公共模块/里堡卖石');
 var teamMode = require('./../公共模块/组队模式');
 var logbackEx = require('./../公共模块/登出防卡住');
 
@@ -12,6 +13,30 @@ var interrupt = require('./../公共模块/interrupt');
 var moveThinkInterrupt = new interrupt();
 var playerThinkInterrupt = new interrupt();
 var playerThinkRunning = false;
+
+var supplyArray = [supplyCastle];
+
+var getSupplyObject = (map, mapindex)=>{
+	if(typeof map != 'string')
+		map = cga.GetMapName();
+	if(typeof mapindex != 'number')
+		mapindex = cga.GetMapIndex().index3;
+	return supplyArray.find((s)=>{
+		return s.isAvailable(map, mapindex);
+	})
+}
+
+var sellArray = [sellCastle];
+
+var getSellObject = (map, mapindex)=>{
+	if(typeof map != 'string')
+		map = cga.GetMapName();
+	if(typeof mapindex != 'number')
+		mapindex = cga.GetMapIndex().index3;
+	return sellArray.find((s)=>{
+		return s.isAvailable(map, mapindex);
+	})
+}
 
 var moveThink = (arg)=>{
 
@@ -33,12 +58,19 @@ var playerThink = ()=>{
 		return true;
 	
 	var playerinfo = cga.GetPlayerInfo();
+	var items = cga.GetItemsInfo();
 	var ctx = {
 		playerinfo : playerinfo,
 		petinfo : playerinfo.petid >= 0 ? cga.GetPetInfo(playerinfo.petid) : null,
 		teamplayers : cga.getTeamPlayers(),
-		result : null,
 		dangerlevel : thisobj.getDangerLevel(),
+		inventory : items.filter((item)=>{
+			return item.pos >= 8 && item.pos < 100;
+		}),
+		equipment : items.filter((item)=>{
+			return item.pos >= 0 && item.pos < 8;
+		}),
+		result : null,
 	}
 
 	teamMode.think(ctx);
@@ -54,8 +86,12 @@ var playerThink = ()=>{
 			ctx.result = 'supply';
 			interruptFromMoveThink = true;
 		}
-
-		if( ctx.result == 'supply' || ctx.result == 'logback' )
+		
+		if(ctx.result){
+			console.log(ctx.result);
+			console.log(ctx.reason);
+		}
+		if( ctx.result == 'supply' || ctx.result == 'logback' || ctx.result == 'logback_forced' )
 		{
 			if(interruptFromMoveThink)
 			{
@@ -73,6 +109,12 @@ var playerThink = ()=>{
 				});
 				return false;
 			}
+		}
+	} else {
+		if( ctx.result == 'logback_forced' )
+		{
+			logbackEx.func(loop);
+			return false;
 		}
 	}
 
@@ -119,7 +161,8 @@ var loop = ()=>{
 			}
 			else
 			{
-				console.log('playerThink on');
+				playerThinkInterrupt.hasInterrupt();//restore interrupt state
+				console.log('playerThink on');				
 				playerThinkRunning = true;
 				//队长：人满了，开始遇敌
 				cga.freqMove(0);
@@ -128,17 +171,30 @@ var loop = ()=>{
 		}
 	} else {
 		//进队了
+		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 		console.log('playerThink on');
 		playerThinkRunning = true;
 		return;
 	}
 
+	if(thisobj.sellStore == 1 && cga.getSellStoneItem().length > 0)
+	{
+		var sellObject = getSellObject(map, mapindex);
+		if(sellObject)
+		{
+			sellObject.func(loop);
+			return;
+		}
+	}
+
 	if(cga.needSupplyInitial())
 	{
-		cga.travel.falan.toCastleHospital(()=>{
-			setTimeout(loop, 5000);
-		});
-		return;
+		var supplyObject = getSupplyObject(map, mapindex);
+		if(supplyObject)
+		{
+			supplyObject.func(loop);
+			return;
+		}
 	}
 	
 	callSubPluginsAsync('prepare', ()=>{
@@ -147,13 +203,7 @@ var loop = ()=>{
 			cga.travel.falan.toStone('C', loop);
 			return;
 		}
-		
-		if(cga.getSellStoneItem().length > 0)
-		{
-			sellStore.func(loop);
-			return;
-		}
-		
+				
 		cga.walkList([
 		[52, 72]
 		], ()=>{
@@ -211,7 +261,7 @@ var thisobj = {
 		return true;
 	},
 	inputcb : (cb)=>{
-		Async.series([sellStore.inputcb, teamMode.inputcb, (cb2)=>{
+		Async.series([teamMode.inputcb, (cb2)=>{
 			var sayString = '【回廊插件】请选择是否卖石: 0不卖石 1卖石';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val)=>{

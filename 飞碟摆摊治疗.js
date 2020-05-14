@@ -1,30 +1,45 @@
 var cga = require('./cgaapi')(function(){
 	
-	var healme = function(){
+	var originalPos = cga.GetMapXY();
+	var originalDir = cga.GetPlayerInfo().direction;
+	
+	if(cga.GetMapName() != '里谢里雅堡')
+	{
+		console.error('提示：飞碟摆摊只能在里谢里雅堡使用！');
+	}
+	
+	var skill = cga.findPlayerSkill('治疗');
+	
+	if(!skill)
+	{
+		console.error('提示：没有治疗技能！');
+	}
+	
+	var loop = ()=>{
 		
-		var skill = cga.findPlayerSkill('治疗');
-		
-		var requiremp = 25 + skill.lv * 5;
-		
-		//补魔
-		if (cga.GetPlayerInfo().mp < requiremp){
-			cga.walkList([
-			[34, 89],
-			], ()=>{
-				cga.TurnTo(35, 88);
-				setTimeout(function(){
-					cga.walkList([
-					[29, 85],
-					], ()=>{
-						cga.TurnTo(27, 85);
-						healme();
-					});
-				}, 3000);
-			})
+		if(skill)
+		{
+			var requiremp = 25 + skill.lv * 5;
 			
-			return;
+			//补魔
+			if (cga.GetPlayerInfo().mp < requiremp){
+				cga.walkList([
+				[34, 89],
+				], ()=>{
+					cga.turnTo(35, 88);
+					setTimeout(()=>{
+						cga.walkList([
+						[originalPos.x, originalPos.y],
+						], ()=>{
+							cga.turnDir(originalDir);
+							loop();
+						});
+					}, 3000);
+				})
+				
+				return;
+			}
 		}
-		
 		//寻找队伍里带拐杖的玩家
 		
 		var teamplayers = cga.getTeamPlayers();
@@ -39,38 +54,37 @@ var cga = require('./cgaapi')(function(){
 		}
 
 		//找到了
-		if(index != -1)
+		if(skill && index != -1)
 		{
 			cga.StartWork(skill.index, skill.lv-1);
-			cga.AsyncWaitPlayerMenu(function(players){
+			cga.AsyncWaitPlayerMenu((err, players)=>{
 				
-				console.log(teamplayers);
-				console.log(players);
-				
-				for(var i in players){
-					if(players[i].name == teamplayers[index].name){
-						
-						cga.AsyncWaitUnitMenu(function(units){
-							console.log(units);
+				if(players){
+					for(var i in players){
+						if(players[i].name == teamplayers[index].name){
 							
-							cga.AsyncWaitWorkingResult(function(r){
-								healme();
+							cga.AsyncWaitUnitMenu((err, units)=>{
+								cga.AsyncWaitWorkingResult(()=>{
+									loop();
+								});
+								cga.UnitMenuSelect(0);
 							});
-							cga.UnitMenuSelect(0);
-						});
-						cga.PlayerMenuSelect(i);
-						break;
+							cga.PlayerMenuSelect(i);
+							break;
+						}
 					}
+					return;
 				}
+				
+				setTimeout(loop, 1000);
 			});
+			return;
 		}
-		else
-		{
-			//说话防掉线
-			cga.SayWords('', 0, 3, 1);
-			setTimeout(healme, 2000);
-		}
+		
+		//说话防掉线
+		cga.SayWords('', 0, 3, 1);
+		setTimeout(loop, 1000);
 	}
 	
-	healme();
+	loop();
 });

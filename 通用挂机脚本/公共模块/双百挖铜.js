@@ -3,6 +3,7 @@ var configTable = global.configTable;
 
 var socket = null;
 
+//购买原材料需求的3倍（即造3件的量）
 const MATERIALS_MULTIPLE_TIMES = 3;
 
 var thisobj = {
@@ -134,7 +135,7 @@ var thisobj = {
 		socket = require('socket.io-client')('http://localhost:'+thisobj.serverPort, { reconnection: true });
 
 		socket.on('connect', ()=>{
-			console.log('connect');
+			console.log('成功连接到双百节点');
 			socket.emit('register', {
 				state : thisobj.object.state,
 				player_name : cga.GetPlayerInfo().name,
@@ -187,7 +188,7 @@ var thisobj = {
 		});
 
 		socket.on('disconnect', ()=>{
-			console.log('disconnect');
+			console.log('退出双百节点');
 		});
 	}
 }

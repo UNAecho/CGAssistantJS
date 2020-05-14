@@ -7,10 +7,6 @@ var craft_target = null;
 
 var healObject = require('./../公共模块/治疗自己');
 
-var craftSkillList = cga.GetSkillsInfo().filter((sk)=>{
-	return (sk.name.indexOf('制') == 0 || sk.name.indexOf('造') == 0 || sk.name.indexOf('铸') == 0 );
-});
-
 const allowMats = ['麻布', '印度轻木', '铜条', '鹿皮', '毛毡', '木棉布'];
 
 const isFabricName = (name)=>{
@@ -36,8 +32,6 @@ const io = require('socket.io')();
 
 io.on('connection', (socket) => { 
 
-	console.log('A client is connected');
-	
 	socket.emit('init', {
 		craft_player : cga.GetPlayerInfo().name,
 		craft_materials : craft_target ? craft_target.materials : [],
@@ -46,7 +40,7 @@ io.on('connection', (socket) => {
 	socket.on('register', (data) => {
 		socket.cga_data = data;
 		socket.join('buddy_'+data.job_name);
-		console.log('client '+ socket.cga_data.player_name +' is registered');
+		console.log(socket.cga_data.player_name +' 已加入双百节点');
 	});
 
 	socket.on('done', (data) => {
@@ -60,15 +54,23 @@ io.on('connection', (socket) => {
 	
 	socket.on('disconnect', (err) => {
 		if(socket.cga_data)
-			console.log('client '+ socket.cga_data.player_name +' is disconnected');
+			console.log(socket.cga_data.player_name +' 已退出双百节点');
 	})
 });
 
 var waitStuffs = (name, materials, cb)=>{
 
-	console.log('waitStuffs ' + name);
+	console.log('正在等待材料 ' + name);
 
 	var repeat = ()=>{
+		
+		//修复：防止面向方向不正确导致无法交易
+		if(cga.GetPlayerInfo().direction != 4){
+			cga.turnTo(32, 88);
+			setTimeout(repeat, 500);
+			return;
+		}
+		
 		var s = io.in('buddy_'+name).sockets;
 		var find_player = null;
 		for(var key in s){
@@ -139,7 +141,7 @@ var waitStuffs = (name, materials, cb)=>{
 		cga.walkList([
 		[34, 88]
 		], ()=>{
-			cga.TurnTo(32, 88);
+			cga.turnTo(32, 88);
 			setTimeout(repeat, 500);
 		});
 	});
@@ -171,6 +173,10 @@ var getBestCraftableItem = ()=>{
 			
 			if(!isFabricName(mat.name))
 				gather_type ++;
+			
+			if(mat.name == '铜条') {
+                gather_type++;
+            }
 		})
 				
 		if(allow == false)
@@ -184,25 +190,29 @@ var getBestCraftableItem = ()=>{
 	
 	return item;
 }
-	
+
 var forgetAndLearn = (teacher, cb)=>{
 	cga.travel.falan.toTeleRoom('圣拉鲁卡村', ()=>{
 		cga.walkList(teacher.path, ()=>{
-			cga.TurnTo(teacher.pos[0], teacher.pos[1]);
+			cga.turnTo(teacher.pos[0], teacher.pos[1]);
 			
 			var dialogHandler = (err, dialog)=>{
 				if(dialog){
-					if (dialog.type == 16) {
-						cga.ClickNPCDialog(-1, 1);
-						cga.AsyncWaitNPCDialog(dialogHandler);
-						return;
-					}
-					if (dialog.type == 18) {
-						const skillIndex = cga.GetSkillsInfo().sort((a,b) => a.pos - b.pos).findIndex(s => s.name == teacher.skillname);
-						if (skillIndex > -1) {
-							cga.ClickNPCDialog(0, skillIndex);
+					var hasSkill = cga.findPlayerSkill(teacher.skillname) ? true : false;
+					if( hasSkill )
+					{
+						if (dialog.type == 16) {
+							cga.ClickNPCDialog(-1, 1);
 							cga.AsyncWaitNPCDialog(dialogHandler);
 							return;
+						}
+						if (dialog.type == 18) {
+							const skillIndex = cga.GetSkillsInfo().sort((a,b) => a.pos - b.pos).findIndex(s => s.name == teacher.skillname);
+							if (skillIndex > -1) {
+								cga.ClickNPCDialog(0, skillIndex);
+								cga.AsyncWaitNPCDialog(dialogHandler);
+								return;
+							}
 						}
 					}
 					if (dialog.options == 12) {
@@ -210,7 +220,7 @@ var forgetAndLearn = (teacher, cb)=>{
 						cga.AsyncWaitNPCDialog(dialogHandler);
 						return;
 					}
-					if (dialog.message.indexOf('已经删除') >= 0) {
+					if (dialog.message.indexOf('已经删除') >= 0 || !hasSkill) {
 						setTimeout(()=>{
 							cga.TurnTo(teacher.pos[0], teacher.pos[1]);
 							cga.AsyncWaitNPCDialog((dlg)=>{
@@ -230,8 +240,8 @@ var forgetAndLearn = (teacher, cb)=>{
 	});
 }
 
-var cleanUseless = (inventory, cb)=>{
-	if(inventory.find((inv)=>{
+var dropUseless = (cb)=>{
+	if(cga.getInventoryItems().find((inv)=>{
 		return inv.name == '木棉布';
 	}) != undefined && craft_target.materials.find((mat)=>{
 		return mat.name == '木棉布';
@@ -239,12 +249,12 @@ var cleanUseless = (inventory, cb)=>{
 		var itempos = cga.findItem('木棉布');
 		if(itempos != -1){
 			cga.DropItem(itempos);
-			setTimeout(cleanUseless, 500, cga.getInventoryItems(), cb);
+			setTimeout(dropUseless, 500, cb);
 			return;
 		}
 	}
 	
-	if(inventory.find((inv)=>{
+	if(cga.getInventoryItems().find((inv)=>{
 		return inv.name == '毛毡';
 	}) != undefined && craft_target.materials.find((mat)=>{
 		return mat.name == '毛毡';
@@ -252,32 +262,61 @@ var cleanUseless = (inventory, cb)=>{
 		var itempos = cga.findItem('毛毡');
 		if(itempos != -1){
 			cga.DropItem(itempos);
-			setTimeout(cleanUseless, 500, cga.getInventoryItems(), cb);
+			setTimeout(dropUseless, 500, cb);
 			return;
 		}
 	}
+	
+	cb(null);
+}
 
-	cga.travel.falan.toStone('C', ()=>{
-		cga.walkList([
-			[41, 98, '法兰城'],
-			[151, 122],
-		], ()=>{
-			cga.TurnTo(149, 122);
-			var sellarray = cga.findItemArray((item)=>{
-				if ( thisobj.craftItemList.find((craftItem)=>{
-					return item.name == craftItem.name;
-				}) !== undefined){
-					return true;
-				}
-			});
-			cga.sellArray(sellarray, ()=>{
-				setTimeout(cb, 1000);
+var cleanUseless = (cb)=>{
+	cga.travel.falan.toStone('B1', ()=>{
+		cga.turnTo(150, 122);
+		var sellarray = cga.findItemArray((item)=>{
+			if ( thisobj.craftItemList.find((craftItem)=>{
+				return item.name == craftItem.name;
+			}) !== undefined){
+				return true;
+			}
+		});
+		cga.sellArray(sellarray, ()=>{
+			cga.walkList([
+			[153, 129]//扔布点
+			], ()=>{
+				dropUseless(cb);
 			});
 		});
 	});
 }
 
 var loop = ()=>{
+
+	var craftSkillList = cga.GetSkillsInfo().filter((sk)=>{
+		return (sk.name.indexOf('制') == 0 || sk.name.indexOf('造') == 0 || sk.name.indexOf('铸') == 0 );
+	});
+
+	for(var i in craftSkillList){
+		if(craftSkillList[i].name == configTable.craftType){				
+			thisobj.craftSkill = craftSkillList[i];
+			thisobj.craftItemList = cga.GetCraftsInfo(thisobj.craftSkill.index);
+			break;
+		}
+	}
+	
+	if(!thisobj.craftSkill)
+	{
+		var teacher = teachers.find((t)=>{
+			return t.skillname == configTable.craftType;
+		})
+		if(teacher != undefined){
+			craft_count = 0;
+			forgetAndLearn(teacher, loop);
+			return;
+		} else {
+			throw new Error('没有学习对应的制造技能!');
+		}
+	}
 
 	callSubPluginsAsync('prepare', ()=>{
 		
@@ -313,7 +352,7 @@ var loop = ()=>{
 		
 		var inventory = cga.getInventoryItems();
 		if(inventory.length >= 15){
-			cleanUseless(inventory, loop);
+			cleanUseless(loop);
 			return;
 		}
 				
@@ -356,15 +395,13 @@ var loop = ()=>{
 				return;
 			}
 			
-			console.log('craft');
+			console.log('开始制造：'+craft_target.name);
 			
 			cga.craftItemEx({
 				craftitem : craft_target.name,
 				immediate : true
 			}, (err, results)=>{
-				//console.log(err);
-				//console.log(results);
-				
+
 				if(results && results.success){
 					craft_count ++;
 					console.log('已造' + craft_count + '次');
@@ -381,7 +418,6 @@ var loop = ()=>{
 }
 
 var thisobj = {
-	craftedCount : 0,
 	getDangerLevel : ()=>{
 		return 0;
 	},
@@ -415,16 +451,9 @@ var thisobj = {
 	},
 	loadconfig : (obj)=>{
 		
-		for(var i in craftSkillList){
-			if(craftSkillList[i].name == obj.craftType){
-				configTable.craftType = craftSkillList[i].name;
-				thisobj.craftSkill = craftSkillList[i];
-				thisobj.craftItemList = cga.GetCraftsInfo(thisobj.craftSkill.index);
-				break;
-			}
-		}
-		
-		if(!thisobj.craftSkill){
+		configTable.craftType = obj.craftType;
+				
+		if(!configTable.craftType){
 			console.error('读取配置：制造类型失败！');
 			return false;
 		}
@@ -453,6 +482,10 @@ var thisobj = {
 	inputcb : (cb)=>{
 
 		var stage1 = (cb2)=>{
+			var craftSkillList = cga.GetSkillsInfo().filter((sk)=>{
+				return (sk.name.indexOf('制') == 0 || sk.name.indexOf('造') == 0 || sk.name.indexOf('铸') == 0 );
+			});
+			
 			var sayString = '【双百插件】请选择刷的技能:';
 			for(var i in craftSkillList){
 				if(i != 0)
@@ -479,7 +512,7 @@ var thisobj = {
 		
 		var stage2 = (cb2)=>{
 			
-			var sayString = '【双百插件】请选择几级之后删除技能: (2~11)';
+			var sayString = '【双百插件】请选择几级之后删除技能: (2~11) (只支持鞋子，11代表不删)';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val)=>{
 				if(val !== null && 2 >= 2 && 11 <= 11){
@@ -522,6 +555,7 @@ var thisobj = {
 		Async.series([stage1, stage2, stage3, healObject.inputcb], cb);
 	},
 	execute : ()=>{
+	
 		io.listen(thisobj.listenPort);
 		callSubPlugins('init');
 		loop();

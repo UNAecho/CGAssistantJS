@@ -1,8 +1,5 @@
 var cga = require('./cgaapi')(function(){
-	console.log('学习因果报应 起始地点：艾尔莎岛')
-
-	//initialize teammates array
-
+	
 	var playerinfo = cga.GetPlayerInfo();
 	
 	var teammates = [];
@@ -12,30 +9,8 @@ var cga = require('./cgaapi')(function(){
 	for(var i in teamplayers)
 		teammates[i] = teamplayers[i].name;
 	
-	cga.isTeamLeader = (teammates[0] == playerinfo.name) ? true : false
+	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
 	
-	var waitStage = (cb2)=>{
-		var teammate_state = [true];
-		var teammate_ready = 1;
-		var teamplayers = cga.getTeamPlayers();
-
-		cga.waitTeammateSay((player, msg)=>{
-
-			if(msg == '1' && teammate_state[player.index] !== true){
-				teammate_state[player.index] = true;
-				teammate_ready ++;
-			}
-
-			if(teammate_ready >= teamplayers.length){
-				//all teammates are ready
-				cb2(true);
-				return false;
-			}
-			
-			return true;
-		});
-	}
-
 	var task = cga.task.Task('大小宝箱', [
 	{//0
 		intro: '1.前往雪拉威森塔52层与纳利米（101.64）对话，选“是”获得【红色蜡烛】；选“否”获得【白色蜡烛】。',
@@ -54,36 +29,44 @@ var cga = require('./cgaapi')(function(){
 				[75, 116],
 				[149, 108, '雪拉威森塔５２层'],
 				[101, 64],
-				[101, 65, null, null, null, true],
-				[101, 64, null, null, null, true],
-				[101, 65, null, null, null, true],
-				[101, 64, null, null, null, true],
 				], ()=>{
-					cga.TurnTo(102, 64);
-					cga.AsyncWaitNPCDialog(()=>{
-						cga.ClickNPCDialog(32, 0);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(32, 0);
+					cga.walkTeammateToPosition([
+					[101, 64],
+					[101, 65],
+					], ()=>{
+						cga.cleanInventory(1, ()=>{
+							cga.turnTo(102, 64);
 							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(4, 0);
+								cga.ClickNPCDialog(32, 0);
 								cga.AsyncWaitNPCDialog(()=>{
-									cga.SayWords('请选择“是”路线，完成请说“1”！', 0, 3, 1);
+									cga.ClickNPCDialog(32, 0);
+									cga.AsyncWaitNPCDialog(()=>{
+										cga.ClickNPCDialog(4, 0);
+										cga.AsyncWaitNPCDialog(()=>{
+											cga.SayWords('请选择“是”路线，完成请说“1”！', 0, 3, 1);
+											setTimeout(()=>{
+												cga.SayWords('1', 0, 3, 1);
+											}, 1500);
+										});
+									});
 								});
 							});
 						});
 					});
 					
-					waitStage(cb2);
+					cga.waitTeammateSayNextStage(teammates, cb2);
 				});
 			}
 			
 			var go2 = ()=>{
-				var name = cga.GetMapName();
-				var pos = cga.GetMapXY();
-				if(name == '雪拉威森塔５２层' && pos.x == 101 && (pos.y == 64 || pos.y == 65)){
-					setTimeout(()=>{
-						cga.TurnTo(102, 64);
-						cga.AsyncWaitNPCDialog(()=>{
+				var retry = ()=>{
+					cga.cleanInventory(1, ()=>{
+						cga.turnTo(102, 64);
+						cga.AsyncWaitNPCDialog((err)=>{
+							if(err){
+								retry();
+								return;
+							}
 							cga.ClickNPCDialog(32, 0);
 							cga.AsyncWaitNPCDialog(()=>{
 								cga.ClickNPCDialog(32, 0);
@@ -92,15 +75,14 @@ var cga = require('./cgaapi')(function(){
 									setTimeout(()=>{
 										cga.SayWords('1', 0, 3, 1);
 										cb2(true);
-									}, 5000);
+									}, 1500);
 								});
 							});
 						});
-					}, 3000);
-					return;
+					});
 				}
 				
-				setTimeout(go2, 1000);
+				cga.waitForLocation({mapname : '雪拉威森塔５２层', pos : [102, 64]}, retry);
 			}
 			
 			var wait3 = ()=>{
@@ -114,23 +96,22 @@ var cga = require('./cgaapi')(function(){
 			}
 			
 			var wait2 = ()=>{
-				var name = cga.GetMapName();
-				var pos = cga.GetMapXY();
-				if(name == '艾尔莎岛' && (pos.x == 164 || pos.x == 165) && pos.y == 153){
-					setTimeout(()=>{
-						cga.TurnTo(165, 154);
+				var retry = ()=>{
+					cga.turnTo(165, 154);
+					cga.AsyncWaitNPCDialog((err)=>{
+						if(err){
+							retry();
+							return;								
+						}
+						cga.ClickNPCDialog(32, 0);
 						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(32, 0);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(4, 0);
-								setTimeout(wait3, 1500);
-							});
+							cga.ClickNPCDialog(4, 0);
+							cga.AsyncWaitMovement({map:'利夏岛', delay:1000, timeout:5000}, wait3);
 						});
-					}, 3000);					
-					return;
+					});
 				}
 				
-				setTimeout(wait2, 1000);
+				cga.waitForLocation({mapname : '艾尔莎岛', pos : [165, 154]}, retry);
 			}
 		
 			var wait = ()=>{
@@ -161,39 +142,47 @@ var cga = require('./cgaapi')(function(){
 				[70, 105, '雪拉威森塔５３层'],
 				[118, 137, '雪拉威森塔５４层'],
 				[85, 44],
-				[85, 45, null, null, null, true],
-				[85, 44, null, null, null, true],
-				[85, 45, null, null, null, true],
-				[85, 44, null, null, null, true],
 				], ()=>{
-					cga.TurnTo(83, 44);
-					cga.AsyncWaitNPCDialog(()=>{
-						cga.ClickNPCDialog(4, 0);
-						cga.SayWords('请拿取藏宝图，完成请说“1”！', 0, 3, 1);
+					cga.walkTeammateToPosition([
+					[85, 44],
+					[85, 45],
+					], ()=>{
+						cga.cleanInventory(1, ()=>{
+							cga.turnTo(84, 44);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, 0);
+								setTimeout(()=>{
+									cga.SayWords('请拿取藏宝图，完成请说“1”！', 0, 3, 1);
+									setTimeout(()=>{
+										cga.SayWords('1', 0, 3, 1);
+									}, 1500);
+								}, 1500);
+							});
+						});
 					});
-					
-					waitStage(cb2);
+					cga.waitTeammateSayNextStage(teammates, cb2);
 				});
 			}
 			
 			var go2 = ()=>{
-				var name = cga.GetMapName();
-				var pos = cga.GetMapXY();
-				if(name == '雪拉威森塔５４层' && pos.x == 85 && (pos.y == 44 || pos.y == 45)){
-					setTimeout(()=>{
-						cga.TurnTo(83, 44);
-						cga.AsyncWaitNPCDialog(()=>{
+				var retry = ()=>{
+					cga.cleanInventory(1, ()=>{
+						cga.turnTo(84, 44);
+						cga.AsyncWaitNPCDialog((err)=>{
+							if(err){
+								retry();
+								return;
+							}
 							cga.ClickNPCDialog(4, 0);
 							setTimeout(()=>{
 								cga.SayWords('1', 0, 3, 1);
 								cb2(true);
-							}, 5000);
+							}, 1500);
 						});
-					}, 3000);
-					return;
+					});
 				}
 				
-				setTimeout(go2, 1000);
+				cga.waitForLocation({mapname : '雪拉威森塔５４层', pos : [84, 44]}, retry);
 			}
 			
 			if(cga.isTeamLeader){
@@ -211,39 +200,37 @@ var cga = require('./cgaapi')(function(){
 				[118, 137, '雪拉威森塔５３层'],
 				[70, 105, '雪拉威森塔５２层'],
 				[101, 64],
-				[101, 65],
-				[101, 64],
-				[101, 65],
-				[101, 64],
 				], ()=>{
-					cga.SayWords('跟NPC对话进入即可学习因果报应！', 0, 3, 1);
-					cga.TurnTo(102, 64);
-					cga.AsyncWaitNPCDialog((err, dlg)=>{
-						if(dlg.message.indexOf('请到这边') >= 0){
-							cga.ClickNPCDialog(1, 0);
-							cb2(true);
-						}
+					cga.walkTeammateToPosition([
+					[101, 64],
+					[101, 65],
+					], ()=>{
+						cga.SayWords('跟NPC对话进入即可学习因果报应！', 0, 3, 1);
+						setTimeout(()=>{
+							cga.turnTo(102, 64);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(1, 0);
+								cb2(true);
+							});
+						}, 1500);
 					});
 				});
 			}
 			
 			var go2 = ()=>{
-				var name = cga.GetMapName();
-				var pos = cga.GetMapXY();
-				if(name == '雪拉威森塔５２层' && pos.x == 101 && (pos.y == 64 || pos.y == 65)){
-					setTimeout(()=>{
-						cga.TurnTo(102, 64);
-						cga.AsyncWaitNPCDialog((err, dlg)=>{
-							if(dlg.message.indexOf('请到这边') >= 0){
-								cga.ClickNPCDialog(1, 0);
-								cb2(true);
-							}
-						});
-					}, 3000);
-					return;
+				var retry = ()=>{
+					cga.turnTo(102, 64);
+					cga.AsyncWaitNPCDialog((err)=>{
+						if(err){
+							retry();
+							return;
+						}
+						cga.ClickNPCDialog(1, 0);
+						cb2(true);
+					});
 				}
 				
-				setTimeout(go2, 1000);
+				cga.waitForLocation({mapname : '雪拉威森塔５２层', pos : [102, 64]}, retry);
 			}
 			
 			if(cga.isTeamLeader){

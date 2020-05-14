@@ -1,7 +1,8 @@
 var Async = require('async');
 var supplyMode = require('./../公共模块/营地回补');
-var sellStore = require('./../公共模块/营地卖石');
-var sellStore2 = require('./../公共模块/里堡卖石');
+var supplyCastle = require('./../公共模块/里堡回补');
+var sellCamp = require('./../公共模块/营地卖石');
+var sellCastle = require('./../公共模块/里堡卖石');
 var teamMode = require('./../公共模块/组队模式');
 var logbackEx = require('./../公共模块/登出防卡住');
 
@@ -14,6 +15,30 @@ var interrupt = require('./../公共模块/interrupt');
 var moveThinkInterrupt = new interrupt();
 var playerThinkInterrupt = new interrupt();
 var playerThinkRunning = false;
+
+var supplyArray = [supplyMode, supplyCastle];
+
+var getSupplyObject = (map, mapindex)=>{
+	if(typeof map != 'string')
+		map = cga.GetMapName();
+	if(typeof mapindex != 'number')
+		mapindex = cga.GetMapIndex().index3;
+	return supplyArray.find((s)=>{
+		return s.isAvailable(map, mapindex);
+	})
+}
+
+var sellArray = [sellCamp, sellCastle];
+
+var getSellObject = (map, mapindex)=>{
+	if(typeof map != 'string')
+		map = cga.GetMapName();
+	if(typeof mapindex != 'number')
+		mapindex = cga.GetMapIndex().index3;
+	return sellArray.find((s)=>{
+		return s.isAvailable(map, mapindex);
+	})
+}
 
 var walkMazeForward = (cb)=>{
 	var map = cga.GetMapName();
@@ -80,12 +105,19 @@ var playerThink = ()=>{
 		return true;
 	
 	var playerinfo = cga.GetPlayerInfo();
+	var items = cga.GetItemsInfo();
 	var ctx = {
 		playerinfo : playerinfo,
 		petinfo : playerinfo.petid >= 0 ? cga.GetPetInfo(playerinfo.petid) : null,
 		teamplayers : cga.getTeamPlayers(),
-		result : null,
 		dangerlevel : thisobj.getDangerLevel(),
+		inventory : items.filter((item)=>{
+			return item.pos >= 8 && item.pos < 100;
+		}),
+		equipment : items.filter((item)=>{
+			return item.pos >= 0 && item.pos < 8;
+		}),
+		result : null,
 	}
 
 	teamMode.think(ctx);
@@ -102,10 +134,18 @@ var playerThink = ()=>{
 			interruptFromMoveThink = true;
 		}
 
-		if(ctx.result == 'supply' && supplyMode.isLogBack())
-			ctx.result = 'logback';
+		var supplyObject = null;
+
+		if(ctx.result == 'supply')
+		{
+			var map = cga.GetMapName();
+			var mapindex = cga.GetMapIndex().index3;
+			supplyObject = getSupplyObject(map, mapindex);
+			if(supplyObject && supplyObject.isLogBack(map, mapindex))
+				ctx.result = 'logback';
+		}
 		
-		if( ctx.result == 'supply' )
+		if( ctx.result == 'supply' && supplyObject)
 		{
 			if(interruptFromMoveThink)
 			{
@@ -124,7 +164,7 @@ var playerThink = ()=>{
 				return false;
 			}
 		}
-		else if( ctx.result == 'logback' )
+		else if( ctx.result == 'logback' || ctx.result == 'logback_forced' )
 		{
 			if(interruptFromMoveThink)
 			{
@@ -142,6 +182,12 @@ var playerThink = ()=>{
 				});
 				return false;
 			}
+		}
+	} else {
+		if( ctx.result == 'logback_forced' )
+		{
+			logbackEx.func(loop);
+			return false;
 		}
 	}
 
@@ -168,15 +214,15 @@ var loop = ()=>{
 	if(isleader && teamMode.is_enough_teammates()){
 		if(map == '医院' && mapindex == 44692){
 			if(thisobj.sellStore == 1){
-				sellStore.func(loop);
-			} else {
-				cga.walkList([
-					[0, 20, '圣骑士营地'],
-				], loop);
+				var sellObject = getSellObject(map, mapindex);
+				if(sellObject)
+				{
+					sellObject.func(loop);
+					return;
+				}
 			}
-			return;
 		} 
-		if(map == '工房'){
+		if(map == '工房' && mapindex == 44693){
 			cga.walkList([
 			[30, 37, '圣骑士营地']
 			], loop);
@@ -187,17 +233,25 @@ var loop = ()=>{
 			return;
 		}
 		if(map == '圣骑士营地'){
-			console.log('playerThink on');
-			playerThinkRunning = true;
-			
-			cga.walkList([
-				[36, 87, '肯吉罗岛'],
-				[424, 345, '黑龙沼泽1区'],
-			], loop);
+			callSubPluginsAsync('prepare', ()=>{
+				if(cga.GetMapName() != '圣骑士营地'){
+					loop();
+					return;
+				}
+				playerThinkInterrupt.hasInterrupt();//restore interrupt state
+				console.log('playerThink on');
+				playerThinkRunning = true;
+				
+				cga.walkList([
+					[36, 87, '肯吉罗岛'],
+					[424, 345, '黑龙沼泽1区'],
+				], loop);
+			});
 			return;
 		}
 		if(map == '黑龙沼泽1区')
 		{
+			playerThinkInterrupt.hasInterrupt();//restore interrupt state
 			console.log('playerThink on');
 			playerThinkRunning = true;
 			walkMazeForward((r)=>{
@@ -212,29 +266,28 @@ var loop = ()=>{
 			return;
 		}
 	} else if(!isleader){
+		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 		console.log('playerThink on');
 		playerThinkRunning = true;
 		return;
 	}
 	
-	if(thisobj.sellStore == 1 && cga.getSellStoneItem().length > 0 && map != '圣骑士营地')
+	if(thisobj.sellStore == 1 && cga.getSellStoneItem().length > 0)
 	{
-		sellStore2.func(loop);
-		return;
-	}
-	
-	if(cga.needSupplyInitial() && supplyMode.isInitialSupply() && map != '圣骑士营地')
-	{
-		if(supplyMode.isInitialSupply())
+		var sellObject = getSellObject(map, mapindex);
+		if(sellObject)
 		{
-			supplyMode.func(loop);
+			sellObject.func(loop);
 			return;
 		}
-		else
+	}
+	
+	if(cga.needSupplyInitial())
+	{
+		var supplyObject = getSupplyObject(map, mapindex);
+		if(supplyObject)
 		{
-			cga.travel.falan.toCastleHospital(()=>{
-				setTimeout(loop, 3000);
-			});
+			supplyObject.func(loop);
 			return;
 		}
 	}

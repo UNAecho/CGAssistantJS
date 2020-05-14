@@ -25,6 +25,11 @@ var gatherArray = [
 	path : './../公共模块/采花',
 },
 {
+	name : '狩猎',
+	skill : '狩猎',
+	path : './../公共模块/狩猎',
+},
+{
 	name : '双百新城鹿皮(狩猎)',
 	skill : '狩猎',
 	path : './../公共模块/双百新城鹿皮',
@@ -69,6 +74,31 @@ var gatherArray = [
 	skill : '伐木',
 	path : './../公共模块/深蓝百里香',
 },
+{
+	name : '鉴定刷家具',
+	skill : '鉴定',
+	path : './../公共模块/鉴定自动1到10',
+},
+{
+	name : '鱼翅流水线鱼翅',
+	skill : '狩猎',
+	path : './../公共模块/鱼翅流水线鱼翅',
+},
+{
+	name : '鱼翅流水线葱',
+	skill : '狩猎',
+	path : './../公共模块/鱼翅流水线葱',
+},
+{
+	name : '鱼翅流水线鸡蛋',
+	skill : '狩猎',
+	path : './../公共模块/鱼翅流水线鸡蛋',
+},
+{
+	name : '鱼翅流水线盐',
+	skill : '狩猎',
+	path : './../公共模块/鱼翅流水线盐',
+},
 ]
 
 var check_drop = ()=>{
@@ -103,24 +133,19 @@ var loop = ()=>{
 			return;
 		}
 		if(mineObject.object && skill.lv < mineObject.object.level){
-			var errmsg = gatherObject.skill+'技能等级不够，挖'+mineObject.object.name+'需要'+mineObject.object.level+'级，而你只有'+skill.lv+'级';
+			var errmsg = gatherObject.skill+'技能等级不够，'+mineObject.object.name+'需要'+mineObject.object.level+'级技能，而你只有'+skill.lv+'级技能';
 			cga.SayWords(errmsg , 0, 3, 1);
 			return;
 		}
 	}
 	
 	var playerInfo = cga.GetPlayerInfo();
-	if(playerInfo.mp < playerInfo.maxmp)
+	if(playerInfo.mp < playerInfo.maxmp * 0.2 || playerInfo.hp < playerInfo.maxhp * 0.8)
 	{
 		if(mineObject.supplyManager)
 			mineObject.supplyManager(loop);
 		else if(supplyObject.func)
-			supplyObject.func(loop);		
-		return;
-	}
-	
-	if(playerInfo.health > 0){
-		healObject.func(loop);
+			supplyObject.func(loop);
 		return;
 	}
 
@@ -132,88 +157,54 @@ var loop = ()=>{
 			doneObject.func(loop, mineObject.object);
 		return;
 	}
-	
-	var waitwait = (cb)=>{
-		cga.AsyncWaitWorkingResult((err, result)=>{
-			var playerInfo = cga.GetPlayerInfo();
-			if(playerInfo.mp == 0){
-				cb('restart');
-				return;
-			}
 
-			if(mineObject.check_done(result))
-			{
-				cb('restart');
-				return;
-			}
-			if(playerInfo.health > 0){
-				cb('heal');
-				return;
-			}
-			
-			check_drop();
-			
-			cga.StartWork(skill.index, 0);
-			
-			waitwait(cb);
-		}, 10000);
-	}
-	
-	var waitwait2 = (cb)=>{
-		var playerInfo = cga.GetPlayerInfo();
-		if(playerInfo.mp == 0){
-			cb('restart');
-			return;
-		}
-		if(mineObject.check_done()){
-			cb('restart');
-			return;
-		}
-		if(playerInfo.health > 0){
-			cb('heal');
-			return;
-		}
+	var workwork = (err, result)=>{
 		
 		check_drop();
 		
-		setTimeout(waitwait2, 1500, cb);
-	}
-	
-	var workwork = ()=>{
-		
 		var playerInfo = cga.GetPlayerInfo();
-		if(playerInfo.mp == 0){
+		if(playerInfo.mp == 0 || (err && err.message == '治疗蓝量不足')){
+			loop();
+			return;
+		}
+
+		if(mineObject.check_done(result)){
 			loop();
 			return;
 		}
 		
-		if(skill != null){
+		if(playerInfo.health > 0){
+			healObject.func(workwork);
+			return;
+		}
+		
+		if(skill != null && !mineObject.workManager){
 			cga.StartWork(skill.index, 0);
-			waitwait((r)=>{
-				if(r == 'restart')
-				{
-					loop();
-					return;
+			cga.AsyncWaitWorkingResult((err, result)=>{
+				
+				if(thisobj.logoutTimes > 0 && result !== undefined){
+					if(thisobj.gatherTimes == undefined)
+						thisobj.gatherTimes = 0;
+					
+					if(thisobj.gatherTimes < thisobj.logoutTimes){
+						thisobj.gatherTimes ++;
+						console.log('已挖'+thisobj.gatherTimes+'次');
+					} else {
+						cga.LogOut();
+						return false;
+					}
 				}
-				if(r == 'heal')
-				{
-					healObject.func(workwork);
-					return;
-				}
-			});
+				
+				workwork(err, result);
+			}, 10000);
 		} else {
-			waitwait2((r)=>{
-				if(r == 'restart')
-				{
-					loop();
-					return;
-				}
-				if(r == 'heal')
-				{
-					healObject.func(workwork);
-					return;
-				}
-			});
+			if(mineObject.workManager){
+				mineObject.workManager((err)=>{
+					workwork(err);
+				});
+			} else {
+				setTimeout(workwork, 1500, null);
+			}
 		}
 	}
 	
@@ -239,7 +230,14 @@ var thisobj = {
 		
 		if(pair.field == 'gatherObject'){
 			pair.field = '采集类型';
-			pair.value = gatherArray[pair.value].name;
+			pair.value = pair.value;
+			pair.translated = true;
+			return true;
+		}
+		
+		if(pair.field == 'logoutTimes'){
+			pair.field = '采集次数';
+			pair.value = pair.value;
 			pair.translated = true;
 			return true;
 		}
@@ -258,8 +256,8 @@ var thisobj = {
 	loadconfig : (obj)=>{
 		
 		for(var i in gatherArray){
-			if(i == obj.gatherObject){
-				configTable.gatherObject = i;
+			if(gatherArray[i].name == obj.gatherObject){
+				configTable.gatherObject = gatherArray[i].name;
 				gatherObject = gatherArray[i];
 				break;
 			}
@@ -281,12 +279,41 @@ var thisobj = {
 				return false;
 		}
 		
+		//legacy
+		configTable.logoutTimes = obj.logoutTimes;
+		thisobj.logoutTimes = obj.logoutTimes;
+		
+		if(typeof thisobj.logoutTimes == 'undefined'){
+			configTable.logoutTimes = 0;
+			thisobj.logoutTimes = 0;
+		}
+		
 		if(!healObject.loadconfig(obj))
 			return false;
 		
 		return true;
 	},
 	inputcb : (cb)=>{
+		var logoutTimesStage = (cb2)=>{
+			var sayString = '【采集插件】请选择采集多少下之后登出服务器 (0~100，0代表不登出):';
+
+			cga.sayLongWords(sayString, 0, 3, 1);
+			cga.waitForChatInput((msg, index)=>{
+				if(index !== null && index >= 0 && index <= 100){
+					configTable.logoutTimes = index;
+					thisobj.logoutTimes = index;
+					
+					var sayString2 = '当前已选择: 采集[' + thisobj.logoutTimes + ']下之后登出服务器。';
+					cga.sayLongWords(sayString2, 0, 3, 1);
+					
+					cb2(null);
+					return false;
+				}
+				
+				return true;
+			});
+		}
+		
 		var sayString = '【采集插件】请选择采集类型:';
 		for(var i in gatherArray){
 			if(i != 0)
@@ -296,7 +323,7 @@ var thisobj = {
 		cga.sayLongWords(sayString, 0, 3, 1);
 		cga.waitForChatInput((msg, index)=>{
 			if(index !== null && index >= 1 && gatherArray[index - 1]){
-				configTable.gatherObject = index - 1;
+				configTable.gatherObject = gatherArray[index - 1].name;
 				gatherObject = gatherArray[index - 1];
 				
 				var sayString2 = '当前已选择:[' + gatherObject.name + ']。';
@@ -306,9 +333,9 @@ var thisobj = {
 					mineObject = require(gatherObject.path);
 				
 				if(!mineObject.doneManager){
-					Async.series([mineObject.inputcb, doneObject.inputcb, healObject.inputcb], cb);
+					Async.series([mineObject.inputcb, logoutTimesStage, doneObject.inputcb, healObject.inputcb], cb);
 				} else {
-					Async.series([mineObject.inputcb, healObject.inputcb], cb);
+					Async.series([mineObject.inputcb, logoutTimesStage, healObject.inputcb], cb);
 				}
 				return false;
 			}

@@ -7,6 +7,7 @@ var isFabricName = (name)=>{
 	return name == '麻布' || name == '木棉布' || name == '毛毡';
 }
 
+//购买原材料需求的5倍（即造5件的量）
 const MATERIALS_MULTIPLE_TIMES = 5;
 
 var thisobj = {
@@ -29,8 +30,8 @@ var thisobj = {
 				cb(true);
 				return
 			}
-						
-			console.log('func');
+
+			console.log('开始买布...');
 			
 			var buyArray = [];
 			if(thisobj.object.gatherCount['麻布']){
@@ -56,7 +57,7 @@ var thisobj = {
 			
 			var repeat = ()=>{
 				
-				console.log(thisobj.object.state);
+				console.log('更新买布状态：'+thisobj.object.state);
 				
 				if(!thisobj.check_done()){
 					thisobj.object.state = 'gathering';
@@ -96,7 +97,7 @@ var thisobj = {
 				cga.walkList([
 				[33, 88]
 				], ()=>{
-					cga.TurnTo(35, 88);
+					cga.turnTo(35, 88);
 					setTimeout(repeat, 1000);
 				});
 			});
@@ -161,7 +162,7 @@ var thisobj = {
 		socket = require('socket.io-client')('http://localhost:'+thisobj.serverPort, { reconnection: true });
 
 		socket.on('connect', ()=>{
-			console.log('connect');
+			console.log('成功连接到双百节点');
 			socket.emit('register', {
 				state : thisobj.object.state,
 				player_name : cga.GetPlayerInfo().name,
@@ -223,7 +224,7 @@ var thisobj = {
 		});
 		
 		socket.on('disconnect', ()=>{
-			console.log('disconnect');
+			console.log('退出双百节点');
 		});
 	}
 }

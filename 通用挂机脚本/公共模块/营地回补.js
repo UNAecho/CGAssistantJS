@@ -24,18 +24,17 @@ var supplyModeArray = [
 			setTimeout(cb, 5000);
 		});
 	},
-	isLogBack : ()=>{
-		var map = cga.GetMapName();
-		var mapindex = cga.GetMapIndex().index3;
-		return (map == '肯吉罗岛' || map == '圣骑士营地' || mapindex == 44692 || map.indexOf('黑龙沼泽') >= 0 || map.indexOf('蜥蜴洞穴') >= 0 || map.indexOf('隐秘之洞地下') >= 0) ? false : true;
-	},
-	isInitialSupply : ()=>{
+	isLogBack : (map, mapindex)=>{
 		return false;
+	},
+	isAvailable : (map, mapindex)=>{
+		return (map == '肯吉罗岛' || map == '圣骑士营地' || mapindex == 44692 || map.indexOf('黑龙沼泽') >= 0 || map.indexOf('蜥蜴洞穴') >= 0 || map.indexOf('隐秘之洞地下') >= 0) ? true : false;
 	},
 },
 {
 	name : '圣骑士营地普通护士回补',
 	func : (cb)=>{
+		var map = cga.GetMapName();
 		var path = [
 			[18, 15],
 			[17, 15],
@@ -52,67 +51,34 @@ var supplyModeArray = [
 		}
 		
 		cga.walkList(path, ()=>{
-			cga.TurnTo(11, 11);
+			cga.TurnTo(18, 14);
 			setTimeout(cb, 5000);
 		});
 	},
-	isLogBack : ()=>{
-		var map = cga.GetMapName();
-		var mapindex = cga.GetMapIndex().index3;
-		return (map == '肯吉罗岛' || map == '圣骑士营地' || mapindex == 44692 || map.indexOf('黑龙沼泽') >= 0 || map.indexOf('蜥蜴洞穴') >= 0 || map.indexOf('隐秘之洞地下') >= 0) ? false : true;
-	},
-	isInitialSupply : ()=>{
+	isLogBack : (map, mapindex)=>{
 		return false;
+	},
+	isAvailable : (map, mapindex)=>{
+		return (map == '肯吉罗岛' || map == '圣骑士营地' || mapindex == 44692 || map.indexOf('黑龙沼泽') >= 0 || map.indexOf('蜥蜴洞穴') >= 0 || map.indexOf('隐秘之洞地下') >= 0) ? true : false;
 	},
 },
 {
 	name : '登出飞碟回补',
 	func : (cb)=>{
-		/*if(cga.GetMapName() == '圣骑士营地'){
-			cga.walkList([
-				[95, 72, '医院'],
-				[9, 11],
-				[9, 12],
-				[9, 11],
-				[9, 12],
-				[9, 11],
-			], ()=>{
-				cga.TurnTo(11,11);
-				setTimeout(cb, 5000);
-			});
-			return;
-		}*/
-		
 		cga.travel.falan.toCastleHospital(()=>{
 			setTimeout(cb, 5000);
 		});
 	},
-	isLogBack : ()=>{
+	isLogBack : (map, mapindex)=>{
 		return true;
 	},
-	isInitialSupply : ()=>{
+	isAvailable : (map, mapindex)=>{
 		return true;
 	},
 },
 {
 	name : '登出曙光营地医院回补',
-	func : (cb)=>{
-		
-		/*if(cga.GetMapName() == '圣骑士营地'){
-			cga.walkList([
-				[95, 72, '医院'],
-				[9, 11],
-				[9, 12],
-				[9, 11],
-				[9, 12],
-				[9, 11],
-			], ()=>{
-				cga.TurnTo(11,11);
-				setTimeout(cb, 5000);
-			});
-			return;
-		}*/
-		
+	func : (cb)=>{		
 		cga.travel.falan.toCamp(()=>{
 			cga.walkList([
 			[42, 56, '曙光营地医院'],
@@ -129,10 +95,10 @@ var supplyModeArray = [
 			})
 		}, true);
 	},
-	isLogBack : ()=>{
+	isLogBack : (map, mapindex)=>{
 		return true;
 	},
-	isInitialSupply : ()=>{
+	isAvailable : (map, mapindex)=>{
 		return true;
 	},
 }
@@ -145,11 +111,11 @@ var thisobj = {
 	func : (cb)=>{
 		thisobj.object.func(cb);
 	},
-	isLogBack : ()=>{
-		return thisobj.object.isLogBack();
+	isLogBack : (map, mapindex)=>{
+		return thisobj.object.isLogBack(map, mapindex);
 	},
-	isInitialSupply : ()=>{
-		return thisobj.object.isInitialSupply();
+	isAvailable : (map, mapindex)=>{
+		return thisobj.object.isAvailable(map, mapindex);
 	},
 	translate : (pair)=>{
 		if(pair.field == 'supplyMode'){

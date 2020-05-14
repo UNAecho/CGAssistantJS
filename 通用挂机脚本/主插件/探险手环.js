@@ -1,33 +1,31 @@
-var cga = require('./cgaapi')(function(){
-	console.log('贝爷 起始地点：艾尔莎岛')
-	
-	var loop_count = 0;
-	
-	var teammates = [ 'hzqst', '你萌死了', '小苹花', '傲世蒼穹√' , '[NAI]地狱宠儿']//队长名字和队员名字
-	
-	var playerinfo = cga.GetPlayerInfo();
-	
-	cga.isTeamLeader = (teammates[0] == playerinfo.name) ? true : false
-	
-	var task = cga.task.Task('贝爷', [
+var Async = require('async');
+var teamMode = require('./../公共模块/组队模式');
+
+var cga = global.cga;
+var configTable = global.configTable;
+
+var task = cga.task.Task('探险专家(贝爷)', [
 	{//0
 		intro: '1.前往法兰城里谢里雅堡与贝尔（53.22）对话，获得【证明信】。',
 		workFunc: function(cb2){
 			cga.travel.falan.toStone('C', ()=>{
+				cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
 				cga.walkList([
 				[53, 23],
 				], ()=>{
-					cga.TurnTo(53, 21);
-					cga.AsyncWaitNPCDialog(()=>{
-						cga.ClickNPCDialog(32, 0);
+					cga.cleanInventory(1, ()=>{
+						cga.TurnTo(53, 21);
 						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(4, 0);
+							cga.ClickNPCDialog(32, 0);
 							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(1, 0);
-								setTimeout(cb2, 1500, true);
+								cga.ClickNPCDialog(4, 0);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, 0);
+									setTimeout(cb2, 1500, true);
+								});
 							});
 						});
-					});
+					});					
 				});
 			});
 		}
@@ -36,31 +34,37 @@ var cga = require('./cgaapi')(function(){
 		intro: '2.前往莎莲娜岛西方洞窟与贝尔的助手（13.10）对话，交出【证明信】进入隐秘的山道。',
 		workFunc: function(cb2){
 			
-			//补血
-			cga.travel.falan.toCastleHospital(()=>{
-				setTimeout(()=>{
-					cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
-						cga.walkList([
-						[5, 4, '村长的家'],
-						[6, 13, 4312],
-						[6, 13, '阿巴尼斯村'],
-						[37, 71, '莎莲娜'],
-						[258, 180, '莎莲娜西方洞窟'],
-						[30, 44, 14001],
-						[14, 68, 14000],
-						[13, 11],
-						], ()=>{
-							cga.TurnTo(13, 9);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(32, 0);
-								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(1, 0);
-									setTimeout(cb2, 1000, true);
-								});
+			if(cga.needSupplyInitial()){
+				cga.travel.falan.toCastleHospital(()=>{
+					setTimeout(()=>{
+						cb2('restart stage');
+					}, 3000);
+				});
+				return;
+			}
+			
+			cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
+				cga.walkList([
+				[5, 4, '村长的家'],
+				[6, 13, 4312],
+				[6, 13, '阿巴尼斯村'],
+				[37, 71, '莎莲娜'],
+				[258, 180, '莎莲娜西方洞窟'],
+				[30, 44, 14001],
+				[14, 68, 14000],
+				[13, 11],
+				], ()=>{
+					cga.TurnTo(13, 9);
+					cga.AsyncWaitNPCDialog(()=>{
+						cga.ClickNPCDialog(32, 0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(1, 0);
+							cga.AsyncWaitMovement({map:'隐秘山道上层', delay:1000, timeout:5000}, ()=>{
+								cb2(true);
 							});
 						});
 					});
-				}, 3000);
+				});
 			});
 		}
 	},
@@ -121,12 +125,12 @@ var cga = require('./cgaapi')(function(){
 										], ()=>{
 											walkMaze(()=>{
 												cga.walkList([
-												[13, 6]
+												[13, 6],
 												], ()=>{
-													cga.TurnTo(13, 4);
+													cga.turnTo(13, 5);
 													cga.AsyncWaitNPCDialog(()=>{
 														cga.ClickNPCDialog(4, 0);
-														setTimeout(cb2, 1000, true);
+														setTimeout(cb2, 1500, true);
 													});
 												});
 											});
@@ -143,40 +147,37 @@ var cga = require('./cgaapi')(function(){
 	{//3
 		intro: '4.返回法兰城里谢里雅堡与贝尔（53.22）对话，交出【贝尔的军刀】并传送至贝尔的隐居地。',
 		workFunc: function(cb2){
-			//补血
-			cga.travel.falan.toCastleHospital(()=>{
-				setTimeout(()=>{
-					cga.travel.falan.toStone('C', ()=>{
-						cga.walkList([
-						[53, 23],
-						], ()=>{
-							cga.TurnTo(53, 21);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(32, 0);
-								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(1, 0);
-									setTimeout(cb2, 1500, true);
-								});
+
+			if(cga.needSupplyInitial()){
+				cga.travel.falan.toCastleHospital(()=>{
+					setTimeout(()=>{
+						cb2('restart stage');
+					}, 3000);
+				});
+				return;
+			}
+			
+			cga.travel.falan.toStone('C', ()=>{
+				cga.walkList([
+				[53, 23],
+				], ()=>{
+					cga.turnTo(53, 22);
+					cga.AsyncWaitNPCDialog(()=>{
+						cga.ClickNPCDialog(32, 0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(1, 0);
+							cga.AsyncWaitMovement({map:'贝尔的隐居地', delay:1000, timeout:5000}, ()=>{
+								cb2(true);
 							});
 						});
 					});
-				}, 3000);
+				});
 			});
 		}
 	},
 	{//4
 		intro: '5.与饥饿的贝尔对话，进入战斗。',
 		workFunc: function(cb2){
-			
-			var waitBOSS = ()=>{
-				if(cga.isInBattle())
-				{
-					setTimeout(waitBOSS, 1000);
-					return;
-				}
-				
-				setTimeout(cb2, 1000, true);
-			}
 			
 			var fuckBeiYe = ()=>{
 				if(cga.isTeamLeader){
@@ -186,38 +187,31 @@ var cga = require('./cgaapi')(function(){
 						cga.TurnTo(20, 16);
 						cga.AsyncWaitNPCDialog(()=>{
 							cga.ClickNPCDialog(1, 0);
-							setTimeout(waitBOSS, 1500);
 						});
 					});
-				} else {
-					if(cga.isInBattle())
-					{
-						setTimeout(waitBOSS, 1000);
-						return;
-					}
-					setTimeout(fuckBeiYe, 1500);
 				}
+				
+				cga.waitForLocation({
+					mapindex: 57200
+				}, ()=>{
+					cb2(true);
+				});
 			}
 			
+			//重新组队
 			var wait = ()=>{
 
-				if(cga.isTeamLeader){
-					cga.WalkTo(23, 23);
-					cga.waitTeammates(teammates, (r)=>{
-						if(r){
-							fuckBeiYe();
-							return;
-						}
-						setTimeout(wait, 1000);
+				if(cga.isTeamLeader)
+				{
+					cga.walkList([
+					[23, 23]
+					], ()=>{
+						teamMode.wait_for_teammates(fuckBeiYe);
 					});
-				} else {
-					cga.addTeammate(teammates[0], (r)=>{
-						if(r){
-							fuckBeiYe();
-							return;
-						}
-						setTimeout(wait, 1000);
-					});
+				}
+				else
+				{
+					teamMode.wait_for_teammates(fuckBeiYe);
 				}
 			}
 			
@@ -261,13 +255,44 @@ var cga = require('./cgaapi')(function(){
 			return false;
 		},
 	]
-	);
-	
-	var loop = ()=>{
-		loop_count ++;
-		cga.SayWords('已刷' + loop_count + '遍贝爷！', 0, 3, 1);
-		task.doTask(loop);
-	}
+);
 
-	task.doTask(loop);
-});
+var loop = ()=>{	
+	callSubPluginsAsync('prepare', ()=>{
+		task.doTask(loop);
+	});
+}
+
+var thisobj = {
+	getDangerLevel : ()=>{
+		var map = cga.GetMapName();
+
+		if(map.indexOf('隐秘山道') >= 0)
+			return 2;
+		
+		return 0;
+	},
+	translate : (pair)=>{
+	
+		if(teamMode.translate(pair))
+			return true;
+		
+		return false;
+	},
+	loadconfig : (obj)=>{
+
+		if(!teamMode.loadconfig(obj))
+			return false;
+
+		return true;
+	},
+	inputcb : (cb)=>{
+		Async.series([teamMode.inputcb], cb);
+	},
+	execute : ()=>{
+		callSubPlugins('init');
+		loop();
+	},
+}
+
+module.exports = thisobj;
