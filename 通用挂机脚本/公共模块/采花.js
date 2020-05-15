@@ -12,7 +12,7 @@ var mineArray = [
 		});
 	}
 },
-{
+{//库鲁克斯岛刚过栅栏427，567也有采集点
 	level : 2,
 	name : '柠檬草',
 	display_name : '柠檬草',
