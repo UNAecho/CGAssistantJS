@@ -2,10 +2,10 @@
  * 鲁村刷钱
  */
 const protect = { // 遇敌保护条件
-	minHp: 300,
-	minMp: 30,
-	minPetHp: 300,
-	minPetMp: 30,
+	minHp: 2000,
+	minMp: 180,
+	minPetHp: 1000,
+	minPetMp: 180,
 	maxItemNumber: 17
 };
 require('../wrapper').then(cga => {
@@ -46,7 +46,7 @@ require('../wrapper').then(cga => {
 	cga.emogua.recursion(
 		() => Promise.resolve().then(() => {
 			const info = cga.emogua.getMapInfo();
-			if (info.name == '库鲁克斯岛' && (info.x >= 290 && info.x <= 320) && (info.y >= 870 && info.y <= 890)) {
+			if (info.name == '库鲁克斯岛' && (info.x >= 290 && info.x <= 321) && (info.y >= 870 && info.y <= 890)) {
 				return cga.emogua.autoWalk([321,883]).then(
 					() => cga.emogua.delay(3000)
 				).then(
@@ -79,7 +79,7 @@ require('../wrapper').then(cga => {
 			}
 		}).then(
 			() => cga.emogua.goto(n => n.lumi.door).then(
-				() => cga.emogua.autoWalk([305,883])
+				() => cga.emogua.autoWalk([319,883])
 			).then(
 				() => cga.emogua.encounter(protect)
 			)

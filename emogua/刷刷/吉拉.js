@@ -13,12 +13,15 @@
  *   生产 1-71(60) 72-76(50)
  */
 let npc = '吉拉';
+var count = 0;
 require('../wrapper').then(cga => {
 	const player = cga.GetPlayerInfo();
 	if (player.level > 54 && player.level < 59) {
 		npc = '巴雷利';
 	} else if (player.level > 58 && player.level < 65) {
 		npc = '伊鲁玛';
+	} else if (player.level > 65 && player.level < 143) {
+		npc = '伊佐塔';
 	}
 	console.log(npc, new Date().toLocaleString());
 	cga.emogua.autoBattle(cga.emogua.AutoBattlePreset.getAttackSets());
@@ -63,6 +66,9 @@ require('../wrapper').then(cga => {
 			if (npc == '巴雷利') {
 				position = [28,24];
 				orientation = 2;
+			}else if(npc == '伊佐塔'){
+				position = [28,22];
+				orientation = 6;
 			}
 			return cga.emogua.autoWalk(position).then(
 				() => cga.emogua.recursion(
@@ -71,7 +77,13 @@ require('../wrapper').then(cga => {
 					).then(() => {
 						const f = cga.getInventoryItems().find(i => i.name == '斗士之证' && i.info != '$4你的斗士之证');
 						const pet = cga.GetPetsInfo().find(e => e.battle_flags === 2);
-						if (f && cga.GetPlayerInfo().hp > 200 && (!pet || pet.hp > 200)) {
+						count +=1
+						console.log('已打 ' + count +' 次');
+						if(count>=30){
+							console.log('已打 ' + count +' 次了，停止刷声望');
+							return
+						}
+						if (f && cga.GetPlayerInfo().hp > 800 && (!pet || pet.hp > 200)) {
 							return cga.emogua.dropItems([f.pos]);
 						}
 						return Promise.reject();
