@@ -3,9 +3,14 @@ var configTable = global.configTable;
 
 var thisobj = {
 	func : (cb)=>{
-		var mapname = cga.GetMapName();
-		if(mapname != '艾尔莎岛' && mapname != '里谢里雅堡' && mapname != '法兰城' && mapname != '阿凯鲁法村' && mapname != '哥拉尔镇')
+		console.log('执行通用登出回补...')
+		var mapname_tmp = cga.GetMapName();
+		var curpos = cga.GetMapXY();
+		if((mapname_tmp == '库鲁克斯岛' && (curpos.x > 512 && curpos.y > 842))||mapname_tmp == '米诺基亚镇'){
+			console.log('当前在米村采集，进入特殊不登出回补模式')
+		}else if(mapname_tmp != '艾尔莎岛' && mapname_tmp != '里谢里雅堡' && mapname_tmp != '法兰城' && mapname_tmp != '阿凯鲁法村' && mapname_tmp != '哥拉尔镇'){
 			cga.LogBack();
+		}
 		
 		setTimeout(()=>{
 			var mapname = cga.GetMapName();
@@ -54,9 +59,24 @@ var thisobj = {
 						});
 					});
 					break;
+				case '库鲁克斯岛':
+					cga.walkList([
+					[511, 842, '米诺基亚镇']
+					], ()=>{
+						cga.travel.minuojiya.toHospital(()=>{
+							setTimeout(cb, 5000, null);
+						}, false);
+					});			
+					break;
+				case '米诺基亚镇':
+					cga.travel.minuojiya.toHospital(()=>{
+						setTimeout(cb, 5000, null);
+					}, false);
+					break;
 				default: throw new Error('登出回到未知的定居地: '+mapname);
 			}
 		}, 1000);
+		console.log('通用登出回补结束...')
 	},
 	translate : (pair)=>{
 		return false;

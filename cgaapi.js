@@ -1686,7 +1686,7 @@ module.exports = function(callback){
 				throw new Error('未知的村子名称');
 		}
 	}
-	
+
 	cga.travel.falan.toTeleRoomPromisify = (city)=>{
 		return cga.promisify(cga.travel.falan.toTeleRoom, [city]);
 	}
@@ -1942,6 +1942,7 @@ module.exports = function(callback){
 		}
 
 		if(cga.travel.gelaer.isSettled){
+			console.log('cga.travel.gelaer.isSettled = '+cga.travel.gelaer.isSettled+' , 执行登出')
 			cga.LogBack();
 			cga.AsyncWaitMovement({map:'哥拉尔镇', delay:1000, timeout:5000}, (err, reason)=>{
 				if(err){
@@ -2000,6 +2001,65 @@ module.exports = function(callback){
 		});
 	}
 
+	// 前往哥拉尔启程之间
+	cga.travel.gelaer.toTeleRoomTemplate = (villageName, npcPos, npcPos2, npcPos3, cb)=>{
+		cga.travel.gelaer.toStone('S', ()=>{
+			var teamplayers = cga.getTeamPlayers();
+			var isTeamLeader = teamplayers.length > 0 && teamplayers[0].is_me == true ? true : false;
+			
+			var list = [
+				// 白之宫殿外面index是43200
+				[140, 214, 43200],
+				// 白之宫殿里面index是43210
+				[47, 39, 43210],
+				[23, 70, '启程之间'],
+			];
+			
+			if(isTeamLeader){
+				list.push(npcPos);
+				list.push(npcPos2);
+				list.push(npcPos);
+				list.push(npcPos2);				
+				list.push(npcPos);
+			} else {
+				list.push(npcPos);
+			}
+			
+			cga.walkList(list, ()=>{
+				var go = ()=>{
+					cga.TurnTo(npcPos3[0], npcPos3[1]);
+					cga.AsyncWaitNPCDialog((err, dlg)=>{
+						if(typeof dlg.message == 'string' && (dlg.message.indexOf('对不起') >= 0 || dlg.message.indexOf('很抱歉') >= 0)){
+							cb(new Error('无法使用前往'+villageName+'的传送石'));
+							return;
+						}
+						cga.ClickNPCDialog(4, -1);
+						cga.AsyncWaitMovement({map:villageName+'的传送点', delay:1000, timeout:5000}, cb);
+					});
+				}
+				if(isTeamLeader){
+					setTimeout(()=>{
+						cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+						setTimeout(go, 1500);
+					}, 1500);
+				} else {
+					go();
+				}
+			});
+		});
+	}
+	
+	cga.travel.gelaer.toTeleRoom = (villageName, cb)=>{
+		
+		switch(villageName){
+			case '米诺基亚镇':
+				cga.travel.gelaer.toTeleRoomTemplate('米诺基亚镇', [11, 8], [11, 9], [13, 7], cb);
+				break;
+			default:
+				throw new Error('未知的村子名称');
+		}
+	}
+
 	//前往鲁米那斯村
 	cga.travel.gelaer.toLumi = (cb)=>{
 		if(cga.GetMapName() != '哥拉尔镇'){
@@ -2051,6 +2111,23 @@ module.exports = function(callback){
 		[
 			[87, 35, '医院'],
 			isPro == true ? [17, 5] : [17, 16],
+		], ()=>{
+			cga.turnDir(0);
+			cb(null);
+		});
+	}
+
+	cga.travel.minuojiya = {};
+	
+	cga.travel.minuojiya.toHospital = (cb, isPro)=>{
+		if(cga.GetMapName() != '米诺基亚镇'){
+			cb(new Error('必须从米诺基亚镇启动'));
+			return;
+		}
+		cga.walkList(
+		[
+			[45, 87, '医院'],
+			isPro == true ? [7, 6] : [11, 8],
 		], ()=>{
 			cga.turnDir(0);
 			cb(null);
@@ -2200,8 +2277,8 @@ module.exports = function(callback){
 
 				newList = joint.concat(newList);
 				
-				console.log('新寻路列表:');			
-				console.log(newList);
+				// console.log('新寻路列表:');			
+				// console.log(newList);
 				
 				return newList;
 			}
@@ -2298,14 +2375,14 @@ module.exports = function(callback){
 			var curpos = cga.GetMapXY();
 			var curmapindex = cga.GetMapIndex().index3;
 
-			console.log('当前地图: ' + curmap);
-			console.log('当前地图序号: ' + curmapindex);
-			console.log('当前坐标: (%d, %d)', curpos.x, curpos.y);
-			console.log('目标坐标: (%d, %d)', targetX, targetY);
+			// console.log('当前地图: ' + curmap);
+			// console.log('当前地图序号: ' + curmapindex);
+			// console.log('当前坐标: (%d, %d)', curpos.x, curpos.y);
+			// console.log('目标坐标: (%d, %d)', targetX, targetY);
 			if(targetMap)
 			{
-				console.log('目标地图');
-				console.log(targetMap);
+				// console.log('目标地图');
+				// console.log(targetMap);
 			}
 			
 			var end = (arg)=>{

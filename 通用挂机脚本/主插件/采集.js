@@ -99,6 +99,46 @@ var gatherArray = [
 	skill : '狩猎',
 	path : './../公共模块/鱼翅流水线盐',
 },
+{
+	name : '蕃茄酱流水线蕃茄',
+	skill : '狩猎',
+	path : './../公共模块/蕃茄酱流水线蕃茄',
+},
+{
+	name : '面包流水线小麦粉',
+	skill : '狩猎',
+	path : './../公共模块/面包流水线小麦粉',
+},
+{
+	name : '面包流水线牛奶',
+	skill : '狩猎',
+	path : './../公共模块/面包流水线牛奶',
+},
+{
+	name : '面包流水线盐',
+	skill : '狩猎',
+	path : './../公共模块/面包流水线盐',
+},
+{
+	name : '烧鸡流水线盐',
+	skill : '狩猎',
+	path : './../公共模块/烧鸡流水线盐',
+},
+{
+	name : '烧鸡流水线鸡肉',
+	skill : '狩猎',
+	path : './../公共模块/烧鸡流水线鸡肉',
+},
+{
+	name : '烧鸡流水线胡椒',
+	skill : '狩猎',
+	path : './../公共模块/烧鸡流水线胡椒',
+},
+{
+	name : '烧鸡流水线柠檬草',
+	skill : '伐木',
+	path : './../公共模块/烧鸡流水线柠檬草',
+},
 ]
 
 var check_drop = ()=>{
@@ -140,7 +180,7 @@ var loop = ()=>{
 	}
 	
 	var playerInfo = cga.GetPlayerInfo();
-	if(playerInfo.mp < playerInfo.maxmp * 0.2 || playerInfo.hp < playerInfo.maxhp * 0.8)
+	if(playerInfo.mp < playerInfo.maxmp || playerInfo.hp < playerInfo.maxhp)
 	{
 		if(mineObject.supplyManager)
 			mineObject.supplyManager(loop);
@@ -188,7 +228,7 @@ var loop = ()=>{
 					
 					if(thisobj.gatherTimes < thisobj.logoutTimes){
 						thisobj.gatherTimes ++;
-						console.log('已挖'+thisobj.gatherTimes+'次');
+						// console.log('已挖'+thisobj.gatherTimes+'次');
 					} else {
 						cga.LogOut();
 						return false;

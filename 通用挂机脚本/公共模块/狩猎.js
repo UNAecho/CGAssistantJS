@@ -304,8 +304,9 @@
 	name : '辣椒',
 	display_name : '辣椒哥拉尔',
 	func : (cb)=>{
-		if(cga.GetMapName() != '哥拉尔镇')
-			throw new Error('必须从哥拉尔镇启动');
+		if(cga.GetMapName() != '哥拉尔镇'){
+			cga.LogBack();
+			throw new Error('必须从哥拉尔镇启动');}
 		cga.walkList([
 			[176, 105, '库鲁克斯岛'],
 			[321, 367],
@@ -431,6 +432,136 @@
 		cga.walkList([
 			[176, 105, '库鲁克斯岛'],
 			[389, 528],
+		], cb);
+	}
+},
+{
+	level : 1,
+	name : '小麦粉',
+	display_name : '小麦伊尔村',
+	func : (cb)=>{
+		cga.travel.falan.toStone('E2', ()=>{
+			cga.walkList([
+				[281, 88, '芙蕾雅'],
+				[594, 242],
+			], cb);
+		});
+	}
+},
+{
+	level : 2,
+	name : '牛奶',
+	display_name : '牛奶伊尔村',
+	func : (cb)=>{
+		cga.travel.falan.toStone('E2', ()=>{
+			cga.walkList([
+				[281, 88, '芙蕾雅'],
+				[679, 312],
+			], cb);
+		});
+	}
+},
+{
+	level : 2,
+	name : '葱',
+	display_name : '葱哥拉尔',
+	func : (cb)=>{
+		if(cga.GetMapName() != '哥拉尔镇')
+			throw new Error('必须从哥拉尔镇启动');
+		cga.walkList([
+			[176, 105, '库鲁克斯岛'],
+			[287, 436],
+		], cb);
+	}
+},
+{
+	level : 4,
+	name : '鸡肉',
+	display_name : '鸡肉哥拉尔',
+	func : (cb)=>{
+		if(cga.GetMapName() != '哥拉尔镇')
+			throw new Error('必须从哥拉尔镇启动');
+		cga.walkList([
+			[119, 38, '库鲁克斯岛'],
+			[264, 394],
+		], cb);
+	}
+},
+{
+	level : 5,
+	name : '牛肉',
+	display_name : '牛肉哥拉尔',
+	func : (cb)=>{
+		if(cga.GetMapName() != '哥拉尔镇')
+			throw new Error('必须从哥拉尔镇启动');
+		cga.walkList([
+			[176, 105, '库鲁克斯岛'],
+			[347, 406],
+		], cb);
+	}
+},
+{
+	level : 6,
+	name : '米',
+	display_name : '米哥拉尔',
+	func : (cb)=>{
+		if(cga.GetMapName() != '哥拉尔镇')
+			throw new Error('必须从哥拉尔镇启动');
+		cga.walkList([
+			[119, 38, '库鲁克斯岛'],
+			[257, 348],
+		], cb);
+	}
+},
+{
+	level : 8,
+	name : '霜降牛肉',
+	display_name : '霜降牛肉哥拉尔',
+	func : (cb)=>{
+		if(cga.GetMapName() != '哥拉尔镇')
+			throw new Error('必须从哥拉尔镇启动');
+		cga.walkList([
+			[176, 105, '库鲁克斯岛'],
+			[435, 456],
+		], cb);
+	}
+},
+{
+	level : 9,
+	name : '伊势虾',
+	display_name : '伊势虾哥拉尔',
+	func : (cb)=>{
+		if(cga.GetMapName() != '哥拉尔镇')
+			throw new Error('必须从哥拉尔镇启动');
+		cga.walkList([
+			[119, 38, '库鲁克斯岛'],
+			[148, 399],
+		], cb);
+	}
+},
+{
+	level : 9,
+	name : '海胆',
+	display_name : '海胆哥拉尔',
+	func : (cb)=>{
+		if(cga.GetMapName() != '哥拉尔镇')
+			throw new Error('必须从哥拉尔镇启动');
+		cga.walkList([
+			[119, 38, '库鲁克斯岛'],
+			[163, 411],
+		], cb);
+	}
+},
+{
+	level : 10,
+	name : '鳖',
+	display_name : '鳖哥拉尔',
+	func : (cb)=>{
+		if(cga.GetMapName() != '哥拉尔镇')
+			throw new Error('必须从哥拉尔镇启动');
+		cga.walkList([
+			[119, 38, '库鲁克斯岛'],
+			[286, 294],
 		], cb);
 	}
 },
