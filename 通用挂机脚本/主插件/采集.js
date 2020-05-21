@@ -6,6 +6,7 @@ var gatherObject = null;
 var mineObject = null;
 var doneObject = require('./../公共模块/采集后操作');
 var healObject = require('./../公共模块/治疗自己');
+var healPetObject = require('./../公共模块/治疗宠物');
 var supplyObject = require('./../公共模块/通用登出回补');
 
 var gatherArray = [
@@ -216,6 +217,12 @@ var loop = ()=>{
 		if(playerInfo.health > 0){
 			healObject.func(workwork);
 			return;
+		}
+
+		var pets = cga.GetPetsInfo();
+		for(var i = 0;i < pets.length; ++i){
+			if(pets[i].health > 0)
+				healPetObject.func(workwork,i);
 		}
 		
 		if(skill != null && !mineObject.workManager){
