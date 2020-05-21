@@ -1,6 +1,7 @@
 var Async = require('async');
 var supplyMode = require('./../公共模块/高地回补');
 var supplyCastle = require('./../公共模块/里堡回补');
+var sellCastle = require('./../公共模块/里堡卖石');
 var teamMode = require('./../公共模块/组队模式');
 var logbackEx = require('./../公共模块/登出防卡住');
 
@@ -21,6 +22,19 @@ var getSupplyObject = (map, mapindex)=>{
 	if(typeof mapindex != 'number')
 		mapindex = cga.GetMapIndex().index3;
 	return supplyArray.find((s)=>{
+		return s.isAvailable(map, mapindex);
+	})
+}
+
+//卖石
+var sellArray = [sellCastle];
+
+var getSellObject = (map, mapindex)=>{
+	if(typeof map != 'string')
+		map = cga.GetMapName();
+	if(typeof mapindex != 'number')
+		mapindex = cga.GetMapIndex().index3;
+	return sellArray.find((s)=>{
 		return s.isAvailable(map, mapindex);
 	})
 }
@@ -285,6 +299,17 @@ var loop = ()=>{
 		console.log('playerThink on');
 		playerThinkRunning = true;
 		return;
+	}
+
+	//高地卖石，防止包满无法购买桥头武器
+	if(cga.getSellStoneItem().length > 0)
+	{
+		var sellObject = getSellObject(map, mapindex);
+		if(sellObject)
+		{
+			sellObject.func(loop);
+			return;
+		}
 	}
 
 	if(cga.needSupplyInitial())
