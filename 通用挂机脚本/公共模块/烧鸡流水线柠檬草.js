@@ -80,7 +80,7 @@ var thisobj = {
 				
 				setTimeout(repeat, 1500);
 			}
-			console.error('材料够了，开始聚集..');
+			console.error('材料够了，开始赶往集散地..');
 			cga.travel.gelaer.toStone('N', ()=>{
 				cga.turnTo(121, 107);
 				setTimeout(repeat, 1000);

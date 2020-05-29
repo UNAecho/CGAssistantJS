@@ -29,6 +29,10 @@ var thisobj = {
 				cb(null);
 				return
 			}
+			if (cga.GetPlayerInfo().souls != 0){
+				thisobj.object.callsouls(cb);
+				return
+			}
 			var mapname = cga.GetMapName();
 			//43510是米村医院
 			if (mapname != '米诺基亚镇' && cga.GetMapIndex().index3 != 43510){
@@ -58,6 +62,24 @@ var thisobj = {
 					], cb);
 				});
 			}
+		},
+		callsouls : (cb) =>{
+			var playerinfo = cga.GetPlayerInfo();
+			var items = cga.GetItemsInfo();
+			var ctx = {
+				playerinfo : playerinfo,
+				petinfo : playerinfo.petid >= 0 ? cga.GetPetInfo(playerinfo.petid) : null,
+				teamplayers : cga.getTeamPlayers(),
+				inventory : items.filter((item)=>{
+					return item.pos >= 8 && item.pos < 100;
+				}),
+				equipment : items.filter((item)=>{
+					return item.pos >= 0 && item.pos < 8;
+				}),
+				result : null,
+			}
+		
+			global.callSubPlugins('think', ctx);
 		},
 		gatherCount : MATERIALS_MULTIPLE_COUNT,
 		doneManager : (cb)=>{

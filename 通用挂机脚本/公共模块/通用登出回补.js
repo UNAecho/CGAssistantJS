@@ -6,8 +6,17 @@ var thisobj = {
 		console.log('执行通用登出回补...')
 		var mapname_tmp = cga.GetMapName();
 		var curpos = cga.GetMapXY();
+		//判定米村
 		if((mapname_tmp == '库鲁克斯岛' && (curpos.x > 512 && curpos.y > 842))||mapname_tmp == '米诺基亚镇'){
 			console.log('当前在米村采集，进入特殊不登出回补模式')
+		}
+		//判定奇利村
+		else if((mapname_tmp == '索奇亚' && (curpos.x > 294 && curpos.y > 324))||mapname_tmp == '奇利村'){
+			console.log('当前在奇利村采集，进入特殊不登出回补模式')
+		}
+		//判定亚留特村
+		else if((mapname_tmp == '芙蕾雅' && (curpos.x > 594 && curpos.y > 24))||mapname_tmp == '亚留特村'){
+			console.log('当前在亚留特村采集，进入特殊不登出回补模式')
 		}else if(mapname_tmp != '艾尔莎岛' && mapname_tmp != '里谢里雅堡' && mapname_tmp != '法兰城' && mapname_tmp != '阿凯鲁法村' && mapname_tmp != '哥拉尔镇'){
 			cga.LogBack();
 		}
@@ -58,6 +67,34 @@ var thisobj = {
 							}, 3000);
 						});
 					});
+					break;
+				case '芙蕾雅':
+					cga.walkList([
+					[595, 84, '亚留特村']
+					], ()=>{
+						cga.travel.yaliute.toHospital(()=>{
+							setTimeout(cb, 5000, null);
+						}, false);
+					});			
+					break;
+				case '亚留特村':
+					cga.travel.yaliute.toHospital(()=>{
+						setTimeout(cb, 5000, null);
+					}, false);
+					break;
+				case '索奇亚':
+					cga.walkList([
+					[294, 325, '奇利村']
+					], ()=>{
+						cga.travel.qili.toHospital(()=>{
+							setTimeout(cb, 5000, null);
+						}, false);
+					});			
+					break;
+				case '奇利村':
+					cga.travel.qili.toHospital(()=>{
+						setTimeout(cb, 5000, null);
+					}, false);
 					break;
 				case '库鲁克斯岛':
 					cga.walkList([
