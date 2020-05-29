@@ -8,10 +8,10 @@ var craft_target = null;
 var healObject = require('../公共模块/治疗自己');
 var checkSettle = require('../公共模块/登出检查定居地');
 
-//必须定居哥拉尔
-cga.travel.gelaer.isSettled = true;
+//必须定居新城
+cga.travel.gelaer.isSettled = false;
 cga.travel.falan.isSettled = false;
-cga.travel.newisland.isSettled = false;
+cga.travel.newisland.isSettled = true;
 
 //卖料理Flag，防止loop卖魔石步骤中的walklist和repeat中walklist冲突
 var sellFlag = false;
@@ -28,7 +28,7 @@ io.on('connection', (socket) => {
 	socket.on('register', (data) => {
 		socket.cga_data = data;
 		socket.join('buddy_' + data.job_name);
-		console.log(socket.cga_data.player_name + ' 已加入烧鸡节点');
+		console.log(socket.cga_data.player_name + ' 已加入寿喜锅节点');
 	});
 
 	socket.on('done', (data) => {
@@ -42,7 +42,7 @@ io.on('connection', (socket) => {
 
 	socket.on('disconnect', (err) => {
 		if (socket.cga_data)
-			console.log(socket.cga_data.player_name + ' 已退出烧鸡节点');
+			console.log(socket.cga_data.player_name + ' 已退出寿喜锅节点');
 	})
 });
 
@@ -54,7 +54,7 @@ var waitStuffs = (name, materials, cb) => {
 
 		//修复：防止面向方向不正确导致无法交易
 		if (cga.GetPlayerInfo().direction != 4) {
-			cga.turnTo(120, 107);
+			cga.turnTo(33, 91);
 			setTimeout(repeat, 500);
 			return;
 		}
@@ -67,16 +67,14 @@ var waitStuffs = (name, materials, cb) => {
 			// console.log('s[key].cga_data.job_name : ' + s[key].cga_data.job_name);
 			// console.log('s[key].cga_data.state : ' + s[key].cga_data.state);
 			if (s[key].cga_data &&
-				(s[key].cga_data.job_name == name && (s[key].cga_data.job_name == '盐' || s[key].cga_data.job_name == '鸡肉' || s[key].cga_data.job_name == '胡椒' || s[key].cga_data.job_name == '柠檬草')) &&
+				(s[key].cga_data.job_name == name && (s[key].cga_data.job_name == '葱' || s[key].cga_data.job_name == '盐' || s[key].cga_data.job_name == '酱油' || s[key].cga_data.job_name == '砂糖' || s[key].cga_data.job_name == '牛肉')) &&
 				s[key].cga_data.state == 'done') {
 				find_player = s[key];
-				console.log(s[key].cga_data.job_name + '  findplayer结束,break..');
 				break;
 			}
 		}
 
 		if (find_player) {
-			console.log('if(find_player){..');
 
 			find_player.cga_data.state = 'trade';
 			find_player.emit('init', {
@@ -87,8 +85,8 @@ var waitStuffs = (name, materials, cb) => {
 			find_player.emit('trade');
 
 			var unit = cga.findPlayerUnit(find_player.cga_data.player_name);
-
-			if (unit == null || unit.xpos != 120 || unit.ypos != 107) {
+			// 寻找站在if判断中集散点坐标的采集者，目的是等待采集者站好位置，等待交易。
+			if (unit == null || unit.xpos != 33 || unit.ypos != 91) {
 				setTimeout(repeat, 1000);
 				return;
 			}
@@ -97,20 +95,25 @@ var waitStuffs = (name, materials, cb) => {
 				var stuffs = { gold: 0 };
 
 				// 根据采集任务给钱
+				// 费用采用线性方程 y = wx + b 计算
+				if (find_player.cga_data.job_name == '葱') {
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.3 + 0);
+					console.log('累计交易金额 : '+ stuffs.gold);
+				}
 				if (find_player.cga_data.job_name == '盐') {
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.3 + 0);
+					console.log('累计交易金额 : '+ stuffs.gold);
+				}
+				if (find_player.cga_data.job_name == '酱油') {
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.5 + 0);
+					console.log('累计交易金额 : '+ stuffs.gold);
+				}
+				if (find_player.cga_data.job_name == '砂糖') {
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 4 + 0);
+					console.log('累计交易金额 : '+ stuffs.gold);
+				}
+				if (find_player.cga_data.job_name == '牛肉') {
 					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.7 + 0);
-					console.log('累计交易金额 : '+ stuffs.gold);
-				}
-				if (find_player.cga_data.job_name == '鸡肉') {
-					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.5);
-					console.log('累计交易金额 : '+ stuffs.gold);
-				}
-				if (find_player.cga_data.job_name == '胡椒') {
-					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.7 + 0);
-					console.log('累计交易金额 : '+ stuffs.gold);
-				}
-				if (find_player.cga_data.job_name == '柠檬草') {
-					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.6 + 0);
 					console.log('累计交易金额 : '+ stuffs.gold);
 				}
 
@@ -132,11 +135,15 @@ var waitStuffs = (name, materials, cb) => {
 		setTimeout(repeat, 1000);
 	}
 
-	cga.walkList([
-	[121, 107]
-	], ()=>{
-		cga.turnTo(120, 107);
-		setTimeout(repeat, 500);
+	cga.travel.falan.toStone('C', ()=>{
+		cga.walkList([
+			//生产等待点
+			[34, 91]
+			], ()=>{
+				//生产等待点站位朝向
+				cga.turnTo(32, 91);
+				setTimeout(repeat, 500);
+			});
 	});
 
 }
@@ -150,18 +157,16 @@ var getBestCraftableItem = () => {
 	thisobj.craftItemList = cga.GetCraftsInfo(thisobj.craftSkill.index);
 
 	return thisobj.craftItemList.find((c) => {
-		return c.name == '烧鸡';
+		return c.name == '寿喜锅';
 	});
 }
 
 var loop = () => {
 
-	console.log('loop()开始..');
-
 	callSubPluginsAsync('prepare', () => {
 
-		if(cga.GetMapName() != '哥拉尔镇'){
-			console.log('登出，必须在哥拉尔镇启动..');
+		if(cga.GetMapName() != '艾尔莎岛' && cga.GetMapName() != '里谢里雅堡'){
+			console.log('登出，必须在新城启动..');
 			cga.LogBack();
 			setTimeout(loop, 1000);
 			return;
@@ -169,16 +174,16 @@ var loop = () => {
 
 		craft_target = getBestCraftableItem();
 		if (!craft_target) {
-			throw new Error('无法制造烧鸡，可能料理技能有问题，技能没有学习或等级不够');
+			throw new Error('无法制造寿喜锅，可能料理技能有问题，技能没有学习或等级不够');
 			return;
 		}
 
 		// 为了刷技能，改为做完料理卖店
 
-		// if(cga.getItemCount('烧鸡') > 0){
+		// if(cga.getItemCount('寿喜锅') > 0){
 		// 	cga.travel.gelaer.toBank(()=>{
 		// 		cga.AsyncWaitNPCDialog(()=>{
-		// 			cga.saveToBankAll('烧鸡', 3, (err)=>{
+		// 			cga.saveToBankAll('寿喜锅', 3, (err)=>{
 		// 				loop();
 		// 			});
 		// 		});
@@ -187,31 +192,29 @@ var loop = () => {
 		// }
 
 		// 卖料理
-		if (cga.getItemCount('烧鸡') > 3) {
+		if(cga.getItemCount('寿喜锅') > 3){
 			sellFlag = true;
 			console.log('卖料理环节..');
-			cga.walkList([
-				[147, 79, '杂货店'],
-				[11, 18],
-			], ()=>{
-				cga.TurnTo(11, 16);
-				cga.AsyncWaitNPCDialog(()=>{
-					cga.ClickNPCDialog(0, 0);
+			cga.travel.falan.toStone('C', ()=>{
+				cga.walkList([
+				[30, 79],
+				], ()=>{
+					console.log('走到NPC周围！！');
+					cga.TurnTo(30, 77);
 					cga.AsyncWaitNPCDialog(()=>{
-						var sell = cga.findItemArray((item)=>{
-							return item.name == '烧鸡';
-						});
-						var sellArray = sell.map((item)=>{
-							item.count /= 3;
-							return item;
-						});
-	
-						cga.SellNPCStore(sellArray);
+						cga.ClickNPCDialog(0, 0);
 						cga.AsyncWaitNPCDialog(()=>{
-							cga.walkList([
-							[18, 30, '哥拉尔镇']
-							], ()=>{
-								cb(null);
+							
+							var sell = cga.findItemArray((item)=>{
+								return item.name == '寿喜锅';
+							});
+							var sellArray = sell.map((item)=>{
+								item.count /= 3;
+								return item;
+							});
+							cga.SellNPCStore(sellArray);
+							cga.AsyncWaitNPCDialog(()=>{
+								setTimeout(loop, 3000);
 							});
 						});
 					});
@@ -224,9 +227,14 @@ var loop = () => {
 		var playerInfo = cga.GetPlayerInfo();
 		if (playerInfo.mp < craft_target.cost) {
 			console.log('去医院补魔..');
-			cga.travel.gelaer.toHospital(()=>{
-				setTimeout(loop, 3000);
-			});
+			cga.travel.falan.toStone('C', ()=>{
+				cga.walkList([
+					[34 ,89],
+					], ()=>{
+						cga.TurnTo(36, 87);
+						setTimeout(loop, 3500);
+					});
+			})
 			return;
 		}
 
@@ -329,7 +337,7 @@ var thisobj = {
 
 		var stage3 = (cb2) => {
 
-			var sayString = '【烧鸡插件】请选择服务监听端口: 1000~65535';
+			var sayString = '【寿喜锅插件】请选择服务监听端口: 1000~65535';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val) => {
 				if (val !== null && val >= 1000 && val <= 65535) {
@@ -356,7 +364,7 @@ var thisobj = {
 		callSubPlugins('init');
 
 		checkSettle.func((err, map)=>{
-			if(map != '哥拉尔镇')
+			if(map != '艾尔莎岛')
 				throw new Error('必须定居哥拉尔镇!');
 			
 			loop();
