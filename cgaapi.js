@@ -1691,6 +1691,40 @@ module.exports = function(callback){
 		return cga.promisify(cga.travel.falan.toTeleRoom, [city]);
 	}
 	
+	cga.travel.yaliute = {};
+	
+	cga.travel.yaliute.toHospital = (cb, isPro)=>{
+		if(cga.GetMapName() != '亚留特村'){
+			cb(new Error('必须从亚留特村启动'));
+			return;
+		}
+		cga.walkList(
+		[
+			[52, 63, '医院'],
+			isPro == true ? [14, 9] : [10, 5],
+		], ()=>{
+			isPro == true ? cga.turnDir(6) : cga.turnDir(0)
+			cb(null);
+		});
+	}
+
+	cga.travel.qili = {};
+	
+	cga.travel.qili.toHospital = (cb, isPro)=>{
+		if(cga.GetMapName() != '奇利村'){
+			cb(new Error('必须从奇利村启动'));
+			return;
+		}
+		cga.walkList(
+		[
+			[64, 56, '医院'],
+			isPro == true ? [7, 2] : [11, 6],
+		], ()=>{
+			isPro == true ? cga.turnDir(0) : cga.turnDir(6)
+			cb(null);
+		});
+	}
+	
 	cga.travel.falan.toCity = function(city, cb){
 		switch(city){
 			case '新城':case '艾尔莎岛':
