@@ -36,7 +36,9 @@ var cga = require('../cgaapi')(function(){
 							retry();
 							return;
 						}
-						cga.SayWords('1', 0, 3, 1);
+						setTimeout(()=>{
+							cga.SayWords('1', 0, 3, 1);						
+						}, 1500);
 						cb2(true);
 					});
 
