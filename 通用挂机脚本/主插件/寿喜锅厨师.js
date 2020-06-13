@@ -13,8 +13,11 @@ cga.travel.gelaer.isSettled = false;
 cga.travel.falan.isSettled = false;
 cga.travel.newisland.isSettled = true;
 
-//卖料理Flag，防止loop卖魔石步骤中的walklist和repeat中walklist冲突
-var sellFlag = false;
+//银行是否存满flag
+var fullofbankflag = false;
+
+//目标物品名称
+const targetname = '寿喜锅'
 
 const io = require('socket.io')();
 
@@ -28,7 +31,7 @@ io.on('connection', (socket) => {
 	socket.on('register', (data) => {
 		socket.cga_data = data;
 		socket.join('buddy_' + data.job_name);
-		console.log(socket.cga_data.player_name + ' 已加入寿喜锅节点');
+		console.log(socket.cga_data.player_name + ' 已加入 ' + targetname + ' 节点');
 	});
 
 	socket.on('done', (data) => {
@@ -42,7 +45,7 @@ io.on('connection', (socket) => {
 
 	socket.on('disconnect', (err) => {
 		if (socket.cga_data)
-			console.log(socket.cga_data.player_name + ' 已退出寿喜锅节点');
+			console.log(socket.cga_data.player_name + ' 已退出 ' + targetname + ' 节点');
 	})
 });
 
@@ -109,7 +112,7 @@ var waitStuffs = (name, materials, cb) => {
 					console.log('累计交易金额 : '+ stuffs.gold);
 				}
 				if (find_player.cga_data.job_name == '砂糖') {
-					stuffs.gold += Math.ceil(find_player.cga_data.count * 4 + 0);
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 4.5 + 0);
 					console.log('累计交易金额 : '+ stuffs.gold);
 				}
 				if (find_player.cga_data.job_name == '牛肉') {
@@ -157,7 +160,7 @@ var getBestCraftableItem = () => {
 	thisobj.craftItemList = cga.GetCraftsInfo(thisobj.craftSkill.index);
 
 	return thisobj.craftItemList.find((c) => {
-		return c.name == '寿喜锅';
+		return c.name == targetname;
 	});
 }
 
@@ -174,54 +177,61 @@ var loop = () => {
 
 		craft_target = getBestCraftableItem();
 		if (!craft_target) {
-			throw new Error('无法制造寿喜锅，可能料理技能有问题，技能没有学习或等级不够');
+			throw new Error('无法制造 ' + targetname + ' ，可能料理技能有问题，技能没有学习或等级不够');
 			return;
 		}
 
-		// 为了刷技能，改为做完料理卖店
-
-		// if(cga.getItemCount('寿喜锅') > 0){
-		// 	cga.travel.gelaer.toBank(()=>{
-		// 		cga.AsyncWaitNPCDialog(()=>{
-		// 			cga.saveToBankAll('寿喜锅', 3, (err)=>{
-		// 				loop();
-		// 			});
-		// 		});
-		// 	});
-		// 	return;
-		// }
-
-		// 卖料理
-		if(cga.getItemCount('寿喜锅') > 3){
-			sellFlag = true;
-			console.log('卖料理环节..');
-			cga.travel.falan.toStone('C', ()=>{
-				cga.walkList([
-				[30, 79],
-				], ()=>{
-					console.log('走到NPC周围！！');
-					cga.TurnTo(30, 77);
-					cga.AsyncWaitNPCDialog(()=>{
-						cga.ClickNPCDialog(0, 0);
+		// 做完料理的善后工作
+		if(cga.getItemCount(targetname) > 3){
+			if(fullofbankflag){
+				console.log('卖料理环节..');
+				cga.travel.falan.toStone('C', ()=>{
+					cga.walkList([
+					[30, 79],
+					], ()=>{
+						cga.TurnTo(30, 77);
 						cga.AsyncWaitNPCDialog(()=>{
-							
-							var sell = cga.findItemArray((item)=>{
-								return item.name == '寿喜锅';
-							});
-							var sellArray = sell.map((item)=>{
-								item.count /= 3;
-								return item;
-							});
-							cga.SellNPCStore(sellArray);
+							cga.ClickNPCDialog(0, 0);
 							cga.AsyncWaitNPCDialog(()=>{
-								setTimeout(loop, 3000);
+								
+								var sell = cga.findItemArray((item)=>{
+									return item.name == targetname;
+								});
+								var sellArray = sell.map((item)=>{
+									item.count /= 3;
+									return item;
+								});
+								cga.SellNPCStore(sellArray);
+								cga.AsyncWaitNPCDialog(()=>{
+									setTimeout(loop, 3000);
+								});
 							});
 						});
 					});
 				});
-			});
-			console.log('卖料理结束..');
-			sellFlag = false;
+				console.log('卖料理结束..');
+				return;
+			}else{
+				cga.travel.falan.toBank(()=>{
+					cga.walkList([
+					[11, 8],
+					], ()=>{
+						cga.turnDir(0);
+						cga.AsyncWaitNPCDialog(()=>{
+
+							var emptyslot = cga.findBankEmptySlot(targetname, 3);
+							if(emptyslot == -1){
+								fullofbankflag = true;
+								loop()
+							}else{
+								cga.saveToBankAll(targetname, 3, (err)=>{
+									setTimeout(loop, 2000);;
+								});
+							}
+						});
+					});
+				});
+			}
 			return;
 		}
 		var playerInfo = cga.GetPlayerInfo();
@@ -287,7 +297,7 @@ var loop = () => {
 			}, (err, results) => {
 				if (results && results.success) {
 					craft_count++;
-					console.log('已造' + craft_count + '次');
+					// console.log('已造' + craft_count + '次');
 					setTimeout(craft, 500);
 				} else {
 					setTimeout(loop, 500);
@@ -337,7 +347,7 @@ var thisobj = {
 
 		var stage3 = (cb2) => {
 
-			var sayString = '【寿喜锅插件】请选择服务监听端口: 1000~65535';
+			var sayString = '【 ' + targetname + ' 插件】请选择服务监听端口: 1000~65535';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val) => {
 				if (val !== null && val >= 1000 && val <= 65535) {
