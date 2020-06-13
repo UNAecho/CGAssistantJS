@@ -181,7 +181,20 @@ var mineArray = [
 			], cb);
 		}
 	},
+	{
+		level : 5,
+		name : '琵琶木',
+		display_name : '琵琶木哥拉尔',
+		func : (cb)=>{
+			if(cga.GetMapName() != '哥拉尔镇')
+				throw new Error('必须从哥拉尔镇启动');
 
+			cga.walkList([
+				[119, 38, '库鲁克斯岛'],
+				[250, 350],
+			], cb);
+		}
+	},
 	{
 		level : 6,
 		name : '赤松',
@@ -193,6 +206,34 @@ var mineArray = [
 			cga.walkList([
 				[178, 227, '米内葛尔岛'],
 				[154, 395],
+			], cb);
+		}
+	},
+	{
+		level : 6,
+		name : '赤松',
+		display_name : '赤松哥拉尔',
+		func : (cb)=>{
+			if(cga.GetMapName() != '哥拉尔镇')
+				throw new Error('必须从哥拉尔镇启动');
+
+			cga.walkList([
+				[176, 105, '库鲁克斯岛'],
+				[360, 430],
+			], cb);
+		}
+	},
+	{
+		level : 7,
+		name : '朴',
+		display_name : '朴哥拉尔',
+		func : (cb)=>{
+			if(cga.GetMapName() != '哥拉尔镇')
+				throw new Error('必须从哥拉尔镇启动');
+
+			cga.walkList([
+				[62, 104, '库鲁克斯岛'],
+				[176, 445],
 			], cb);
 		}
 	},
