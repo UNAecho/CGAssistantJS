@@ -201,7 +201,7 @@ var loop = ()=>{
 	}
 	
 	var playerInfo = cga.GetPlayerInfo();
-	if(playerInfo.mp < playerInfo.maxmp || playerInfo.hp < playerInfo.maxhp)
+	if(playerInfo.mp < playerInfo.maxmp * 0.8 || playerInfo.hp < playerInfo.maxhp * 0.8)
 	{
 		if(mineObject.supplyManager)
 			mineObject.supplyManager(loop);
