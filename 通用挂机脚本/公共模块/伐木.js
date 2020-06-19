@@ -186,8 +186,9 @@ var mineArray = [
 		name : '琵琶木',
 		display_name : '琵琶木哥拉尔',
 		func : (cb)=>{
-			if(cga.GetMapName() != '哥拉尔镇')
-				throw new Error('必须从哥拉尔镇启动');
+			if(cga.GetMapName() != '哥拉尔镇'){
+				cga.LogBack();
+				throw new Error('必须从哥拉尔镇启动');}
 
 			cga.walkList([
 				[119, 38, '库鲁克斯岛'],
@@ -214,8 +215,9 @@ var mineArray = [
 		name : '赤松',
 		display_name : '赤松哥拉尔',
 		func : (cb)=>{
-			if(cga.GetMapName() != '哥拉尔镇')
-				throw new Error('必须从哥拉尔镇启动');
+			if(cga.GetMapName() != '哥拉尔镇'){
+				cga.LogBack();
+				throw new Error('必须从哥拉尔镇启动');}
 
 			cga.walkList([
 				[176, 105, '库鲁克斯岛'],
@@ -228,8 +230,9 @@ var mineArray = [
 		name : '朴',
 		display_name : '朴哥拉尔',
 		func : (cb)=>{
-			if(cga.GetMapName() != '哥拉尔镇')
-				throw new Error('必须从哥拉尔镇启动');
+			if(cga.GetMapName() != '哥拉尔镇'){
+				cga.LogBack();
+				throw new Error('必须从哥拉尔镇启动');}
 
 			cga.walkList([
 				[62, 104, '库鲁克斯岛'],
