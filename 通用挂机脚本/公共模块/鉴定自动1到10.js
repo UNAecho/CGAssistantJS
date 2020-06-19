@@ -83,6 +83,18 @@ var thisobj = {
 			}
 			
 			cga.AsyncWaitNPCDialog(dialogHandler);
+			if(thisobj.object.donecount % 10 ==0){
+				console.log('已鉴定 '+ thisobj.object.donecount +' 次 ...' )
+			}
+
+			if (thisobj.object.donecount % 100 ==0){
+				console.log('当前鉴定等级： ' +  thisobj.object.skill.lv + ' ，已鉴定 '+ thisobj.object.donecount +' 次 ,' )
+			}
+			if (thisobj.object.skill.lv == thisobj.object.maxskilllv ){
+				throw new error('你需要晋级了，不然技能不涨经验')
+			} 
+
+			
 		},
 		doneManager : (cb)=>{
 			//更新技能等级
@@ -96,7 +108,10 @@ var thisobj = {
 			
 			return item.assessed && (item.itemid == 14668 || item.itemid == 14669 || item.itemid == 14670 || item.itemid == 18184);
 		},
+		job : null,
 		skill : null,
+		maxskilllv : null,
+		donecount : null,
 	},
 	check_done : ()=>{
 		return (cga.getItemCount((it)=>{
@@ -116,6 +131,31 @@ var thisobj = {
 		thisobj.object.skill = cga.findPlayerSkill('鉴定');
 		if(!thisobj.object.skill)
 			throw new Error('需要鉴定技能!');
+		// 判断技能多少级需要晋级
+		thisobj.object.job = cga.GetPlayerInfo().job
+		switch(thisobj.object.job)
+		{
+			case '鉴定学徒':
+				thisobj.object.maxskilllv = 4
+				break;
+			case '鉴定士':
+				thisobj.object.maxskilllv = 6
+				break;
+			case '资深鉴定师傅':
+				thisobj.object.maxskilllv = 8
+				break;
+			case '御用鉴定师':
+				thisobj.object.maxskilllv = 10
+				break;
+			case '鉴定专家':
+				thisobj.object.maxskilllv = 10
+				break;
+			default:
+				console.log('你不是鉴定师，请自行甄别你需要升级到多少级') 
+				thisobj.object.maxskilllv = 99;
+		}
+		// 鉴定次数
+		thisobj.object.donecount = 0
 	}
 }
 
