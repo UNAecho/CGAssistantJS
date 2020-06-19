@@ -75,6 +75,18 @@ const putupEquipments = (cb)=>{
 	
 	if(item != undefined){
 		cga.UseItem(item.pos)
+		setTimeout(()=>{
+			// 直接丢弃换下来的武器
+			item = cga.getInventoryItems().find((it)=>{
+				return (it.name == thisobj.buyWeapon.name)
+			});
+			if(item){
+				console.log('丢弃旧武器..'+item.name);
+				cga.DropItem(item.pos);
+			}
+
+		}, 2000);
+		
 		setTimeout(putupEquipments, 1000, cb);
 		return;
 	}
