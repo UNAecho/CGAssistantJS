@@ -879,7 +879,7 @@ module.exports = function(callback){
 
 		var castle_2_camp = ()=>{
 			
-			var shouldWarp = (cga.getItemCount('承认之戒') > 0 && noWarp !== true) ? true : false;
+			var shouldWarp = (cga.getItemCount('承认之戒', true) > 0 && noWarp !== true) ? true : false;
 			
 			var list = shouldWarp ? [
 			[55,47, '辛希亚探索指挥部'],
@@ -3849,6 +3849,17 @@ module.exports = function(callback){
 			}
 		}
 		
+		if(obj.desired_teamplayers != undefined)
+		{
+			var teamplayersnow = cga.getTeamPlayers();
+			
+			if(teamplayersnow.length < obj.desired_teamplayers.length)
+			{
+				cb(new Error('当前队伍人数 '+teamplayersnow.length+' 小于预期值 '+obj.desired_teamplayers.length+', 可能队伍已解散，取消等待。'));
+				return;
+			}
+		}
+		
 		if(passCheck){
 			cb(null);
 			return;
@@ -3909,6 +3920,17 @@ module.exports = function(callback){
 			
 			if(passCheck){
 				if(obj.cb(null) == true)
+					return;
+			}
+		}
+		
+		if(obj.desired_teamplayers != undefined)
+		{
+			var teamplayersnow = cga.getTeamPlayers();
+			
+			if(teamplayersnow.length < obj.desired_teamplayers.length)
+			{
+				if( obj.cb(new Error('当前队伍人数 '+teamplayersnow.length+' 小于预期值 '+obj.desired_teamplayers.length+', 可能队伍已解散，取消等待。')) == true)
 					return;
 			}
 		}
