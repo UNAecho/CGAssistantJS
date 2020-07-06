@@ -268,7 +268,17 @@ var playerThinkTimer = ()=>{
 	
 	setTimeout(playerThinkTimer, 1500);
 }
+var avgteammateslv= (teamplayers)=>{
+	var sumlv = 0
+	var avg = 0 
+	for (i = 1 ; i< teamplayers.length ; i++){
+		sumlv += teamplayers[i].level
 
+	}
+	avg = sumlv/(teamplayers.length-1)
+	console.log('队员（不含队长）平均等级 : ' + avg)
+	return avg
+}
 var loop = ()=>{
 
 	var map = cga.GetMapName();
@@ -277,6 +287,21 @@ var loop = ()=>{
 	
 	if(isleader && teamMode.is_enough_teammates())
 	{
+		var teamplayers = cga.getTeamPlayers();
+		if(teamplayers.length >1){
+			avg = avgteammateslv(teamplayers)
+			if(avg < 15){
+				thisobj.battleArea = battleAreaArray[3];
+			}else if(avg >=15 && avg < 28){
+				thisobj.battleArea = battleAreaArray[0];
+			}else if(avg >=28 && avg < 35){
+				thisobj.battleArea = battleAreaArray[1];
+			}else if(avg >=35 && avg < 51){
+				thisobj.battleArea = battleAreaArray[2];
+			}else{
+				throw new error('超过50级了，不能再打高地怪了')
+			}
+		}
 		if(thisobj.battleArea.isDesiredMap(map))
 		{
 			playerThinkInterrupt.hasInterrupt();//restore interrupt state
