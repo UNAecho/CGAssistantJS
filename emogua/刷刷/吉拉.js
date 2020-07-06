@@ -79,10 +79,6 @@ require('../wrapper').then(cga => {
 						const pet = cga.GetPetsInfo().find(e => e.battle_flags === 2);
 						count +=1
 						console.log('已打 ' + count +' 次');
-						if(count>=30){
-							console.log('已打 ' + count +' 次了，停止刷声望');
-							return
-						}
 						if (f && cga.GetPlayerInfo().hp > 800 && (!pet || pet.hp > 200)) {
 							return cga.emogua.dropItems([f.pos]);
 						}
