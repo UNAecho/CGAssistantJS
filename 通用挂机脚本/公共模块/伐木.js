@@ -245,8 +245,9 @@ var mineArray = [
 		name : '单木',
 		display_name : '单木阿凯鲁法',
 		func : (cb)=>{
-			if(cga.GetMapName() != '阿凯鲁法村')
-				throw new Error('必须从阿凯鲁法村启动');
+			if(cga.GetMapName() != '阿凯鲁法村'){
+				cga.LogBack();
+				throw new Error('必须从阿凯鲁法村启动');}
 
 			cga.walkList([
 				[178, 227, '米内葛尔岛'],
