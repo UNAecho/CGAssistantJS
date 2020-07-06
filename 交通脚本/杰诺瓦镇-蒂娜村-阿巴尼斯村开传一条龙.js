@@ -1,20 +1,49 @@
 var cga = require('../cgaapi')(function(){
 	//队员信息
 	var playerinfo = cga.GetPlayerInfo();
-	
-	var teammates = [];
+	//手动输入队友，方便脚本直接加队伍，省去手动组队切窗口的麻烦
+	var teammates = ["UNAの弓","UNAの格斗2","UNAの造斧","UNAの护士","UNAの封印"];
 	
 	var teamplayers = cga.getTeamPlayers();
 
-	for(var i in teamplayers)
-		teammates[i] = teamplayers[i].name;
+	// for(var i in teamplayers)
+	// 	teammates[i] = teamplayers[i].name;
 	
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
-
 
 	//任务核心流程
 	var task = cga.task.Task('杰诺瓦镇-蒂娜村-阿巴尼斯村开传一条龙', [
 	{//0
+		intro: '0.队员集合',
+		workFunc: function(cb2){
+			var gather = ()=>{
+					if(cga.isTeamLeader){
+						cga.WalkTo(140, 106);
+						cga.waitTeammates(teammates, (r)=>{
+							if(r){
+								cb2(true)
+								return;
+							}
+							setTimeout(gather, 1000);
+						});
+			
+					} else {
+
+						cga.addTeammate(teammates[0], (r)=>{
+							if(r){
+								cb2(true)
+								return;
+							}
+							setTimeout(gather, 1000);
+						});
+					}
+			}
+			cga.travel.newisland.toStone('X', ()=>{
+				gather()
+			})
+		}
+	},
+	{//1
 		intro: '1.从法兰城侧过海底，直接在杰诺瓦开传送',
 		workFunc: function(cb2){
 			//队员进入地图，找队长组队
@@ -160,7 +189,7 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//1
+	{//2
 		intro: '2.补给之后出杰诺瓦镇',
 		workFunc: function(cb2){
 			var leader_go_1 = ()=>{
@@ -196,7 +225,7 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//2 
+	{//3
 		intro: '3.去蒂娜村开传送，注意只有白天是能去蒂娜村的，夜晚会被梦游村民fuck，夜晚地图index4201',
 		workFunc: function(cb2){
 			var leader_go_1 = ()=>{
@@ -297,7 +326,7 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//3
+	{//4
 		intro: '4.蒂娜村补给，出村准备回到杰诺瓦中转',
 		workFunc: function(cb2){
 			var leader_go_1 = ()=>{
@@ -335,7 +364,7 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//4
+	{//5
 		intro: '5.返回杰诺瓦镇中专补给，准备去阿巴尼斯村',
 		workFunc: function(cb2){
 			var leader_go_1 = ()=>{
@@ -370,7 +399,7 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//5
+	{//6
 		intro: '6.出杰诺瓦镇，过通往阿巴尼斯的地下道，来到阿巴尼斯开传送',
 		workFunc: function(cb2){
 			var leader_go_1 = ()=>{
