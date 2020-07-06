@@ -15,7 +15,7 @@ var thisobj = {
 			console.log('当前在奇利村采集，进入特殊不登出回补模式')
 		}
 		//判定亚留特村
-		else if((mapname_tmp == '芙蕾雅' && (curpos.x > 594 && curpos.y > 24))||mapname_tmp == '亚留特村'){
+		else if((mapname_tmp == '芙蕾雅' && (curpos.x > 594 && curpos.y > 24 && curpos.y < 150))||mapname_tmp == '亚留特村'){
 			console.log('当前在亚留特村采集，进入特殊不登出回补模式')
 		}else if(mapname_tmp != '艾尔莎岛' && mapname_tmp != '里谢里雅堡' && mapname_tmp != '法兰城' && mapname_tmp != '阿凯鲁法村' && mapname_tmp != '哥拉尔镇'){
 			cga.LogBack();
