@@ -267,6 +267,60 @@ var mineArray = [
 		})
 	}
 },
+{
+	level : 7,
+	name : '幻之钢',
+	display_name : '幻之钢法兰城',
+	func : (cb)=>{
+		cga.travel.falan.toStone('C', () => {
+			cga.walkList([
+				[17, 53, '法兰城'],
+				[22, 88, '芙蕾雅'],
+				[201, 166],
+			], () => {
+				cga.TurnTo(201, 165);
+				setTimeout(() => {
+					cga.AsyncWaitNPCDialog(() => {
+						cga.ClickNPCDialog(1, -1)
+						cga.AsyncWaitMovement({ map: 15000, delay: 1000, timeout: 5000 }, () => {
+							cga.walkList([
+								[20, 8, '莎莲娜海底洞窟 地下2楼'],
+								[11, 47],
+							], cb);
+						});
+					});
+				}, 1500);
+			});
+		})
+	}
+},
+{
+	level : 8,
+	name : '幻之银',
+	display_name : '幻之银法兰城',
+	func : (cb)=>{
+		cga.travel.falan.toStone('C', () => {
+			cga.walkList([
+				[17, 53, '法兰城'],
+				[22, 88, '芙蕾雅'],
+				[201, 166],
+			], () => {
+				cga.TurnTo(201, 165);
+				setTimeout(() => {
+					cga.AsyncWaitNPCDialog(() => {
+						cga.ClickNPCDialog(1, -1)
+						cga.AsyncWaitMovement({ map: 15000, delay: 1000, timeout: 5000 }, () => {
+							cga.walkList([
+								[20, 8, '莎莲娜海底洞窟 地下2楼'],
+								[12, 6],
+							], cb);
+						});
+					});
+				}, 1500);
+			});
+		})
+	}
+},
 ];
 
 var cga = global.cga;
