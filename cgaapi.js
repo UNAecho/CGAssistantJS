@@ -3205,7 +3205,7 @@ module.exports = function(callback){
 			arr[banks[i].pos-100] = banks[i];
 		}
 		
-		for(var i = 0; i < 80; ++i){
+		for(var i = 0; i < 20; ++i){
 			if(typeof arr[i] != 'undefined'){
 				if(typeof filter == 'string' && maxcount > 0){
 					if(arr[i].name == filter && arr[i].count < maxcount)
@@ -3671,6 +3671,36 @@ module.exports = function(callback){
 			if((teammates.length && teammate_ready + teammate_notready >= teammates.length) || (!teammates.length && teammate_ready + teammate_notready == 1)){
 				//some teammates are not ready
 				cb(false);
+				return false;
+			}
+			
+			return true;
+		});
+	}
+
+	cga.waitTeammateSayandreturninfo = (teammates, positivemsg,nativemsg,cb)=>{
+		var teammate_info = {
+			teammate_ready : 0,
+			teammate_answercount:0
+		};
+
+		cga.waitTeammateSay((player, msg)=>{
+
+			if(teammate_info[player.name] !== true && teammate_info[player.name] !== false){
+				console.log('msg :  ' + msg.indexOf(positivemsg))
+				if(msg.indexOf(positivemsg) >= 0){
+					teammate_info[player.name] = true;
+					teammate_info.teammate_ready ++;
+					teammate_info.teammate_answercount ++;
+				} else if((msg.indexOf(nativemsg) >= 0)){
+					teammate_info[player.name] = false;
+					teammate_info.teammate_answercount ++;
+				}
+			}
+			console.log('teammates.teammate_ready ' + teammate_info.teammate_ready+ 'readycount : ' + teammate_info.teammate_answercount)
+			if((teammates.length && teammate_info.teammate_answercount >= teammates.length) || (!teammates.length && teammate_answercount == 1)){
+				//all teammates are ready
+				cb(teammate_info);
 				return false;
 			}
 			
@@ -4376,7 +4406,7 @@ module.exports = function(callback){
 				if(tradeFinished)
 					return false;
 				
-				console.log('waitSysMsg='+msg);
+				console.log('waitSysMsg='+msg + 'playerName = ' + playerName);
 												
 				if(msg.indexOf('交易完成') >= 0){
 					tradeFinished = true;
