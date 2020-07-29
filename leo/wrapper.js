@@ -222,7 +222,7 @@ module.exports = new Promise(resolve => {
 		else cga.LogBack();
 		return cga.emogua.delay(2000).then(() => cga.emogua.waitAfterBattle());
 	}).then(() => {
-		if (['法兰城','艾尔莎岛'].indexOf(cga.GetMapName()) < 0) {
+		if (['法兰城','艾尔莎岛','阿凯鲁法村','哥拉尔镇'].indexOf(cga.GetMapName()) < 0) {
 			return cga.emogua.logBack(times + 1);
 		}
 	}).catch(e => {
@@ -897,12 +897,15 @@ module.exports = new Promise(resolve => {
 	 * 返回
 	 *     true 银行已没有指定物品
 	 */
-	cga.emogua.getFromBank = (filter) => {
-		const bankList = cga.GetBankItemsInfo().filter(e => {
+	cga.emogua.getFromBank = (filter,count = 100) => {
+		let bankList = cga.GetBankItemsInfo().filter(e => {
 			if (typeof filter == 'string') return e.name == filter || e.itemid == filter;
 			else if (typeof filter == 'function') return filter(e);
 			else return !filter;
 		});
+		if(bankList.length>count){
+			bankList = bankList.slice(0,count);
+		}
 		const items = cga.getInventoryItems();
 		let bankListIndex = 0;
 		let result = Promise.resolve();
@@ -2176,6 +2179,8 @@ module.exports = new Promise(resolve => {
 		);
 		context.enemies.front = context.enemies.filter(e => context.isFront(e.pos));
 		context.enemies.back = context.enemies.filter(e => !context.isFront(e.pos));
+		//1级宠信息
+		context.enemies.lv1 = context.enemies.filter(e => e.level == 1);
 		context.teammates = context.units.filter(e =>
 			(context.player_pos > 9 && e.pos > 9) ||
 			(context.player_pos <= 9 && e.pos <= 9)
@@ -2283,10 +2288,10 @@ module.exports = new Promise(resolve => {
 							isBossBattle = (cga.GetBGMIndex() == 14);
 							delay = AutoBattleFirstRoundDelay;
 							if (isBossBattle) {
-								console.log('BOSS战斗');
+								//console.log('BOSS战斗');
 							}
 							if (context.round_count == 1) { // 被偷袭
-								console.log('被偷袭');
+								//console.log('被偷袭');
 								//delay += AutoBattleFirstRoundDelay;
 							}
 						} else if (lastRound === context.round_count) {
@@ -2296,6 +2301,7 @@ module.exports = new Promise(resolve => {
 						if (delay > 0) setTimeout(() => battle(state, context), delay);
 						else battle(state, context);
 						lastRound = context.round_count;
+						context.isFirstBattleAction = isFirstBattleAction;
 						//console.log(context);
 					}
 					isFirstBattleAction = false;

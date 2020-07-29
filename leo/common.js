@@ -1,6 +1,6 @@
 module.exports = require('./wrapper').then(cga => {
     global.leo = cga.emogua;
-    leo.version = '2.3';
+    leo.version = '2.6';
     leo.qq = '158583461'
     leo.copyright = '红叶散落';
     leo.FORMAT_DATE = 'yyyy-MM-dd';
@@ -81,7 +81,10 @@ module.exports = require('./wrapper').then(cga => {
         console.log('健康： ' + petinfo.health);
         //宠物信息
         console.log('宠物信息： ');
-        var pets = cga.GetPetsInfo();
+        leo.petInfoPrint();
+    }
+    //打印宠物信息
+    leo.petInfoPrint = (pets = cga.GetPetsInfo()) => {
         for (var i in pets) {
             var pet = pets[i];
             var index = parseInt(pet.index) + 1;
@@ -123,8 +126,7 @@ module.exports = require('./wrapper').then(cga => {
     //人物说话和控制台都打印内容
     leo.log = (words = '') => {
         console.log(leo.logTime() + words);
-        leo.say(leo.logTime() + words);
-        return leo.resolve();
+        return leo.say(leo.logTime() + words);;
     }
     //流程控制辅助函数，无实际功能
     leo.todo = leo.next = leo.done = (result) => {
@@ -220,8 +222,7 @@ module.exports = require('./wrapper').then(cga => {
                     teammates[i] = teamplayers[i].name;
                 }
             }
-            leo.log('组队完成，队员[' + teammates.toString() + ']');
-            return leo.done();
+            return leo.log('组队完成，队员[' + teammates.toString() + ']');
         });
     }
     //队员进入队伍，参数为队长名字
@@ -253,8 +254,7 @@ module.exports = require('./wrapper').then(cga => {
     leo.enterTeamBlock = (teamLeader)=>{
         return leo.enterTeam(teamLeader)
         .then(() => {
-            leo.log('已进入队伍，队长[' + cga.getTeamPlayers()[0].name + ']');
-            return leo.next();
+            return leo.log('已进入队伍，队长[' + cga.getTeamPlayers()[0].name + ']');
         });
     }
 
@@ -325,7 +325,7 @@ module.exports = require('./wrapper').then(cga => {
                 cga.ClickNPCDialog(-1, 6);
                 return false;
             }))
-            .then(() => leo.done());
+            .then(() => leo.logBack());
         }else{
             return leo.done();
         }
@@ -921,6 +921,21 @@ module.exports = require('./wrapper').then(cga => {
     leo.getPetCalcInfo = (pet, split = 'x') => {
         return '【LV' + pet.level + '】【' + pet.realname + '】【 ' + pet.maxhp + split + pet.maxmp + split + pet.detail.value_attack + split + pet.detail.value_defensive + split + pet.detail.value_agility + ' 】';
     }
+    //打印遇敌的1级宠信息，用于自动战斗抓宠过滤
+    leo.isCatchPet = (enemies, petOptions,isNameOnly = false) => {
+        enemies.forEach(e => {
+            var isPrint = true;
+            if(isNameOnly){
+                isPrint = e.name == petOptions.name;
+            }
+            if(isPrint){
+                var flag = (e.maxhp >= petOptions.minHp && e.maxmp >= petOptions.minMp)
+                var flagStr = flag?'，抓！':'';
+                console.log(leo.logTime()+'第【'+(petOptions.index++)+'】只1级怪:【' + e.name + '】【' + e.maxhp + '('+petOptions.minHp+')/' + e.maxmp + '('+petOptions.minMp+')】'+flagStr);
+            }
+        });
+    }
+
     //随机遇敌(队长用)
     leo.encounterTeamLeader = leo.encounter;
     //随机遇敌(队员用)
@@ -957,7 +972,7 @@ module.exports = require('./wrapper').then(cga => {
     }
     //获取人物的声望称号
     leo.getPlayerSysTitle = (titles) => {
-		var sysTitles = ['无名的旅人','树旁的落叶','水面上的小草','呢喃的歌声','地上的月影','奔跑的春风','苍之风云','摇曳的金星','欢喜的慈雨','蕴含的太阳','敬畏的寂静','无尽星空'];
+		var sysTitles = ['恶人','受忌讳的人','受挫折的人','无名的旅人','树旁的落叶','水面上的小草','呢喃的歌声','地上的月影','奔跑的春风','苍之风云','摇曳的金星','欢喜的慈雨','蕴含的太阳','敬畏的寂静','无尽星空','迈步前进者','追求技巧的人','刻于新月之铭','掌上的明珠','敬虔的技巧','踏入神的领域','贤者','神匠','摘星的技巧','万物创造者','持石之贤者'];
 		for(var i in titles){
 			for(var j in sysTitles){
 				if(titles[i] == sysTitles[j]){
@@ -985,11 +1000,17 @@ module.exports = require('./wrapper').then(cga => {
         }
         return leo.delay(1000);
     }
-    leo.dropItem = (itemName) => {
+    leo.dropItem = (itemName,minCount) => {
         var items = leo.getItems(itemName);
         if(items && items.length >0 ){
             for(var i in items){
-                cga.DropItem(items[i].pos);
+                var isDrop = true;
+                if(minCount && items[i].count >= minCount){
+                    isDrop = false;
+                }
+                if(isDrop){
+                    cga.DropItem(items[i].pos);
+                }
             }
         }
         return leo.delay(1000);
@@ -1243,6 +1264,13 @@ module.exports = require('./wrapper').then(cga => {
             ]);
         }
     }
+    //从阿凯鲁法村去砍村
+    leo.gotoKan = ()=>{
+        if(cga.GetMapName() == '阿凯鲁法村'){
+            return leo.autoWalk([166,107])
+            .then(()=>leo.talkNpc(0,leo.talkNpcSelectorYes,'坎那贝拉村'));
+        }
+    }
     //切图，带战斗检测
     leo.forceMoveEx = (orientation, times = 1) => {
         if  (times > 0) {
@@ -1252,6 +1280,13 @@ module.exports = require('./wrapper').then(cga => {
             .then(() => leo.forceMoveEx(orientation, times - 1));
         }
         return leo.done();
+    }
+
+    //退出脚本
+    leo.exit = () => {
+        return leo.log('脚本即将结束')
+        .then(()=>leo.delay(2000))
+        .then(()=>process.abort());
     }
 
     ///////////////////////脚本默认执行内容///////////////////////////////
@@ -1402,6 +1437,6 @@ module.exports = require('./wrapper').then(cga => {
         }
     };
     leo.monitor.keepAlive();    //启动防掉线循环
-    leo.monitor.config.monitorLoop(); //启动监控
+    setTimeout(leo.monitor.config.monitorLoop, 5000);//启动监控
     return cga;
 });
