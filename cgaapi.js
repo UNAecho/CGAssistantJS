@@ -3405,7 +3405,7 @@ module.exports = function(callback){
 				console.log(e);
 			}
 			
-			setTimeout(move, 100);
+			setTimeout(move, 300);
 		}
 		
 		move();
