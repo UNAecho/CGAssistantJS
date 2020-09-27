@@ -4,6 +4,23 @@ var cga = require('../cgaapi')(function () {
 		console.log('需要从新城启动')
 		// return;
 	}
+	var getintoturorroom = ()=>{
+		cga.TurnTo(11, 0);
+		cga.AsyncWaitNPCDialog(() => {
+			cga.ClickNPCDialog(4, 0);
+			cga.AsyncWaitNPCDialog(() => {
+				cga.ClickNPCDialog(1, -1)
+				cga.AsyncWaitMovement({ map: 15012, delay: 1000, timeout: 5000 }, () => {
+					cga.walkList([
+						[11, 11],
+					], () => {
+						cga.SayWords('已到达咒术就职处', 0, 3, 1);
+					});
+				});
+
+			});
+		});
+	}
 	cga.travel.falan.toStone('C', () => {
 		cga.walkList([
 			[17, 53, '法兰城'],
@@ -29,24 +46,12 @@ var cga = require('../cgaapi')(function () {
 											[38, 37, '咒术师的秘密住处'],
 											[12, 7],
 											[10, 0, 15008],
-											[11, 1],
+											[1, 10, 15010],
+											[15, 10]
 										], () => {
-											cga.TurnTo(11, 0);
-											cga.AsyncWaitNPCDialog(() => {
-												cga.ClickNPCDialog(4, 0);
-												cga.AsyncWaitNPCDialog(() => {
-													cga.ClickNPCDialog(1, -1)
-													cga.AsyncWaitMovement({ map: 15012, delay: 1000, timeout: 5000 }, () => {
-														cga.walkList([
-															[11, 11],
-														], () => {
-															cga.SayWords('我要转职', 0, 3, 1);
-														});
-													});
-
-												});
-											});
-
+											// 不去导师房间了，改去技能学习处 
+											// getintoturorroom()
+											cga.SayWords('已到达技能学习处，看看到处的书架吧', 0, 3, 1);
 										});
 									});
 								});

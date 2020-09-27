@@ -1,13 +1,11 @@
 var cga = require('../cgaapi')(function(){
 	//队员信息
 	var playerinfo = cga.GetPlayerInfo();
-	//手动输入队友，方便脚本直接加队伍，省去手动组队切窗口的麻烦
-	var teammates = ["UNAの弓","UNAの格斗2","UNAの造斧","UNAの护士","UNAの封印"];
-	
+	var teammates = [];
 	var teamplayers = cga.getTeamPlayers();
 
-	// for(var i in teamplayers)
-	// 	teammates[i] = teamplayers[i].name;
+	for(var i in teamplayers)
+		teammates[i] = teamplayers[i].name;
 	
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
 
