@@ -437,6 +437,21 @@ module.exports = function(callback){
 		return null;
 	}
 	
+
+	//获取装备种类，返回String
+	cga.getEquipClass = (item)=>{
+		if(item.attr){
+			var regex = item.attr.match(/\$0种类 (\w+)/);
+			console.log(regex)
+
+			if(regex && regex.length >= 3){
+				return [parseInt(regex[1]), parseInt(regex[2])];
+			}
+		}
+
+		return null;
+	}
+
 	cga.travel = {};
 		
 	cga.travel.falan = {};
@@ -2279,8 +2294,8 @@ module.exports = function(callback){
 
 		var frompos = [curX - walls.x_bottom, curY - walls.y_bottom];
 		var topos = [targetX - walls.x_bottom, targetY - walls.y_bottom];
-		console.log('寻路起始坐标 ('  + (frompos[0]) + ', '+ (frompos[1]) + ')');
-		console.log('寻路目的坐标 ('  + (topos[0]) +', '+(topos[1]) + ')');
+		// console.log('寻路起始坐标 ('  + (frompos[0]) + ', '+ (frompos[1]) + ')');
+		// console.log('寻路目的坐标 ('  + (topos[0]) +', '+(topos[1]) + ')');
 		
 		if(frompos[0] >= 0 && frompos[0] < walls.x_size && 
 		frompos[1] >= 0 && frompos[1] < walls.y_size &&
@@ -2641,7 +2656,7 @@ module.exports = function(callback){
 				}
 
 				if(newList.length == 0){
-					console.log('寻路结束3');
+					// console.log('寻路结束3');
 					end( {pos : [targetX, targetY], map : targetMap} );
 					return;
 				}
@@ -4406,7 +4421,7 @@ module.exports = function(callback){
 				if(tradeFinished)
 					return false;
 				
-				console.log('waitSysMsg='+msg + 'playerName = ' + playerName);
+				// console.log('waitSysMsg='+msg + 'playerName = ' + playerName);
 												
 				if(msg.indexOf('交易完成') >= 0){
 					tradeFinished = true;
@@ -4464,7 +4479,7 @@ module.exports = function(callback){
 						return;
 					}
 					
-					console.log('AsyncWaitTradeStuffs='+type);
+					// console.log('AsyncWaitTradeStuffs='+type);
 															
 					getInTradeStuffs = true;
 						
@@ -4504,14 +4519,14 @@ module.exports = function(callback){
 						return;
 					}
 					
-					console.log('AsyncWaitTradeState='+state);
+					// console.log('AsyncWaitTradeState='+state);
 					
 					if(!err){
 						if (state == cga.TRADE_STATE_READY || state == cga.TRADE_STATE_CONFIRM) {
 							getInTradeStuffs = true;
 							if (!checkParty || tradeStuffsChecked || checkParty(playerName ? playerName : savePartyName, receivedStuffs)) {
 								tradeStuffsChecked = true;
-								console.log('confirm');
+								// console.log('confirm');
 								cga.DoRequest(cga.REQUEST_TYPE_TRADE_CONFIRM);
 							} else {
 								console.log('refuse');
@@ -4548,7 +4563,7 @@ module.exports = function(callback){
 			if(tradeFinished)
 				return;
 			
-			console.log('AsyncWaitTradeDialog='+partyLevel);
+			// console.log('AsyncWaitTradeDialog='+partyLevel);
 			//console.log(partyName);
 			//console.log(partyLevel);
 			
