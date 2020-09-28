@@ -118,7 +118,8 @@ var teamModeArray = [
 				return;
 			}
 			
-			cga.SayWords('等待队友中...队伍人数大于等于'+thisobj.minTeamMemberCount+'人即可发车！', 0, 3, 1 );
+			// cga.SayWords('等待队友中...队伍人数大于等于'+thisobj.minTeamMemberCount+'人即可发车！', 0, 3, 1 );
+			console.log('等待队友中...队伍人数大于等于'+thisobj.minTeamMemberCount+'人即可发车！')
 			setTimeout(wait, 5000);
 		}
 		

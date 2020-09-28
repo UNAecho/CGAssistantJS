@@ -72,12 +72,14 @@ var thisobj = {
 					cga.ClickNPCDialog(1, 0);
 					setTimeout(()=>{
 						cga.assessAllItems(cb);
+						thisobj.object.donecount +=1
 					}, 500);
 					return;
 				}
 				else
 				{
 					cga.assessAllItems(cb);
+					thisobj.object.donecount +=1
 					return;
 				}
 			}
@@ -91,7 +93,7 @@ var thisobj = {
 				console.log('当前鉴定等级： ' +  thisobj.object.skill.lv + ' ，已鉴定 '+ thisobj.object.donecount +' 次 ,' )
 			}
 			if (thisobj.object.skill.lv == thisobj.object.maxskilllv ){
-				throw new error('你需要晋级了，不然技能不涨经验')
+				console.log('你需要晋级了，不然技能不涨经验')
 			} 
 
 			

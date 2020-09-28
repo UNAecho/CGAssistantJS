@@ -31,7 +31,7 @@ var thisobj = {
 				return
 			}
 
-			console.log('开始买布...');
+			// console.log('开始买布...');
 			
 			var buyArray = [];
 			if(thisobj.object.gatherCount['麻布']){
@@ -57,11 +57,11 @@ var thisobj = {
 			
 			var repeat = ()=>{
 				
-				console.log('更新买布状态：'+thisobj.object.state);
+				// console.log('更新买布状态：'+thisobj.object.state);
 				
 				if(!thisobj.check_done()){
 					thisobj.object.state = 'gathering';
-					socket.emit('gathering');
+					socket.emit('gathering',{ player_name : cga.GetPlayerInfo().name, gold : cga.GetPlayerInfo().gold });
 					cb(true);
 					return;
 				}
@@ -166,6 +166,8 @@ var thisobj = {
 			socket.emit('register', {
 				state : thisobj.object.state,
 				player_name : cga.GetPlayerInfo().name,
+				// 初始资金，用于计算整体一批socket下的所有账号的生产利润总和
+				initial_funding : cga.GetPlayerInfo().gold,
 				job_name : thisobj.object.name,
 			});
 		});
@@ -183,7 +185,7 @@ var thisobj = {
 				});
 			}
 			
-			console.log(thisobj.object.gatherCount);
+			// console.log(thisobj.object.gatherCount);
 		});
 
 		socket.on('trade', (required_stuffs)=>{
