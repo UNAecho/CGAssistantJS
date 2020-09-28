@@ -1,0 +1,92 @@
+{
+    "battle": {
+        "autobattle": true,
+        "bossprot": false,
+        "delayfrom": 4000,
+        "delayto": 4500,
+        "highspeed": true,
+        "list": [
+            {
+                "condition": 0,
+                "condition2": 0,
+                "condition2rel": 0,
+                "condition2val": "",
+                "conditionrel": 0,
+                "conditionval": "",
+                "index": 0,
+                "petaction": 100,
+                "petskillname": "防御",
+                "pettarget": 0,
+                "pettargetsel": 0,
+                "playeraction": 2,
+                "playertarget": -1,
+                "playertargetsel": -1
+            }
+        ],
+        "lockcd": false,
+        "lv1prot": false,
+        "pet2action": false,
+        "playerforceaction": false,
+        "r1nodelay": false,
+        "showhpmp": false
+    },
+    "chat": {
+        "displayname": true,
+        "displaytime": true,
+        "mychat": true,
+        "npcmsg": true,
+        "playerchat": true,
+        "sysmsg": true,
+        "todayonly": true
+    },
+    "itemdroplist": [
+        "#18028",
+        "#18008",
+        "#18029",
+        "#14951",
+        "#18310",
+        "#18313",
+        "#18027",
+        "#18068",
+        "#18005",
+        "#18048",
+        "#18069",
+        "#18195",
+        "#18311"
+    ],
+    "itemidmap": {
+    },
+    "itemtweaklist": [
+        "小麦粉|40",
+        "牛奶|40",
+        "盐|40",
+        "酱油|40",
+        "葱|40",
+        "鸡肉|40",
+        "牛肉|40",
+        "胡椒|40",
+        "砂糖|20",
+        "苹果薄荷|40",
+        "柠檬草|40",
+        "面包|3",
+        "法国面包|3",
+        "烧鸡|3",
+        "寿喜锅|3",
+        "魅惑的哈密瓜面包|3",
+        "魔法红萝卜|40",
+        "阿巴尼斯哈密瓜|3",
+        "鹿皮|40",
+        "印度轻木|40",
+        "铜|40",
+        "麻布|20",
+        "木棉布|20",
+        "毛毡|20"
+    ],
+    "player": {
+        "autosupply": true,
+        "movespd": 129,
+        "noswitchanim": true,
+        "workacc": 100,
+        "workdelay": 1500
+    }
+}
