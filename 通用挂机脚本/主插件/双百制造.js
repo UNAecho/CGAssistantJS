@@ -4,8 +4,38 @@ var configTable = global.configTable;
 
 var craft_count = 0;
 var craft_target = null;
+//脚本开始时人物信息，用于检测是否刷双百
+var playerInfoOrigin = cga.GetPlayerInfo()
 
-var healObject = require('./../公共模块/治疗自己');
+// 提取本地职业数据
+const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
+var professionalInfo = getprofessionalInfos(playerInfoOrigin.job)
+
+//开始时间，用于计算效率
+var starttime = new Date().getTime()
+//统计效率时刻的时间点
+var nowtime = null
+
+//初始化总资产，socket每加入一个人就累加资产。用于计算总利益
+var originassets = 0
+//统计效率时刻点总资产
+var generalassets = 0
+
+//【初始化】整个生产team的socket资产信息，初始化时直接加入制造者信息
+var originmoneyinfos = {}
+originmoneyinfos[playerInfoOrigin.name] = playerInfoOrigin.gold
+//【实时】整个生产team的socket资产信息
+var moneyinfos = {}
+
+//检查是刷双百还是单纯制造的flag
+var aim_flag = false
+if(playerInfoOrigin['detail'].manu_endurance == 100 && playerInfoOrigin['detail'].manu_skillful == 100){
+	aim_flag = true
+}
+//如果刷双百，升级后判断是否达到目标的flag
+var warn_flag = false
+
+var healObject = require('../公共模块/治疗自己');
 
 const allowMats = ['麻布', '印度轻木', '铜条', '鹿皮', '毛毡', '木棉布'];
 
@@ -15,16 +45,9 @@ const isFabricName = (name)=>{
 
 const teachers = [
 {
-	skillname : '制鞋',
-	path : [
-		[7, 3, '村长的家'],
-		[2, 9, '圣拉鲁卡村'],
-		[32, 70, '装备品店'],
-		[14, 4, '1楼小房间'],
-		[9, 3, '地下工房'],
-		[22, 23],
-	],
-	pos : [23, 24],	
+	skillname : professionalInfo.skill,
+	path : professionalInfo.teacherwalk,
+	pos : professionalInfo.teacherpos,	
 },
 ]
 
@@ -41,6 +64,20 @@ io.on('connection', (socket) => {
 		socket.cga_data = data;
 		socket.join('buddy_'+data.job_name);
 		console.log(socket.cga_data.player_name +' 已加入双百节点');
+		if(socket.cga_data.initial_funding){
+			// 重新计算初始化资产
+			originassets = 0
+			// 更新队员加入时现金信息，如果有信息了就不做处理，没有就新增
+			originmoneyinfos[socket.cga_data.player_name] > 0 ? ()=>{} : originmoneyinfos[socket.cga_data.player_name] = socket.cga_data.initial_funding
+			// 总金额加和
+			for(var i in originmoneyinfos){
+				// 初始资产累加统计
+				originassets += originmoneyinfos[i]
+				// 初始化一份实时更新的dict，用于接下来与原资产进行计算，得出总利润
+				moneyinfos[i] = originmoneyinfos[i]
+			}
+			console.log('有新队员【' + socket.cga_data.player_name + '】加入节点，当前有【' + Object.keys(originmoneyinfos).length +'】人，队伍总资产为：【' + originassets + '】')
+		}
 	});
 
 	socket.on('done', (data) => {
@@ -48,13 +85,31 @@ io.on('connection', (socket) => {
 		socket.cga_data.state = 'done'; 
 	});
 	
-	socket.on('gathering', () => {
-		socket.cga_data.state = 'gathering'; 
+	socket.on('gathering', (data) => {
+		socket.cga_data.state = 'gathering';
+		if(data){
+			nowtime = null
+			generalassets = 0
+			// 新emit过来的队员资产信息
+			moneyinfos[data.player_name] = data.gold
+			// 实时制造者资产信息
+			moneyinfos[playerInfoOrigin.name] = cga.GetPlayerInfo().gold
+			// 交易之后，采集号去采集，此时计算总资产
+			for(var i in moneyinfos){
+				generalassets += moneyinfos[i]
+			}
+			profit = generalassets - originassets
+			nowtime = new Date().getTime()
+			costminutes = Math.floor((nowtime - starttime)/(60*1000)) <1 ? 1 : Math.floor((nowtime - starttime)/(60*1000))
+			console.log('当前总资产：【' + generalassets +'】，生产队【' + Object.keys(moneyinfos).length + '】人，耗时【'+costminutes+'】分钟，总利润：【' + profit + '】，每分钟获利：【' + Math.floor(profit/costminutes)+'】')
+
+		}
 	});
 	
 	socket.on('disconnect', (err) => {
 		if(socket.cga_data)
 			console.log(socket.cga_data.player_name +' 已退出双百节点');
+			delete moneyinfos[socket.cga_data.player_name]
 	})
 });
 
@@ -282,15 +337,31 @@ var cleanUseless = (cb)=>{
 		});
 		cga.sellArray(sellarray, ()=>{
 			cga.walkList([
-			[153, 129]//扔布点
+			[153, 123]//扔布点
 			], ()=>{
 				dropUseless(cb);
 			});
 		});
 	});
 }
+// 本方法需要多层if来避免循环判断带来的循环浪费
+var checkaim = (playerInfo)=>{
+	//如果每次制造循环都判断是否到达双百，性能过于浪费。通过开启warnflag来避免这一问题
+	if(warn_flag){
+		if(playerInfo['detail'].manu_endurance == 100 && playerInfo['detail'].manu_skillful == 100){
+			console.log('注意：人物已经刷到了双百，再刷下去也只是金钱和声望的增长，望周知')
+			return
+		}
+	}else{
+		return
+	}
 
+}
 var loop = ()=>{
+
+	// console.log('teachers = ' + teachers[0])
+	// console.log('teachers = ' + teachers[1])
+	// console.log('teachers = ' + teachers[2])
 
 	var craftSkillList = cga.GetSkillsInfo().filter((sk)=>{
 		return (sk.name.indexOf('制') == 0 || sk.name.indexOf('造') == 0 || sk.name.indexOf('铸') == 0 );
@@ -391,12 +462,14 @@ var loop = ()=>{
 			
 			//升级?
 			if(cga.findPlayerSkill(thisobj.craftSkill.name).lv != thisobj.craftSkill.lv){
+				// 开启警告flag，用于接下来提醒是否已经刷满双百
+				warn_flag = true
 				loop();
 				return;
 			}
 			
-			console.log('开始制造：'+craft_target.name);
-			
+			// console.log('开始制造：'+craft_target.name);
+
 			cga.craftItemEx({
 				craftitem : craft_target.name,
 				immediate : true
@@ -404,7 +477,11 @@ var loop = ()=>{
 
 				if(results && results.success){
 					craft_count ++;
-					console.log('已造' + craft_count + '次');
+					// console.log('已造' + craft_count + '次');
+					//检查是否刷满双百
+					if(!aim_flag){
+						checkaim(playerInfo)
+					}
 					setTimeout(craft, 500);
 				} else {
 					setTimeout(loop, 500);
@@ -512,7 +589,7 @@ var thisobj = {
 		
 		var stage2 = (cb2)=>{
 			
-			var sayString = '【双百插件】请选择几级之后删除技能: (2~11) (只支持鞋子，11代表不删)';
+			var sayString = '【双百插件】请选择几级之后删除技能: (2~11) (目前已支持所有制造系技能)';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val)=>{
 				if(val !== null && 2 >= 2 && 11 <= 11){
