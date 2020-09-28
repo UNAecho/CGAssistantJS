@@ -1,7 +1,7 @@
 
 require('./common').then(cga => {
 	leo.monitor.config.healSelf = true;//自动治疗自己
-	leo.log('大叔memory尝试自采自造1级短杖制作脚本，需要使用leo的模块启动');
+	// leo.log('大叔memory尝试自采自造1级短杖制作脚本，需要使用leo的模块启动');
 	var doctorName = '大叔-医治苍生';
 	var countmany = 1; //制作次数
 	var skillLevel = 1; //造几级， 目前只写了造1级的
@@ -111,7 +111,7 @@ require('./common').then(cga => {
 			leo.log('已到达工房，走到铜跟前，准备换铜');			
 			var exchangeCount = cga.getItemCount(itemName) / 20;
 			var list = [{index:0, count:exchangeCount}];
-			await leo.exchange(4,list);
+			await leo.exchange(6,list);
 			// 压条结束
 			}
 		}

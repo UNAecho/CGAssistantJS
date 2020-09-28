@@ -1,12 +1,12 @@
-
+﻿
 require('./common').then(cga => {
 	leo.monitor.config.healSelf = true;//自动治疗自己
-	// leo.log('大叔memory尝试自采自造1级剑制作脚本，需要使用leo的模块启动');
+	// // leo.log('大叔memory尝试自采自造1级斧制作脚本，需要使用leo的模块启动');
 	var doctorName = '大叔-医治苍生';
 	var countmany = 1; //制作次数
 	var skillLevel = 1; //造几级， 目前只写了造1级的
-	var productName="长剑" ;
-	var skill = cga.findPlayerSkill('铸剑');
+	var productName="手斧" ;
+	var skill = cga.findPlayerSkill('造斧');
 	if(!skill){
 		console.error('提示：没有制造技能！');
 		return;
@@ -121,7 +121,7 @@ require('./common').then(cga => {
 		///////////////////////////////// 2.伐木模块开始
 			leo.log('伐木模块开启');	
 		
-		while(cga.getItemCount('印度轻木') < 160 && cga.getItemCount('长剑') < 1){
+		while(cga.getItemCount('印度轻木') < 160 && cga.getItemCount('手斧') < 1){
 			await leo.logBack()
 			await leo.checkHealth(doctorName)
 
@@ -182,7 +182,7 @@ require('./common').then(cga => {
 		///////////////////////////////// 4.制作模块开始
 		while(cga.getItemCount('铜条')>=4 
 			&& cga.getItemCount('印度轻木')>=20 ){
-			await leo.log('材料已集齐，开始去制造一级1A 长剑')
+			await leo.log('材料已集齐，开始去制造一级1A 手斧')
 			await leo.logBack()
 			await leo.checkHealth(doctorName)
 			await leo.loop(()=>{
