@@ -186,6 +186,7 @@ module.exports = function(callback){
 		cga.TurnTo(pos[0], pos[1]);
 	}
 	
+	//转向(x,y)坐标，默认往前一格避免捡起面前的物品
 	cga.turnTo = (x, y)=>{
 		cga.turnOrientation(cga.getOrientation(x, y));
 	}
@@ -210,7 +211,7 @@ module.exports = function(callback){
 		return str.replace(/%(5C|2F|3A|2A|3F|22|3C|3E|7C)/g, (c)=>{ return {'%5C':'\\','%2F':'/','%3A':':','%2A':'*','%3F':'?','%22':'"','%3C':'<','%3E':'>','%7C':'|'}[c];});
 	}
 
-	//获取制造物品名为itemname的物品所需要的材料信息，返回材料信息object或null
+	//获取制造某种物品所需要的材料信息，返回材料信息object或null
 	cga.getItemCraftInfo = function(filter){
 		var result = null;
 		cga.GetSkillsInfo().forEach((sk)=>{
@@ -245,6 +246,12 @@ module.exports = function(callback){
 		return result;
 	}
 
+	/*鉴定、装饰物品，参数：
+		cga.manipulateItemEx({
+			itempos : 操作的物品位置,
+			immediate : 是否立即完成（高速鉴定）,
+		}, cb回调)
+	*/
 	cga.manipulateItemEx = function(options, cb){
 		var skill = cga.findPlayerSkill(options.skill);
 		if(!skill){
@@ -301,11 +308,18 @@ module.exports = function(callback){
 	}
 	
 	//制造物品，参数：物品名，添加的宝石的名字(或物品位置)
+	//该API已经弃用，请用cga.craftItemEx
 	cga.craftNamedItem = function(craftItemName, extraItemName){
-
-		throw new Error('this api is deprecated.')
+		throw new Error('该API已经弃用，请用cga.craftItemEx')
 	}
 
+	/*制造物品，参数：
+		cga.craftItemEx({
+			craftitem : 制造的物品名,
+			extraitem(可选) : 添加宝石
+			immediate : 是否立即完成（高速制造）,
+		}, cb回调)
+	*/
 	cga.craftItemEx = function(options, cb){
 
 		var info = cga.getItemCraftInfo(options.craftitem);
@@ -412,7 +426,7 @@ module.exports = function(callback){
 			return item.pos >= 0 && item.pos < 8;
 		});
 	}
-		
+
 	//获取装备耐久，返回数组[当前耐久,最大耐久]
 	cga.getEquipEndurance = (item)=>{
 
@@ -422,18 +436,7 @@ module.exports = function(callback){
 				return [parseInt(regex[1]), parseInt(regex[2])];
 			}
 		}
-		if(item.info){
-			regex = item.info.match(/\$4耐久 (\d+)\/(\d+)/);
-			if(regex && regex.length >= 3){
-				return [parseInt(regex[1]), parseInt(regex[2])];
-			}
-		}
-		if(item.info2){
-			regex = item.info2.match(/\$4耐久 (\d+)\/(\d+)/);
-			if(regex && regex.length >= 3){
-				return [parseInt(regex[1]), parseInt(regex[2])];
-			}
-		}
+
 		return null;
 	}
 	
@@ -515,7 +518,7 @@ module.exports = function(callback){
 				], cb);
 				return;
 			}
-			if(stone == 'B1'){
+			if(stone == 'B2'){
 				cga.walkList([
 				[155, 122]
 				], cb);
@@ -647,50 +650,6 @@ module.exports = function(callback){
 			});
 			return;
 		}
-		/*if(curMap == '里谢里雅堡' && curXY.x >= 33 && curXY.x <= 35 && curXY.y >= 87 && curXY.y <= 90 ){
-			cga.walkList([
-			[41, 91],
-			], (err, reason)=>{
-				if(err){
-					cb(err, reason);
-					return;
-				}
-				cga.travel.falan.toStoneInternal(stone, cb, true);
-			});
-			return;
-		}
-		if(curMap == '里谢里雅堡'){
-			if(stone == 'C'){
-				cb(true);
-				return;
-			}
-			var walks = null;
-			const walkOutOfCastle_1 = [
-				[40, 98, '法兰城'],
-				[141, 148]
-			];
-			const walkOutOfCastle_2 = [
-				[40, 98, '法兰城'],
-				[162, 130]
-			];
-			if(stone.length == 1)
-				walks = walkOutOfCastle_2;
-			else if(stone.length >= 2 && stone.charAt(1) == '1')
-				walks = walkOutOfCastle_1;
-			else
-				walks = walkOutOfCastle_2;
-
-			cga.walkList(walks, (err, reason)=>{
-				if(err){
-					cb(err, reason);
-					return;
-				}
-				cga.travel.falan.toStoneInternal(stone, cb);
-			});
-			return;
-		}*/
-		//重新回城
-		//console.log('yyy')
 		cga.LogBack();
 		cga.AsyncWaitMovement({map:desiredMap, delay:1000, timeout:5000}, (err, reason)=>{
 			if(err){
@@ -831,6 +790,7 @@ module.exports = function(callback){
 		});	
 	}
 	
+	//前往里堡打卡处并打卡
 	cga.travel.falan.toCastleClock = (cb)=>{
 		cga.travel.falan.toStone('C', (r)=>{
 			cga.walkList([
@@ -874,6 +834,7 @@ module.exports = function(callback){
 		return null;
 	}
 
+	//前往圣骑士营地，noWarp为true时只进到曙光骑士团营地
 	cga.travel.falan.toCamp = (cb, noWarp)=>{
 		var warp = ()=>{
 			
@@ -961,6 +922,7 @@ module.exports = function(callback){
 		}
 	}
 
+	//前往流行商店
 	cga.travel.falan.toFashionStore = cga.travel.falan.toFabricStore = (cb)=>{
 		if(cga.GetMapName()=='流行商店'){
 			cb(null);
@@ -983,6 +945,7 @@ module.exports = function(callback){
 		}
 	}
 	
+	//前往凯蒂夫人的店
 	cga.travel.falan.toKatieStore = cga.travel.falan.toAssessStore = (cb)=>{
 		if(cga.GetMapName()=='凯蒂夫人的店'){
 			cb(null);
@@ -1005,6 +968,7 @@ module.exports = function(callback){
 		}
 	}
 	
+	//前往达美姊妹的店
 	cga.travel.falan.toDameiStore = cga.travel.falan.toCrystalStore = (cb)=>{
 		if(cga.GetMapName()=='达美姊妹的店'){
 			cb(null);
@@ -1027,6 +991,7 @@ module.exports = function(callback){
 		}
 	}
 	
+	//前往法兰工房，mine为要换的矿名
 	cga.travel.falan.toMineStore = (mine, cb)=>{
 		var mineExchange = null;
 		if(mine == '铜'){
@@ -1146,6 +1111,7 @@ module.exports = function(callback){
 		}
 	}
 	
+	//前往新城工房，mine为要换的矿名
 	cga.travel.falan.toNewMineStore = (mine, cb)=>{
 		var mineExchange = null;
 		if(mine == '铜'){
@@ -1496,6 +1462,7 @@ module.exports = function(callback){
 	
 	cga.travel.AKLF.isSettled = false;
 	
+	//从阿凯鲁法到法兰
 	cga.travel.AKLF.toFalan = (cb)=>{
 		if(cga.GetMapName() != '阿凯鲁法村'){
 			cb(new Error('必须从阿凯鲁法村启动'));
@@ -1600,7 +1567,7 @@ module.exports = function(callback){
 			});
 		});
 	}
-		
+	
 	cga.travel.falan.toTeleRoomTemplate = (villageName, npcPos, npcPos2, npcPos3, cb)=>{
 		cga.travel.falan.toStone('C', ()=>{
 			var teamplayers = cga.getTeamPlayers();
@@ -1645,6 +1612,7 @@ module.exports = function(callback){
 		});
 	}
 	
+	//从启程之间传送到指定村落
 	cga.travel.falan.toTeleRoom = (villageName, cb)=>{
 		
 		switch(villageName){
@@ -1739,7 +1707,8 @@ module.exports = function(callback){
 			cb(null);
 		});
 	}
-	
+
+	//从法兰坐船前往某城镇
 	cga.travel.falan.toCity = function(city, cb){
 		switch(city){
 			case '新城':case '艾尔莎岛':
@@ -1877,6 +1846,7 @@ module.exports = function(callback){
 		cga.travel.newisland.toStoneInternal(stone, cb);
 	}
 	
+	//前往新城冒险者旅馆
 	cga.travel.newisland.toPUB = (cb)=>{
 		cga.travel.newisland.toStone('B', (r)=>{
 			cga.walkList([
@@ -1887,6 +1857,7 @@ module.exports = function(callback){
 		});
 	}
 	
+	//前往新城立夏岛
 	cga.travel.newisland.toLiXiaIsland = (cb)=>{
 		cga.travel.newisland.toStone('X', (r)=>{
 			var teamplayers = cga.getTeamPlayers();
@@ -1918,7 +1889,6 @@ module.exports = function(callback){
 	
 	cga.travel.gelaer = {};
 	
-	//定居？
 	cga.travel.gelaer.isSettled = false;
 	
 	cga.travel.gelaer.xy2name = function(x, y, mapname){
@@ -2137,6 +2107,7 @@ module.exports = function(callback){
 	
 	cga.travel.lumi = {};
 	
+	//前往鲁村商店
 	cga.travel.lumi.toStore = (cb)=>{
 		if(cga.GetMapName() != '鲁米那斯'){
 			cb(new Error('必须从鲁米那斯启动'));
@@ -2151,6 +2122,7 @@ module.exports = function(callback){
 		});
 	}
 	
+	//前往鲁村医院
 	cga.travel.lumi.toHospital = (cb, isPro)=>{
 		if(cga.GetMapName() != '鲁米那斯'){
 			cb(new Error('必须从鲁米那斯启动'));
@@ -2165,6 +2137,7 @@ module.exports = function(callback){
 			cb(null);
 		});
 	}
+
 
 	cga.travel.minuojiya = {};
 	
@@ -2182,7 +2155,7 @@ module.exports = function(callback){
 			cb(null);
 		});
 	}
-
+	//从哥拉尔到法兰
 	cga.travel.gelaer.toFalan = (cb)=>{
 		if(cga.GetMapName() != '哥拉尔镇'){
 			cb(new Error('必须从哥拉尔镇启动'));
@@ -2380,6 +2353,29 @@ module.exports = function(callback){
 	'哥拉尔 港湾管理处',
 	];
 	
+	/*自动寻路走路，调用方式：
+
+		//走到指定地点：
+		cga.walkList({
+			[坐标x, 坐标y]
+		}, cb回调)
+
+		//走到指定地点并切图：
+		cga.walkList({
+			[坐标x, 坐标y, 地图名]
+		}, cb回调)
+
+		//走到指定地点并切图：
+		cga.walkList({
+			[坐标x, 坐标y, 地图索引]
+		}, cb回调)
+		
+		//走到指定地点并传送至同一张地图的另一坐标（比如辛西娅探索指挥部的楼梯）：
+		cga.walkList({
+			[坐标x, 坐标y, 地图索引, 传送目标x, 传送目标y]
+		}, cb回调)
+
+	*/
 	cga.walkList = (list, cb)=>{
 		
 		//console.log('初始化寻路列表');
@@ -2705,6 +2701,7 @@ module.exports = function(callback){
 		return skill != undefined ? skill : null;
 	}
 	
+	//查找宝箱
 	cga.findCrate = function(filter){
 		var unit = cga.GetMapUnits().find((u)=>{
 			if(u.valid == 2 && u.type == 2 && u.model_id != 0 && (u.flags & 1024) != 0)
@@ -2716,6 +2713,7 @@ module.exports = function(callback){
 		return unit != undefined ? unit : null;
 	}
 	
+	//搜索NPC，支持过滤器
 	cga.findNPCEx = function(filter){
 		var unit = cga.GetMapUnits().find((u)=>{
 			if(u.valid == 2 && u.type == 1 && u.model_id != 0 && (u.flags & 4096) != 0)
@@ -2727,12 +2725,14 @@ module.exports = function(callback){
 		return unit != undefined ? unit : null;
 	}
 
+	//按名称搜索NPC
 	cga.findNPC = function(name){
 		return cga.findNPCEx((u)=>{
 			return (u.unit_name == name);
 		});
 	}
 	
+	//按坐标搜索NPC
 	cga.findNPCByPosition = function(name, x, y){
 		return cga.findNPCEx((u)=>{
 			return (u.unit_name == name && x == u.xpos && y == u.ypos);
@@ -2740,7 +2740,7 @@ module.exports = function(callback){
 	}
 
 	//取背包中的物品数量
-	//参数1：物品名, 或#物品id
+	//参数1：物品名, 或#物品id，或过滤函数
 	//参数2：是否包括装备栏
 	cga.getItemCount = function(filter){
 		var includeEquipment = arguments[1] === true ? true : false;
@@ -3073,6 +3073,7 @@ module.exports = function(callback){
 		return found != undefined ? found.pos : -1;
 	}
 	
+	//寻找背包里符合条件的物品，并整合成符合cga.SellStore和cga.AddTradeStuffs的数组格式
 	cga.findItemArray = (filter) =>{
 		
 		var arr = [];
@@ -3090,7 +3091,6 @@ module.exports = function(callback){
 			})
 			return arr;
 		}
-		
 		
 		if(typeof filter =='string' && filter.charAt(0) == '#'){
 			items.forEach((item)=>{
@@ -3128,7 +3128,8 @@ module.exports = function(callback){
 		});
 		return arr;
 	}
-		
+	
+	//出售物品
 	cga.sellArray = (sellarray, cb)=>{
 		cga.AsyncWaitNPCDialog((err, dlg)=>{
 			var numOpt = dlg.message.charAt(dlg.message.length-1);
@@ -3142,6 +3143,7 @@ module.exports = function(callback){
 		});
 	}
 	
+	//获取背包里能够出售的物品
 	cga.getSellStoneItem = ()=>{
 		var pattern = /(.+)的卡片/;
 		var sellArray = []
@@ -3157,6 +3159,7 @@ module.exports = function(callback){
 		return sellArray;
 	}
 	
+	//清理背包里无用的物品
 	cga.cleanInventory = (count, cb)=>{
 		if(cga.getInventoryItems().length >= 21 - count)
 		{
@@ -3173,6 +3176,7 @@ module.exports = function(callback){
 		}
 	}
 	
+	//循环清理背包里无用的物品直到无东西可清
 	cga.cleanInventoryEx = (filter, cb)=>{
 		var items = cga.getInventoryItems().filter(filter);
 		if(items.length > 0){
@@ -3183,6 +3187,7 @@ module.exports = function(callback){
 		}
 	}
 	
+	//出售魔石
 	cga.sellStone = (cb)=>{
 		cga.AsyncWaitNPCDialog((err, dlg)=>{
 			if(err){
@@ -3199,17 +3204,19 @@ module.exports = function(callback){
 		});
 	}
 	
-	cga.getDistance = (x1, y1, x2, y2)=>{
-		
+	//获取坐标之间的距离
+	cga.getDistance = (x1, y1, x2, y2)=>{		
 		return Math.sqrt((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2));
 	}
 	
+	//判断坐标之间的距离是否小于等于1
 	cga.isDistanceClose = (x1, y1, x2, y2)=>{
 		if(x1 - x2 <= 1 && x1 - x2 >= -1 && y1 - y2 <= 1 && y1 - y2 >= -1)
 			return true;
 		return false;
 	}
-	
+
+	//寻找银行中的空闲格子
 	cga.findBankEmptySlot = (filter, maxcount) =>{
 		
 		var banks = cga.GetBankItemsInfo();
@@ -3242,6 +3249,7 @@ module.exports = function(callback){
 		return -1;
 	}
 	
+	//寻找背包中的空闲格子
 	cga.findInventoryEmptySlot = (itemname, maxcount) =>{
 		
 		var items = cga.GetItemsInfo();
@@ -3266,6 +3274,7 @@ module.exports = function(callback){
 		return -1;
 	}
 
+	//获取背包中的空闲格子数量
 	cga.getInventoryEmptySlotCount = () =>{
 		
 		var items = cga.GetItemsInfo();
@@ -3285,6 +3294,7 @@ module.exports = function(callback){
 		return count;
 	}
 
+	//将符合条件的物品存至银行，maxcount为最大堆叠数量
 	cga.saveToBankOnce = (filter, maxcount, cb)=>{
 		var itempos = cga.findItem(filter);
 		if(itempos == -1){
@@ -3314,6 +3324,7 @@ module.exports = function(callback){
 		setTimeout(saveToBank, 800);
 	}
 	
+	//循环将符合条件的物品存至银行，maxcount为最大堆叠数量
 	cga.saveToBankAll = (filter, maxcount, cb)=>{
 		var repeat = ()=>{
 			cga.saveToBankOnce(filter, maxcount, (err)=>{
@@ -3333,7 +3344,7 @@ module.exports = function(callback){
 		repeat();		
 	}
 	
-	
+	//原地高速移动，dir为方向
 	cga.freqMove = function(dir){
 		var freqMoveDirTable = [ 4, 5, 6, 7, 0, 1, 2, 3 ];
 		var freqMoveDir = dir;
@@ -3426,6 +3437,7 @@ module.exports = function(callback){
 		move();
 	}
 	
+	//从NPC对话框解析商店购物列表
 	cga.parseBuyStoreMsg = (dlg)=>{
 		
 		if(!dlg.message)
@@ -3461,6 +3473,7 @@ module.exports = function(callback){
 		return obj;
 	}
 	
+	//获取队伍成员详细信息
 	cga.getTeamPlayers = ()=>{
 		var teaminfo = cga.GetTeamPlayerInfo();
 		var units = cga.GetMapUnits();
@@ -3488,6 +3501,7 @@ module.exports = function(callback){
 		return teaminfo;
 	}
 	
+	//和名字为name的玩家组队（必须在附近1x1范围）
 	cga.addTeammate = (name, cb)=>{
 		var unit = cga.findPlayerUnit(name);
 		var mypos = cga.GetMapXY();
@@ -3545,6 +3559,7 @@ module.exports = function(callback){
 		}, 1000);
 	}
 	
+	//等待名字在teammates列表中的的玩家组队，并自动踢出不符合teammates列表的陌生人。
 	cga.waitTeammates = (teammates, cb)=>{
 				
 		var teamplayers = cga.getTeamPlayers();
@@ -3591,7 +3606,8 @@ module.exports = function(callback){
 		
 		cb(false);
 	}
-		
+	
+	//监听队友聊天信息
 	cga.waitTeammateSay = (cb)=>{
 		
 		cga.AsyncWaitChatMsg((err, r)=>{
@@ -3638,6 +3654,7 @@ module.exports = function(callback){
 		}, 1000);
 	}
 	
+	//监听队友聊天信息 队友必须说“1”
 	cga.waitTeammateSayNextStage = (teammates, cb)=>{
 	
 		var teammate_state = {};
@@ -3660,6 +3677,7 @@ module.exports = function(callback){
 		});
 	}
 	
+	//监听队友聊天信息 队友必须说“1”或“2”
 	cga.waitTeammateSayNextStage2 = (teammates, cb)=>{
 		var teammate_state = {};
 		var teammate_ready = 0;
@@ -3723,6 +3741,7 @@ module.exports = function(callback){
 		});
 	}
 	
+	//把队友带至posArray指定的位置
 	cga.walkTeammateToPosition = (posArray, cb) =>{
 		
 		console.log('cga.walkTeammateToPosition stage1');
@@ -3806,6 +3825,7 @@ module.exports = function(callback){
 		walk();
 	}
 	
+	//监听自己聊天输入（只支持数字）
 	cga.waitForChatInput = (cb)=>{
 		cga.waitTeammateSay((player, msg)=>{
 
@@ -3820,6 +3840,7 @@ module.exports = function(callback){
 		});
 	}
 	
+	//监听系统消息
 	cga.waitSysMsg = (cb)=>{
 		cga.AsyncWaitChatMsg((err, r)=>{
 			if(!r || r.unitid != -1){
@@ -3834,6 +3855,7 @@ module.exports = function(callback){
 		}, 1000);
 	}
 	
+	//发送超长聊天信息
 	cga.sayLongWords = (words, color, range, size)=>{
 
 		var splitCount = words.length / 100;
@@ -3846,6 +3868,14 @@ module.exports = function(callback){
 		
 	}
 	
+	/*等待到达某位置，无超时时间限制
+
+		等待到达民家(14,10)，如果解散了队伍则自动走到(13,10)处：
+			cga.waitForLocation({mapname : '民家', pos : [14, 10], leaveteam : true, walkto : [13, 10]}, cb);
+
+		等待到达地图索引号为24074的地图的(21,12)处：
+			cga.waitForLocation({mapindex: 24074, pos:[21, 12] }, cb);
+	*/
 	cga.waitForLocation = (obj, cb)=>{
 		var name = cga.GetMapName();
 		var fpos = cga.GetMapXYFloat();
@@ -3913,6 +3943,9 @@ module.exports = function(callback){
 		setTimeout(cga.waitForLocation, 1000, obj, cb);
 	}
 	
+	/*等待到达某位置，无超时时间限制
+		和cga.waitForLocation一样，只是可以等待多个位置，只要满足其中一个就能触发回调。
+	*/
 	cga.waitForMultipleLocation = (arr)=>{
 		var name = cga.GetMapName();
 		var fpos = cga.GetMapXYFloat();
@@ -4116,13 +4149,15 @@ module.exports = function(callback){
 		return cga.cachedMapObjects;
 	}
 
+	//搜索玩家单位
 	cga.findPlayerUnit = (filter)=>{
 		var found = cga.GetMapUnits().find((u)=>{
 			return u.valid == 2 && u.type == 8 && (u.flags & 256) != 0 && ((typeof filter == 'function' && filter(u)) || (typeof filter == 'string' && filter == u.unit_name)) ;
 		});
 		return found != undefined ? found : null;
 	}
-		
+	
+	//下载地图的部分区域并等待下载完成
 	cga.downloadMapEx = (xfrom, yfrom, xsize, ysize, cb)=>{
 		var last_index3 = cga.GetMapIndex().index3;
 		var x = xfrom, y = yfrom;
@@ -4162,11 +4197,19 @@ module.exports = function(callback){
 		recursiveDownload();
 	}
 	
+	//下载整张地图并等待下载完成
 	cga.downloadMap = (cb)=>{
 		var walls = cga.buildMapCollisionMatrix(true);
 		cga.downloadMapEx(0, 0, walls.x_size, walls.y_size, cb);
 	}
 	
+	/*走一层迷宫
+		target_map :  走到目标地图就停止，填null则自动解析地图名中的楼层，填''则允许任何形式的地图作为目标楼层。
+		filter (可选) : {
+			layerNameFilter : 自定义解析地图名的方法
+			entryTileFilter : 自定义解析楼梯的方法
+		}
+	*/
 	cga.walkMaze = (target_map, cb, filter)=>{
 
 		var objs = cga.getMapObjects();
@@ -4249,6 +4292,8 @@ module.exports = function(callback){
 			return;
 		});
 	}
+
+	//判断当前地图是否已经下载完成
 	
 	cga.isMapDownloaded = ()=>{
 		var tiles = cga.buildMapTileMatrix(true);
@@ -4262,6 +4307,8 @@ module.exports = function(callback){
 		
 		return true;
 	}
+	
+	//走一层随机迷宫，和cga.walkMaze的区别是走之前会先下载地图
 	
 	cga.walkRandomMaze = (target_map, cb, filter)=>{
 		if(!cga.isMapDownloaded())
@@ -4363,6 +4410,7 @@ module.exports = function(callback){
 		});
 	}
 	
+	//获取一格(x,y)周围1x1区域内的空闲地形格子
 	cga.getRandomSpace = (x, y)=>{
 		var walls = cga.buildMapCollisionMatrix(true);
 		if(walls.matrix[y][x-1] == 0)
@@ -4385,6 +4433,7 @@ module.exports = function(callback){
 		return null;
 	}
 	
+	//获取一格(x,y)周围1x1区域内的空闲地形格子，并判断其方向
 	cga.getRandomSpaceDir = (x, y)=>{
 		var walls = cga.buildMapCollisionMatrix(true);
 		if(walls.matrix[y][x-1] == 0)
@@ -4581,6 +4630,76 @@ module.exports = function(callback){
 		waitTradeMsg();
 	};
 
+	//主动向名字为name的玩家发起交易，给他stuff里指定的东西，成功或失败时回调resolve，在checkParty里可以根据对方名字和收到的东西判断同意还是拒绝交易
+	/*
+	给名字为hzqst的玩家交易3组鹿皮:
+		var count = 0;
+		cga.positiveTrade('hzqst', {
+			itemFilter : (item)=>{
+				if(item.name == '鹿皮' && item.count == 40 && count < 3){
+					count ++;
+					return true;
+				}
+				return false;
+			}		
+		},
+		null, (arg)=>{
+			if(arg.success){
+				console.log('交易成功!');
+			} else {
+				console.log('交易失败! 原因：'+arg.reason);
+			}
+		});
+
+	给名字为hzqst的玩家交易包里所有的鹿皮，并且对方必须给自己1000金币否则拒绝交易:
+		cga.positiveTrade('hzqst', {
+			itemFilter : (item)=>{
+				return item.name == '鹿皮' && item.count == 40;
+			}
+		},
+		(playerName, receivedStuffs)={
+			if(receivedStuffs.gold != 1000){
+				console.log('对方没有给自己1000金币!');
+				return false;
+			}
+			return true;
+		}, 
+		(arg)=>{
+			if(arg.success){
+				console.log('交易成功!');
+			} else {
+				console.log('交易失败! 原因：'+arg.reason);
+			}
+		});
+
+	给名字为hzqst的玩家交易3只哥布林，并且对方必须给自己一只红帽哥布林否则拒绝交易:
+		var count = 0;
+		cga.positiveTrade('hzqst', {
+			petFilter : (pet)=>{
+				if(pet.realname == '哥布林' && count < 3){
+					count ++;
+					return true;
+				}
+				return false;
+			}
+		},
+		(playerName, receivedStuffs)={
+			if(receivedStuffs.pets.find((pet)=>{
+				return pet.realname == '红帽哥布林';
+			}) == null){
+				console.log('对方没有给自己红帽哥布林!');
+				return false;
+			}
+			return true;
+		}, 
+		(arg)=>{
+			if(arg.success){
+				console.log('交易成功!');
+			} else {
+				console.log('交易失败! 原因：'+arg.reason);
+			}
+		});
+	*/
 	cga.positiveTrade = (name, stuff, checkParty, resolve, timeout) => {
 		cga.AsyncWaitPlayerMenu((err, players) => {
 			if(err){
@@ -4603,6 +4722,7 @@ module.exports = function(callback){
 		cga.DoRequest(cga.REQUEST_TYPE_TRADE);
 	}
 	
+	//主动向name玩家发起交易（到开启交易对话框为止），成功或失败时回调resolve
 	cga.requestTrade = (name, resolve, timeout) => {
 		cga.AsyncWaitPlayerMenu((err, players) => {
 			if(err){
@@ -4625,11 +4745,53 @@ module.exports = function(callback){
 		cga.DoRequest(cga.REQUEST_TYPE_TRADE);
 	}
 
+	//等待其他玩家向自己发起交易，成功或失败时回调resolve，在checkParty里可以根据对方名字和收到的东西判断同意还是拒绝交易
+	/*
+	等待任意玩家给自己交易3组鹿皮:		
+		cga.waitTrade({},
+		(playerName, receivedStuffs)=>{
+			if( receivedStuffs.items.filter((item)=>{
+				return item.name == '鹿皮' && item.count == 40;
+			}).length == 3 )
+			{
+				return true;
+			}
+			return false;
+		},
+		(arg)=>{
+			if(arg.success){
+				console.log('交易成功!');
+			} else {
+				console.log('交易失败! 原因：'+arg.reason);
+			}
+		});
+	等待名为hzqst的玩家给自己交易3组鹿皮，并给他1000金币:		
+		cga.waitTrade({
+			gold : 1000
+		},
+		(playerName, receivedStuffs)=>{
+			if( playerName == 'hzqst' && receivedStuffs.items.filter((item)=>{
+				return item.name == '鹿皮' && item.count == 40;
+			}).length == 3 )
+			{
+				return true;
+			}
+			return false;
+		},
+		(arg)=>{
+			if(arg.success){
+				console.log('交易成功!');
+			} else {
+				console.log('交易失败! 原因：'+arg.reason);
+			}
+		});
+	*/
 	cga.waitTrade = (stuff, checkParty, resolve, timeout) => {
 		cga.EnableFlags(cga.ENABLE_FLAG_TRADE, true)
 		cga.tradeInternal(stuff, checkParty, resolve, timeout);
 	}
 	
+	//主动向名为name的玩家发起交易并同时等待名为name的玩家向自己发起交易，成功或失败时回调resolve
 	cga.trade = (name, stuff, checkParty, resolve, timeout) => {
 		
 		cga.EnableFlags(cga.ENABLE_FLAG_TRADE, true);
@@ -4647,7 +4809,8 @@ module.exports = function(callback){
 				
 		cga.DoRequest(cga.REQUEST_TYPE_TRADE);
 	}
-	
+
+	//判断是否是满血满蓝
 	cga.needSupplyInitial = (obj)=>{
 		var playerinfo = cga.GetPlayerInfo();
 		var petinfo = cga.GetPetInfo(playerinfo.petid);
@@ -4673,6 +4836,7 @@ module.exports = function(callback){
 		return false;
 	}
 
+	//判断是否需要找医生治疗
 	cga.needDoctor = ()=>{
 		var playerinfo = cga.GetPlayerInfo();
 		var pets = cga.GetPetsInfo();
@@ -4688,6 +4852,7 @@ module.exports = function(callback){
 		return false;
 	}
 
+	//等待战斗结束
 	cga.waitForBattleEnd = (cb, timeout = 30000)=>{
 		
 		cga.AsyncWaitBattleAction((err, result) => {
