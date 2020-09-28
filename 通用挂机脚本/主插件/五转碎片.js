@@ -275,8 +275,8 @@ var getMazeEntrance = (cb)=>{
 		})
 		
 		if(entrance == undefined){
-			console.log('迷宫入口未找到,等待15秒后重试')
-			setTimeout(getMazeEntrance, 15000, cb);
+			console.log('迷宫入口未找到,等待3秒后重试')
+			setTimeout(getMazeEntrance, 3000, cb);
 			return;
 		}
 		
