@@ -5,11 +5,15 @@ var cga = require('./cgaapi')(function(){
 	// 需要队伍内传递使用的道具名称
 	var shareditem = '觉醒的文言抄本'
 	var targetitem = '转职保证书'
-	// 获得传递道具的队员名称
-	var provider = null
 
 	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦
-	var teammates = ["UNAの弓","UNAの传教","UNAの造斧","UNAの格斗2","UNAの封印"];
+	var teammates = [
+		"UNAの弓",
+		"UNAの传教",
+		"UNAの护士",
+		"UNAの造小刀",
+		"UNAの巫师",
+	];
 
 	// 注销掉动态组队
 	// var teamplayers = cga.getTeamPlayers();
@@ -21,7 +25,7 @@ var cga = require('./cgaapi')(function(){
 	// 任务从第几步开始。
 	// 考虑到多数玩家都是重复刷保证书，这里改成默认从第一步开始。避免每次都需要手动在游戏中输入，尤其是多号刷，手动输入很麻烦。
 	// ‘0’从头（朵拉）开始任务，‘1’从打长老证之前开始任务，‘3’从荷普特开始任务，‘4’从祭坛守卫开始任务，‘5’从打完BOSS换保证书开始任务（必须有文言抄本）。
-	index = 4
+	index = 0
 
 	var callZLZZ = false;
 	var callWYW = false;
@@ -282,6 +286,8 @@ var cga = require('./cgaapi')(function(){
 			if(pos.x == 163 && pos.y == 100){
 				cb(true);
 				return;
+			}else{
+				setTimeout(battleAgain, 1500);
 			}
 			
 			setTimeout(battleAgain, 1500);
@@ -694,7 +700,7 @@ var cga = require('./cgaapi')(function(){
 				}
 
 				if(doneBOSS && callWYW){
-					//cga.LogBack();
+					cga.LogBack();
 					setTimeout(cb2, 1000, true);
 					return;
 				}
