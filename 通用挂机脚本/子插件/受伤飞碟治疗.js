@@ -1,6 +1,9 @@
 var cga = global.cga;
 var configTable = global.configTable;
 
+// 如果有私人医生，请指定
+var personaldoctor = 'UNAの鉴定师'
+
 var thisobj = {
 	prepare : (cb)=>{
 		if(cga.GetPlayerInfo().health == 0){
@@ -30,7 +33,12 @@ var thisobj = {
 			
 			var doctor = cga.findPlayerUnit((u)=>{
 				return ['实习医师','医师','资深医师','御医','超级医生','神医'].find((n)=>{
-					return n == u.title_name;
+					//私有号直接指定名称
+					if (u.unit_name == personaldoctor){
+						return true
+					}else{
+						return n == u.title_name;
+					}
 				}) == undefined ? false : true;
 			});
 						
