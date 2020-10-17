@@ -73,7 +73,7 @@
         "lv1prot": false,
         "pet2action": false,
         "playerforceaction": false,
-        "r1nodelay": false,
+        "r1nodelay": true,
         "showhpmp": false
     },
     "chat": {
@@ -111,7 +111,9 @@
         "#14873",
         "#18068",
         "#18010",
-        "#18031"
+        "#18031",
+        "#18032",
+        "#18011"
     ],
     "itemidmap": {
     },
@@ -127,6 +129,14 @@
         "autosupply": true,
         "movespd": 129,
         "noswitchanim": true,
+        "petfood": false,
+        "petfoodat": "",
+        "petmed": false,
+        "petmedat": "",
+        "usefood": false,
+        "usefoodat": "",
+        "usemed": false,
+        "usemedat": "",
         "workacc": 100,
         "workdelay": 6500
     }
