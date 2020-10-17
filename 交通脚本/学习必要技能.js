@@ -58,33 +58,11 @@ var cga = require('../cgaapi')(function(){
 		}
 	},
 	{//3
-		intro: '4.如果是战斗系，需要学习咒术师的单体石化与传教士的气绝回复来刷声望',
+		intro: '4.如果是战斗系，检查是否有气绝回复技能（用于刷声望）',
 		workFunc: function(cb2){
-			if(category == '物理系' || category == '魔法系' || category == '魔物系'){
-				console.log('看看是否需要学习刷声望的两个技能：石化与气绝')
-				// 石化魔法
-				var hasStoneSkill = cga.findPlayerSkill('石化魔法') ? true : false;
-				if(!hasStoneSkill){
-					cga.travel.falan.toStone('C', (r)=>{
-						cga.walkList([
-							[17, 53, '法兰城'],
-							[120,65],
-						], (r)=>{
-							cga.TurnTo(120, 64);
-							cga.AsyncWaitNPCDialog((dlg)=>{
-								cga.ClickNPCDialog(0, 0);
-								cga.AsyncWaitNPCDialog((dlg2)=>{
-									cga.ClickNPCDialog(0, 0);
-									cb2(true)
-								});
-							});
-						});
-					});
-				}
-				// 气绝回复
+			if(category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系'){
 				var hasResurgenceSkill = cga.findPlayerSkill('气绝回复') ? true : false;
 				if(!hasResurgenceSkill){
-
 					var goandlearn = ()=>{
 						cga.walkList([
 							[8, 3, '村长的家'],
@@ -103,9 +81,11 @@ var cga = require('../cgaapi')(function(){
 					}
 
 					var walktovinoa = (cb)=>{
+						console.log('【注意】即将进行长远位移，请注意移动速度是否是100%，过快容易掉线')
 						cga.walkList([
-							[27, 82],
-							[41,98,'法兰城'],
+							[25, 24, '里谢里雅堡 1楼'],
+							[74, 40, '里谢里雅堡'],
+							[65, 53, '法兰城'],
 							[281, 88, '芙蕾雅'],
 							[672,223,'哈巴鲁东边洞穴 地下1楼'],
 							[41,8,'哈巴鲁东边洞穴 地下2楼'],
@@ -152,6 +132,35 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
+	{//3
+		intro: '4.如果是战斗系，检查是否有单体石化技能（用于刷声望）',
+		workFunc: function(cb2){
+			if(category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系'){
+				var hasStoneSkill = cga.findPlayerSkill('石化魔法') ? true : false;
+				if(!hasStoneSkill){
+					cga.travel.falan.toStone('C', (r)=>{
+						cga.walkList([
+							[17, 53, '法兰城'],
+							[120,65],
+						], (r)=>{
+							cga.TurnTo(120, 64);
+							cga.AsyncWaitNPCDialog((dlg)=>{
+								cga.ClickNPCDialog(0, 0);
+								cga.AsyncWaitNPCDialog((dlg2)=>{
+									cga.ClickNPCDialog(0, 0);
+									cb2(true)
+								});
+							});
+						});
+					});
+				}else{
+					cb2(true)
+				}
+			}else{
+				cb2(true)
+			}
+		}
+	},
 	{//4
 		intro: '5.学狩猎（狩猎是随机NPC，不好找，暂不支持）',
 		workFunc: function(cb2){
@@ -191,6 +200,36 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
+	{//7
+		intro: '8.抗石化',
+		workFunc: function(cb2){
+			if(category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系'){
+				var hasStoneSkill = cga.findPlayerSkill('抗石化') ? true : false;
+				if(!hasStoneSkill){
+					professionalbehavior(cga, '抗石化','learning',cb2)
+				}else{
+					cb2(true)
+				}
+			}else{
+				cb2(true)
+			}
+		}
+	},
+	{//8
+		intro: '8.抗混乱',
+		workFunc: function(cb2){
+			if(category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系'){
+				var hasStoneSkill = cga.findPlayerSkill('抗混乱') ? true : false;
+				if(!hasStoneSkill){
+					professionalbehavior(cga, '抗混乱','learning',cb2)
+				}else{
+					cb2(true)
+				}
+			}else{
+				cb2(true)
+			}
+		}
+	},
 	],
 	[//任务阶段是否完成
 		function(){//学治疗
@@ -205,7 +244,19 @@ var cga = require('../cgaapi')(function(){
 		function(){
 
 				if(category == '物理系' || category == '魔法系' || category == '魔物系'){
-					if(cga.findPlayerSkill('石化魔法') && cga.findPlayerSkill('气绝回复')){
+					if(cga.findPlayerSkill('气绝回复')){
+						return true
+					}else{
+						return false
+					}
+				}else{
+					return true
+				}
+		},
+		function(){
+
+				if(category == '物理系' || category == '魔法系' || category == '魔物系'){
+					if(cga.findPlayerSkill('石化魔法')){
 						return true
 					}else{
 						return false
@@ -219,6 +270,12 @@ var cga = require('../cgaapi')(function(){
 		},
 		function(){
 			return (cga.findPlayerSkill('治疗') && cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化')&& cga.findPlayerSkill('狩猎') && cga.findPlayerSkill('伐木') && cga.findPlayerSkill('挖掘') ) ? true : false;
+		},
+		function(){
+			return (cga.findPlayerSkill('治疗') && cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化')&& cga.findPlayerSkill('狩猎') && cga.findPlayerSkill('伐木') && cga.findPlayerSkill('挖掘') && cga.findPlayerSkill('抗石化')) ? true : false;
+		},
+		function(){
+			return (cga.findPlayerSkill('治疗') && cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化')&& cga.findPlayerSkill('狩猎') && cga.findPlayerSkill('伐木') && cga.findPlayerSkill('挖掘') && cga.findPlayerSkill('抗石化') && cga.findPlayerSkill('抗混乱')) ? true : false;
 		},
 	]
 	);
