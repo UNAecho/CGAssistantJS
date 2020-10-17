@@ -1,1 +1,1 @@
-{"mainPlugin":"自动1-50","subPlugins":["受伤医院治疗","回补提醒","换水晶","掉魂自动招魂","监听回补","队员卖石"],"supplyMode":2,"teamMode":0,"teammates":["UNAの弓"],"battleArea":6,"minHp":"25%","minMp":"25%"}
+{"mainPlugin":"双百制造","subPlugins":[],"craftType":"造枪","forgetSkillAt":11,"listenPort":2222}

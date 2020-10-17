@@ -1,1 +1,1 @@
-{"mainPlugin":"黑龙","subPlugins":["受伤飞碟治疗","回补提醒","换水晶","掉魂自动招魂","监听回补","队员卖石"],"supplyMode":0,"teamMode":0,"teammates":["UNAの格斗2","UNAの传教","UNAの封印","UNAの护士","UNAの巫师"],"sellStore":1,"layerLevel":1,"minHp":"25%","minMp":"25%"}
+{"mainPlugin":"营地","subPlugins":["买桥头武器","受伤飞碟治疗","回补提醒","换水晶","掉魂自动招魂","监听回补","队员卖石"],"supplyMode":2,"teamMode":0,"teammates":["UNAの格斗2","UNAの封印","UNAの饲养师","UNAの剑士"],"sellStore":1,"buyWeapon":"平民回力镖","minHp":"25%","minMp":"25%"}

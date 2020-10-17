@@ -1,1 +1,1 @@
-{"mainPlugin":"采集","subPlugins":[],"gatherObject":"寿喜锅流水线葱","serverPort":1000,"logoutTimes":30}
+{"mainPlugin":"双百制造","subPlugins":[],"craftType":"制药","forgetSkillAt":11,"listenPort":2222}
