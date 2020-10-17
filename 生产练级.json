@@ -34,7 +34,7 @@
                 "pettargetsel": -1,
                 "playeraction": 1,
                 "playertarget": 0,
-                "playertargetsel": 0
+                "playertargetsel": 12
             },
             {
                 "condition": 1,
@@ -145,7 +145,8 @@
         "#606628",
         "#450536",
         "#450535",
-        "#18194"
+        "#18194",
+        "#14848"
     ],
     "itemidmap": {
     },
@@ -155,6 +156,14 @@
         "autosupply": true,
         "movespd": 129,
         "noswitchanim": true,
+        "petfood": false,
+        "petfoodat": "",
+        "petmed": false,
+        "petmedat": "",
+        "usefood": false,
+        "usefoodat": "",
+        "usemed": false,
+        "usemedat": "",
         "workacc": 100,
         "workdelay": 4600
     }
