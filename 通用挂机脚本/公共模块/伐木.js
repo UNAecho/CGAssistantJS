@@ -340,3 +340,4 @@ var thisobj = {
 }
 
 module.exports = thisobj;
+module.exports.mineArray = mineArray;

@@ -37,7 +37,25 @@ var warn_flag = false
 
 var healObject = require('../公共模块/治疗自己');
 
-const allowMats = ['麻布', '印度轻木', '铜条', '鹿皮', '毛毡', '木棉布'];
+const allowMats = [
+	'麻布', 
+	'印度轻木', 
+	'铜条', 
+	'鹿皮', 
+	'毛毡', 
+	'木棉布',
+	// 以下为自定义材料，注意更改，以避免生产者使用高级制造配方
+	// '苹果薄荷',
+	// '柠檬草',
+	'蝴蝶花',
+	'果梨',
+	'桃木',
+	// '番红花',
+	// '百里香',
+	// '瞿麦',
+	// '茴香',
+	// '七叶树',
+];
 
 const isFabricName = (name)=>{
 	return name == '麻布' || name == '木棉布' || name == '毛毡';
@@ -76,7 +94,7 @@ io.on('connection', (socket) => {
 				// 初始化一份实时更新的dict，用于接下来与原资产进行计算，得出总利润
 				moneyinfos[i] = originmoneyinfos[i]
 			}
-			console.log('有新队员【' + socket.cga_data.player_name + '】加入节点，当前有【' + Object.keys(originmoneyinfos).length +'】人，队伍总资产为：【' + originassets + '】')
+			// console.log('有新队员【' + socket.cga_data.player_name + '】加入节点，当前有【' + Object.keys(originmoneyinfos).length +'】人，队伍总资产为：【' + originassets + '】')
 		}
 	});
 
@@ -101,7 +119,7 @@ io.on('connection', (socket) => {
 			profit = generalassets - originassets
 			nowtime = new Date().getTime()
 			costminutes = Math.floor((nowtime - starttime)/(60*1000)) <1 ? 1 : Math.floor((nowtime - starttime)/(60*1000))
-			console.log('当前总资产：【' + generalassets +'】，生产队【' + Object.keys(moneyinfos).length + '】人，耗时【'+costminutes+'】分钟，总利润：【' + profit + '】，每分钟获利：【' + Math.floor(profit/costminutes)+'】')
+			// console.log('当前总资产：【' + generalassets +'】，生产队【' + Object.keys(moneyinfos).length + '】人，耗时【'+costminutes+'】分钟，总利润：【' + profit + '】，每分钟获利：【' + Math.floor(profit/costminutes)+'】')
 
 		}
 	});
@@ -112,7 +130,9 @@ io.on('connection', (socket) => {
 			delete moneyinfos[socket.cga_data.player_name]
 	})
 });
-
+var testlog = (para)=>{
+	console.log('' + String(para) + ' = ' + para)
+}
 var waitStuffs = (name, materials, cb)=>{
 
 	console.log('正在等待材料 ' + name);
@@ -330,9 +350,22 @@ var cleanUseless = (cb)=>{
 		cga.turnTo(150, 122);
 		var sellarray = cga.findItemArray((item)=>{
 			if ( thisobj.craftItemList.find((craftItem)=>{
-				return item.name == craftItem.name;
+				// 如果是料理和血瓶，count会大于0。如果是装备，count=0
+				if(item.name == craftItem.name && (item.count == 0 || (item.count >0 && item.count == 3))){
+					return true
+				}else{
+					return false
+				}
 			}) !== undefined){
 				return true;
+			}
+		});
+		sellarray = sellarray.map((item)=>{
+			if(item.count ==3){
+				item.count /= 3;
+				return item;
+			}else{
+				return item
 			}
 		});
 		cga.sellArray(sellarray, ()=>{
@@ -589,7 +622,7 @@ var thisobj = {
 		
 		var stage2 = (cb2)=>{
 			
-			var sayString = '【双百插件】请选择几级之后删除技能: (2~11) (目前已支持所有制造系技能)';
+			var sayString = '【双百插件】请选择几级之后删除技能: (2~11，11为不删除) (目前已支持所有制造系技能)';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val)=>{
 				if(val !== null && 2 >= 2 && 11 <= 11){
