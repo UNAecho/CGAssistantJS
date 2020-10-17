@@ -29,8 +29,6 @@ require('./leo/common').then(cga=>{
 	var force = true ;			//是否强制启用战斗配置
 	leo.autoBattle(sets,firstRoundDelay,roundDelay,force);
 
-	leo.log('红叶の传咒互转脚本，启动~');
-
 	var isCanChange = true;
 	var hasItem = cga.getItemCount('转职保证书') > 0;
 	if(!forceChange && !hasItem){

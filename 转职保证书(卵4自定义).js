@@ -1,21 +1,19 @@
 var cga = require('./cgaapi')(function(){
 
 	var playerinfo = cga.GetPlayerInfo();
-	
+
+	// 需要队伍内传递使用的道具名称
+	var shareditem = '觉醒的文言抄本'
+	var targetitem = '转职保证书'
+
 	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦
 	var teammates = [
 		"UNAの弓",
 		"UNAの传教",
-		// "UNAの剑士",
-		// "UNAの游侠",
-		// "UNAの饲养师",
-		// "UNAの圣骑士",
-		// "UNAの巫师",
-		// "UNAの暗黑骑士"
+		"UNAの剑士",
+		"UNAの游侠",
+		"UNAの饲养师",
 	];
-
-	// 本次刷保证书的人数
-	var maxteammate = 4
 
 	// 注销掉动态组队
 	// var teamplayers = cga.getTeamPlayers();
@@ -26,23 +24,47 @@ var cga = require('./cgaapi')(function(){
 
 	// 任务从第几步开始。
 	// 考虑到多数玩家都是重复刷保证书，这里改成默认从第一步开始。避免每次都需要手动在游戏中输入，尤其是多号刷，手动输入很麻烦。
-	// ‘0’从头（朵拉）开始任务，‘1’从打长老证之前开始任务，‘3’从荷特普开始任务，‘4’从祭坛守卫开始任务，‘5’从打完BOSS换保证书开始任务（必须有文言抄本）。
-	var index = 0
+	// ‘0’从头（朵拉）开始任务，‘1’从打长老证之前开始任务，‘3’从荷普特开始任务，‘4’从祭坛守卫开始任务，‘5’从打完BOSS换保证书开始任务（必须有文言抄本）。
+	index = 0
 
 	var callZLZZ = false;
 	var callWYW = false;
 	var doneBOSS = false;
-	
+	// 如果全队都有文言抄本，那么将此flag置true，BOSS阶段全员登出，直接进入换保证书阶段
+	var BOSSLogBack = false
+
+	// 保存全员道具持有状态，用于最后传递保证书使用
+	var WYWstate = {ready_count :0}
+	var guaranteestate = {ready_count :0}
 	cga.waitTeammateSay((player, msg)=>{
 
 		if(msg.indexOf('长老之证x7 GET') >= 0 ){
 			callZLZZ = true;
 		}
 		
-		if(msg.indexOf('觉醒的文言抄本') >= 0 ){
+		if(msg.indexOf('觉醒的文言抄本 GET') >= 0 ){
 			callWYW = true;
 		}
 
+		if(msg.indexOf('我有文言抄本了')  >= 0){
+
+			if(WYWstate[player.name] !== true && WYWstate[player.name] !== false){
+				WYWstate[player.name] = true;
+				WYWstate.ready_count ++;
+				console.log('队员 '+player.name+'已持有 '+shareditem +'， 当前队伍持有数量 ： '+ WYWstate.ready_count)
+				if(WYWstate.ready_count == teammates.length){
+					BOSSLogBack = true
+					console.log('全员已持有 ' + shareditem + ',BOSS战登出，省略战斗 ')
+				}
+			}
+		}
+		if(msg.indexOf('我有保证书了')  >= 0){
+			if(guaranteestate[player.name] !== true && guaranteestate[player.name] !== false){
+				guaranteestate[player.name] = true;
+				guaranteestate.ready_count ++;
+				console.log('队员 '+player.name+'已持有 '+targetitem +'， 当前队伍持有数量 ： '+ guaranteestate.ready_count)
+			}
+		}
 		return true;
 	});
 	
@@ -163,19 +185,13 @@ var cga = require('./cgaapi')(function(){
 	var zhanglaozhizheng = (cb)=>{
 		if(cga.isTeamLeader){
 			cga.WalkTo(131, 62);
-			if(cga.getTeamPlayers().length >= maxteammate){
-				goodToGoZLZZ(cb);
-				return;
-			}else{
+			cga.waitTeammates(teammates, (r)=>{
+				if(r){
+					goodToGoZLZZ(cb);
+					return;
+				}
 				setTimeout(zhanglaozhizheng, 1000, cb);
-			}
-			// cga.waitTeammates(teammates, (r)=>{
-			// 	if(r){
-			// 		goodToGoZLZZ(cb);
-			// 		return;
-			// 	}
-			// 	setTimeout(zhanglaozhizheng, 1000, cb);
-			// });
+			});
 		} else {
 			cga.addTeammate(teammates[0], (r)=>{
 				if(r){
@@ -189,7 +205,7 @@ var cga = require('./cgaapi')(function(){
 	
 	var goodToGoZDZ = (cb)=>{
 		
-		var findZDZ_D = ()=>{
+		var findZDZ_E = ()=>{
 			cga.walkList([
 				[193, 184],
 			], ()=>{
@@ -201,7 +217,20 @@ var cga = require('./cgaapi')(function(){
 				return;
 			});
 		}
-		
+
+		var findZDZ_D = ()=>{
+			cga.walkList([
+				[228, 206],
+			], ()=>{
+				if(cga.findNPCByPosition('障碍物', 228, 207)){
+					cga.turnTo(228, 207);
+					return;
+				}
+				findZDZ_E();
+				return;
+			});
+		}
+
 		var findZDZ_C = ()=>{
 			cga.walkList([
 				[234, 202],
@@ -257,6 +286,8 @@ var cga = require('./cgaapi')(function(){
 			if(pos.x == 163 && pos.y == 100){
 				cb(true);
 				return;
+			}else{
+				setTimeout(battleAgain, 1500);
 			}
 			
 			setTimeout(battleAgain, 1500);
@@ -271,21 +302,13 @@ var cga = require('./cgaapi')(function(){
 		var teamplayers = cga.getTeamPlayers();
 
 		if(cga.isTeamLeader){
-
-			if(cga.getTeamPlayers().length >= maxteammate){
-				goodToGoZDZ(cb);
-				return;
-			}else{
+			cga.waitTeammates(teammates, (r)=>{
+				if(r){
+					goodToGoZDZ(cb);
+					return;
+				}
 				setTimeout(zudangzhe, 1000, cb);
-			}
-
-			// cga.waitTeammates(teammates, (r)=>{
-			// 	if(r){
-			// 		goodToGoZDZ(cb);
-			// 		return;
-			// 	}
-			// 	setTimeout(zudangzhe, 1000, cb);
-			// });
+			});
 		} else {
 			cga.addTeammate(teammates[0], (r)=>{
 				if(r){
@@ -296,11 +319,57 @@ var cga = require('./cgaapi')(function(){
 			});
 		}
 	}
+	//将血最多的宠物拿出来合击BOSS用
+	var setmaxhppetbattle = ()=>{
+		var petinfos = cga.GetPetsInfo()
+		var maxhp = 0
+		var maxlvindex = 0
+		for (petindex in petinfos){
+			// console.log(petindex)
+			petinfo = petinfos[petindex]
+			for (key in petinfo){
+				if (key == 'maxhp' && petinfo[key] > maxhp){
+					maxlvindex = petindex
+					maxhp = petinfo[key]
+				}
+			}
+		}
+		cga.ChangePetState(maxlvindex, cga.PET_STATE_BATTLE);
+	}
 	
+	//检查全队觉醒的文言抄本数量
+	var CheckItemstate = ()=>{
+
+		if(cga.isTeamLeader){
+			cga.SayWords('统计一下，各自手里的 ' + shareditem + ' 和 ' + targetitem + ' 持有情况，各自报告', 0, 3, 1);
+			setTimeout(()=>{
+				cga.SayWords((cga.getItemCount(shareditem) > 0) ? '我有文言抄本了' : '我没有文言抄本', 0, 3, 1);
+			}, Math.random() * 5000);
+			setTimeout(()=>{
+				cga.SayWords((cga.getItemCount(targetitem) > 0) ? '我有保证书了' : '我没有保证书', 0, 3, 1);
+			}, Math.random() * 5000);
+		} else {
+			cga.waitTeammateSay((player, msg)=>{
+				if(player.index == 0 && msg.indexOf('统计一下')  >= 0){
+					setTimeout(()=>{
+						cga.SayWords((cga.getItemCount(shareditem) > 0) ? '我有文言抄本了' : '我没有文言抄本', 0, 3, 1);
+					}, Math.random() * 5000);
+					setTimeout(()=>{
+						cga.SayWords((cga.getItemCount(targetitem) > 0) ? '我有保证书了' : '我没有保证书', 0, 3, 1);
+					}, Math.random() * 5000);
+					return true;
+				}
+				return true;
+			});
+
+		}
+	}
+
 	var task = cga.task.Task('琥珀之卵4', [
 	{//0
 		intro: '◆在艾夏岛冒险者旅馆(102.115)内与时空之人(30.20)对话，输入“朵拉”选“是”，再选“确定”可重置本任务',
 		workFunc: function(cb2){
+			setmaxhppetbattle()
 			cga.travel.newisland.toPUB(()=>{
 				cga.walkList([
 				[31, 21],
@@ -631,7 +700,7 @@ var cga = require('./cgaapi')(function(){
 				}
 
 				if(doneBOSS && callWYW){
-					//cga.LogBack();
+					cga.LogBack();
 					setTimeout(cb2, 1000, true);
 					return;
 				}
@@ -762,31 +831,31 @@ var cga = require('./cgaapi')(function(){
 	);
 	
 	task.anyStepDone = false;
-	var firstmsg = ''
-	if(index == 0){
-		firstmsg = '朵拉重置任务'
-		task.jumpToStep = 0;
-	}else if(index == 1){
-		firstmsg = '长老之证'
-		task.jumpToStep = 2;
-	//else if(index == 2)
-	//	task.jumpToStep = 3;
-	}else if(index == 3){
-		firstmsg = '黄昏或夜晚找荷特普'
-		task.jumpToStep = 4;
-	}else if(index == 4){
-		firstmsg = '打阻挡者'
-		task.jumpToStep = 6;
-	}else if(index == 5){
-		firstmsg = '换保证书'
-		task.jumpToStep = 9;
+
+	cga.SayWords('欢迎使用琥珀之卵4（转职保证书）脚本，输入‘0’从头（朵拉）开始任务，输入‘1’从打长老证之前开始任务，输入‘3’从荷普特开始任务，输入‘4’从祭坛守卫开始任务，输入‘5’从打完BOSS换保证书开始任务（必须有文言抄本）。', 0, 3, 1);
+	
+
+
+	if(index !== null)
+	{
+		if(index == 0)
+			task.jumpToStep = 0;
+		else if(index == 1)
+			task.jumpToStep = 2;
+		else if(index == 3)
+			task.jumpToStep = 4;
+		else if(index == 4)
+			task.jumpToStep = 6;
+		else if(index == 5)
+			task.jumpToStep = 9;
+				
+		if(typeof task.jumpToStep != 'undefined'){
+			task.doTask(()=>{
+				console.log('ok');
+			});
+			return false;
+		}
 	}
-	if(typeof task.jumpToStep != 'undefined'){
-		cga.SayWords('欢迎使用【UNAの脚本】转职保证书，当前从【'+ firstmsg + '】步骤开始任务', 0, 3, 1);
-		task.doTask(()=>{
-			console.log('任务完成');
-		});
-		return false;
-	}
-	return true;
+
+
 });

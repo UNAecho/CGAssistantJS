@@ -14,9 +14,13 @@ require('./leo/common').then(cga => {
 	var percentage = 0.0
 
 	const profession = cga.emogua.getPlayerProfession();
-	console.log('红叶の灵堂刷声望脚本，启动~');
 	console.log('当前人物职业：【'+profession.name+'】，称号：【'+title+'】');
-	console.log('脚本自动判断需要多少金币烧技能');
+	
+	// 判断是否满称号
+	if(title =="无尽星空"){
+		leo.todo().then(()=>{return console.log('你都星空了还刷个蛋，脚本结束')});
+	}else{//如果不是星空，开始主逻辑。此else覆盖本脚本全部逻辑
+		console.log('脚本自动判断需要多少金币烧技能');
 	console.log('请不要勾选CGA面板的自动战斗，否则优先级将高于此脚本内的设置');
 	var petIndex = playerinfo.petid;
 	if(petIndex!=-1){
@@ -26,14 +30,15 @@ require('./leo/common').then(cga => {
 	    cga.ChangePetState(petIndex, 0);
 	}
 
-	//自动取下水晶
-	var crystal = cga.GetItemsInfo().find(i => i.pos == 7);
-	var emptyIndexes = leo.getEmptyBagIndexes();
+	// 自动取下水晶，注销掉是因为下面的穿水晶动作一直都不好使，导致无限重买水晶，故取消此动作。
+	// emptyIndex = -1是因为下面是-1的话就跳过穿水晶动作
+	// var crystal = cga.GetItemsInfo().find(i => i.pos == 7);
+	// var emptyIndexes = leo.getEmptyBagIndexes();
     var emptyIndex = -1;
-    if(crystal && emptyIndexes && emptyIndexes.length > 0 ){
-    	emptyIndex = emptyIndexes[0];
-        cga.MoveItem(crystal.pos, emptyIndex, -1);
-    }
+    // if(crystal && emptyIndexes && emptyIndexes.length > 0 ){
+    // 	emptyIndex = emptyIndexes[0];
+    //     cga.MoveItem(crystal.pos, emptyIndex, -1);
+    // }
 
     if(profession.name == '传教士'){
     	//检查是否有气绝回复技能
@@ -168,7 +173,7 @@ require('./leo/common').then(cga => {
 			var newTitle = leo.getPlayerSysTitle(playerinfo.titles);
 			leo.waitNPCDialog(dlg => {
 			if (dlg && dlg.message) {
-				if(dlg.message.indexOf('一点兴趣都没有') >= 0||dlg.message.indexOf('新称号而努力') >= 0){
+				if(dlg.message.indexOf('一点兴趣') >= 0||dlg.message.indexOf('新称号而努力') >= 0){
 					per = 0
 				}else if(dlg.message.indexOf('四分之一') >= 0){
 					per = 0.25
@@ -182,13 +187,15 @@ require('./leo/common').then(cga => {
 				leo.delay(1000);
 				if(newTitle == title){
 					if(per != percentage){
-						console.log('称号未更新但有进展，称号进度前进了' + ((per - percentage)*100).toString() +'%')
+						console.log('称号未更新但有进展，称号进度前进了【' + ((per - percentage)*100).toString() +'%】')
 					}else{
-						console.log('称号无进展，该转职解声望锁了')
+						console.log('【注意】：称号无进展，该转职解声望锁了')
 					}
 				}else{
 					console.log('获得新称号【'+newTitle+'】，当前称号进度为【'+(per*100).toString()+'%】')
-					if(newTitle == '敬畏的寂静'){
+					if(newTitle == '蕴含的太阳'){
+						console.log('提醒：下次转职可以解锁【敬畏的寂静】，为最终称号前置称号。\n如果要学习其它职业必备技能（如补血、洁净），请注意下次需要转成对应职业。')
+					}else if(newTitle == '敬畏的寂静'){
 						console.log('提醒：下次转职可以解锁【无尽星空】，如果要学【完美驯兽术】，下一次要转【驯兽师】了')
 					}
 				}
@@ -221,7 +228,7 @@ require('./leo/common').then(cga => {
 		.then(()=>{
 			leo.waitNPCDialog(dlg => {
 			if (dlg && dlg.message) {
-				if(dlg.message.indexOf('一点兴趣都没有') >= 0||dlg.message.indexOf('新称号而努力') >= 0){
+				if(dlg.message.indexOf('一点兴趣') >= 0||dlg.message.indexOf('新称号而努力') >= 0){
 					percentage = 0
 				}else if(dlg.message.indexOf('四分之一') >= 0){
 					percentage = 0.25
@@ -242,7 +249,7 @@ require('./leo/common').then(cga => {
 				}else if(profession.name == '咒术师'){
 					needGold = skillcount * 5 + 1000
 				}else if(profession.name == '巫师'){
-					needGold = skillcount * 30 + 1000
+					needGold = skillcount * 15 + 1000
 				}else{
 					console.log('脚本结束：人物的职业有误，必须是传教士或者咒术师、巫师');
 					return;
@@ -336,4 +343,5 @@ require('./leo/common').then(cga => {
 		);
 	})
 	.catch(()=>{return console.log('结束脚本')});
+	}
 });
