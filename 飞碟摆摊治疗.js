@@ -5,7 +5,10 @@ var cga = require('./cgaapi')(function(){
 	
 	if(cga.GetMapName() != '里谢里雅堡')
 	{
-		console.error('提示：飞碟摆摊只能在里谢里雅堡使用！');
+		cga.travel.falan.toStone('C', (r)=>{
+			originalPos = cga.GetMapXY();
+			originalDir = cga.GetPlayerInfo().direction;
+		});
 	}
 	
 	var skill = cga.findPlayerSkill('治疗');
