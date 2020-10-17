@@ -165,11 +165,110 @@ const Professions = [
 		skill:'',
 		titles: ['见习咒术师', '咒术师', '王宫咒术师', '降头师', '咒术大师', '咒缚者'],
 		category: '魔法系',
-        tutorlocation: '法兰城',
-		tutorwalk:[],
-		tutorpos : [],
-		teacherwalk:[],
+        tutorlocation: '莎莲娜海底洞窟',
+		tutorwalk:[
+			CW,
+			[22, 88, '芙蕾雅'],
+			[201, 166],
+		],
+		// 咒术师房间导师坐标，地图index3:15011
+		tutorpos : [11, 10],
+		teacherwalk:[
+			CW,
+			[22, 88, '芙蕾雅'],
+			[201, 166],
+		],
 		teacherpos : [],
+	},  {
+		jobmainname: '',
+		skill:'抗毒',
+		titles: ['抗毒'],
+		category: '一职多技能系',
+        teacherlocation: '杰诺瓦镇',
+		teacherwalk:[
+			[14, 6, '村长的家'],
+			[1, 9, '杰诺瓦镇'],
+			[24, 40, '莎莲娜'],
+			[196, 443, '莎莲娜海底洞窟 地下1楼'],
+			[14, 41, '莎莲娜海底洞窟 地下2楼'],
+			[32, 21],
+		],
+		teacherpos : [11, 7],
+	}, {
+		jobmainname: '',
+		skill:'抗昏睡',
+		titles: ['抗昏睡'],
+		category: '一职多技能系',
+        teacherlocation: '杰诺瓦镇',
+		teacherwalk:[
+			[14, 6, '村长的家'],
+			[1, 9, '杰诺瓦镇'],
+			[24, 40, '莎莲娜'],
+			[196, 443, '莎莲娜海底洞窟 地下1楼'],
+			[14, 41, '莎莲娜海底洞窟 地下2楼'],
+			[32, 21],
+		],
+		teacherpos : [11, 9],
+	}, {
+		jobmainname: '',
+		skill:'抗混乱',
+		titles: ['抗混乱'],
+		category: '一职多技能系',
+        teacherlocation: '杰诺瓦镇',
+		teacherwalk:[
+			[14, 6, '村长的家'],
+			[1, 9, '杰诺瓦镇'],
+			[24, 40, '莎莲娜'],
+			[196, 443, '莎莲娜海底洞窟 地下1楼'],
+			[14, 41, '莎莲娜海底洞窟 地下2楼'],
+			[32, 21],
+		],
+		teacherpos : [14, 7],
+	}, {
+		jobmainname: '',
+		skill:'抗酒醉',
+		titles: ['抗酒醉'],
+		category: '一职多技能系',
+        teacherlocation: '杰诺瓦镇',
+		teacherwalk:[
+			[14, 6, '村长的家'],
+			[1, 9, '杰诺瓦镇'],
+			[24, 40, '莎莲娜'],
+			[196, 443, '莎莲娜海底洞窟 地下1楼'],
+			[14, 41, '莎莲娜海底洞窟 地下2楼'],
+			[32, 21],
+		],
+		teacherpos : [11, 15],
+	}, {
+		jobmainname: '',
+		skill:'抗石化',
+		titles: ['抗石化'],
+		category: '一职多技能系',
+        teacherlocation: '杰诺瓦镇',
+		teacherwalk:[
+			[14, 6, '村长的家'],
+			[1, 9, '杰诺瓦镇'],
+			[24, 40, '莎莲娜'],
+			[196, 443, '莎莲娜海底洞窟 地下1楼'],
+			[14, 41, '莎莲娜海底洞窟 地下2楼'],
+			[32, 21],
+		],
+		teacherpos : [11, 13],
+	},  {
+		jobmainname: '',
+		skill:'抗遗忘',
+		titles: ['抗遗忘'],
+		category: '一职多技能系',
+        teacherlocation: '杰诺瓦镇',
+		teacherwalk:[
+			[14, 6, '村长的家'],
+			[1, 9, '杰诺瓦镇'],
+			[24, 40, '莎莲娜'],
+			[196, 443, '莎莲娜海底洞窟 地下1楼'],
+			[14, 41, '莎莲娜海底洞窟 地下2楼'],
+			[32, 21],
+		],
+		teacherpos : [16, 9],
 	}, {
 		jobmainname: '封印师',
 		skill:'精灵的盟约',
@@ -435,7 +534,24 @@ const Professions = [
 		jobmainname: '药剂师',
 		skill:'',
 		titles: ['实习药剂师', '药剂师', '资深药剂大师', '御用药剂师', '炼金术士'],
-        tutorlocation: '法兰城'
+        tutorlocation: '圣拉鲁卡村',
+		tutorwalk:[
+			[7, 3, '村长的家'],
+			[2, 9, '圣拉鲁卡村'],
+			[37, 50, '医院'],
+			[14, 11, 2311],
+			[12, 6]
+			],
+		tutorpos : [12, 5],
+		teacherwalk:[
+			[7, 3, '村长的家'],
+			[2, 9, '圣拉鲁卡村'],
+			[32, 70, '装备品店'],
+			[14, 4, '1楼小房间'],
+			[9, 3, '地下工房'],
+			[12, 19]
+			],
+		teacherpos : [12 ,18],
 	}, {
 		category: '制造系',
 		jobmainname: '造枪工',
@@ -588,7 +704,7 @@ const Professions = [
 	}, {
 		jobmainname: '医生',
 		skill:'治疗',
-		titles: ['见习医生','医生','资深医生','御医','超级医生','神医'],
+		titles: ['实习医师','医师','资深医师','御医','超级医生','神医'],
 		category: '服务系',
         tutorlocation: '法兰城',
 		tutorwalk:[
@@ -596,7 +712,7 @@ const Professions = [
 			[221, 83, '医院'],
 			[15, 8]
 			],
-		tutorpos : [33, 33],
+		tutorpos : [16, 8],
 		teacherlocation: '法兰城',
 		teacherwalk:[
 			CW,
@@ -694,7 +810,7 @@ const titlesMap = (inputmsg) => {
 };
 
 module.exports = function(inputmsg) {
-	// console.log('职业信息输入 inputmsg = ' + inputmsg)
+	console.log('职业信息输入 inputmsg = ' + inputmsg)
 	var profession = null
 	if(inputmsg == null){
 		return Professions

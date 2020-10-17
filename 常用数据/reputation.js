@@ -5,7 +5,7 @@
 const reputationList = [
 	{
 		reputation: '无名的旅人',
-		min: -999,
+		min: 0,
 		max: 1999,
 	}, {
 		reputation: '路旁的落叶',
@@ -75,7 +75,9 @@ const calculate =(inputreputation,percentage) => {
 module.exports = function(inputreputation,percentage) {
 	var result = 0
 	if(inputreputation == null){
-		throw new Error('必须传入当前声望，否则无法计算')
+		inputreputation ='路旁的落叶'
+		console.log('inputreputation = null ,请注意称号是否有问题，现在默认从【路旁的落叶】开始刷')
+		result = calculate(inputreputation,percentage)
 	}else if(inputreputation == '无尽星空'){
 		console.log('result返回0，都无尽星空了还刷神马。。')
 		return result
