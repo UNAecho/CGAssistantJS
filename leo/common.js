@@ -1302,7 +1302,7 @@ module.exports = require('./wrapper').then(cga => {
     leo.monitor.keepAlive = () => {
         if(leo.keepAliveStatus != leo.monitor.config.keepAlive){
             leo.keepAliveStatus = leo.monitor.config.keepAlive;
-            leo.log('防掉线功能已' + (leo.keepAliveStatus?'【开启】':'【关闭】'));
+            // leo.log('防掉线功能已' + (leo.keepAliveStatus?'【开启】':'【关闭】'));
         }
         if(leo.keepAliveStatus){
             leo.sayWords();

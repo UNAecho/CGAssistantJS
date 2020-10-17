@@ -1,4 +1,4 @@
-const doctorName = 'ｍｉｌｋ'; // 指定医生名字
+const doctorName = 'UNAの护士'; // 指定医生名字
 require('../wrapper').then(cga => {
 	console.log('送死刷治疗');
 	cga.emogua.autoBattle(cga.emogua.AutoBattlePreset.getAttackSets());
