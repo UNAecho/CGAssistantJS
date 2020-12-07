@@ -2,6 +2,9 @@ var cga = require('./cgaapi')(function(){
 	
 	var originalPos = cga.GetMapXY();
 	var originalDir = cga.GetPlayerInfo().direction;
+
+	// 如需私人治疗，请自定义名字中的特殊字符
+	var namefilter = "UNA"
 	
 	if(cga.GetMapName() != '里谢里雅堡')
 	{
@@ -50,7 +53,7 @@ var cga = require('./cgaapi')(function(){
 		var index = -1;
 		
 		for(var i in teamplayers){
-			if(teamplayers[i].injury){
+			if(teamplayers[i].injury && teamplayers[i].name.indexOf(namefilter) >=0){
 				index = i;
 				break;
 			}
