@@ -3,7 +3,7 @@ var configTable = global.configTable;
 
 var thisobj = {
 	object : {
-		name :'鹿皮'，
+		name :'鹿皮',
 		func : (cb) =>{
 			cga.travel.falan.toStone('E1', ()=>{
 				cga.walkList([

@@ -431,6 +431,7 @@ var loop = ()=>{
 	if(isleader && teamMode.is_enough_teammates())
 	{
 		var teamplayers = cga.getTeamPlayers();
+		console.log('thisobj.battleArea.name = ' + thisobj.battleArea.name)
 		if(teamplayers.length >1){
 			if(thisobj.battleArea.name =='全自动识别最低级号'){
 				min = minteammateslv(teamplayers)
