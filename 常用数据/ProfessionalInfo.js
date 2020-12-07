@@ -16,7 +16,17 @@ const Professions = [
 		skill:'',
 		titles: ['见习暗黑骑士', '暗黑骑士', '高阶暗黑骑士', '暗黑领主', '暗黑之魂', '漆黑之影'],
 		category: '物理系',
-		tutorlocation: '法兰城'
+		tutorlocation: '法兰城',
+		tutorwalk:[
+			CE,
+			[194, 191],
+			],
+		tutorpos : [195, 191],
+		teacherwalk:[
+			CE,
+			[195, 193],
+			],
+		teacherpos : [196 ,193],
 	}, {
 		jobmainname: '盗贼',
 		skill:'',
@@ -78,10 +88,25 @@ const Professions = [
         tutorlocation: '曙光骑士团营地',
 	}, {
 		jobmainname: '骑士',
-		skill:'',
+		skill:'护卫',
 		titles: ['见习骑士', '骑士', '王宫骑士', '近卫骑士', '枪术大师', '枪圣'],
 		category: '物理系',
-        tutorlocation: '法兰城'
+        tutorlocation: '法兰城',
+		tutorwalk:[
+			[41, 50, '里谢里雅堡 1楼'],
+			[74, 19, '里谢里雅堡 2楼'],
+			[67, 71, '客房'],
+			[10, 4]
+			],
+		tutorpos : [11, 4],
+        teacherlocation: '法兰城',
+		teacherwalk:[
+			CS,
+			[182, 132, '公寓'],
+			[32, 71, '客房'],
+			[23, 12]
+			],
+		teacherpos : [24 ,12],
 	}, {
 		jobmainname: '忍者',
 		skill:'暗杀',
@@ -358,7 +383,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '造斧工',
 		skill:'造斧',
-		titles: ['造斧学徒', '造斧工', '资深造斧师傅', '御用造斧师傅', '造斧名师'],
+		titles: ['造斧学徒', '造斧工', '资深造斧师傅', '御用造斧师', '造斧名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorwalk:[
 			[7, 3, '村长的家'],
