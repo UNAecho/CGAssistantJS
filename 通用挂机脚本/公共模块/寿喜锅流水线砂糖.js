@@ -29,10 +29,11 @@ var thisobj = {
 				cb(null);
 				return
 			}
-			if (cga.GetPlayerInfo().souls != 0){
-				thisobj.object.callsouls(cb);
-				return
-			}
+			// 砂糖不需要遇敌，删掉掉魂招魂模块，不然原本掉魂的号会卡住不动
+			// if (cga.GetPlayerInfo().souls != 0){
+			// 	thisobj.object.callsouls(cb);
+			// 	return
+			// }
 			console.log('去买砂糖...'); 			
 			cga.travel.falan.toTeleRoom('维诺亚村', ()=>{
 				cga.walkList([
@@ -191,7 +192,7 @@ var thisobj = {
 		socket = require('socket.io-client')('http://localhost:'+thisobj.serverPort, { reconnection: true });
 
 		socket.on('connect', ()=>{
-			console.log('成功连接到烧鸡流水线节点');
+			console.log('成功连接到寿喜锅流水线节点');
 			socket.emit('register', {
 				state : thisobj.object.state,
 				player_name : cga.GetPlayerInfo().name,
@@ -244,7 +245,7 @@ var thisobj = {
 		});
 
 		socket.on('disconnect', ()=>{
-			console.log('退出烧鸡流水线节点');
+			console.log('退出寿喜锅流水线节点');
 		});
 	}
 }
