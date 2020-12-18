@@ -2,7 +2,7 @@ var cga = global.cga;
 var configTable = global.configTable;
 
 // 如果有私人医生，请指定
-var personaldoctor = 'UNAの鉴定师'
+var personaldoctor = 'UNAの护士'
 
 var thisobj = {
 	prepare : (cb)=>{
