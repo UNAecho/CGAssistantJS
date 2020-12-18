@@ -1,8 +1,47 @@
 var cga = global.cga;
 var configTable = global.configTable;
 
+var buyArray = [
+	{
+		name : '封印卡（人形系）',
+		type : 40,
+	},
+	{
+		name : '封印卡（龙系）',
+		type : 40,	
+	},
+	{
+		name : '封印卡（野兽系)',
+		type : 40,	
+	},
+	{
+		name : '封印卡（昆虫系）',
+		type : 40,	
+	},
+	{
+		name : '封印卡（特殊系）',
+		type : 40,	
+	},
+	{
+		name : '封印卡（金属系）',
+		type : 40,	
+	},
+	{
+		name : '封印卡（飞行系）',
+		type : 40,	
+	},
+	{
+		name : '封印卡（不死系）',
+		type : 40,	
+	},
+	{
+		name : '封印卡（植物系）',
+		type : 40,	
+	}
+	]
+
 const buyFilter = (eq) => {
-	if (eq.type == 40 && eq.assessed == true) {
+	if (eq.type == 40 && eq.assessed == true && eq.name == thisobj.buyCard.name && eq.count >=20) {
 		return true;
 	}
 	return false;
@@ -26,8 +65,8 @@ const buyLoop = (cb)=>{
 			var emptySlotCount = cga.getInventoryEmptySlotCount();
 			
 			store.items.forEach((it)=>{
-				if(it.name.indexOf('封印卡') >= 0 && buyCount < emptySlotCount){
-					buyitem.push({index: it.index, count:20});
+				if(it.name == thisobj.buyCard.name && buyCount < emptySlotCount){
+					buyitem.push({index: it.index, count:20*emptySlotCount});
 					buyCount ++;
 				}
 			});
@@ -55,7 +94,7 @@ const buyLoop = (cb)=>{
 
 var thisobj = {
 	prepare : (cb)=>{
-		var items = cga.getInventoryItems().filter(buyFilter);
+		var items = cga.GetItemsInfo().filter(buyFilter);
 		if(items.length){
 			cb(null);
 			return;
@@ -132,11 +171,69 @@ var thisobj = {
 			});
 		}
 	},
+	translate : (pair)=>{
+		
+		if(pair.field == 'buyCard'){
+			pair.field = '购买封印卡';
+			pair.value = pair.value;
+			pair.translated = true;
+			return true;
+		}
+		
+		return false;
+	},
+	think : (ctx)=>{
+
+		var counts = cga.getItemCount(thisobj.buyCard.name)
+		if(counts<20)
+		{
+			cga.SayWords('封印卡不够，需要回补!', 0, 3, 1);
+			ctx.result = 'supply';
+			ctx.reason = '封印卡不够';
+			return;
+			
+
+		}
+	},
 	loadconfig : (obj, cb)=>{
+		for(var i in buyArray){
+			if(buyArray[i].name == obj.buyCard){
+				configTable.buyCard = buyArray[i].name;
+				thisobj.buyCard = buyArray[i];
+				break;
+			}
+		}
+		
+		if(thisobj.buyCard === undefined){
+			console.error('读取配置：购买封印卡失败！');
+			return false;
+		}
+
 		return true;
 	},
 	inputcb : (cb)=>{
-		cb(null);
+		var sayString = '【买封印卡】请选择购买卡片种类:';
+		for(var i in buyArray){
+			if(i != 0)
+				sayString += ', ';
+			sayString += '('+ (parseInt(i)+1) + ')' + buyArray[i].name;
+		}
+		cga.sayLongWords(sayString, 0, 3, 1);
+		cga.waitForChatInput((msg, index)=>{
+			if(index !== null && index >= 1 && buyArray[index - 1]){
+				configTable.buyCard = buyArray[index - 1].name;
+				thisobj.buyCard = buyArray[index - 1];
+				
+				var sayString2 = '当前已选择:[' + thisobj.buyCard.name + ']。';
+				cga.sayLongWords(sayString2, 0, 3, 1);
+				
+				cb(null);
+				
+				return false;
+			}
+			
+			return true;
+		});
 	}
 };
 
