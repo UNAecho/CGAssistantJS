@@ -4,8 +4,11 @@ var cga = require('./cgaapi')(function(){
 	
 	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦
 	var teammates = [
-		"UNAの弓",
+		"UNAの格斗2",
+		"UNAの格斗",
+		"UNAの封印",
 		"UNAの传教",
+		"UNAの战斧",
 		// "UNAの剑士",
 		// "UNAの游侠",
 		// "UNAの饲养师",
@@ -15,7 +18,7 @@ var cga = require('./cgaapi')(function(){
 	];
 
 	// 本次刷保证书的人数
-	var maxteammate = 4
+	var maxteammate = 5
 
 	// 注销掉动态组队
 	// var teamplayers = cga.getTeamPlayers();
@@ -617,7 +620,7 @@ var cga = require('./cgaapi')(function(){
 					doneBOSS = true;
 					
 					if(cga.getItemCount('觉醒的文言抄本') > 0){
-						//cga.LogBack();
+						item = cga.GetItemsInfo().find(i => i.itemid == 18257)
 						setTimeout(cb2, 1000, true);
 						return;
 					}
