@@ -1382,7 +1382,7 @@ module.exports = function(callback){
 	//从法兰城到哥拉尔
 	cga.travel.falan.toGelaer = (cb)=>{
 		
-		if(cga.GetMapName() == '哥拉尔'){
+		if(cga.GetMapName() == '哥拉尔镇'){
 			cb(null);
 			return;
 		}
@@ -2456,8 +2456,8 @@ module.exports = function(callback){
 			var curpos = cga.GetMapXY();
 			var curmapindex = cga.GetMapIndex().index3;
 
-			console.log('当前地图: ' + curmap + ', 序号 ' + curmapindex);
-			console.log('当前 (%d, %d) -> 目标 (%d, %d)', curpos.x, curpos.y, targetX, targetY);
+			// console.log('当前地图: ' + curmap + ', 序号 ' + curmapindex);
+			// console.log('当前 (%d, %d) -> 目标 (%d, %d)', curpos.x, curpos.y, targetX, targetY);
 			if(targetMap)
 			{
 				// console.log('目标地图');
