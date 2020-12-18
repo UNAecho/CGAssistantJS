@@ -289,7 +289,7 @@ var getExtractedItemCount = (inventory)=>{
 }
 
 var loop = ()=>{
-	console.trace();
+	// console.trace();
 	callSubPluginsAsync('prepare', ()=>{
 		
 		var skill = cga.findPlayerSkill('制药');
@@ -395,7 +395,7 @@ var loop = ()=>{
 				craftitem : craft_target.name,
 				immediate : true
 			}, (err, results)=>{
-				console.log(err);
+				// console.log(err);
 				if(results && results.success){
 					craft_count ++;
 					console.log('已造' + craft_count + '次');
