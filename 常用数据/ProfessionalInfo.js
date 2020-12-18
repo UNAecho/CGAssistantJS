@@ -32,7 +32,15 @@ const Professions = [
 		skill:'',
 		titles: ['见习盗贼', '盗贼', '小偷', '欺诈师', '偷窃高手', '盗贼头目'],
 		category: '物理系',
-		tutorlocation: '哥拉尔镇'
+		tutorlocation: '哥拉尔镇',
+		tutorwalk:[
+			[13, 9],
+			],
+		tutorpos : [13, 8],
+		teacherwalk:[
+			[15, 10],
+			],
+		teacherpos : [16 ,10],
 	}, {
 		jobmainname: '格斗士',
 		skill:'混乱攻击',
@@ -301,7 +309,6 @@ const Professions = [
 		category: '魔物系',
         tutorlocation: '法兰城',
 		tutorwalk:[
-			[153, 100, '里谢里雅堡'],
 			[41, 50, '里谢里雅堡 1楼'],
 			[74, 19, '里谢里雅堡 2楼'],
 			[32, 71, '客房'],
@@ -309,7 +316,7 @@ const Professions = [
 			],
 		tutorpos : [10, 4],
 		teacherwalk:[
-			[153, 100, '里谢里雅堡 1楼'],
+			[41, 50, '里谢里雅堡 1楼'],
 			[74, 19, '里谢里雅堡 2楼'],
 			[32, 71, '客房'],
 			[9, 5]
