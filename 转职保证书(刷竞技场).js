@@ -13,6 +13,9 @@ var cga = require('./cgaapi')(function(){
 	var crystal = "风地的水晶（5：5）"
 	var isweaponequip = false
 	var iscrystalequip = false
+	// 如果不需要装备辅助，请设置为true
+	var noneedweapon = true
+	console.log('noneedweapon = ' + noneedweapon)
 
 	var bosspos = [31, 23]
 
@@ -289,6 +292,9 @@ var cga = require('./cgaapi')(function(){
 	}
 
 	var checkEquipItems = ()=>{
+		if (noneedweapon){
+			return
+		}
 		// 如果光腚数值能达到150攻击，1300以上血量，则不买武器和水晶，裸装直接刷。
 		var playerinfotemp = cga.GetPlayerInfo();
 	
