@@ -194,6 +194,14 @@ var cga = require('./cgaapi')(function(){
 			}
 			
 			if(cga.isTeamLeader){
+				if(cga.needSupplyInitial({  })){
+					cga.travel.falan.toCastleHospital(()=>{
+						setTimeout(()=>{
+							cb2('restart stage');
+						}, 3000);
+					});
+					return;
+				}
 				cga.travel.falan.toTeleRoom('杰诺瓦镇', wait);
 			} else {
 				wait2();
