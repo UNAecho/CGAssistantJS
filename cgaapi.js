@@ -522,7 +522,7 @@ module.exports = function(callback){
 	cga.travel.falan.toStoneInternal = function(stone, cb){
 		var curXY = cga.GetMapXY();
 		var curMap = cga.GetMapName();
-		const desiredMap = ['法兰城','里谢里雅堡','艾尔莎岛','市场一楼 - 宠物交易区','市场三楼 - 修理专区'];
+		const desiredMap = ['法兰城','里谢里雅堡','艾尔莎岛','市场一楼 - 宠物交易区','市场三楼 - 修理专区','召唤之间'];
 		if(curMap == '法兰城'){
 			if(stone == 'C'){
 				cga.travel.falan.toCastle(cb);
