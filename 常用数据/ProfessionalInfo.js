@@ -94,6 +94,15 @@ const Professions = [
 		titles: ['见习教团骑士', '教团骑士', '高阶教团骑士', '圣骑士', '光明骑士', '仲裁者'],
 		category: '物理系',
         tutorlocation: '曙光骑士团营地',
+		tutorwalk:[
+			[10, 5]
+			],
+		tutorpos : [11, 5],
+        teacherlocation: '法兰城',
+		teacherwalk:[
+			[10, 8]
+			],
+		teacherpos : [11 ,8],
 	}, {
 		jobmainname: '骑士',
 		skill:'护卫',

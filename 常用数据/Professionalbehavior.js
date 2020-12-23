@@ -195,7 +195,6 @@ module.exports = function(cga,job,behavior,cb) {
         }else{//非法兰城职业、职级变动
             if(professionalInfo.tutorlocation == "哥拉尔镇"){
                 if(professionalInfo.jobmainname == '盗贼'){
-                    console.log('盗贼')
                     cga.travel.falan.toCity('哥拉尔镇', ()=>{
                         cga.walkList([
                             [176, 105, '库鲁克斯岛'],
@@ -215,32 +214,48 @@ module.exports = function(cga,job,behavior,cb) {
                     });
                 }
             }else{//法兰其他区域职业所
-                cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, ()=>{
                     if (professionalInfo.jobmainname == '格斗士'){
-                        cga.walkList(professionalInfo.tutorwalk, ()=>{
-                            cga.TurnTo(23,23)
-                            cga.AsyncWaitNPCDialog((err, dlg)=>{
-                                if(dlg && dlg.message.indexOf('老师') >= 0){
-                                    cga.ClickNPCDialog(4, -1);
-                                    return
-                                }
-                            });
-                            cga.AsyncWaitMovement({map:'师范的房间'}, ()=>{
-                                cga.walkList([
-                                    [19,15]], ()=>{
-                                        cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
-                                        choose()
+                        cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, ()=>{
+                            cga.walkList(professionalInfo.tutorwalk, ()=>{
+                                cga.TurnTo(23,23)
+                                cga.AsyncWaitNPCDialog((err, dlg)=>{
+                                    if(dlg && dlg.message.indexOf('老师') >= 0){
+                                        cga.ClickNPCDialog(4, -1);
+                                        return
+                                    }
+                                });
+                                cga.AsyncWaitMovement({map:'师范的房间'}, ()=>{
+                                    cga.walkList([
+                                        [19,15]], ()=>{
+                                            cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                                            choose()
+                                    });
                                 });
                             });
                         });
-                    }else{
-                        cga.walkList(professionalInfo.tutorwalk, ()=>{
-                            cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
-                            choose()
-                        });
+                    }else if(professionalInfo.jobmainname == '教团骑士'){
+                        cga.travel.falan.toCamp(()=>{
+                            cga.walkList([
+                                [52, 68, '曙光营地指挥部'],
+                                [69, 69, '曙光营地指挥部', 85, 2],
+                                [97, 13],
+                            ], ()=>{
+                                cga.TurnTo(97, 14);
+                                cga.AsyncWaitNPCDialog((err, dlg)=>{
+                                    if(dlg && dlg.message.indexOf('欢迎') >= 0){
+                                        cga.ClickNPCDialog(1, -1);
+                                        return
+                                    }
+                                });
+                                cga.waitForLocation({mapindex: 27015, pos : [11, 0]}, ()=>{
+                                    cga.walkList(professionalInfo.tutorwalk, ()=>{
+                                            cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                                            choose()
+                                    });
+                                });
+                            });
+                        },true)
                     }
-    
-                });
             }
         }
     }
