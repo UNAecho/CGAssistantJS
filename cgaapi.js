@@ -2619,7 +2619,7 @@ module.exports = function(callback){
 				}
 
 				if(newList.length == 0){
-					console.log('寻路正常结束3');
+					// console.log('寻路正常结束3');
 					end( {pos : [targetX, targetY], map : targetMap} );
 					return;
 				}
@@ -3052,7 +3052,9 @@ module.exports = function(callback){
 					arr.push({
 					itempos : item.pos,
 					itemid : item.itemid,
+					name : item.name,
 					count : (item.count < 1) ? 1 : item.count,
+					type : item.type,
 					});
 				}
 			})
