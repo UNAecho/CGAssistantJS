@@ -204,32 +204,29 @@ var battleAreaArray = [
 	}
 },
 {
+	//诅咒1层怪等级16-22
+	//诅咒2层怪等级21-26
+	//诅咒3层怪等级24-30
+	//诅咒4层怪等级29-34
+	//诅咒5层怪等级31-36
+	//诅咒6层怪等级35-41
+	//诅咒7层怪等级39-45
+	//诅咒7层怪等级43-49
 	name : '诅咒',
 	walkTo : (cb)=>{
-		var map = cga.GetMapName();
-		var mapindex = cga.GetMapIndex().index3;
-		if(map == '医院' && mapindex == 59539){
+		cga.travel.falan.toStone('C', ()=>{
 			cga.walkList([
-				[28, 52, '艾夏岛'],
-				[190, 116, '盖雷布伦森林'],
-				[231, 222, '布拉基姆高地'],
-				[147, 117],
-			], cb);
-		} else {
-			cga.travel.falan.toStone('C', ()=>{
-				cga.walkList([
-					[17, 53, '法兰城'],
-					[22, 88, '芙蕾雅'],
-					[265, 155],
-				], ()=>{
-					getMazeEntrance((obj)=>{
-						cga.walkList([
-							[obj.mapx, obj.mapy, '诅咒之迷宫地下1楼']
-						], loop);
-					})
-				});
+				[17, 53, '法兰城'],
+				[22, 88, '芙蕾雅'],
+				[262, 147],
+			], ()=>{
+				getMazeEntrance((obj)=>{
+					cga.walkList([
+						[obj.mapx, obj.mapy, '诅咒之迷宫地下1楼']
+					], loop);
+				})
 			});
-		}
+		});
 	},
 	moveDir : 2,
 	isDesiredMap : (map)=>{
@@ -242,27 +239,10 @@ var battleAreaArray = [
 	walkTo : (cb)=>{
 		var map = cga.GetMapName();
 		var mapindex = cga.GetMapIndex().index3;
-		if(map == '医院' && mapindex == 59539){
-			cga.walkList([
-				[28, 52, '艾夏岛'],
-				[190, 116, '盖雷布伦森林'],
-				[231, 222, '布拉基姆高地'],
-				[147, 117],
-			], cb);
-		} else {
-			cga.travel.newisland.toStone('D', ()=>{
-				cga.walkList([
-					[190, 116, '盖雷布伦森林'],
-					[231, 222, '布拉基姆高地'],
-					[122, 117],
-					[147, 117],
-				], cb);
-			});
-		}
 	},
 	moveDir : 2,
 	isDesiredMap : (map)=>{
-		return (map == '布拉基姆高地');
+		return (map == '布拉基姆高地' || map.indexOf('诅咒之')>=0 || map.indexOf('回廊')>=0);
 	}
 },
 
@@ -387,6 +367,47 @@ var playerThinkTimer = ()=>{
 	
 	setTimeout(playerThinkTimer, 1500);
 }
+
+var dialogHandler = (err, dlg)=>{
+
+	if(dlg && (dlg.options & 4) == 4)
+	{
+		console.log('dlg.options = ' + dlg.options)
+		cga.ClickNPCDialog(4, 0);
+		cga.AsyncWaitNPCDialog(dialogHandler);
+		return;
+	}
+	if(dlg && (dlg.options & 32) == 32)
+	{
+		console.log('dlg.options = ' + dlg.options)
+		cga.ClickNPCDialog(32, 0);
+		cga.AsyncWaitNPCDialog(dialogHandler);
+		return;
+	}
+	else if(dlg && dlg.options == 1)
+	{
+		console.log('dlg.options = ' + dlg.options)
+		cga.ClickNPCDialog(1, 0);
+		return;
+	}else if(dlg && dlg.options == 8)
+	{
+		console.log('dlg.options = ' + dlg.options)
+		cga.ClickNPCDialog(8, 0);
+		return;
+	}
+	else if(dlg && dlg.options == 3)
+	{
+		console.log('dlg.options = ' + dlg.options)
+		cga.ClickNPCDialog(1, 0);
+		cga.AsyncWaitNPCDialog(dialogHandler);
+		return;
+	}
+	else
+	{
+		return;
+	}
+}
+
 var minteammateslv= (teamplayers)=>{
 	var minlv = null
 	if(teamplayers.length>=2){
@@ -419,15 +440,29 @@ var getMazeEntrance = (cb)=>{
 		cb(entrance);
 	});
 }
+var newborn = (cb)=>{
+	cga.walkList([
+		[4, 10],
+	], ()=>{
+		cga.TurnTo(4, 9);
+		cga.AsyncWaitNPCDialog(()=>{
+			cga.ClickNPCDialog(32, -1);
+			cga.AsyncWaitNPCDialog(()=>{
+				cga.ClickNPCDialog(4, -1);
+				cga.AsyncWaitNPCDialog(()=>{
+					cga.ClickNPCDialog(1, -1);
+					setTimeout(cb, 2000);
+				});
+			});
+		});
+	});
+}
 var loop = ()=>{
 
 	var map = cga.GetMapName();
 	var mapindex = cga.GetMapIndex().index3;
 	var isleader = cga.isTeamLeaderEx();
 
-	// 诅咒迷宫层数
-	var curselayer = 1
-	
 	if(isleader && teamMode.is_enough_teammates())
 	{
 		var teamplayers = cga.getTeamPlayers();
@@ -435,20 +470,44 @@ var loop = ()=>{
 		if(teamplayers.length >1){
 			if(thisobj.battleArea.name =='全自动识别最低级号'){
 				min = minteammateslv(teamplayers)
+				// 低地鸡
 				if(min < 10){
 					thisobj.battleArea = battleAreaArray[0];
-				}else if(min >=10 && min < 28){
+				}//诅咒1层怪等级16-22
+				else if(min >=10 && min < 21){
+					thisobj.battleArea = battleAreaArray[5];
+					thisobj.layerLevel = 1
+				}//刀鸡
+				else if(min >=21 && min < 29){
 					thisobj.battleArea = battleAreaArray[1];
-				}else if(min >=28 && min < 32){
-					thisobj.battleArea = battleAreaArray[2];
-				}else if(min >=32 && min < 38){
-					thisobj.battleArea = battleAreaArray[3];
-				}else if(min >=38 && min < 50){
-					//battleAreaArray，4是银狮，5是诅咒，暂时改为4，因为一个弓箭手带不了4个小号诅咒练级
-					thisobj.battleArea = battleAreaArray[4];
+				}//诅咒4层怪等级29-34
+				else if(min >=29 && min < 31){
+					thisobj.battleArea = battleAreaArray[5];
+					thisobj.layerLevel = 4
+				}//诅咒5层怪等级31-36
+				else if(min >=31 && min < 36){
+					thisobj.battleArea = battleAreaArray[5];
+					thisobj.layerLevel = 5
+				}//诅咒6层怪等级35-41
+				else if(min >=36 && min < 40){
+					thisobj.battleArea = battleAreaArray[5];
+					thisobj.layerLevel = 6
+				}//诅咒7层怪等级39-45
+				else if(min >=40 && min < 44){
+					thisobj.battleArea = battleAreaArray[5];
+					thisobj.layerLevel = 7
+				}//诅咒8层怪等级43-49
+				else if(min >=44 && min < 70){
+					thisobj.battleArea = battleAreaArray[5];
 					thisobj.layerLevel = 8
 				}else{
-					throw new error('超过50级了，再练刷不了吉拉（52级最高）了')
+					console.log('超过50级了，再练刷不了吉拉（52级最高）了')
+					var wait = ()=>{
+						while(true){
+							continue
+						}
+					}
+					wait()
 				}
 				console.log('根据当前队员最小等级推断练级地点：' + thisobj.battleArea.name)
 			}else{
@@ -475,7 +534,7 @@ var loop = ()=>{
 					cga.freqMove(dir);
 				});
 				return;
-			}else{//高地逻辑
+			}else{//练级逻辑
 				playerThinkInterrupt.hasInterrupt();//restore interrupt state
 				console.log('playerThink on');
 				playerThinkRunning = true;
@@ -523,13 +582,38 @@ var loop = ()=>{
 	}
 
 	callSubPluginsAsync('prepare', ()=>{
-		cga.travel.newisland.toStone('X', ()=>{
-			cga.walkList([
-			cga.isTeamLeader ? [144, 106] : [143, 106],
-			], ()=>{
-				teamMode.wait_for_teammates(loop);
+		// 判断是不是刚出生的人物
+		if(cga.GetMapIndex().index3 == 1530){
+			console.log('人物在召唤之间')
+			var pos = cga.GetMapXY();
+			if(pos.x == 15 && pos.y == 6){
+				newborn(loop)
+			}else if (pos.x == 4 && pos.y == 10){
+				cga.LogBack();
+				setTimeout(loop, 2000);
+			}
+		}else if(cga.GetPlayerInfo().level == 1 && cga.GetMapIndex().index3 == 1000){
+			var stay = ()=>{
+				cga.walkList([
+				[141, 105]
+				], ()=>{
+					cga.turnTo(142, 105);
+					cga.AsyncWaitNPCDialog(()=>{
+						cga.ClickNPCDialog(4, -1);
+						setTimeout(loop, 2000);
+					});
+				});
+			};
+			cga.travel.falan.toCity('艾尔莎岛', stay);
+		}else{//如果不是刚出生小号，走正常练级逻辑
+			cga.travel.newisland.toStone('X', ()=>{
+				cga.walkList([
+				cga.isTeamLeader ? [144, 106] : [143, 106],
+				], ()=>{
+					teamMode.wait_for_teammates(loop);
+				});
 			});
-		});
+		}
 	});
 }
 
@@ -542,7 +626,9 @@ var thisobj = {
 
 		if(map == '布拉基姆高地' )
 			return 2;
-		
+		if(map.indexOf('诅咒')>=0){
+			return 2;
+		}
 		return 0;
 	},
 	translate : (pair)=>{
@@ -588,7 +674,7 @@ var thisobj = {
 	inputcb : (cb)=>{
 		Async.series([supplyMode.inputcb, teamMode.inputcb, (cb2)=>{
 			
-			var sayString = '【高地插件】请选择练级地点:';
+			var sayString = '【自动1-50插件】请选择练级地点:';
 			for(var i in battleAreaArray){
 				if(i != 0)
 					sayString += ', ';
