@@ -9,7 +9,7 @@ require('./common').then(async (cga) => {
         rechargeFlag: 1,
         repairFlag: -1,
         crystalName: '水火的水晶（5：5）',
-        doctorName: '医道之殇'
+        doctorName: 'UNAの护士'
     };
 
     var targetName = ['','地','水','火','风'];

@@ -9,8 +9,8 @@ require('./common').then(cga => {
         sealCardName: '封印卡（飞行系）',
         sealCardLevel: 1,
         autoDropPet: true, //是否自动扔宠，true扔/false不扔
-        minHp: 91 - 3,
-        minMp: 107 - 3,
+        minHp: 88 - 3,
+        minMp: 100 - 3,
         minAttack: 37,
         minDefensive: 33,
         minAgility: 35,
@@ -110,7 +110,7 @@ require('./common').then(cga => {
         targets: context => [context.petUnit.pos]
     });
 
-    var firstRoundDelay = 1;    //首回合延迟
+    var firstRoundDelay = 4000;    //首回合延迟
     var roundDelay = 4000          //每回合延迟
     var force = true ;          //是否强制启用战斗配置
     leo.setBattlePet2(false);   //关闭宠物二动
@@ -122,7 +122,7 @@ require('./common').then(cga => {
         rechargeFlag: 1,
         repairFlag: -1,
         crystalName: '火风的水晶（5：5）',
-        doctorName: '医道之殇'
+        doctorName: 'UNAの护士'
     };
     leo.log('红叶の自动抓【' + petOptions.name + '】存银行脚本，启动~');
     var setting = '预设五围是：【' + petOptions.minHp + '/' + petOptions.minMp + '/' + petOptions.minAttack + '/' + petOptions.minDefensive + '/' + petOptions.minAgility + '】，自动扔宠：【' + (petOptions.autoDropPet ? '已启用' : '未启用') + '】';

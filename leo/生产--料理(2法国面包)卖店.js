@@ -6,7 +6,7 @@ require('./common').then(cga=>{
 	leo.log('红叶の单人全自动法国面包采集制作贩卖商店脚本，启动~');
 	
 	var daka = true  //是否打卡(true/false)
-	var doctorName = '医道之殇';
+	var doctorName = 'UNAの护士';
 	var itemName = '法国面包';
 	var skillLevel = 2;
 	var skill = cga.findPlayerSkill('料理');

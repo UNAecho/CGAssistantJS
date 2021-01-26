@@ -24,7 +24,7 @@ require('./common').then(cga => {
         rechargeFlag: 1,
         repairFlag: -1,
         crystalName: '火风的水晶（5：5）',
-        doctorName: '医道之殇'
+        doctorName: 'UNAの护士'
     };
     var playerinfo = cga.GetPlayerInfo();
     var playerName = playerinfo.name;

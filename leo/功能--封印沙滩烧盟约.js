@@ -19,9 +19,9 @@ require('./common').then(cga => {
     };
 
     var protect = {
-        minHp: 500,
+        minHp: 1000,
         minMp: 50,
-        minPetHp: 200,
+        minPetHp: 800,
         minPetMp: 50,
         maxItemNumber: 19,
         minTeamNumber: 0,
@@ -37,7 +37,7 @@ require('./common').then(cga => {
         rechargeFlag: -1,
         repairFlag: -1,
         crystalName: '火风的水晶（5：5）',
-        doctorName: '医道之殇'
+        doctorName: 'UNAの护士'
     };
     var playerinfo = cga.GetPlayerInfo();
     var playerName = playerinfo.name;
@@ -46,7 +46,7 @@ require('./common').then(cga => {
         isTeamLeader = true;
     }
 
-    leo.log('高仿红叶の沙滩登出回补脚本，推荐80~100级使用，启动~');
+    // leo.log('高仿红叶の沙滩登出回补脚本，推荐80~100级使用，启动~');
 
     var task = async () => {
         await leo.waitAfterBattle()

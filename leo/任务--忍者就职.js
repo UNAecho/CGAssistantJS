@@ -6,7 +6,7 @@ require('./common').then(cga=>{
 	var prepareOptions = {
         rechargeFlag: 1,
         repairFlag: -1,
-        doctorName: '医道之殇'
+        doctorName: 'UNAの护士'
     };
     var teammates = [];
 	leo.log('红叶の忍者就职脚本，启动~');

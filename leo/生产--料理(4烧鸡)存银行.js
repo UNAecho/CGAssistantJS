@@ -6,7 +6,7 @@ require('./common').then(cga=>{
 	leo.monitor.config.healSelf = true;//自动治疗自己
 	leo.log('高仿红叶の单人全自动烧鸡采集制作脚本，启动~');
 
-	var doctorName = '医道之殇';
+	var doctorName = 'UNAの护士';
 	var itemName = '烧鸡';
 	var skillLevel = 4;
 	var skill = cga.findPlayerSkill('料理');

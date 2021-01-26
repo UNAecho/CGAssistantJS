@@ -9,11 +9,11 @@ require('./common').then(cga => {
         sealCardName: '封印卡（龙系）',
         sealCardLevel: 1,
         autoDropPet: true, //是否自动扔宠，true扔/false不扔
-        minHp: 128 - 3,
-        minMp: 76 - 3,
+        minHp: 126 - 3,
+        minMp: 70 - 3,
         minAttack: 46,
-        minDefensive: 46,
-        minAgility: 29,
+        minDefensive: 46-5,
+        minAgility: 29-2,
         index: 1,
         petChecker: () => {
             var pets = cga.GetPetsInfo();
@@ -80,7 +80,7 @@ require('./common').then(cga => {
     sets.push({
         user: 2,
         check: context => context.enemies.find(e => e.level == 1 && e.name == petOptions.name && e.curhp == e.maxhp) && cga.getInventoryItems().find(i => i.name == petOptions.sealCardName),
-        skillName: '陨石魔法-Ⅰ',
+        skillName: '风刃魔法-Ⅰ',
         targets: context => [context.enemies.find(e => e.level == 1 && e.name == petOptions.name).pos]
     });
     sets.push({
@@ -102,9 +102,9 @@ require('./common').then(cga => {
         rechargeFlag: 1,
         repairFlag: -1,
         crystalName: '风地的水晶（5：5）',
-        doctorName: '医道之殇'
+        doctorName: 'UNAの护士'
     };
-    leo.log('红叶の自动抓【' + petOptions.name + '】存银行脚本，启动~');
+    // leo.log('红叶の自动抓【' + petOptions.name + '】存银行脚本，启动~');
     var setting = '预设五围是：【' + petOptions.minHp + '/' + petOptions.minMp + '/' + petOptions.minAttack + '/' + petOptions.minDefensive + '/' + petOptions.minAgility + '】，自动扔宠：【' + (petOptions.autoDropPet ? '已启用' : '未启用') + '】';
     leo.log(setting);
     cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, false); //关闭队聊

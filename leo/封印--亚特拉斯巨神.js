@@ -51,7 +51,7 @@ require('./common').then(cga => {
         rechargeFlag: 1,
         repairFlag: -1,
         crystalName: '水火的水晶（5：5）',
-        doctorName: '医道之殇'
+        doctorName: 'UNAの护士'
     };
     leo.log('红叶の自动抓【' + petOptions.name + '】脚本，启动~');
     var setting = '预设五围是：【' + petOptions.minHp + '/' + petOptions.minMp + '/' + petOptions.minAttack + '/' + petOptions.minDefensive + '/' + petOptions.minAgility + '】，自动扔宠：【' + (petOptions.autoDropPet ? '已启用' : '未启用') + '】';

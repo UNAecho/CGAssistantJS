@@ -943,7 +943,7 @@ module.exports = require('./wrapper').then(cga => {
                 }
 
                 let flagStr = flag?'，抓！':'';
-                console.log(leo.logTime()+'第【'+(petOptions.index++)+'】只1级怪:【' + e.name + '】【' + e.maxhp + '('+petOptions.minHp+')/' + e.maxmp + '('+petOptions.minMp+')】'+flagStr);
+                console.log(leo.logTime()+'第【'+(petOptions.index++)+'】只1级怪:【' + e.name + '】【' + e.maxhp + '(要求：'+petOptions.minHp+')/' + e.maxmp + '(要求：'+petOptions.minMp+')】'+flagStr);
             }
         });
     }

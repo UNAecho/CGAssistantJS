@@ -4,7 +4,7 @@ require('./common').then(cga=>{
 	var prepareOptions = {
         rechargeFlag: 1,
         repairFlag: -1,
-        doctorName: '医道之殇'
+        doctorName: 'UNAの护士'
     };
 
 	leo.log('红叶の森罗万象(风之洞窟)脚本，启动~');

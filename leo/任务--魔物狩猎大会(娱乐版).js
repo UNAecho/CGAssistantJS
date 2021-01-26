@@ -11,7 +11,7 @@ require('./common').then(cga=>{
 	var prepareOptions = {
         rechargeFlag: 1,
         repairFlag: -1,
-        doctorName: '医道之殇'
+        doctorName: 'UNAの护士'
     };
     var teammates = [];
 	leo.log('红叶の魔物狩猎大会(娱乐版)脚本，希特拉在等你哟~！启动~~~');

@@ -18,7 +18,7 @@ require('./common').then(cga => {
         rechargeFlag: 1,
         repairFlag: -1,
         crystalName: '火风的水晶（5：5）',
-        doctorName: '医道之殇'
+        doctorName: 'UNAの护士'
     };
     
     leo.log('红叶の营地烧技能脚本，启动~');

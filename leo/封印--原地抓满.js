@@ -53,7 +53,7 @@ require('./common').then(cga=>{
 	var prepareOptions = {
 		repairFlag: -1,
 		crystalName: '火风的水晶（5：5）',
-		doctorName: '医道之殇'
+		doctorName: 'UNAの护士'
 	};
 
 	leo.log('红叶の原地抓【'+petOptions.name+'】脚本，启动~');

@@ -5,7 +5,7 @@ require('./common').then(cga => {
         rechargeFlag: 1,
         repairFlag: -1,
         crystalName: '水火的水晶（5：5）',
-        doctorName: '医道之殇'
+        doctorName: 'UNAの护士'
     };
 	var playerinfo = cga.GetPlayerInfo();
 	var value_charisma = playerinfo.detail.value_charisma;//魅力值

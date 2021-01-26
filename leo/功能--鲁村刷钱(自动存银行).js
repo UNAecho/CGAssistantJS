@@ -15,7 +15,7 @@ require('./common').then(cga => {
         rechargeFlag: 1,
         repairFlag: -1,
         crystalName: '火风的水晶（5：5）',
-        doctorName: '医道之殇'
+        doctorName: 'UNAの护士'
     };
 
     leo.log('红叶の鲁村刷钱(自动存银行)脚本，启动~');
