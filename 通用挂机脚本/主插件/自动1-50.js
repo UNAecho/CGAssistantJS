@@ -25,6 +25,9 @@ var getSupplyObject = (map, mapindex)=>{
 		return s.isAvailable(map, mapindex);
 	})
 }
+// 队伍最低和最高等级
+var minlv = null
+var maxlv = null
 
 //卖石
 var sellArray = [sellCastle];
@@ -67,6 +70,18 @@ var walkMazeForward = (cb)=>{
 }
 // 练级地点
 var battleAreaArray = [
+	{
+		//本dict仅name有用，walkTo请无视
+		name : '全自动识别最低级号',
+		walkTo : (cb)=>{
+			var map = cga.GetMapName();
+			var mapindex = cga.GetMapIndex().index3;
+		},
+		moveDir : 2,
+		isDesiredMap : (map)=>{
+			return (map == '布拉基姆高地' || map.indexOf('诅咒之')>=0 || map.indexOf('回廊')>=0);
+		}
+	},
 	{
 		name : '低地鸡',
 		walkTo : (cb)=>{
@@ -233,18 +248,6 @@ var battleAreaArray = [
 		return (map == '诅咒之迷宫地下1楼');
 	}
 },
-{
-	//本dict仅name有用，walkTo请无视
-	name : '全自动识别最低级号',
-	walkTo : (cb)=>{
-		var map = cga.GetMapName();
-		var mapindex = cga.GetMapIndex().index3;
-	},
-	moveDir : 2,
-	isDesiredMap : (map)=>{
-		return (map == '布拉基姆高地' || map.indexOf('诅咒之')>=0 || map.indexOf('回廊')>=0);
-	}
-},
 
 ]
 
@@ -408,18 +411,21 @@ var dialogHandler = (err, dlg)=>{
 	}
 }
 
-var minteammateslv= (teamplayers)=>{
-	var minlv = null
+var minmaxlv= (teamplayers)=>{
+
 	if(teamplayers.length>=2){
 		minlv = teamplayers[0].level
+		maxlv = teamplayers[0].level
 	}else{
 		minlv = playerinfo.level
 	}
 	for (i = 0 ; i< teamplayers.length ; i++){
 		minlv = minlv < teamplayers[i].level ? minlv : teamplayers[i].level
+		maxlv = maxlv > teamplayers[i].level ? maxlv : teamplayers[i].level
 	}
-	// console.log('队伍最低等级 : ' + minlv)
-	return minlv
+	console.log('队伍最低等级 : ' + minlv)
+	console.log('队伍最高等级 : ' + maxlv)
+	return
 }
 var getMazeEntrance = (cb)=>{
 	console.log('正在下载地图')
@@ -469,38 +475,56 @@ var loop = ()=>{
 		console.log('thisobj.battleArea.name = ' + thisobj.battleArea.name)
 		if(teamplayers.length >1){
 			if(thisobj.battleArea.name =='全自动识别最低级号'){
-				min = minteammateslv(teamplayers)
+				minmaxlv(teamplayers)
 				// 低地鸡
-				if(min < 10){
-					thisobj.battleArea = battleAreaArray[0];
-				}//诅咒1层怪等级16-22
-				else if(min >=10 && min < 21){
-					thisobj.battleArea = battleAreaArray[5];
-					thisobj.layerLevel = 1
-				}//刀鸡
-				else if(min >=21 && min < 29){
+				if(minlv < 10){
 					thisobj.battleArea = battleAreaArray[1];
-				}//诅咒4层怪等级29-34
-				else if(min >=29 && min < 31){
-					thisobj.battleArea = battleAreaArray[5];
+				}
+				// 诅咒1层怪等级16-22
+				else if(minlv >=10 && minlv < 21){
+					thisobj.battleArea = battleAreaArray[6];
+					thisobj.layerLevel = 1
+					// 没有大号带就打刀鸡
+					if(maxlv <= 100)
+					thisobj.battleArea = battleAreaArray[2];
+				}
+				//诅咒4层怪等级29-34
+				else if(minlv >=29 && minlv < 31){
+					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 4
+					// 没有大号带就打龙骨
+					if(maxlv <= 100)
+					thisobj.battleArea = battleAreaArray[3];
 				}//诅咒5层怪等级31-36
-				else if(min >=31 && min < 36){
-					thisobj.battleArea = battleAreaArray[5];
+				else if(minlv >=31 && minlv < 36){
+					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 5
+					// 没有大号带就打龙骨
+					if(maxlv <= 100)
+					thisobj.battleArea = battleAreaArray[3];
 				}//诅咒6层怪等级35-41
-				else if(min >=36 && min < 40){
-					thisobj.battleArea = battleAreaArray[5];
+				else if(minlv >=36 && minlv < 40){
+					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 6
+					// 没有大号带就打黄金龙骨
+					if(maxlv <= 100)
+					thisobj.battleArea = battleAreaArray[4];
 				}//诅咒7层怪等级39-45
-				else if(min >=40 && min < 44){
-					thisobj.battleArea = battleAreaArray[5];
+				else if(minlv >=40 && minlv < 44){
+					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 7
-				}//诅咒8层怪等级43-49
-				else if(min >=44 && min < 70){
+					// 没有大号带就打银狮
+					if(maxlv <= 100)
 					thisobj.battleArea = battleAreaArray[5];
+				}//诅咒8层怪等级43-49
+				else if(minlv >=44 && minlv < 70){
+					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 8
-				}else{
+					// 没有大号带就打银狮
+					if(maxlv <= 100)
+					thisobj.battleArea = battleAreaArray[5];
+				}
+				else{
 					console.log('超过50级了，再练刷不了吉拉（52级最高）了')
 					var wait = ()=>{
 						while(true){
@@ -582,8 +606,9 @@ var loop = ()=>{
 	}
 
 	callSubPluginsAsync('prepare', ()=>{
+		var mapindex = cga.GetMapIndex().index3
 		// 判断是不是刚出生的人物
-		if(cga.GetMapIndex().index3 == 1530){
+		if(cga.GetPlayerInfo().level == 1 && mapindex >= 1530 && mapindex < 1550){
 			console.log('人物在召唤之间')
 			var pos = cga.GetMapXY();
 			if(pos.x == 15 && pos.y == 6){
@@ -592,7 +617,7 @@ var loop = ()=>{
 				cga.LogBack();
 				setTimeout(loop, 2000);
 			}
-		}else if(cga.GetPlayerInfo().level == 1 && cga.GetMapIndex().index3 == 1000){
+		}else if(cga.GetPlayerInfo().level == 1 && mapindex == 1000){
 			var stay = ()=>{
 				cga.walkList([
 				[141, 105]
