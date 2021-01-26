@@ -1874,6 +1874,18 @@ module.exports = function(callback){
 		});
 	}
 	
+	//前往新城银行
+	cga.travel.newisland.toBank = (cb)=>{
+		cga.travel.newisland.toStone('B', (r)=>{
+			cga.walkList([
+			[114, 104, '银行'],
+			[49, 25]
+			], (r)=>{
+				cb(r);
+			});
+		});
+	}
+
 	//前往新城立夏岛
 	cga.travel.newisland.toLiXiaIsland = (cb)=>{
 		cga.travel.newisland.toStone('X', (r)=>{
