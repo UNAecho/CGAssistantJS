@@ -4,6 +4,7 @@ var cga = require('./cgaapi')(function () {
 		'金币',
 		'魔石',
 		'海苔',
+		'蕃茄',
 		'印度轻木',
 		'苹果薄荷',
 		'面包',
@@ -13,11 +14,17 @@ var cga = require('./cgaapi')(function () {
 	];
 	// 不常见但是可以卖的东西
 	var extraitems = [
-		'蕃茄',
-		'小麦粉',
-		'葱',
-		'牛奶',
-		'柠檬草',
+		// '牛奶',
+		// '柠檬草',
+		'封印卡（人形系）',
+		'封印卡（龙系）',
+		'封印卡（野兽系)',
+		// '封印卡（昆虫系）',
+		// '封印卡（特殊系）',
+		'封印卡（金属系）',
+		// '封印卡（飞行系）',
+		'封印卡（不死系）',
+		// '封印卡（植物系）',
 	]
 	var missionitem = [
 		'火的水晶碎片',
@@ -234,7 +241,7 @@ var cga = require('./cgaapi')(function () {
 						cga.TurnTo(unit.xpos, unit.ypos)
 						cga.AsyncWaitNPCDialog((err, dlg) => {
 							if (dlg && dlg.message) {
-								setTimeout(gogogo, 250);
+								setTimeout(gogogo, 500);
 							}
 							else {
 								setTimeout(pickup, 250);
@@ -295,9 +302,9 @@ var cga = require('./cgaapi')(function () {
 						// 23料理、43血瓶
 						if ([23, 43].indexOf(item.type) != -1) {
 							item.count /= 3;
-						}// 29矿条、30木、31秘文之皮、34蕃茄、35其他食材、36花
+						}// 29矿条、30木、31秘文之皮、34蕃茄、35其他食材、36花、40封印卡
 						// id：18211是鹿皮，type也是26，特殊处理，因为很多其他物品type也是26
-						else if (([29, 30, 31, 34, 35, 36].indexOf(item.type) != -1 || item.itemid == 18211) && item.name != '魔石') {
+						else if (([29, 30, 31, 34, 35, 36,40].indexOf(item.type) != -1 || item.itemid == 18211) && item.name != '魔石') {
 							// console.log('item.name = ' + item.name)
 							item.count /= 20;
 						} else if (item.name == '魔石') {
@@ -346,9 +353,9 @@ var cga = require('./cgaapi')(function () {
 							});
 							return;
 						} else {
-							if (cga.getInventoryEmptySlotCount() < 5) {
-								var posx = Math.floor(Math.random() * 3 + 35);
-								var posy = Math.floor(Math.random() * 3 + 80);
+							if (cga.getInventoryEmptySlotCount() < 3) {
+								var posx = Math.floor(Math.random() * 3 + 41);
+								var posy = Math.floor(Math.random() * 3 + 69);
 
 								setTimeout(() => {
 									cga.walkList([
