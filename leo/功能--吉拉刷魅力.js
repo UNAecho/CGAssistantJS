@@ -16,6 +16,9 @@ require('./common').then(cga => {
 		return;
 	}
 	leo.log('请不要勾选CGA面板的自动战斗，否则优先级将高于此脚本内的设置');
+	leo.panel.autoBattle(false);//关闭CGA面板的自动战斗
+	leo.panel.noswitchanim(false);//关闭CGA面板的“屏蔽切图”
+	
 	var petIndex = playerinfo.petid;
 	if(petIndex!=-1){
 		//leo.log('脚本结束：请先设置不带宠，否则可能导致掉线');
@@ -96,7 +99,7 @@ require('./common').then(cga => {
 					).then(() => {
 						var value_charisma = cga.GetPlayerInfo().detail.value_charisma;
 						console.log(leo.logTime()+'当前人物魅力【'+value_charisma+'】');
-						if(value_charisma>=100){
+						if(value_charisma>=target){
 							return leo.reject();
 						}
 						const f = cga.getInventoryItems().find(i => i.itemid == 18257 && i.itemid != 18256);

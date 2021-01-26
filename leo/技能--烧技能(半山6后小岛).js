@@ -2,12 +2,16 @@ require('./common').then(cga => {
     leo.baseInfoPrint();
     //leo.logStatus = false;
 
-    var skillName = '补血魔法';
-    var skillLevel = 6;
+    var skillName = '宠物强化';
+    var skillLevel = 8;
 
     var teamLeader = '队长名称'; //队长名称
-    var teamPlayerCount = 5; //队伍人数
+    var teamPlayerCount = 1; //队伍人数
     var usingpunchclock = false; //是否打卡
+    var isBuySealCard = false; //是否买封印卡
+    var sealCardName = '封印卡（昆虫系）';
+    var sealCardLevel = 1;
+    var sealCardMaxCount = 300; 
 
     var protect = {
         minHp: 500,
@@ -15,7 +19,16 @@ require('./common').then(cga => {
         minPetHp: 300,
         minPetMp: 120,
         minTeamNumber: 5,
-        normalNurse: false
+        normalNurse: false,
+        checker: ()=>{
+            if(isBuySealCard){
+                //判断是否要购买封印卡
+                var sealCardCount = cga.getItemCount(sealCardName);
+                if (sealCardCount < 5) {
+                    return true;
+                }
+            }
+        }
     };
     var teammates = [];
     var isLogBackFirst = false; //启动登出
@@ -82,6 +95,34 @@ require('./common').then(cga => {
             .then(() => leo.checkHealth(prepareOptions.doctorName))
             .then(() => leo.checkCrystal(prepareOptions.crystalName))
             .then(() => {
+                //判断是否要去银行取钱
+                playerinfo = cga.GetPlayerInfo();
+                if(playerinfo.gold<5000){
+                    return leo.goto(n=>n.falan.bank)
+                    .then(()=>leo.moveGold(100000,cga.MOVE_GOLD_FROMBANK))
+                    .then(()=>leo.moveGold(100000,cga.MOVE_GOLD_FROMBANK))
+                    .then(()=>leo.moveGold(100000,cga.MOVE_GOLD_FROMBANK))
+                    .then(()=>leo.moveGold(100000,cga.MOVE_GOLD_FROMBANK))
+                    .then(()=>leo.moveGold(100000,cga.MOVE_GOLD_FROMBANK))
+                    .then(()=>{
+                        playerinfo = cga.GetPlayerInfo();
+                        if(playerinfo.gold<5000){
+                            return leo.reject('钱到用时方恨少！请补充足够银子后重新执行脚本！');       //跳出总循环
+                        }
+                    });
+                }
+            })
+            .then(() => {
+                if(isBuySealCard){
+                    //判断是否要购买封印卡
+                    var sealCardCount = cga.getItemCount(sealCardName);
+                    if (sealCardCount < 5) {
+                        return leo.buySealCard(sealCardName, sealCardMaxCount, sealCardLevel)
+                        .then(()=>leo.logBack());
+                    }
+                }
+            })
+            .then(() => {
                 if(isTeamLeader) {
                     var nowTime = leo.now();
                     var time = parseInt((nowTime - leo.beginTime)/1000/60);//已持续练级时间
@@ -99,12 +140,11 @@ require('./common').then(cga => {
             .then(() => {
                 //完成组队
                 var teamplayers = cga.getTeamPlayers();
-                if ((isTeamLeader && teamplayers.length >= protect.minTeamNumber)
-                        || (!isTeamLeader && teamplayers.length > 0)) {
+                if (!isTeamLeader && teamplayers.length > 0) {
                     //console.log('组队已就绪');
                     return leo.next();
                 } else {
-                    console.log(leo.logTime() + '寻找队伍');
+                    //console.log(leo.logTime() + '寻找队伍');
                     return leo.todo()
                     .then(()=>{
                         if(usingpunchclock){
@@ -122,14 +162,14 @@ require('./common').then(cga => {
                         if (isTeamLeader) {
                             cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, true); //开启组队
                             return leo.forceMoveEx(3)
-                            .then(() => leo.buildTeamBlock(teamPlayerCount))
+                            .then(() => leo.buildTeam(teamPlayerCount))
                             .then(() => {
                                 //关闭组队
                                 cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false); 
                                 return leo.next();
                             });
                         } else {
-                            return leo.enterTeamBlock(teamLeader);
+                            return leo.enterTeam(teamLeader);
                         }
                     });
                 }
