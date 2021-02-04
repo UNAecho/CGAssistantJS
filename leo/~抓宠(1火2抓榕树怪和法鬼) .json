@@ -21,6 +21,21 @@
                 "playeraction": 2,
                 "playertarget": -1,
                 "playertargetsel": -1
+            }, {
+                "condition": 13,
+                "condition2": 17,
+                "condition2rel": 4,
+                "condition2val": "2",
+                "conditionrel": 4,
+                "conditionval": "1",
+                "index": 0,
+                "petaction": 100,
+                "petskillname": "火焰魔法-Ⅰ",
+                "pettarget": 0,
+                "pettargetsel": 7,
+                "playeraction": 2,
+                "playertarget": -1,
+                "playertargetsel": -1
             },
             {
                 "condition": 13,

@@ -20,7 +20,7 @@ require('./common').then(cga => {
         minHp: 85,
         minMp: 116,
         minAttack: 21,
-        minDefensive: 35,
+        minDefensive: 37,
         minAgility: 39,
         petChecker: () => {
             var pets = cga.GetPetsInfo();

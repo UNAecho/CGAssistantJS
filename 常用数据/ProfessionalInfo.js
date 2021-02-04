@@ -851,7 +851,7 @@ const titlesMap = (inputmsg) => {
 };
 
 module.exports = function(inputmsg) {
-	console.log('职业信息输入 inputmsg = ' + inputmsg)
+	console.log('当前目标职业：【' + inputmsg + '】')
 	var profession = null
 	if(inputmsg == null){
 		return Professions

@@ -2,6 +2,7 @@ var cga = require('./cgaapi')(function () {
 
 	cga.travel.newisland.toBank(() => {
 		cga.TurnTo(50, 25);
+		cga.EnableFlags(cga.ENABLE_FLAG_TRADE, true);
 		cga.AsyncWaitNPCDialog(() => {
 			var pets = cga.GetBankPetsInfo()
 			var result = []
