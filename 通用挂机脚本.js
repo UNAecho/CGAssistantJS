@@ -162,7 +162,7 @@ var cga = require('./cgaapi')(function(){
 	var start = ()=>{
 		console.log('脚本开始执行，在游戏中输入del可以删除配置文件。');
 		console.log('或者也可手动删除"'+configName+'"处的配置文件。');
-		cga.SayWords('CGA通用挂机脚本开始执行，输入del可以删除配置文件。', 0, 3, 1);
+		console.log('CGA通用挂机脚本开始执行，输入del可以删除配置文件。');
 		cga.waitForChatInput((msg)=>{
 			if(msg == 'del'){
 				clearConfig();
@@ -214,7 +214,7 @@ var cga = require('./cgaapi')(function(){
 			}
 		}
 
-		cga.sayLongWords(configString, 0, 3, 1);
+		console.log(configString);
 		
 		start();
 	} else {
