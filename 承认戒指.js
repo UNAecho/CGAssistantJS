@@ -4,7 +4,7 @@ var cga = require('./cgaapi')(function(){
 	
 	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦
 	var teammates = [
-		"UNAの弓",
+		"UNAの格斗2",
 		"UNAの传教",
 	];
 	
