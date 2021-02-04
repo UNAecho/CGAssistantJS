@@ -46,7 +46,7 @@ var getSellObject = (map, mapindex)=>{
 var battleAreaArray = [
 {
 	name : '地洞',
-	range : [450, 600, 200, 300],
+	range : [450, 600, 200, 320],
 },
 {
 	name : '水洞',
@@ -261,6 +261,8 @@ var getMazeEntrance = (cb)=>{
 		console.log(objs.filter((o)=>{
 			return o.cell == 3;
 		}))
+		// 打印黑名单迷宫
+		console.log(blacklistEntrance)
 		var entrance = objs.find((obj)=>{
 
 			return (obj.cell == 3 && 
@@ -275,8 +277,8 @@ var getMazeEntrance = (cb)=>{
 		})
 		
 		if(entrance == undefined){
-			console.log('迷宫入口未找到,等待3秒后重试')
-			setTimeout(getMazeEntrance, 3000, cb);
+			console.log('迷宫入口未找到,等待15秒后重试')
+			setTimeout(getMazeEntrance, 15000, cb);
 			return;
 		}
 		
