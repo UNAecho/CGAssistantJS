@@ -422,7 +422,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		jobmainname: '造弓工',
-		titles: ['造弓学徒', '造弓工', '资深造弓师傅', '御用造弓师傅', '造弓名师'],
+		titles: ['造弓学徒', '造弓工', '资深造弓师傅', '御用造弓师', '造弓名师'],
 		skill : '造弓',
         tutorlocation: '圣拉鲁卡村',
 		tutorwalk:[
