@@ -1,7 +1,8 @@
+var fs = require('fs');
 require('./leo/common').then(cga=>{
 	//leo.baseInfoPrint();
 	//没有转职保证书也强制转职，可设置成true，默认false，
-	var forceChange = true;
+	var forceChange = false;
 	var needGold = 10000;
 	var isLogBackFirst = true;
 	var prepareOptions = {
@@ -32,7 +33,7 @@ require('./leo/common').then(cga=>{
 	var isCanChange = true;
 	var hasItem = cga.getItemCount('转职保证书') > 0;
 	if(!forceChange && !hasItem){
-		leo.log('红叶の传咒互转脚本，身上【没有】转职保证书！结束脚本');
+		leo.log('身上【没有】转职保证书！结束脚本');
 		isCanChange = false;
 	}
 
@@ -42,6 +43,19 @@ require('./leo/common').then(cga=>{
 		leo.log('身上【没有】转职保证书!!!');
 	}
 
+	var nexttask = ()=>{
+		global.cga = cga
+		console.log('准备进入刷声望环节');
+		var rootdir = cga.getrootdir()
+		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+		var body = {
+			path : rootdir + "\\转职保证书(烧技能).js",
+		}
+		var settingpath = rootdir +'\\战斗配置\\灵堂烧声望.json';
+		var setting = JSON.parse(fs.readFileSync(settingpath))
+		scriptMode.call_ohter_script(body,setting)
+	
+	}
 	leo.todo()
 	.then(()=>{
 		var playerinfo = cga.GetPlayerInfo();
@@ -132,7 +146,10 @@ require('./leo/common').then(cga=>{
 		        		return leo.log('到达转职位置!请注意：身上【没有】转职保证书!!!');
 		        	}
 		        })
-		        .then(()=>leo.log('脚本结束'));
+		        .then(()=>{
+					console.log('脚本结束')
+					nexttask()
+				});
 			}else{
 				//当前非传教，转成传教
 				leo.log('当前职业：'+playerinfo.job+'，需要转成传教');
@@ -176,7 +193,10 @@ require('./leo/common').then(cga=>{
 		        		return leo.log('到达转职位置!请注意：身上【没有】转职保证书!!!');
 		        	}
 		        })
-		        .then(()=>leo.log('脚本结束'));
+				.then(()=>{
+					console.log('脚本结束')
+					nexttask()
+				});
 			}
 		}
 	})

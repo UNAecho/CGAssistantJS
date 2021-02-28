@@ -1,14 +1,15 @@
+var fs = require('fs');
+var path = require('path');
 var cga = require('./cgaapi')(function(){
 
 	var playerinfo = cga.GetPlayerInfo();
-	
 	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦
 	var teammates = [
-		"UNAの格斗2",
-		"UNAの格斗",
-		"UNAの封印",
 		"UNAの传教",
-		"UNAの战斧",
+		"UNAの格斗2",
+		"UNAの饲养师2",
+		"UNAの封印4",
+		"UNAの弓箭",
 		// "UNAの剑士",
 		// "UNAの游侠",
 		// "UNAの饲养师",
@@ -192,6 +193,20 @@ var cga = require('./cgaapi')(function(){
 	
 	var goodToGoZDZ = (cb)=>{
 		
+		var retry = ()=>{
+			var pos = cga.GetMapXY();
+			if (pos.x == 163 && pos.y == 100){
+				return
+			}
+
+			if(cga.findNPCByPosition('障碍物', 213, 226)){
+				cga.turnDir(2);
+			}
+			setTimeout(retry, 1000);
+			return
+		
+		}
+
 		var findZDZ_D = ()=>{
 			cga.walkList([
 				[193, 184],
@@ -234,14 +249,7 @@ var cga = require('./cgaapi')(function(){
 		var findZDZ_A = ()=>{
 			cga.walkList([
 				[213, 225],
-			], ()=>{
-				if(cga.findNPCByPosition('障碍物', 213, 226)){
-					cga.turnTo(213, 226);
-					return;
-				}
-				findZDZ_B();
-				return;
-			});
+			], retry);
 		}
 		
 		if(cga.isTeamLeader)
@@ -304,25 +312,39 @@ var cga = require('./cgaapi')(function(){
 	{//0
 		intro: '◆在艾夏岛冒险者旅馆(102.115)内与时空之人(30.20)对话，输入“朵拉”选“是”，再选“确定”可重置本任务',
 		workFunc: function(cb2){
-			cga.travel.newisland.toPUB(()=>{
-				cga.walkList([
-				[31, 21],
-				], ()=>{
-					cga.TurnTo(30, 20);
-					cga.AsyncWaitNPCDialog(()=>{
-						cga.SayWords('朵拉', 0, 3, 1);
+			var thisstep = ()=>{
+				cga.travel.newisland.toPUB(()=>{
+					cga.walkList([
+					[31, 21],
+					], ()=>{
+						cga.TurnTo(30, 20);
 						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(4, 0);
+							cga.SayWords('朵拉', 0, 3, 1);
 							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(1, 0);
-								setTimeout(()=>{
-									cb2(true);
-								}, 1500);
+								cga.ClickNPCDialog(4, 0);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, 0);
+									setTimeout(()=>{
+										cb2(true);
+									}, 1500);
+								});
 							});
 						});
 					});
 				});
-			});
+			}
+			if(cga.GetPlayerInfo().gold < 10000){
+				cga.SayWords('现金有点少，去银行补充现金', 0, 3, 1);
+				cga.travel.newisland.toBank(() => {
+					cga.turnDir(0);
+					cga.AsyncWaitNPCDialog(() => {
+						cga.MoveGold(cga.GetBankGold(), cga.MOVE_GOLD_FROMBANK);
+						setTimeout(thisstep, 2000);
+					}, 1000);
+				});
+			}else{
+				setTimeout(thisstep, 2000);
+			}
 		}
 	},
 	{//1
@@ -383,46 +405,60 @@ var cga = require('./cgaapi')(function(){
 	{//2
 		intro: '2.前往盖雷布伦森林路路耶博士的家(244.76)，进入后再离开路路耶博士的家并传送至？？？。' + "\n" + '3.通过(142.69)或(122.69)处黄色传送石进入海底墓场外苑，寻找随机出现的守墓者并与之对话进入战斗。',
 		workFunc: function(cb2){
-			if(cga.needSupplyInitial({  })){
-				cga.travel.falan.toCastleHospital(()=>{
-					setTimeout(()=>{
-						cb2('restart stage');
-					}, 3000);
-				});
-				return;
-			}
-			
-			cga.travel.newisland.toStone('X', ()=>{
-				cga.walkList([
-				[130, 50, '盖雷布伦森林'],
-				[246, 76, '路路耶博士的家'],
-				], ()=>{
-					cga.WalkTo(3, 10);
-					cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
-						cga.walkList([
-						[131, 61],
-						], ()=>{
-							cga.TurnTo(131, 59);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(32, 0);
-								cga.AsyncWaitNPCDialog((err, dlg)=>{
-									if(dlg && dlg.message.indexOf('还不快点') == -1)
-									{
-										cga.ClickNPCDialog(32, 0);
-										cga.AsyncWaitNPCDialog(()=>{
+			var thisstep = ()=>{
+				if(cga.needSupplyInitial({  })){
+					cga.travel.falan.toCastleHospital(()=>{
+						setTimeout(()=>{
+							cb2('restart stage');
+						}, 3000);
+					});
+					return;
+				}
+	
+				cga.travel.newisland.toStone('X', ()=>{
+					cga.walkList([
+					[130, 50, '盖雷布伦森林'],
+					[246, 76, '路路耶博士的家'],
+					], ()=>{
+						cga.WalkTo(3, 10);
+						cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
+							cga.walkList([
+							[131, 61],
+							], ()=>{
+								cga.TurnTo(131, 59);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(32, 0);
+									cga.AsyncWaitNPCDialog((err, dlg)=>{
+										if(dlg && dlg.message.indexOf('还不快点') == -1)
+										{
+											cga.ClickNPCDialog(32, 0);
+											cga.AsyncWaitNPCDialog(()=>{
+												cga.ClickNPCDialog(1, 0);
+												zhanglaozhizheng(cb2);
+											});
+										} else {
 											cga.ClickNPCDialog(1, 0);
 											zhanglaozhizheng(cb2);
-										});
-									} else {
-										cga.ClickNPCDialog(1, 0);
-										zhanglaozhizheng(cb2);
-									}
+										}
+									});
 								});
 							});
 						});
 					});
 				});
-			});
+			}
+			if(cga.GetPlayerInfo().gold < 10000){
+				cga.SayWords('现金有点少，去银行补充现金', 0, 3, 1);
+				cga.travel.newisland.toBank(() => {
+					cga.turnDir(0);
+					cga.AsyncWaitNPCDialog(() => {
+						cga.MoveGold(cga.GetBankGold(), cga.MOVE_GOLD_FROMBANK);
+						setTimeout(thisstep, 2000);
+					}, 1000);
+				});
+			}else{
+				setTimeout(thisstep, 2000);
+			}
 		}
 	},
 	{//3
@@ -431,7 +467,7 @@ var cga = require('./cgaapi')(function(){
 
 			var sayshit = ()=>{
 				if(cga.getItemCount('长老之证') >= 7){
-					console.log('sayshit1');
+					console.log('长老之证已集齐7个，回去召唤神龙许愿进行任务下一阶段');
 					cga.TurnTo(131, 60);
 					cga.AsyncWaitNPCDialog(()=>{
 						cga.ClickNPCDialog(32, 0);
@@ -446,7 +482,7 @@ var cga = require('./cgaapi')(function(){
 						});
 					});
 				} else {
-					console.log('sayshit2');
+					console.log('没打齐7个，但有队友集齐，跟着蹭吃蹭喝去');
 					cga.waitForLocation({mapname : '盖雷布伦森林'}, ()=>{
 						cb2(true);
 					});
@@ -542,35 +578,37 @@ var cga = require('./cgaapi')(function(){
 	{//6
 		intro: '7.前往梅布尔隘地，持有【琥珀之卵】、【逆十字】与祭坛守卫(211.116)对话进入？？？。',
 		workFunc: function(cb2){
-			if(cga.needSupplyInitial({  })){
-				cga.travel.falan.toCastleHospital(()=>{
-					setTimeout(()=>{
-						cb2('restart stage');
-					}, 3000);
-				});
-				return;
-			}
-			
-			cga.travel.newisland.toStone('X', ()=>{
-				cga.walkList([
-					[165, 153],
-				], (r)=>{
-					cga.TurnTo(165, 154);
-					cga.AsyncWaitNPCDialog(()=>{
-						cga.ClickNPCDialog(32, -1);
+			var thisstep = ()=>{
+				if(cga.needSupplyInitial({  })){
+					cga.travel.falan.toCastleHospital(()=>{
+						setTimeout(()=>{
+							cb2('restart stage');
+						}, 3000);
+					});
+					return;
+				}
+				
+				cga.travel.newisland.toStone('X', ()=>{
+					cga.walkList([
+						[165, 153],
+					], (r)=>{
+						cga.TurnTo(165, 154);
 						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(8, -1);
-							cga.AsyncWaitMovement({map:['梅布尔隘地'], delay:1000, timeout:10000}, ()=>{
-								cga.walkList([
-									[211, 117],
-								], (r)=>{
-									cga.TurnTo(212, 116);
-									cga.AsyncWaitNPCDialog(()=>{
-										cga.ClickNPCDialog(32, -1);
+							cga.ClickNPCDialog(32, -1);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(8, -1);
+								cga.AsyncWaitMovement({map:['梅布尔隘地'], delay:1000, timeout:10000}, ()=>{
+									cga.walkList([
+										[211, 117],
+									], (r)=>{
+										cga.TurnTo(212, 116);
 										cga.AsyncWaitNPCDialog(()=>{
-											cga.ClickNPCDialog(1, -1);
-											cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
-												cb2(r);
+											cga.ClickNPCDialog(32, -1);
+											cga.AsyncWaitNPCDialog(()=>{
+												cga.ClickNPCDialog(1, -1);
+												cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
+													cb2(r);
+												});
 											});
 										});
 									});
@@ -579,7 +617,19 @@ var cga = require('./cgaapi')(function(){
 						});
 					});
 				});
-			});
+			}
+			if(cga.GetPlayerInfo().gold < 10000){
+				cga.SayWords('现金有点少，去银行补充现金', 0, 3, 1);
+				cga.travel.newisland.toBank(() => {
+					cga.turnDir(0);
+					cga.AsyncWaitNPCDialog(() => {
+						cga.MoveGold(cga.GetBankGold(), cga.MOVE_GOLD_FROMBANK);
+						setTimeout(thisstep, 2000);
+					}, 1000);
+				});
+			}else{
+				setTimeout(thisstep, 2000);
+			}
 		}
 	},
 	{//7
@@ -714,7 +764,13 @@ var cga = require('./cgaapi')(function(){
 								cga.AsyncWaitNPCDialog(()=>{
 									cga.ClickNPCDialog(1, 0);
 									setTimeout(()=>{
-										
+										if(cga.getItemCount('觉醒的文言抄本') > 1){
+											var dropItem = cga.findItem('觉醒的文言抄本');
+											if(dropItem != -1)
+											{
+												cga.DropItem(dropItem);
+											}
+										}
 										if(cga.getItemCount('转职保证书') > 0){
 											cb2(true);
 											return;
@@ -759,7 +815,7 @@ var cga = require('./cgaapi')(function(){
 			return false;
 		},
 		function(){
-			return cga.getItemCount('转职保证书') > 0 ? true : false;
+			return (cga.getItemCount('转职保证书') > 0 && cga.getItemCount('觉醒的文言抄本') == 0)? true : false;
 		},
 	]
 	);
@@ -787,7 +843,38 @@ var cga = require('./cgaapi')(function(){
 	if(typeof task.jumpToStep != 'undefined'){
 		cga.SayWords('欢迎使用【UNAの脚本】转职保证书，当前从【'+ firstmsg + '】步骤开始任务', 0, 3, 1);
 		task.doTask(()=>{
-			console.log('任务完成');
+			global.cga = cga
+			console.log('任务完成，去阿蒙刷新一下称号。');
+			cga.travel.falan.toStone('E2', ()=>{
+				cga.walkList([
+					[230, 82],
+				], ()=>{
+					cga.turnTo(230, 83);
+					setTimeout(() => {
+						if(cga.ismaxbattletitle()){
+							console.log('已到达【无尽星空】称号，属于陪打大号，任务完成')
+							process.exit(0)
+							return
+						}else{
+							console.log('未到达【无尽星空】称号，开始转职刷声望')
+
+							if(cga.getItemCount('转职保证书') == 0){
+								console.log('包里没有保证书，需要重新解本任务！')
+								return
+							}
+							var rootdir = cga.getrootdir()
+							var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+							var body = {
+								path : rootdir + "\\转职保证书(传咒互转).js",
+							}
+							var settingpath = rootdir +'\\生产赶路.json';
+							var setting = JSON.parse(fs.readFileSync(settingpath))
+							scriptMode.call_ohter_script(body,setting)
+
+						}
+					}, 3000);
+				});
+			});
 		});
 		return false;
 	}

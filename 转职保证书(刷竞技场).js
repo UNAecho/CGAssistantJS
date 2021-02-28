@@ -14,7 +14,7 @@ var cga = require('./cgaapi')(function(){
 	var isweaponequip = false
 	var iscrystalequip = false
 	// 如果不需要装备辅助，请设置为true
-	var noneedweapon = true
+	var noneedweapon = false
 	console.log('noneedweapon = ' + noneedweapon)
 
 	var bosspos = [31, 23]
@@ -30,10 +30,6 @@ var cga = require('./cgaapi')(function(){
 		var battlecount = 20
 	}
 
-	if (playerinfo.level <20 || playerinfo.level >108){
-		console.log("【注意】：人物等级在1-108级打吉拉才会有声望，你目前等级不在这范围内，打吉拉仅会加魅力。")
-	}
-
 	if(playerinfo.level >52 && playerinfo.level <=104){
 		console.log("当前等级为：" + playerinfo.level +"，需要打巴雷莉")
 		bosspos = [27,25]
@@ -44,7 +40,7 @@ var cga = require('./cgaapi')(function(){
 		console.log("当前等级为：" + playerinfo.level +"，需要打伊佐塔")
 		bosspos = [27,21]
 	}else if(playerinfo.level >124 && playerinfo.level <=132){
-		console.log("当前等级为：" + playerinfo.level +"，需要打伍娜")
+		console.log("当前等级为：" + playerinfo.level +"，需要打伍那")
 		bosspos = [30,26]
 	}else if(playerinfo.level >132 && playerinfo.level <=156){
 		console.log("当前等级为：" + playerinfo.level +"，需要打伊石雄")
@@ -90,8 +86,8 @@ var cga = require('./cgaapi')(function(){
 			if (onmarket !=undefined && onmarket == true){
 				// console.log('在场内，丢弃自己的斗士之证')
 				item = cga.getInventoryItems().find((it)=>{
-				//itemid == 18257吉拉，18260 伊佐塔，18261伍娜
-				return (it.itemid == 18257 || it.itemid == 18260 || it.itemid == 18261)
+				//itemid == 18257吉拉，18258巴雷莉，18260 伊佐塔，18261伍娜
+				return (it.itemid == 18257 || it.itemid == 18258 || it.itemid == 18260 || it.itemid == 18261)
 				});
 				if(item){
 					cga.DropItem(item.pos);
@@ -293,7 +289,7 @@ var cga = require('./cgaapi')(function(){
 
 	var checkEquipItems = ()=>{
 		if (noneedweapon){
-			return
+			isweaponequip = true
 		}
 		// 如果光腚数值能达到150攻击，1300以上血量，则不买武器和水晶，裸装直接刷。
 		var playerinfotemp = cga.GetPlayerInfo();
@@ -362,10 +358,10 @@ var cga = require('./cgaapi')(function(){
 					battle()
 				});
 			}else{
-				// console.log('在场外')
+				console.log('在场外')
 				cga.travel.falan.toStone('C', ()=>{
 					checkEquipItems()
-					if(!isweaponequip){
+					if(!isweaponequip && !noneedweapon){
 						console.log("去买武器")
 						buyEquip(weapon)
 						return

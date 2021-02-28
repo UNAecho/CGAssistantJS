@@ -1,5 +1,6 @@
+var fs = require('fs');
 require('./leo/common').then(cga => {
-	//leo.baseInfoPrint();
+	global.cga = cga
 
 	var isMoveGold = true; //是否要去取钱，true-按设定的money取钱，false-直接去刷
 	var protect = {
@@ -16,11 +17,36 @@ require('./leo/common').then(cga => {
 	const profession = cga.emogua.getPlayerProfession();
 	console.log('当前人物职业：【'+profession.name+'】，称号：【'+title+'】');
 	
+	var changeScript = ()=>{
+		var rootdir = cga.getrootdir()
+		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+		var body = {
+			path : rootdir + "\\转职保证书(卵4).js",
+		}
+		var settingpath = rootdir +'\\战斗配置\\保证书小号.json';
+		var setting = JSON.parse(fs.readFileSync(settingpath))
+		scriptMode.call_ohter_script(body,setting)
+	}
+	var nexttask = ()=>{
+		cga.walkList([
+			[238, 111, '银行'],
+			[11, 8],
+		], () => {
+			cga.turnDir(0);
+			cga.AsyncWaitNPCDialog(() => {
+				cga.MoveGold(cga.GetBankGold(), cga.MOVE_GOLD_FROMBANK);
+				console.log('已到达到最大称号（寂静或星空），开始进入卵4陪打环节');
+				setTimeout(changeScript, 2000);
+			}, 1000);
+		});
+	}
+
 	// 判断是否满称号
-	if(title =="无尽星空"){
-		leo.todo().then(()=>{return console.log('你都星空了还刷个蛋，脚本结束')});
+	if(cga.ismaxbattletitle()){
+		console.log('已到达到最大称号（寂静或星空），开始进入卵4陪打环节');
+		setTimeout(changeScript, 2000);
 	}else{//如果不是星空，开始主逻辑。此else覆盖本脚本全部逻辑
-		console.log('脚本自动判断需要多少金币烧技能');
+	console.log('脚本自动判断需要多少金币烧技能');
 	console.log('请不要勾选CGA面板的自动战斗，否则优先级将高于此脚本内的设置');
 	var petIndex = playerinfo.petid;
 	if(petIndex!=-1){
@@ -39,6 +65,9 @@ require('./leo/common').then(cga => {
     // 	emptyIndex = emptyIndexes[0];
     //     cga.MoveItem(crystal.pos, emptyIndex, -1);
     // }
+
+
+
 
     if(profession.name == '传教士'){
     	//检查是否有气绝回复技能
@@ -120,7 +149,7 @@ require('./leo/common').then(cga => {
     	//检查是否有恢复魔法技能
     	var skill = cga.findPlayerSkill('恢复魔法');
     	if(!skill){
-    		console.log('脚本结束：人物没有学习恢复魔法技能，请先到打LB学习');
+    		console.log('脚本结束：人物没有学习恢复魔法技能，请先打LB学习');
     		return;
     	}else{
     		//技能设置
@@ -188,8 +217,10 @@ require('./leo/common').then(cga => {
 				if(newTitle == title){
 					if(per != percentage){
 						console.log('称号未更新但有进展，称号进度前进了【' + ((per - percentage)*100).toString() +'%】')
+						process.exit();
 					}else{
 						console.log('【注意】：称号无进展，该转职解声望锁了')
+						nexttask()
 					}
 				}else{
 					console.log('获得新称号【'+newTitle+'】，当前称号进度为【'+(per*100).toString()+'%】')
@@ -198,18 +229,11 @@ require('./leo/common').then(cga => {
 					}else if(newTitle == '敬畏的寂静'){
 						console.log('提醒：下次转职可以解锁【无尽星空】，如果要学【完美驯兽术】，下一次要转【驯兽师】了')
 					}
+					process.exit();
 				}
-				return leo.next()
+				return
 			}
 		})})
-		.then(()=>leo.autoWalkList([
-			[238,111,'银行'],[11,8]
-		]))
-		.then(()=>leo.turnDir(0))
-		.then(()=>leo.moveGold(10000,cga.MOVE_GOLD_FROMBANK))
-		.then(()=>leo.autoWalk([2,13,'法兰城']))
-		.then(()=>leo.autoWalk([234,108]))
-		.then(()=>leo.turnDir(0))
 		.then(()=>leo.done());
 	}
 	//自动判断需要多少钱
@@ -290,13 +314,11 @@ require('./leo/common').then(cga => {
 			.then(()=>{
 				playerinfo = cga.GetPlayerInfo();
 				if(playerinfo.gold <= 1000){
-					return leo.log('已刷够魔币')
+					return leo.log('已刷够升级称号次数')
 					.then(()=>{
-						console.log('恢复宠物出战状态')
-						if(petIndex!=-1){
-							//恢复宠物出战状态
-						    cga.ChangePetState(petIndex, cga.PET_STATE_BATTLE);
-						}
+						console.log('恢复宠物出战状态，使用新的最优宠物API【cga.findbattlepet()】')
+						cga.ChangePetState(cga.findbattlepet(), cga.PET_STATE_BATTLE);
+						
 						return leo.delay(500);
 					})
 					.then(()=>{
