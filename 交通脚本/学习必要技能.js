@@ -1,5 +1,6 @@
 const thisobj = require('../通用挂机脚本/公共模块/治疗自己');
-
+var fs = require('fs');
+var path = require('path');
 var cga = require('../cgaapi')(function(){
 
 	var playerinfo = cga.GetPlayerInfo();
@@ -17,7 +18,15 @@ var cga = require('../cgaapi')(function(){
 	if(category == '初始系'){
 		throw new error('游民不能学习治疗、调教、宠物强化等职业技能，不适合使用当前脚本,')
 	}
-	
+	// 读取玩家配置：战斗逃跑+原始移速
+	var loadplayerconfig = () =>{
+		console.log('【注意】即将长途跋涉，已调整为【逃跑】【100%移动速度】，防止人物阵亡过多和移速过快掉线')
+		var rootdir = cga.getrootdir()
+		var settingpath = rootdir +'\\生产赶路.json';
+		var setting = JSON.parse(fs.readFileSync(settingpath))
+		cga.gui.LoadSettings(setting,(err, result)=>{})
+	}
+
 	var task = cga.task.Task('学习必要技能 : 治疗、调教、宠物强化等', [
 	{//0
 		intro: '1.学治疗',
@@ -60,7 +69,7 @@ var cga = require('../cgaapi')(function(){
 	{//3
 		intro: '4.如果是战斗系，检查是否有气绝回复技能（用于刷声望）',
 		workFunc: function(cb2){
-			if(category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系'){
+			if((category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系') && playerinfo.level > 50){
 				var hasResurgenceSkill = cga.findPlayerSkill('气绝回复') ? true : false;
 				if(!hasResurgenceSkill){
 					var goandlearn = ()=>{
@@ -81,7 +90,7 @@ var cga = require('../cgaapi')(function(){
 					}
 
 					var walktovinoa = (cb)=>{
-						console.log('【注意】即将进行长远位移，请注意移动速度是否是100%，过快容易掉线')
+						loadplayerconfig()
 						cga.walkList([
 							[25, 24, '里谢里雅堡 1楼'],
 							[74, 40, '里谢里雅堡'],
@@ -128,6 +137,7 @@ var cga = require('../cgaapi')(function(){
 				}
 				
 			}else{
+				console.log('不是战斗系或等级小于50级，无法单人走到亚留特学气绝，跳过')
 				cb2(true)
 			}
 		}
@@ -203,14 +213,16 @@ var cga = require('../cgaapi')(function(){
 	{//7
 		intro: '8.抗石化',
 		workFunc: function(cb2){
-			if(category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系'){
+			if((category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系') && playerinfo.level > 50){
 				var hasStoneSkill = cga.findPlayerSkill('抗石化') ? true : false;
 				if(!hasStoneSkill){
+					loadplayerconfig()
 					professionalbehavior(cga, '抗石化','learning',cb2)
 				}else{
 					cb2(true)
 				}
 			}else{
+				console.log('非战斗系或者等级小于50级，无法单人学习技能')
 				cb2(true)
 			}
 		}
@@ -218,14 +230,33 @@ var cga = require('../cgaapi')(function(){
 	{//8
 		intro: '8.抗混乱',
 		workFunc: function(cb2){
-			if(category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系'){
+			if((category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系') && playerinfo.level > 50){
 				var hasStoneSkill = cga.findPlayerSkill('抗混乱') ? true : false;
 				if(!hasStoneSkill){
+					loadplayerconfig()
 					professionalbehavior(cga, '抗混乱','learning',cb2)
 				}else{
 					cb2(true)
 				}
 			}else{
+				console.log('非战斗系或者等级小于50级，无法单人学习技能')
+				cb2(true)
+			}
+		}
+	},
+	{//8
+		intro: '9.抗毒',
+		workFunc: function(cb2){
+			if((category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系') && playerinfo.level > 50){
+				var hasStoneSkill = cga.findPlayerSkill('抗毒') ? true : false;
+				if(!hasStoneSkill){
+					loadplayerconfig()
+					professionalbehavior(cga, '抗毒','learning',cb2)
+				}else{
+					cb2(true)
+				}
+			}else{
+				console.log('非战斗系或者等级小于50级，无法单人学习技能')
 				cb2(true)
 			}
 		}

@@ -12,7 +12,7 @@ var cga = require('../cgaapi')(function(){
 			}
 		});
 	}else{
-		var sayString = '您想做什么？ [0]找职业导师晋级，[1]找本职技能NPC学技能，[2]找职业导师就职，[3]找职业导师转职。请输入编号';
+		var sayString = '您想做什么？ 请输入编号\n[0]找职业导师晋级，[1]找本职技能NPC学技能，[2]找职业导师就职，[3]找职业导师转职。';
 		cga.sayLongWords(sayString, 0, 3, 1);
 		cga.waitForChatInput((msg, val)=>{
 			if(val !== null && val >= 0 && val <= 3){
