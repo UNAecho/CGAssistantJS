@@ -11,11 +11,13 @@ var cga = require('./cgaapi')(function () {
 			cga.AsyncWaitNPCDialog(dialogHandler);
 			return;
 		}
+		else if (dlg && dlg.options == 12) {
+			cga.ClickNPCDialog(1, 0);
+			cga.AsyncWaitNPCDialog(dialogHandler);
+			return;
+		}
 		else if (dlg && dlg.options == 1) {
 			cga.ClickNPCDialog(1, 0);
-			setTimeout(() => {
-				cb2(true);
-			}, 500);
 			return;
 		}
 		else {
@@ -73,6 +75,16 @@ var cga = require('./cgaapi')(function () {
 				cga.turnDir(2);
 
 				cga.AsyncWaitNPCDialog(dialogHandler);
+
+				var retry = ()=>{
+					if(cga.getItemCount('僧侣适性检查合格证') > 0){
+						cb2(true)
+						return
+					}
+					setTimeout(retry, 2000);
+				}
+				setTimeout(retry, 2000);
+				return
 			}
 		},
 		{
@@ -144,7 +156,7 @@ var cga = require('./cgaapi')(function () {
 				return cga.GetPlayerInfo().job.indexOf('传教士') != -1 ? true : false;
 			},
 			function () {
-				return (cga.findPlayerSkill('补血魔法')) ? true : false;
+				return (cga.findPlayerSkill('补血魔法') && cga.GetPlayerInfo().job.indexOf('传教士') != -1) ? true : false;
 			}
 		]
 	);
