@@ -1,6 +1,8 @@
 var cga = require('bindings')('node_cga');	
 var moment = require('moment');
 var PF = require('pathfinding');
+var fs = require('fs');
+var path = require('path');
 var Async = require('async');
 var request = require('request');
 const { createVerify } = require('crypto');
@@ -2353,9 +2355,20 @@ module.exports = function(callback){
 				
 				return newList;
 			}
+		}else{
+			console.log('发现寻路失败，尝试自动下载当前地图')
+			cga.downloadMap(()=>{
+				cga.calculatePath(curX, curY, targetX, targetY, targetMap, dstX, dstY, newList)
+			})
 		}
 		
-		throw new Error('发现严重错误：寻路失败！');
+		throw new Error('发现严重错误：寻路失败！\n' 
+		+ '地图最小值坐标 ('  + (walls.x_bottom) + ', '+ (walls.y_bottom) + ')'
+		+ '地图最大值坐标 ('  + (walls.x_size) +', '+(walls.y_size) + ')'
+		+ '寻路起始坐标 ('  + (frompos[0]) + ', '+ (frompos[1]) + ')'
+		+ '寻路目的坐标 ('  + (topos[0]) +', '+(topos[1]) + ')'
+		+ '【注意】此错误多数情况下是由于地图未下载完全导致，请手动在【地图】模式中下载地图再试试'
+		);
 		//return [];
 	}
 	
@@ -4842,6 +4855,38 @@ module.exports = function(callback){
 		
 		return false;
 	}
+	/* 
+	* 寻找最适合出战的宠物，先找最高等级，如果出现多个最高等级，则选血量最多的。
+	* 如果连等级血量都是一样，选首次检测到的。
+	* 不会派出受伤的宠物
+	* 不会派出忠诚低于40的宠物
+	*/ 
+	cga.findbattlepet = ()=>{
+		index = -1
+		maxhp = 1 
+		maxlv = 1
+		var pets = cga.GetPetsInfo();
+
+		for(var i = 0;i < pets.length; ++i){
+			// 受伤宠物、忠诚低于40宠物不参与出战
+			if(pets[i].health !=0 || pets[i].loyality < 40)
+				continue
+			
+			if(pets[i].level == maxlv){
+				if(pets[i].maxhp > maxhp){
+					index = pets[i].index
+					maxhp = pets[i].maxhp
+				}else{
+					continue
+				}
+			}else if(pets[i].level > maxlv){
+				index = pets[i].index
+				maxlv = pets[i].level
+			}
+		}
+		
+		return index;
+	}
 
 	//等待战斗结束
 	cga.waitForBattleEnd = (cb, timeout = 30000)=>{
@@ -5085,6 +5130,37 @@ module.exports = function(callback){
 				return;
 			}
 		});
+	}
+
+	cga.getrootdir = ()=>{
+
+		var temppath = __dirname
+		var count = 0
+		while(count<10){
+			if(fs.readdirSync(temppath).indexOf("cgaapi.js")!=-1){
+				console.log("根目录已找到："+ temppath)
+				break
+			}else{
+				temppath = path.join(temppath,'../')
+			}
+			count+=1
+		}
+		return temppath
+	}
+
+	cga.ismaxbattletitle = ()=>{
+
+		var playerinfo = cga.GetPlayerInfo();
+		var titles = playerinfo.titles
+	
+		for(var i in titles){
+			if(titles[i] == "无尽星空"){
+				return true
+			}else if(titles[i] == "敬畏的寂静"){
+				return true
+			}
+		}
+		return false
 	}
 
 	return cga;
