@@ -72,7 +72,7 @@ var walkMazeForward = (cb)=>{
 var battleAreaArray = [
 	{
 		//本dict仅name有用，walkTo请无视
-		name : '全自动识别最低级号',
+		name : '全自动练级',
 		walkTo : (cb)=>{
 			var map = cga.GetMapName();
 			var mapindex = cga.GetMapIndex().index3;
@@ -248,6 +248,33 @@ var battleAreaArray = [
 		return (map == '诅咒之迷宫地下1楼');
 	}
 },
+{
+
+	name : '回廊',
+	walkTo : (cb)=>{
+		cga.travel.falan.toStone('C', ()=>{
+			cga.walkList([
+				[52, 72]
+				], ()=>{
+					cga.TurnTo(54, 72);
+					cga.AsyncWaitNPCDialog(()=>{
+						cga.ClickNPCDialog(32, 0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(4, 0);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, 0);
+								cga.AsyncWaitMovement({map:'过去与现在的回廊', delay:1000, timeout:5000}, loop);
+							});
+						});
+					});
+				});	
+		});
+	},
+	moveDir : 2,
+	isDesiredMap : (map)=>{
+		return (map == '过去与现在的回廊');
+	}
+},
 
 ]
 
@@ -291,7 +318,9 @@ var playerThink = ()=>{
 	global.callSubPlugins('think', ctx);
 
 	if(cga.isTeamLeaderEx())
-	{
+	{	
+		console.log('ctx.result = ' + ctx.result)
+		console.log('playerThinkInterrupt.hasInterrupt() = ' + playerThinkInterrupt.hasInterrupt())
 		var interruptFromMoveThink = false;
 		
 		if(ctx.result == null && playerThinkInterrupt.hasInterrupt())
@@ -333,16 +362,54 @@ var playerThink = ()=>{
 		else if( ctx.result == 'logback' || ctx.result == 'logback_forced' )
 		{
 			if(interruptFromMoveThink)
-			{
+			{	console.log('interruptFromMoveThink..')
 				logbackEx.func(loop);
 				return false;
 			}
 			else
-			{
+			{	console.log('interruptFromMoveThink..else!!!!!!!')
 				moveThinkInterrupt.requestInterrupt(()=>{
 					if(cga.isInNormalState()){
-						logbackEx.func(loop);
-						return true;
+						console.log('index3 = ' + cga.GetMapIndex().index3)
+						console.log('cga.GetMapXY().x = ' + cga.GetMapXY().x)
+						console.log('cga.GetMapXY().y = ' + cga.GetMapXY().y)
+						// 如果由于进回廊导致的队伍解散，强制更改思考逻辑，改为不登出，去回廊练级
+						if(cga.GetMapIndex().index3 == 27213 && cga.GetMapXY().y ==20){
+							console.log('队长去回廊等待队员')
+							ctx.result = null
+							cga.walkList([
+								[11, 20],
+							], ()=>{
+								teamMode.wait_for_teammates(loop);
+								return true
+							});
+							//队员在回廊外逻辑
+						}else if(cga.GetMapIndex().index3 == 1500 && cga.GetMapXY().x > 43 && cga.GetMapXY().y <80){
+							console.log('队员去回廊找队长')
+							cga.walkList([
+								[52, 72]
+								], ()=>{
+									cga.TurnTo(54, 72);
+									cga.AsyncWaitNPCDialog(()=>{
+										cga.ClickNPCDialog(32, 0);
+										cga.AsyncWaitNPCDialog(()=>{
+											cga.ClickNPCDialog(4, 0);
+											cga.AsyncWaitNPCDialog(()=>{
+												cga.ClickNPCDialog(4, 0);
+												cga.AsyncWaitMovement({map:'过去与现在的回廊', delay:1000, timeout:5000}, ()=>{
+													teamMode.wait_for_teammates(loop);
+												});
+												return true
+											});
+										});
+									});
+								});	
+						}else{// 正常playerthink逻辑
+							console.log('正常登出！！！！！！')
+							logbackEx.func(loop);
+							return true;
+						}
+
 					}
 					return false;
 				});
@@ -351,7 +418,7 @@ var playerThink = ()=>{
 		}
 	} else {
 		if( ctx.result == 'logback_forced' )
-		{
+		{	console.log('logback_forced!!!!!!!!!!!!!!!!!!!!')
 			logbackEx.func(loop);
 			return false;
 		}
@@ -423,8 +490,8 @@ var minmaxlv= (teamplayers)=>{
 		minlv = minlv < teamplayers[i].level ? minlv : teamplayers[i].level
 		maxlv = maxlv > teamplayers[i].level ? maxlv : teamplayers[i].level
 	}
-	console.log('队伍最低等级 : ' + minlv)
-	console.log('队伍最高等级 : ' + maxlv)
+	console.log('队员最低等级 : ' + minlv)
+	console.log('队员最高等级 : ' + maxlv)
 	return
 }
 var getMazeEntrance = (cb)=>{
@@ -463,25 +530,19 @@ var newborn = (cb)=>{
 		});
 	});
 }
-var loop = ()=>{
 
-	var map = cga.GetMapName();
-	var mapindex = cga.GetMapIndex().index3;
-	var isleader = cga.isTeamLeaderEx();
-
-	if(isleader && teamMode.is_enough_teammates())
-	{
-		var teamplayers = cga.getTeamPlayers();
+var chooseArea = (cb)=>{
+	var teamplayers = cga.getTeamPlayers();
 		console.log('thisobj.battleArea.name = ' + thisobj.battleArea.name)
 		if(teamplayers.length >1){
-			if(thisobj.battleArea.name =='全自动识别最低级号'){
+			if(thisobj.battleArea.name =='全自动练级'){
 				minmaxlv(teamplayers)
 				// 低地鸡
 				if(minlv < 10){
 					thisobj.battleArea = battleAreaArray[1];
 				}
 				// 诅咒1层怪等级16-22
-				else if(minlv >=10 && minlv < 21){
+				else if(minlv >=10 && minlv < 27){
 					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 1
 					// 没有大号带就打刀鸡
@@ -489,7 +550,7 @@ var loop = ()=>{
 					thisobj.battleArea = battleAreaArray[2];
 				}
 				//诅咒4层怪等级29-34
-				else if(minlv >=29 && minlv < 31){
+				else if(minlv >=27 && minlv < 31){
 					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 4
 					// 没有大号带就打龙骨
@@ -499,9 +560,12 @@ var loop = ()=>{
 				else if(minlv >=31 && minlv < 36){
 					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 5
-					// 没有大号带就打龙骨
-					if(maxlv <= 100)
-					thisobj.battleArea = battleAreaArray[3];
+					// 没有大号带就打黄金龙骨
+					if(maxlv <= 100){
+						thisobj.battleArea = battleAreaArray[4];
+						global.battleAreaName = battleAreaArray[4].name
+					}
+
 				}//诅咒6层怪等级35-41
 				else if(minlv >=36 && minlv < 40){
 					thisobj.battleArea = battleAreaArray[6];
@@ -514,15 +578,20 @@ var loop = ()=>{
 					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 7
 					// 没有大号带就打银狮
-					if(maxlv <= 100)
-					thisobj.battleArea = battleAreaArray[5];
+					if(maxlv <= 100){
+						thisobj.battleArea = battleAreaArray[5];
+						global.battleAreaName = battleAreaArray[5].name
+					}
 				}//诅咒8层怪等级43-49
-				else if(minlv >=44 && minlv < 70){
+				else if(minlv >=44 && minlv < 50){
 					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 8
 					// 没有大号带就打银狮
 					if(maxlv <= 100)
 					thisobj.battleArea = battleAreaArray[5];
+				}//回廊
+				else if(minlv >=50 && minlv < 60){
+					thisobj.battleArea = battleAreaArray[7];
 				}
 				else{
 					console.log('超过50级了，再练刷不了吉拉（52级最高）了')
@@ -539,6 +608,19 @@ var loop = ()=>{
 			}
 
 		}
+}
+var loop = ()=>{
+
+	var map = cga.GetMapName();
+	var mapindex = cga.GetMapIndex().index3;
+	var isleader = cga.isTeamLeaderEx();
+
+	// 组成队伍后，各队员思考本次练级地点
+	chooseArea()
+
+	// 队长满员发车
+	if(isleader && teamMode.is_enough_teammates())
+	{
 		//如果到达了battleArray的脚本地点
 		if(thisobj.battleArea.isDesiredMap(map))
 		{	//诅咒逻辑
@@ -575,12 +657,16 @@ var loop = ()=>{
 			playerThinkRunning = true;
 			
 			thisobj.battleArea.walkTo(loop);
+			// 走到指定练级地点，进入playerThink on阶段之后，重置练级地点思考模式，用于更新下一次的练级地点。
+			thisobj.battleArea = battleAreaArray[0];
 			return;
 		}
 	} else if(!isleader){
 		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 		console.log('playerThink on');
 		playerThinkRunning = true;
+		// 进入playerThink on阶段之后，重置练级地点思考模式，用于更新下一次的练级地点。
+		thisobj.battleArea = battleAreaArray[0];
 		return;
 	}
 
@@ -631,13 +717,23 @@ var loop = ()=>{
 			};
 			cga.travel.falan.toCity('艾尔莎岛', stay);
 		}else{//如果不是刚出生小号，走正常练级逻辑
-			cga.travel.newisland.toStone('X', ()=>{
+			// 回廊
+			if (cga.GetMapIndex().index3 == 27213 && cga.GetMapXY().x == 10 && cga.GetMapXY().y ==20){
 				cga.walkList([
-				cga.isTeamLeader ? [144, 106] : [143, 106],
-				], ()=>{
-					teamMode.wait_for_teammates(loop);
+					cga.isTeamLeader ? [11, 20] : [10, 20],
+					], ()=>{
+						teamMode.wait_for_teammates(loop);
+					});
+			}else{// 1-50 高地+诅咒
+				cga.travel.newisland.toStone('X', ()=>{
+					cga.walkList([
+					cga.isTeamLeader ? [144, 106] : [143, 106],
+					], ()=>{
+						teamMode.wait_for_teammates(loop);
+					});
 				});
-			});
+			}
+
 		}
 	});
 }
@@ -652,6 +748,9 @@ var thisobj = {
 		if(map == '布拉基姆高地' )
 			return 2;
 		if(map.indexOf('诅咒')>=0){
+			return 2;
+		}
+		if(map.indexOf('回廊')>=0){
 			return 2;
 		}
 		return 0;
