@@ -530,6 +530,19 @@ var cga = require('./cgaapi')(function(){
 				return;
 			}
 			
+			if(cga.getItemCount('王冠') == 0)
+			{
+				// 跳转四转换花脚本
+				global.cga = cga
+				var rootdir = cga.getrootdir()
+				var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+				var body = {
+					path : rootdir + "\\交通脚本\\去辛梅尔.js",
+				}
+				
+				scriptMode.call_ohter_script(body)
+				return;
+			}
 			cga.travel.newisland.toLiXiaIsland(()=>{
 				cga.walkList([
 				[90, 99, '国民会馆'],
@@ -656,8 +669,35 @@ var cga = require('./cgaapi')(function(){
 	]
 	);
 
-	cga.SayWords('欢迎使用CGA通用四转脚本换花，红组输入‘1’，蓝组输入‘2’，黄组输入‘3’，绿组输入‘4’。', 0, 3, 1);
+	cga.SayWords('欢迎使用CGA通用四转脚本换花，红组输入‘1’，蓝组输入‘2’，黄组输入‘3’，绿组输入‘4’。UNA脚本提供自动分组功能，请等待程序自动喊话分组', 0, 3, 1);
 	
+	var chooseteam = ()=>{
+		// 分组信息，绿组暂时不用，走else判断
+		const red = ["剑士","骑士","战斧斗士","弓箭手","格斗士","教团骑士","暗黑骑士","魔术师","传教士","咒术师","巫师"]
+		const bule = ["士兵","忍者","舞者","盗贼","封印师","驯兽师","饲养师","医生","护士"]
+		const yellow = ["鉴定师","厨师","侦探","仙人","药剂师","矿工","樵夫","猎人","武器修理工","防具修理工"]
+		const green = ["造斧工","造弓工","长袍工"]
+		
+		// 提取本地职业信息
+		const getprofessionalInfos = require(cga.getrootdir() + '/常用数据/ProfessionalInfo.js');
+		var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
+		var jobmainname = professionalInfo.jobmainname
+
+		if(red.indexOf(jobmainname) != -1){
+			cga.SayWords('1', 0, 3, 1);
+		}else if(bule.indexOf(jobmainname) != -1){
+			cga.SayWords('2', 0, 3, 1);
+		}else if(yellow.indexOf(jobmainname) != -1){
+			cga.SayWords('3', 0, 3, 1);
+		}else{
+			cga.SayWords('4', 0, 3, 1);
+		}
+		
+		return
+	}
+	
+	setTimeout(chooseteam, 2000);
+
 	cga.waitTeammateSay((player, msg)=>{
 
 		if(player.is_me == true){
@@ -672,7 +712,10 @@ var cga = require('./cgaapi')(function(){
 			if(mineObject != null){
 				cga.SayWords('您选择了'+mineObject.name+'。', 0, 3, 1);
 				task.doTask(()=>{
-					
+					// 阻塞，防止不断重启脚本
+					while (true) {
+				
+					}
 				});
 				return false;
 			}
