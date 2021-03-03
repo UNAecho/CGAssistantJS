@@ -1,5 +1,23 @@
 var cga = require('./cgaapi')(function(){
 
+	/* tips:龙心id 622042，type = 26
+	* 黑色方舟顶层出去，后传送至白色方舟index 59934，x= 145,y=56
+	* 白色方舟目送者149，79。人物与其对话坐标站在149，78
+	* 与目送者对话，就一个确定按钮。需要持有龙心的人点确定。
+	* 目送者会全队传送，无须持有龙心以外的人操作
+	* 目送者会传送全队至白色方舟index 59934，x= 93,y=12，房间中有黑色露比
+	* 黑露比99，15，人物与其对话坐标站在98，15
+	* 接下来2种情况：
+	*
+	* 1、未四转时，与黑露比对话，露比说【什么事情那么吃惊..】。对话顺序为2个【下一步】，一个【是否】，一个单【确定】按钮，确定后，交出誓言之花。任务完毕。
+	*
+	* 2、已四转时，与黑露比对话，露比说【真的来了啊..】。对话为单确定按钮，交出誓言之花，然后被强制离队，传送至index59934白色方舟的77，96
+	* 【生产系注意：】然后生产系走到index59934白色方舟的63，60处，与64，60的传授者对话。学习11级制作配方。对话为单确定按钮
+	* 之后走到51，131，与51，132处唤醒者对话，内容为【你好像只有..】时，选【是否】中的【是】，增加第11个技能栏。
+	* 内容为【你已经有...光之路...】，选【是否】中的【是】，传送回光之路。
+	*
+	* 任务结束，被传送至光之路166，87。
+	*/
 	console.log('重要提示：每一层白色方舟地图档都要下载，否则自动寻路会失败！')
 
 	var myname = cga.GetPlayerInfo().name;
@@ -669,19 +687,20 @@ var cga = require('./cgaapi')(function(){
 	]
 	);
 
-	cga.SayWords('欢迎使用CGA通用四转脚本换花，红组输入‘1’，蓝组输入‘2’，黄组输入‘3’，绿组输入‘4’。UNA脚本提供自动分组功能，请等待程序自动喊话分组', 0, 3, 1);
+	cga.SayWords('欢迎使用CGA通用四转脚本换花，红组输入‘1’，蓝组输入‘2’，黄组输入‘3’，绿组输入‘4’。UNA脚本提供自动分组功能，2秒后自动分组', 0, 3, 1);
+
+	// 分组信息，绿组暂时不用，走else判断
+	const red = ["剑士","骑士","战斧斗士","弓箭手","格斗士","教团骑士","暗黑骑士","魔术师","传教士","咒术师","巫师"]
+	const bule = ["士兵","忍者","舞者","盗贼","封印师","驯兽师","饲养师","医生","护士"]
+	const yellow = ["鉴定师","厨师","侦探","仙人","药剂师","矿工","樵夫","猎人","武器修理工","防具修理工"]
+	const green = ["造斧工","造弓工","长袍工"]
+	
+	// 提取本地职业信息
+	const getprofessionalInfos = require(cga.getrootdir() + '/常用数据/ProfessionalInfo.js');
+	var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
+	var jobmainname = professionalInfo.jobmainname
 	
 	var chooseteam = ()=>{
-		// 分组信息，绿组暂时不用，走else判断
-		const red = ["剑士","骑士","战斧斗士","弓箭手","格斗士","教团骑士","暗黑骑士","魔术师","传教士","咒术师","巫师"]
-		const bule = ["士兵","忍者","舞者","盗贼","封印师","驯兽师","饲养师","医生","护士"]
-		const yellow = ["鉴定师","厨师","侦探","仙人","药剂师","矿工","樵夫","猎人","武器修理工","防具修理工"]
-		const green = ["造斧工","造弓工","长袍工"]
-		
-		// 提取本地职业信息
-		const getprofessionalInfos = require(cga.getrootdir() + '/常用数据/ProfessionalInfo.js');
-		var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
-		var jobmainname = professionalInfo.jobmainname
 
 		if(red.indexOf(jobmainname) != -1){
 			cga.SayWords('1', 0, 3, 1);
@@ -710,7 +729,7 @@ var cga = require('./cgaapi')(function(){
 			}
 			
 			if(mineObject != null){
-				cga.SayWords('您选择了'+mineObject.name+'。', 0, 3, 1);
+				cga.SayWords('当前职业：【'+jobmainname+'】，应走【'+mineObject.name+'】。', 0, 3, 1);
 				task.doTask(()=>{
 					// 阻塞，防止不断重启脚本
 					while (true) {
