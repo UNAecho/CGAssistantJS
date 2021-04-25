@@ -42,8 +42,8 @@ const allowMats = [
 	'印度轻木', 
 	'铜条', 
 	'鹿皮', 
-	'毛毡', 
-	'木棉布',
+	// '毛毡', 
+	// '木棉布',
 	// 以下为自定义材料，注意更改，以避免生产者使用高级制造配方
 	'苹果薄荷',
 	'柠檬草',
@@ -130,9 +130,6 @@ io.on('connection', (socket) => {
 			delete moneyinfos[socket.cga_data.player_name]
 	})
 });
-var testlog = (para)=>{
-	console.log('' + String(para) + ' = ' + para)
-}
 var waitStuffs = (name, materials, cb)=>{
 
 	console.log('正在等待材料 ' + name);
@@ -455,7 +452,8 @@ var loop = ()=>{
 		}
 		
 		var inventory = cga.getInventoryItems();
-		if(inventory.length >= 15){
+		// 新增法兰城判断：如果在法兰城，猜测刚卖完道具，临回去前做了一点东西，先卖掉再回里谢里雅堡等待材料，节约背包空间
+		if(inventory.length >= 15 || (cga.getItemCount(craft_target.name) >= 1 && cga.GetMapName() == '法兰城')){
 			cleanUseless(loop);
 			return;
 		}
