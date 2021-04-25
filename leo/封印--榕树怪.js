@@ -19,7 +19,7 @@ require('./common').then(cga => {
         autoDropPet: true, //是否自动扔宠，true扔/false不扔
         minHp: 85,
         minMp: 116,
-        minAttack: 21,
+        minAttack: 25,
         minDefensive: 37,
         minAgility: 39,
         petChecker: () => {
@@ -39,7 +39,7 @@ require('./common').then(cga => {
                     if (pet.realname == petOptions.name && pet.level == 1 && isDrop.flag) {
                         if (cga.isInNormalState()) {
                             // 由于随机档的存在，单一能力初始数值低不一定不好，不能因为没达到最小值就丢弃，这样会损失大量潜在优秀宠物
-                            if (hpDefAglMp >= 287) {
+                            if (hpDefAglMp >= 291) {
                                 console.log('尚可！' + isDrop.info + '虽然有瘸腿数值但是血魔防敏总和【' + hpDefAglMp + '】达标。')
                                 petIndexMap[pet.index] = 1;
                             }
