@@ -77,6 +77,19 @@ const dropFilter = (eq) => {
 	return false;
 }
 
+const dropfun = (cb)=>{
+	var drop = cga.getInventoryItems().filter(dropFilter);
+	
+	if(drop && drop[0])
+	{
+		cga.DropItem(drop[0].pos);
+		setTimeout(cb, 1000, null);
+	}
+	else
+	{
+		cb(null);
+	}
+}
 // 本方法疑似废弃
 // const putdownEquipments = (cb)=>{
 // 	var items = cga.getEquipItems().filter(repairFilter);
@@ -200,6 +213,7 @@ var thisobj = {
 			// console.log('tempIndex = '+tempIndex)
 			console.log('检测到本次去【'+global.battleAreaName+'】，适合佩戴：【'+crystalName[tempIndex]+'】')
 		}else{
+			console.log('global.battleAreaName.name = ' + global.battleAreaName)
 			console.log('首次检测队伍练级地点，如果你使用了自动练级系列脚本，待下次出发前，全员开始自动购买对应属性水晶方便练级。')
 		}
 		var items = cga.getEquipItems().filter(repairFilter);
@@ -218,20 +232,28 @@ var thisobj = {
 			var equipped = cga.getEquipItems();
 			var needRepair = equipped.filter(repairFilter);
 			if(needRepair && needRepair[0]){
+				// 买水晶之前先看看身上水晶有没有可以合适的可以直接使用
+				var item = cga.getInventoryItems().find((eq)=>{
+					if (eq.type != 22)
+						return false
+					const durability = cga.getEquipEndurance(eq);
+					if (durability && durability[0] < durability[1] / 2)
+						return false;
+					// 如果自动识别未定义，则看看有没有现在身上带的同属性，过半耐久的水晶先用着
+					return tempIndex === null ? (eq.itemid == needRepair[0].itemid && (durability && durability[0] >= durability[1] / 2)) : eq.itemid == crystalid[tempIndex] && (durability && durability[0] >= durability[1] / 2)
+				});
+				
+				if(item != undefined){
+					console.log('检测到身上有直接可用的水晶，跳过购买，节约资金')
+					cga.UseItem(item.pos)
+					setTimeout(dropfun, 500, cb2);
+					return;
+				}
+			
+
 				repairLoop(needRepair, ()=>{
 					putupEquipments(equipped, ()=>{
-						
-						var drop = cga.getInventoryItems().filter(dropFilter);
-						
-						if(drop && drop[0])
-						{
-							cga.DropItem(drop[0].pos);
-							setTimeout(cb2, 1000, null);
-						}
-						else
-						{
-							cb2(null);
-						}
+						dropfun(cb2)
 					});
 				});
 			} else {
