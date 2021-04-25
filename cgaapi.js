@@ -834,6 +834,10 @@ module.exports = function(callback){
 	cga.travel.camp.getRegion = (mapname, mapXY)=>{
 		if(mapname == '肯吉罗岛')
 		{
+			if(mapXY.x <=480 && mapXY.x >=463 && mapXY.y <= 206 && mapXY.y >=195)
+			{
+				return '沙滩域';
+			}
 			if(mapXY.x <= 316 && mapXY.y >= 325)
 			{
 				return '矮人城镇域';
@@ -2355,11 +2359,6 @@ module.exports = function(callback){
 				
 				return newList;
 			}
-		}else{
-			console.log('发现寻路失败，尝试自动下载当前地图')
-			cga.downloadMap(()=>{
-				cga.calculatePath(curX, curY, targetX, targetY, targetMap, dstX, dstY, newList)
-			})
 		}
 		
 		throw new Error('发现严重错误：寻路失败！\n' 
