@@ -78,7 +78,7 @@ var battleAreaArray = [
 
 // var lowArea = ['低地鸡','刀鸡','诅咒']
 var dwarfArea = ['蝎子','石头人']
-var KengiroArea = ['营地','地洞','蜥蜴','黑龙']
+var KengiroArea = ['营地','沙滩','地洞','蜥蜴','黑龙']
 
 var battleAreaName = ['隐秘之洞','蜥蜴洞穴','黑龙沼泽']
 var regionName = ['隐秘之洞地下','蜥蜴洞穴上层第','黑龙沼泽']
@@ -90,7 +90,15 @@ var walkMazeForward = (cb)=>{
 		cb(true);
 		return;
 	}
-	if(map == '肯吉罗岛'){
+	if(map == '蜥蜴洞穴上层第'+(thisobj.layerLevel)+'层'){
+		cb(true);
+		return;
+	}
+	if(map == '黑龙沼泽'+(thisobj.layerLevel)+'区'){
+		cb(true);
+		return;
+	}
+	if(map == '蜥蜴洞穴'){
 		cb(false);
 		return;
 	}
@@ -100,10 +108,20 @@ var walkMazeForward = (cb)=>{
 			cb(true);
 			return;
 		}
+		if(err && err.message == '无法找到迷宫的出口' && cga.GetMapName().indexOf('蜥蜴洞穴上层') >= 0)
+		{
+			cb(true);
+			return;
+		}
+		if(err && err.message == '无法找到迷宫的出口' && cga.GetMapName().indexOf('黑龙沼泽') >= 0)
+		{
+			cb(true);
+			return;
+		}
 		walkMazeForward(cb);
 	}, {
 		layerNameFilter : (layerIndex)=>{
-			return '隐秘之洞地下'+(layerIndex + 1)+'层';
+			return ('隐秘之洞地下'+(layerIndex + 1)+'层') || ('蜥蜴洞穴上层第'+(layerIndex + 1)+'层') || ('黑龙沼泽'+(layerIndex + 1)+'区');
 		},
 		entryTileFilter : (e)=>{
 			return e.colraw == 0x2EE2;
@@ -113,6 +131,10 @@ var walkMazeForward = (cb)=>{
 
 var walkMazeBack = (cb)=>{
 	var map = cga.GetMapName();
+		if(map == '蜥蜴洞穴'){
+		cb(true);
+		return;
+	}
 	if(map == '肯吉罗岛'){
 		cb(true);
 		return;
@@ -121,10 +143,10 @@ var walkMazeBack = (cb)=>{
 		walkMazeBack(cb);
 	}, {
 		layerNameFilter : (layerIndex)=>{
-			return layerIndex > 1 ? ('隐秘之洞地下'+(layerIndex - 1)+'层') : '肯吉罗岛';
+			return (layerIndex > 1 ? ('隐秘之洞地下'+(layerIndex - 1)+'层') : '肯吉罗岛') || (layerIndex > 1 ? ('蜥蜴洞穴上层第'+(layerIndex - 1)+'层') : '蜥蜴洞穴') || (layerIndex > 1 ? ('黑龙沼泽'+(layerIndex - 1)+'区') : '肯吉罗岛');
 		},
 		entryTileFilter : (e)=>{
-			return (cga.GetMapName() == '隐秘之洞地下1层') ? (e.colraw == 0) : (e.colraw == 0x2EE0);
+			return ((cga.GetMapName() == '隐秘之洞地下1层') ? (e.colraw == 0) : (e.colraw == 0x2EE0)) || ((cga.GetMapName() == '蜥蜴洞穴上层第1层') ? (e.colraw == 0) : (e.colraw == 0x2EE0)) || ((cga.GetMapName() == '黑龙沼泽1区') ? (e.colraw == 0) : (e.colraw == 0x2EE0));
 		}
 	});
 }
@@ -152,16 +174,22 @@ var choosearea = ()=>{
 	minmaxlv(teamplayers)
 
 	// 营地门口
-	if(minlevel <= 69 ){
+	if(minlevel <= 72 ){
 		area = '营地'
 		global.battleAreaName = area
 	}// 矮人城镇外（蝎子）
-	else if(minlevel > 69 && minlevel <= 80){
+	else if(minlevel > 72 && minlevel <= 80){
 		area = '蝎子'
 		global.battleAreaName = area
 	}// 矮人城镇内（石头人）
-	else if(minlevel > 80 && minlevel <= 90){
-		area = '石头人'
+	// 废弃，因为需要额外做矮人手环任务，改为去沙滩练级
+	// else if(minlevel > 80 && minlevel <= 90){
+	// 	area = '石头人'
+	// 	global.battleAreaName = area
+	// }
+	// 沙滩
+	else if(minlevel > 80 && minlevel <= 89){
+		area = '沙滩'
 		global.battleAreaName = area
 	}
 	// 隐秘之洞（地）
@@ -172,9 +200,10 @@ var choosearea = ()=>{
 	// }
 
 	// 蜥蜴
-	else if(minlevel > 90 && minlevel <= 105){
+	else if(minlevel > 89 && minlevel <= 105){
 		area = '蜥蜴'
 		global.battleAreaName = area
+		thisobj.layerLevel = 1
 	}// 黑龙
 	else if(minlevel > 105 && minlevel <= 140){
 		area = '黑龙'
@@ -275,14 +304,18 @@ var playerThink = ()=>{
 		{
 			if(interruptFromMoveThink)
 			{
-				walkMazeBack(loop);
+				// 注销掉出迷宫逻辑，原因是所有迷宫都距离营地补给处太远，直接登出回补
+				// walkMazeBack(loop);
+				supplyObject.func(loop)
 				return false;
 			}
 			else
 			{
 				moveThinkInterrupt.requestInterrupt(()=>{
 					if(cga.isInNormalState()){
-						walkMazeBack(loop);
+					// 注销掉出迷宫逻辑，原因是所有迷宫都距离营地补给处太远，直接登出回补
+					// walkMazeBack(loop);
+					supplyObject.func(loop)
 						return true;
 					}
 					return false;
@@ -410,7 +443,7 @@ var loop = ()=>{
 	var mapXY = cga.GetMapXY();
 
 	var isleader = cga.isTeamLeaderEx();
-	
+	// console.log('ctx.result = '  + ctx.result)
 	if(isleader && teamMode.is_enough_teammates()){
 
 		// 判断练级地点
@@ -423,7 +456,6 @@ var loop = ()=>{
 			], loop);
 			return;
 		}
-		// TODO 需要添加石头人逻辑
 		if(map == '矮人城镇'){
 			var go = ()=>{
 				callSubPluginsAsync('prepare', ()=>{
@@ -477,6 +509,12 @@ var loop = ()=>{
 			getSupplyObject().func(loop);
 			return;
 		}
+		if(map == '蜥蜴洞穴'){
+			cga.walkList([
+			[12, 13, '肯吉罗岛'],
+			], loop);
+			return;
+		}
 		if(map == '圣骑士营地'){
 			callSubPluginsAsync('prepare', ()=>{
 				if(cga.GetMapName() != '圣骑士营地'){
@@ -523,6 +561,13 @@ var loop = ()=>{
 							[12, 2, '肯吉罗岛'],
 							[231, 434, '矮人城镇'],
 						], loop);
+					}
+					else if(area == '沙滩'){
+						cga.walkList([
+							[471, 203],
+						], ()=>{
+							cga.freqMove(0);
+						});
 					}
 					else if(area == '蜥蜴'){
 						cga.walkList([
@@ -588,6 +633,9 @@ var loop = ()=>{
 			return;
 		}
 	} else if(!isleader){
+
+		// 判断练级地点
+		choosearea()
 		// 五转碎片不加hasInterrupt，原因未知，如果有问题，请注释
 		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 
@@ -621,31 +669,7 @@ var loop = ()=>{
 			cga.walkList([
 			cga.isTeamLeader ? [96, 86] : [97, 86],
 			], ()=>{
-				teamMode.wait_for_teammates(loop
-					
-				// 	()=>{
-				// 	// 判断练级地点
-				// 	choosearea()
-
-				// 	// 矮人城镇域练级
-				// 	if(dwarfArea.indexOf(area) != -1){
-				// 		console.log('出发去矮人城镇')
-				// 		cga.walkList([
-				// 			[36, 87, '肯吉罗岛'],
-				// 			[384, 245, '蜥蜴洞穴'],
-				// 			[12, 2, '肯吉罗岛'],
-				// 			[231, 434, '矮人城镇'],
-				// 		], loop);
-				// 	}// 营地域练级
-				// 	else if(KengiroArea.indexOf(area) != -1){
-				// 		loop()
-				// 	}// TODO 前50级练级
-				// 	else{
-				// 		loop()
-				// 	}
-
-				// }
-				);
+				teamMode.wait_for_teammates(loop);
 			});
 		});
 	});
@@ -661,8 +685,10 @@ var thisobj = {
 			dangerlevel = 2;
 			return dangerlevel;
 		}
-		// TODO 矮人城镇石头人区域
-		// if(mapXY){}
+		if(map == '肯吉罗岛' && cga.travel.camp.getRegion(map, mapXY) == '沙滩域'){
+			dangerlevel = 2;
+			return dangerlevel;
+		}
 
 		if(map == '肯吉罗岛' || map == '蜥蜴洞穴' )
 			return 1;
