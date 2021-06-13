@@ -61,6 +61,8 @@ module.exports = function(callback){
 	cga.ENABLE_FLAG_CARD = 3;
 	cga.ENABLE_FLAG_TRADE = 4;
 	cga.ENABLE_FLAG_FAMILY = 5;
+	cga.ENABLE_FLAG_AVATAR_PUBLIC = 100;
+	cga.ENABLE_FLAG_BATTLE_POSITION = 101;
 	
 	cga.TRADE_STATE_CANCEL = 0;
 	cga.TRADE_STATE_READY = 1;
@@ -1484,6 +1486,28 @@ module.exports = function(callback){
 	
 	cga.travel.AKLF.isSettled = false;
 	
+	//前往到阿凯鲁法银行
+	cga.travel.AKLF.toBank = (cb)=>{
+		if(cga.GetMapName() != '阿凯鲁法村'){
+
+			if(cga.travel.AKLF.isSettled){
+				cga.LogBack();
+				setTimeout(cga.travel.AKLF.toBank, 1000, cb);
+				return;
+			}
+
+			cb(new Error('"前往阿凯鲁法银行"功能必须从阿凯鲁法村启动'));
+			return;
+		}
+		cga.walkList([
+			[139, 136, '银行'],
+			[20, 17],
+		], ()=>{
+			cga.turnDir(0);
+			cb(null);
+		});
+	}
+
 	//从阿凯鲁法到法兰
 	cga.travel.AKLF.toFalan = (cb)=>{
 		if(cga.GetMapName() != '阿凯鲁法村'){
@@ -1612,14 +1636,21 @@ module.exports = function(callback){
 			
 			cga.walkList(list, ()=>{
 				var go = ()=>{
-					cga.TurnTo(npcPos3[0], npcPos3[1]);
+					cga.turnTo(npcPos3[0], npcPos3[1]);
 					cga.AsyncWaitNPCDialog((err, dlg)=>{
 						if(typeof dlg.message == 'string' && (dlg.message.indexOf('对不起') >= 0 || dlg.message.indexOf('很抱歉') >= 0)){
-							cb(new Error('无法使用前往'+villageName+'的传送石'));
+							cb(new Error('无法使用前往'+villageName+'的传送石，可能的原因：没开传送点'));
 							return;
 						}
 						cga.ClickNPCDialog(4, -1);
-						cga.AsyncWaitMovement({map:villageName+'的传送点', delay:1000, timeout:5000}, cb);
+						cga.AsyncWaitMovement({map:villageName+'的传送点', delay:1000, timeout:5000}, (err)=>{
+							if(err){
+								cb(new Error('无法使用前往'+villageName+'的传送石，可能的原因：钱不够'));
+								return;
+							}
+
+							cb(null);
+						});
 					});
 				}
 				if(isTeamLeader){
@@ -2305,6 +2336,35 @@ module.exports = function(callback){
 				});
 			});
 		});
+	}
+
+	cga.isPathAvailable = (curX, curY, targetX, targetY)=>{
+		var walls = cga.buildMapCollisionMatrix();
+		var grid = new PF.Grid(walls.matrix);
+		var finder = new PF.AStarFinder({
+			allowDiagonal: true,
+			dontCrossCorners: true
+		});
+
+		var frompos = [curX - walls.x_bottom, curY - walls.y_bottom];
+		var topos = [targetX - walls.x_bottom, targetY - walls.y_bottom];
+
+		if(frompos[0] >= 0 && frompos[0] < walls.x_size && 
+		frompos[1] >= 0 && frompos[1] < walls.y_size &&
+			topos[0] >= 0 && topos[0] < walls.x_size && 
+			topos[1] >= 0 && topos[1] < walls.y_size){
+		
+			//console.log('using AStar path finder...');
+			
+			var path = finder.findPath(frompos[0], frompos[1], topos[0], topos[1], grid);
+			
+			if(path.length)
+			{
+				return true;
+			}
+		}
+		
+		return false;
 	}
 
 	cga.calculatePath = (curX, curY, targetX, targetY, targetMap, dstX, dstY, newList)=>{
@@ -4373,24 +4433,41 @@ module.exports = function(callback){
 		const getTarget = (noTargetCB) => {
 			const target = targetFinder(cga.GetMapUnits());
 			if (typeof target == 'object') {
-				const walkTo = cga.getRandomSpace(target.xpos,target.ypos);
+				const walkTo = cga.getRandomSpace(target.xpos, target.ypos);
 				if (walkTo) {
 					cga.walkList([walkTo], () => cb(null, target));
-				} else noTargetCB();
-			} else if (target === true) cb(null);
-			else noTargetCB();
+				} else {
+					noTargetCB();
+				}
+			} else if (target === true){
+				cb(null);
+			} else{
+				noTargetCB();
+			}
 		};
-		const toNextPoint = (points, centre, toNextCB) => {
+		const toNextPoint = (points, current, toNextCB) => {
 			const remain = points.filter(p => {
-				const xd = Math.abs(p.x - centre.x);
-				const yd = Math.abs(p.y - centre.y);
+				const xd = Math.abs(p.x - current.x);
+				const yd = Math.abs(p.y - current.y);
 				p.d = xd + yd;
 				return !(xd < 12 && yd < 12);
 			}).sort((a,b) => a.d - b.d);
 			const next = remain.shift();
-			if (next) {
-				cga.walkList([[next.x,next.y]], () => getTarget(() => toNextPoint(remain,next,toNextCB)));
-			} else toNextCB();
+			if (next)
+			{
+				if(cga.isPathAvailable(current.x, current.y, next.x, next.y))
+				{
+					cga.walkList([[next.x,next.y]], () => getTarget(() => toNextPoint(remain, next, toNextCB)));
+				}
+				else
+				{
+					getTarget(() => toNextPoint(remain, next, toNextCB))
+				}
+			}
+			else 
+			{
+				toNextCB();
+			}
 		};
 		//const start = cga.GetMapXY();
 		//let entry = null;
@@ -4473,7 +4550,7 @@ module.exports = function(callback){
 				if(tradeFinished)
 					return false;
 				
-				// console.log('waitSysMsg='+msg + 'playerName = ' + playerName);
+				console.log('等待交易消息：'+msg);
 												
 				if(msg.indexOf('交易完成') >= 0){
 					tradeFinished = true;
@@ -4531,7 +4608,7 @@ module.exports = function(callback){
 						return;
 					}
 					
-					// console.log('AsyncWaitTradeStuffs='+type);
+					console.log('等待交易物品：'+type);
 															
 					getInTradeStuffs = true;
 						
@@ -4571,7 +4648,7 @@ module.exports = function(callback){
 						return;
 					}
 					
-					// console.log('AsyncWaitTradeState='+state);
+					console.log('等待交易状态变更：'+state);
 					
 					if(!err){
 						if (state == cga.TRADE_STATE_READY || state == cga.TRADE_STATE_CONFIRM) {
@@ -4615,9 +4692,7 @@ module.exports = function(callback){
 			if(tradeFinished)
 				return;
 			
-			// console.log('AsyncWaitTradeDialog='+partyLevel);
-			//console.log(partyName);
-			//console.log(partyLevel);
+			console.log('等待交易对话框：'+partyLevel);
 			
 			savePartyName = partyName;
 			
@@ -4687,11 +4762,14 @@ module.exports = function(callback){
 			}
 		},
 		(playerName, receivedStuffs)={
-			if(receivedStuffs.pets.find((pet)=>{
-				return pet.realname == '红帽哥布林';
-			}) == null){
-				console.log('对方没有给自己红帽哥布林!');
-				return false;
+			
+			if(receivedStuffs && receivedStuffs.pets){
+				if(receivedStuffs.pets.find((pet)=>{
+					return pet.realname == '红帽哥布林';
+				}) == null){
+					console.log('对方没有给自己红帽哥布林!');
+					return false;
+				}
 			}
 			return true;
 		}, 
@@ -4706,7 +4784,7 @@ module.exports = function(callback){
 	cga.positiveTrade = (name, stuff, checkParty, resolve, timeout) => {
 		cga.AsyncWaitPlayerMenu((err, players) => {
 			if(err){
-				console.log('player not found')
+				console.log('等待交易超时')
 				resolve({success: false, reason : 'player menu timeout'});
 				return;
 			}
@@ -4717,7 +4795,7 @@ module.exports = function(callback){
 				cga.tradeInternal(stuff, checkParty, resolve, name, timeout);
 				cga.PlayerMenuSelect(player.index);
 			} else {
-				console.log('player not found')
+				console.log('未找到目标交易对象')
 				resolve({success: false, reason : 'player not found'});
 			}
 		}, 3000);
@@ -4729,7 +4807,7 @@ module.exports = function(callback){
 	cga.requestTrade = (name, resolve, timeout) => {
 		cga.AsyncWaitPlayerMenu((err, players) => {
 			if(err){
-				console.log('player not found')
+				console.log('等待交易超时')
 				resolve({success: false, reason : 'player menu timeout'});
 				return;
 			}
@@ -4740,7 +4818,7 @@ module.exports = function(callback){
 				resolve({success: true});
 				cga.PlayerMenuSelect(player.index);
 			} else {
-				console.log('player not found')
+				console.log('未找到目标交易对象')
 				resolve({success: false, reason : 'player not found'});
 			}
 		}, 3000);
@@ -4749,15 +4827,18 @@ module.exports = function(callback){
 	}
 
 	//等待其他玩家向自己发起交易，成功或失败时回调resolve，在checkParty里可以根据对方名字和收到的东西判断同意还是拒绝交易
+	//提示：receivedStuffs可能为空数组，所以访问receivedStuffs.items或其他成员之前必须先检查有效性！
 	/*
 	等待任意玩家给自己交易3组鹿皮:		
 		cga.waitTrade({},
 		(playerName, receivedStuffs)=>{
-			if( receivedStuffs.items.filter((item)=>{
-				return item.name == '鹿皮' && item.count == 40;
-			}).length == 3 )
-			{
-				return true;
+			if(receivedStuffs && receivedStuffs.items){
+				if( receivedStuffs.items.filter((item)=>{
+					return item.name == '鹿皮' && item.count == 40;
+				}).length == 3 )
+				{
+					return true;
+				}
 			}
 			return false;
 		},
@@ -4768,16 +4849,18 @@ module.exports = function(callback){
 				console.log('交易失败! 原因：'+arg.reason);
 			}
 		});
-	等待名为hzqst的玩家给自己交易3组鹿皮，并给他1000金币:		
+	等待名为hzqst的玩家给自己交易3组鹿皮，并给他1000金币:
 		cga.waitTrade({
 			gold : 1000
 		},
 		(playerName, receivedStuffs)=>{
-			if( playerName == 'hzqst' && receivedStuffs.items.filter((item)=>{
-				return item.name == '鹿皮' && item.count == 40;
-			}).length == 3 )
-			{
-				return true;
+			if(receivedStuffs && receivedStuffs.items){
+				if( playerName == 'hzqst' && receivedStuffs.items.filter((item)=>{
+					return item.name == '鹿皮' && item.count == 40;
+				}).length == 3 )
+				{
+					return true;
+				}
 			}
 			return false;
 		},
@@ -4806,7 +4889,7 @@ module.exports = function(callback){
 				cga.tradeInternal(stuff, checkParty, resolve, name, timeout);
 				cga.PlayerMenuSelect(player.index);
 			} else {
-				console.log('player not found, do nothing');
+				console.log('未找到目标交易对象');
 			}
 		}, 3000);
 				

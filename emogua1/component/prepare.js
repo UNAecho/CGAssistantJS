@@ -39,7 +39,7 @@ const changePoints = (detail, attr) => {
  *   attr：体力=0，力量=1，防御=2，敏捷=3，魔法=4
  */
 module.exports = async ({
-	doctorName, crystalNameFilter, repair = false, sellFilter, upgrades
+	doctorName = undefined, crystalNameFilter = undefined, repair = false, sellFilter = undefined, upgrades = undefined
 } = {}) => {
 	const cga = await require('./wrapper');
 	const goto = await require('./goto');
@@ -48,7 +48,6 @@ module.exports = async ({
 	const bank = await require('./bank');
 	battle.updateBattleSkillsCache();
 	let playerInfo = cga.GetPlayerInfo();
-	let pets = cga.GetPetsInfo();
 
 	if (playerInfo.souls > 0) {
 		console.log('你丢掉了灵魂', playerInfo.souls);
@@ -66,31 +65,34 @@ module.exports = async ({
 	}
 
 	// 升级人物加点
-	while (playerInfo.detail.points_remain && upgrades) {
+	if (upgrades) {
 		const upgrade = upgrades.find(u => u.names.includes(playerInfo.name));
 		if (upgrade) {
-			console.log('人物加点', upgrade);
-			let pointsPerLevel = Math.min(playerInfo.detail.points_remain, 4);
-			let assignIndex = 0;
-			while (pointsPerLevel > 0 && assignIndex < upgrade.assign.length) {
-				const assign = upgrade.assign[assignIndex++];
-				for (let points = assign.points; points > 0; points--) {
-					if (!assign.max || getCurrentPoints(playerInfo.detail, assign.attr) < assign.max) {
-						cga.UpgradePlayer(assign.attr);
-						changePoints(playerInfo.detail, assign.attr);
-						--pointsPerLevel;
-					} else if (typeof assign.maxTo == 'number') {
-						cga.UpgradePlayer(assign.maxTo);
-						changePoints(playerInfo.detail, assign.maxTo);
-						--pointsPerLevel;
+			while (playerInfo.detail.points_remain) {
+				console.log('人物加点', upgrade);
+				let pointsPerLevel = Math.min(playerInfo.detail.points_remain, 4);
+				let assignIndex = 0;
+				while (pointsPerLevel > 0 && assignIndex < upgrade.assign.length) {
+					const assign = upgrade.assign[assignIndex++];
+					for (let points = assign.points; points > 0; points--) {
+						if (!assign.max || getCurrentPoints(playerInfo.detail, assign.attr) < assign.max) {
+							cga.UpgradePlayer(assign.attr);
+							changePoints(playerInfo.detail, assign.attr);
+							--pointsPerLevel;
+						} else if (typeof assign.maxTo == 'number') {
+							cga.UpgradePlayer(assign.maxTo);
+							changePoints(playerInfo.detail, assign.maxTo);
+							--pointsPerLevel;
+						}
 					}
 				}
 			}
 		}
 	}
 	// 升级宠物加点
+	let pets = cga.GetPetsInfo();
 	if (upgrades) {
-		let battlePet = pets.find(p => p.state == cga.PET_STATE_BATTLE);
+		let battlePet = pets.find(p => p.battle_flags == cga.PET_STATE_BATTLE);
 		if (battlePet) {
 			const upgrade = upgrades.find(u => u.names.includes(battlePet.name || battlePet.realname));
 			if (upgrade && upgrade.assign.length > 0) {
@@ -99,16 +101,16 @@ module.exports = async ({
 					const assign = upgrade.assign[0];
 					const oldPoints = battlePet.detail.points_remain;
 					cga.UpgradePet(battlePet.index, assign.attr);
-					await cga.emogua.delay(1000);
+					await cga.emogua.delay(2000);
 					pets = cga.GetPetsInfo();
-					battlePet = pets.find(p => p.state == cga.PET_STATE_BATTLE);
+					battlePet = pets.find(p => p.battle_flags == cga.PET_STATE_BATTLE);
 					if (oldPoints == battlePet.detail.points_remain) {
 						const altAssign = upgrade.assign[1];
 						if (altAssign && altAssign.attr != assign.attr) {
 							cga.UpgradePet(battlePet.index, altAssign.attr);
-							await cga.emogua.delay(1000);
+							await cga.emogua.delay(2000);
 							pets = cga.GetPetsInfo();
-							battlePet = pets.find(p => p.state == cga.PET_STATE_BATTLE);
+							battlePet = pets.find(p => p.battle_flags == cga.PET_STATE_BATTLE);
 						} else {
 							console.log('宠物爆点，且没有候选加点', upgrade);
 							break;
@@ -119,9 +121,9 @@ module.exports = async ({
 		}
 	}
 
-	if (playerInfo.hp < playerInfo.maxhp || playerInfo.mp < playerInfo.maxmp || pets.find(p => p.hp < p.maxhp || p.mp < p.maxmp)) {
+	const petHurt = pets.find(e => e.health > 0);
+	if (playerInfo.hp < playerInfo.maxhp || playerInfo.mp < playerInfo.maxmp || pets.find(p => p.hp < p.maxhp || p.mp < p.maxmp) || petHurt) {
 		const hNurse = cga.emogua.needHNurse(playerInfo, profession);
-		const petHurt = pets.find(e => e.health > 0);
 		if (hNurse || petHurt) {
 			await goto(n => n.falan.whospital);
 			if (hNurse) {
@@ -228,7 +230,7 @@ module.exports = async ({
 
 	if (repair) {
 		const allItems = cga.GetItemsInfo();
-		const needRepairEquipments = allItems.map(item => {
+		const needRepairEquipments = allItems.filter(item => {
 			if (item.type >= 0 && item.type <= 14 && item.level <= 10) {
 				item.durability = cga.emogua.getDurability(item);
 				return item.durability && (item.durability.rate < 0.75 || (item.durability.current < item.durability.max && item.durability.current < cga.emogua.equipmentMinDurability));
@@ -236,15 +238,24 @@ module.exports = async ({
 		});
 		if (needRepairEquipments.length > 0) {
 			const emptyIndexes = cga.emogua.getEmptyBagIndexes(allItems);
-			const tryWaitRepair = async (words, position) => {
-				for (let i = 3; i > 0; i--) {
+			const tryWaitRepair = async (words, position, itemId) => {
+				for (let i = 5; i > 0; i--) {
 					cga.emogua.sayWords(words);
 					await cga.emogua.waitTrade({itemFilter: i => i.pos == position}).then(
 						async () => {
-							const timer = Date.now();
+							let timer = Date.now();
 							do {
 								await cga.emogua.waitTrade().then(
-									() => timer = 0,
+									async () => {
+										timer = 0;
+										if (itemId) {
+											const equipItem = cga.getInventoryItems().find(i => i.itemid == itemId && cga.emogua.getDurability(i).current >= cga.emogua.equipmentMinDurability);
+											if (equipItem) {
+												cga.UseItem(equipItem.pos);
+												await cga.emogua.delay(1000);
+											}
+										}
+									},
 									() => {}
 								);
 							} while (Date.now() - timer < 120000);
@@ -260,26 +271,29 @@ module.exports = async ({
 						const emptyIndex = emptyIndexes[0];
 						if (emptyIndex) {
 							if (cga.MoveItem(item.pos, emptyIndex, -1)) {
-								await tryWaitRepair(words, emptyIndex);
+								await cga.emogua.delay(500);
+								await tryWaitRepair(words, emptyIndex, item.itemid);
 								if (!cga.MoveItem(emptyIndex, item.pos, -1)) {
 									emptyIndexes.shift();
 								}
 							}
 						}
 					} else {
-						await tryWaitRepair(words, emptyIndex);
+						await tryWaitRepair(words, item.pos);
 					}
 					
 				}
 			};
 			const weapons = needRepairEquipments.filter(item => item.type >= 0 && item.type <= 6);
 			const armors = needRepairEquipments.filter(item => item.type >= 7 && item.type <= 14);
-			await goto(n => n.castle.x).then(() => cga.emogua.walkTo([23,82]));
-			if (weapons.length > 0) {
-				await doRepair(weapons, '修理武器');
-			}
-			if (armors.length > 0) {
-				await doRepair(weapons, '修理防具');
+			if (weapons.length > 0 || armors.length > 0) {
+				await goto(n => n.castle.x).then(() => cga.emogua.walkTo([26,81]));
+				if (weapons.length > 0) {
+					await doRepair(weapons, '修理武器');
+				}
+				if (armors.length > 0) {
+					await doRepair(armors, '修理防具');
+				}
 			}
 		}
 	}

@@ -37,7 +37,8 @@ module.exports = (async () => {
 			n: new Station([151, 97, {map:'艾夏岛'}]),
 			bank: new Station([49, 25, {map:'银行'}])
 		}, lisa: {
-			n: new Station([93, 62, {map:'利夏岛'}])
+			n: new Station([93, 62, {map:'利夏岛'}]),
+			xme: new Station([185,90,{map:'辛梅尔'}])
 		}, falan: {
 			e1: new Station([242, 100, {map:'法兰城'}]),
 			s1: new Station([141, 148, {map:'法兰城'}]),
@@ -75,7 +76,8 @@ module.exports = (async () => {
 			kili: new Station([50, 63, {map:'奇利村'}]),
 			jenova: new Station([58, 43, {map:'杰诺瓦镇'}]),
 			vinoy: new Station([40,36, {map:'维诺亚村'}]),
-			ghana: new Station([36,40, {map:'加纳村'}])
+			ghana: new Station([36,40, {map:'加纳村'}]),
+			albanese: new Station([36,54, {map:'阿巴尼斯村'}]),
 		}, aleut: {
 			eout: new Station([596,83,{map:'芙蕾雅'}]),
 			nout: new Station([588,50,{map:'芙蕾雅'}])
@@ -167,7 +169,12 @@ module.exports = (async () => {
 	Network.lisa.n.links = [
 		new Link(Network.tower.tower1, () => cga.emogua.autoWalkList([
 			[90,99,{map:'国民会馆'}],[108,39,{map:'雪拉威森塔１层'}]
-		]))
+		])),
+		new Link(Network.lisa.xme, () => cga.emogua.autoWalkList([
+			[90,99,{map:'国民会馆'}],[108,39,{map:'雪拉威森塔１层'}],[35,96]
+		]).then(
+			() => cga.emogua.talkNpc([35,95])(s => s.yes)
+		))
 	];
 	const castleF1Link = new Link(Network.castle.f1, () => cga.emogua.autoWalk([41, 50, {map:'里谢里雅堡 1楼'}]));
 	Network.castle.x.links = [
@@ -246,6 +253,15 @@ module.exports = (async () => {
 		).then(
 			() => cga.emogua.autoWalkList([
 				[5,12,{map:'村长的家'}],[1,9,{map:'加纳村'}]
+			])
+		)),
+		new Link(Network.teleport.albanese, () => cga.emogua.autoWalk([37, 4]).then(
+			() => cga.emogua.talkNpc([38,4,{map:'阿巴尼斯村的传送点'}])(s => s.yesGenerator(1))
+		).then(
+			() => cga.emogua.autoWalkList([
+				[5,4,{map:4313}],
+				[6,13,{map:4312}],
+				[6,13,{map:'阿巴尼斯村'}]
 			])
 		))
 	];
@@ -371,7 +387,7 @@ module.exports = (async () => {
 	];
 	Network.falan.sout.links = [
 		new Link(Network.camp.x, () => cga.emogua.autoWalkList([
-			[513,282,{map:'曙光骑士团营地'}],[55,47,{map:'辛希亚探索指挥部'}],[7,4,{map:'辛希亚探索指挥部',x:91,y:6}],[95,9,{map:27101}],[8,21]
+			[513,282,{map:'曙光骑士团营地'}],[55,47,{map:'辛希亚探索指挥部'}],[7,4,{map:'*',x:91,y:6}],[95,9,{map:27101}],[8,21]
 		]).then(() => cga.emogua.turnTo([7,21,{map:'圣骑士营地'}])).then(
 			() => cga.emogua.autoWalk(Network.camp.x.id)
 		))
@@ -388,10 +404,10 @@ module.exports = (async () => {
 		new Link(Network.falan.s1, () => cga.emogua.turnOrientation(6, Network.falan.s1.id[2]))
 	];
 	Network.falan.mbank.links = [
-		new Link(Network.falan.m1), new Link(Network.falan.mtrade)
+		new Link(Network.falan.mtrade)
 	];
 	Network.falan.mtrade.links = [
-		new Link(Network.falan.m1), new Link(Network.falan.mbank), new Link(Network.falan.mnurse)
+		new Link(Network.falan.mbank), new Link(Network.falan.mnurse)
 	];
 	Network.falan.mnurse.links = [
 		new Link(Network.falan.mtrade)
@@ -507,13 +523,14 @@ module.exports = (async () => {
 		]))
 	];
 	Network.dwarf.x.links = [
-		new Link(Network.dwarf.sell),new Link(Network.dwarf.elom)
+		new Link(Network.dwarf.sell),new Link(Network.dwarf.elom),new Link(Network.dwarf.out, async () => {
+			cga.FixMapWarpStuck(1);
+			await cga.emogua.waitForDestination({map:'肯吉罗岛'});
+		})
 	];
 	Network.dwarf.sell.links = [
 		new Link(Network.dwarf.nurse),new Link(Network.dwarf.hnurse),new Link(Network.dwarf.bank),new Link(Network.dwarf.doctor),new Link(Network.dwarf.elom),
-		new Link(Network.dwarf.out, () => cga.emogua.autoWalkList([
-			[110,191,{map:'肯吉罗岛'}]
-		]))
+		new Link(Network.dwarf.out, () => cga.emogua.autoWalk([110,191,{map:'肯吉罗岛'}]))
 	];
 	Network.dwarf.hnurse.links = [
 		new Link(Network.dwarf.nurse),new Link(Network.dwarf.sell),new Link(Network.dwarf.bank),new Link(Network.dwarf.doctor),new Link(Network.dwarf.elom)

@@ -9,7 +9,7 @@ var doneArray = [
 			cga.AsyncWaitNPCDialog(()=>{
 				cga.ClickNPCDialog(0, 0);
 				cga.AsyncWaitNPCDialog(()=>{
-					var exchangeCount = cga.getItemCount(mineObject.name) / 20;
+					var exchangeCount = parseInt( cga.getItemCount(mineObject.name) / 20 );
 					cga.BuyNPCStore([{index:0, count:exchangeCount}]);
 					cga.AsyncWaitNPCDialog(()=>{
 						cga.travel.falan.toBank(()=>{
@@ -216,6 +216,22 @@ var doneArray = [
 				cga.saveToBankAll(mineObject.name, 20, (err)=>{
 					cga.walkList([
 					[11, 12, '哥拉尔镇']
+					], ()=>{
+						cb(null);
+					});
+				});
+			});
+		});
+	}
+},
+{
+	name: '阿凯鲁法存银行',
+	func: (cb, mineObject)=>{
+		cga.travel.AKLF.toBank(()=>{
+			cga.AsyncWaitNPCDialog(()=>{
+				cga.saveToBankAll(mineObject.name, 20, (err)=>{
+					cga.walkList([
+					[8, 16, '阿凯鲁法村']
 					], ()=>{
 						cb(null);
 					});

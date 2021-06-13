@@ -8,21 +8,21 @@ module.exports = (async () => {
 	Secondary.waitWorkResult = (timeout = 3000) => new Promise((resolve, reject) => cga.AsyncWaitWorkingResult((error, result) => setTimeout(() => error ? reject(error) : resolve(result)), timeout));
 
 	const heal = async (skill, name) => {
-		cga.StartWork(skill.index, skill.lv - 1);
-		const players = await cga.emogua.waitPlayerMenu();
-		const index = players.findIndex(p => p.name == name);
-		if (typeof index == 'number') {
-			cga.PlayerMenuSelect(index);
-			await cga.emogua.waitUnitMenu();
-			cga.UnitMenuSelect(0);
-			return await Secondary.waitWorkResult();
+		if (cga.StartWork(skill.index, skill.lv - 1)) {
+			const players = await cga.emogua.waitPlayerMenu();
+			const index = players.findIndex(p => p.name == name);
+			if (index >= 0) {
+				cga.PlayerMenuSelect(index);
+				await cga.emogua.waitUnitMenu();
+				cga.UnitMenuSelect(0);
+				return await Secondary.waitWorkResult();
+			}
 		}
 		throw '治疗失败';
 	};
-	Secondary.healTeam = async () => {
-		const skill = cga.GetSkillsInfo().find(s => s.name == '治疗');
-		const requireMp = 25 + skill.lv * 5;
+	Secondary.healTeam = async (skill = cga.GetSkillsInfo().find(s => s.name == '治疗')) => {
 		if (skill) {
+			const requireMp = 25 + skill.lv * 5;
 			for (;;) {
 				let healName;
 				const playerInfo = cga.GetPlayerInfo();
@@ -37,6 +37,7 @@ module.exports = (async () => {
 				}
 				if (healName) {
 					await heal(skill, healName).catch(console.log);
+					await cga.emogua.delay(1000);
 				} else {
 					return true;
 				}
@@ -69,8 +70,7 @@ module.exports = (async () => {
 			}
 		}
 	};
-	Secondary.repairAll = async () => {
-		const skill = cga.GetSkillsInfo().filter(e => e.name.indexOf('修理') >= 0).sort((e1, e2) => e2.lv - e1.lv)[0];
+	Secondary.repairAll = async (skill = cga.GetSkillsInfo().filter(e => e.name.indexOf('修理') >= 0).sort((e1, e2) => e2.lv - e1.lv)[0]) => {
 		if (skill) {
 			await assessItems(skill, cga.getInventoryItems().filter(eq => {
 				if (
@@ -85,12 +85,13 @@ module.exports = (async () => {
 				return false;
 			}));
 		}
+		return false;
 	};
-	Secondary.assessAll = async () => {
-		const skill = cga.GetSkillsInfo().find(e => e.name == '鉴定');
+	Secondary.assessAll = async (skill = cga.GetSkillsInfo().find(e => e.name == '鉴定')) => {
 		if (skill) {
 			await assessItems(skill, cga.getInventoryItems().filter(i => !i.assessed && i.level <= skill.lv));
 		}
+		return false;
 	};
 	Secondary.makeAll = async (requireInfo) => {
 		if (requireInfo) {
@@ -116,7 +117,7 @@ module.exports = (async () => {
 						checkResultTimeout();
 						const result = await Secondary.waitWorkResult(resultTimeout);
 						if (result.success) {
-							await cga.emogua.sortItems();
+							await cga.emogua.sortItems(true);
 						} else {
 							throw 'bag is full';
 						}
@@ -160,11 +161,12 @@ module.exports = (async () => {
 			if (moved) {
 				await cga.emogua.walkTo([arrivePosition.x, arrivePosition.y]);
 			}
-			cga.turnOrientation(orientation);
+			await cga.emogua.turnOrientation(orientation);
 		}
 	};
 
 	let tryGetFromBank = true;
+	const materialNameRegex = /@(.+)@/;
 	Secondary.provideMaterials = async ({materials, currentItems = cga.getInventoryItems()}) => {
 		const makeConfig = configLoader.readFromConfigPath('\\script\\secondary\\make.json');
 		if (!makeConfig.products) {
@@ -172,12 +174,14 @@ module.exports = (async () => {
 			await cga.emogua.stopScript();
 		}
 		const makers = makeConfig.products.reduce((a,c) => a.concat(c.players), []);
+		console.log('makers', makers);
 		if (tryGetFromBank) {
 			await goto(n => n.falan.mbank);
 			const oldItemCount = currentItems.filter(i => materials.includes(i.name)).reduce((a,c) => a + (c.count > 0 ? c.count : 1), 0);
 			await bank.get({
 				teller: [85,12],
-				filter: item => materials.includes(item.name)
+				filter: item => materials.includes(item.name),
+				exchange: true
 			});
 			currentItems = cga.getInventoryItems();
 			const currentItemCount = currentItems.filter(i => materials.includes(i.name)).reduce((a,c) => a + (c.count > 0 ? c.count : 1), 0);
@@ -185,29 +189,33 @@ module.exports = (async () => {
 				tryGetFromBank = false;
 			}
 		}
-		await goto(n => n.falan.mnurse);
-		await cga.emogua.autoWalk([82,8]);
-		await cga.emogua.turnOrientation(0);
-		let availableItems = currentItems.filter(i => materials.includes(i.name) && (i.count == 20 || i.count == 40));
-		while (availableItems.length > 0) {
-			const chat = await cga.emogua.waitMessage().catch(() => {});
-			if (chat && chat.msg) {
-				const maker = cga.emogua.getNameFromChat(chat);
-				if (makers.includes(maker)) {
-					const matchedItems = availableItems.filter(item => chat.msg.includes('@' + item.name + '@'));
-					if (matchedItems.length > 0) {
-						const tradeCount = cga.emogua.getCountFromChat(chat);
-						if (tradeCount) {
-							await cga.emogua.trade({
-								party: maker,
-								itemFilter: (item, addedItems) => availableItems.find(ai => ai.pos == item.pos) && addedItems.reduce((a,c) => a + c.count, 0) < tradeCount
-							}).then(
-								() => {
-									currentItems = cga.getInventoryItems();
-									availableItems = currentItems.filter(i => materials.includes(i.name) && (i.count == 20 || i.count == 40));
-								},
-								() => {}
-							);
+		let availableItems = currentItems.filter(i => materials.find(m => i.name.includes(m)) && i.count == (cga.emogua.getPileMax(i) || 0));
+		if (availableItems.length > 0) {
+			await goto(n => n.falan.mtrade);
+			await cga.emogua.turnOrientation(0);
+			while (availableItems.length > 0) {
+				const chat = await cga.emogua.waitMessage().catch(() => {});
+				if (chat && chat.player) {
+					if (makers.includes(chat.player)) {
+						const materialMatcher = materialNameRegex.exec(chat.content);
+						if (materialMatcher) {
+							const materialName = materialMatcher[1];
+							const matchedItems = availableItems.filter(item => item.name.includes(materialName));
+							if (matchedItems.length > 0) {
+								const tradeCount = cga.emogua.getCountFromChat(chat);
+								if (tradeCount) {
+									await cga.emogua.trade({
+										party: chat.player,
+										itemFilter: (item, addedItems) => availableItems.find(ai => ai.pos == item.pos) && addedItems.reduce((a,c) => a + (c.count || 1), 0) < tradeCount
+									}).then(
+										() => {
+											currentItems = cga.getInventoryItems();
+											availableItems = currentItems.filter(i => materials.find(m => i.name.includes(m)) && i.count == (cga.emogua.getPileMax(i) || 0));
+										},
+										() => {}
+									);
+								}
+							}
 						}
 					}
 				}

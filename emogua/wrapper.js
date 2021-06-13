@@ -545,9 +545,13 @@ module.exports = new Promise(resolve => {
 			}).sort((a,b) => a.d - b.d);
 			const next = remain.shift();
 			if (next) {
-				return cga.emogua.autoWalk([next.x,next.y],undefined,undefined,{compress: false}).then(
-					() => getTarget()
-				).then(() => toNextPoint(remain,next))
+				if(cga.isPathAvailable(centre.x, centre.y, next.x, next.y)){
+					return cga.emogua.autoWalk([next.x,next.y],undefined,undefined,{compress: false}).then(
+						() => getTarget()
+					).then(() => toNextPoint(remain,next))
+				} else {
+					return getTarget().then(() => toNextPoint(remain,next))
+				}
 			}
 			return Promise.resolve();
 		};
@@ -1301,11 +1305,15 @@ module.exports = new Promise(resolve => {
 			);
 		});
 	};
-	cga.emogua.joinTeamBlock = (x, y, name) => Promise.resolve().then(() => {
+	cga.emogua.joinTeamBlock = (x, y, name, interruptor) => Promise.resolve().then(() => {
 		console.log(`尝试加入(${name})的队伍...`);
+		if (typeof interruptor == 'function' && interruptor()) {
+			console.log(`组队中断`);
+			return;
+		}
 		return cga.emogua.joinTeam(x, y, name).catch(
 			() => cga.emogua.delay(3000).then(
-				() => cga.emogua.joinTeamBlock(x, y, name)
+				() => cga.emogua.joinTeamBlock(x, y, name, interruptor)
 			)
 		);
 	});
@@ -1686,7 +1694,7 @@ module.exports = new Promise(resolve => {
 			} else return Promise.resolve();
 		};
 		const repair = () => {
-			const repairFlag = (options && typeof options.repairFlag == 'number') ? options.repairFlag : 1;
+			const repairFlag = (options && typeof options.repairFlag == 'number') ? options.repairFlag : 0;
 			const needRepairChecker = (eq) => {
 				if (eq.type >= 0 && eq.type <= 14 && eq.level <= 10) {
 					const durability = cga.emogua.getDurability(eq);
