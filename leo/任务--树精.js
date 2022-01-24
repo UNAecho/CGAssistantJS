@@ -1,4 +1,4 @@
-require('./common').then(async (cga)=>{
+require(process.env.CGA_DIR_PATH+'/leo').then(async (cga) => {
 	var teamLeader = '此处填写队长名称';
 	var teamPlayerCount = 4;
 
@@ -34,6 +34,7 @@ require('./common').then(async (cga)=>{
     }
 	
 	var teammates = [];
+	teamplayers = cga.getTeamPlayers();
 	for(var i in teamplayers)
 		teammates[i] = teamplayers[i].name;
 	

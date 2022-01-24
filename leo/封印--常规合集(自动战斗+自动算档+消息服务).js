@@ -1,8 +1,12 @@
-require('./common').then(async (cga) => {
+require(process.env.CGA_DIR_PATH+'/leo').then(async (cga) => {
 
-    const petName = '杀人螳螂';
+    const petName = '哥布林';
 
     let protect = {
+        //contactType遇敌类型：-1-旧遇敌，0-按地图自适应，1-东西移动，2-南北移动，
+        //3-随机移动，4-画小圈圈，5-画中圈圈，6-画大圈圈，7-画十字，8-画8字
+        contactType: 0,
+        visible: false, 
         minHp: 500,
         minMp: 200,
         minPetHp: 500,
@@ -10,18 +14,27 @@ require('./common').then(async (cga) => {
         maxPetNumber: 4, //超过4只宠物
     };
 
-    const petPlugins = require('./pet.js');
+    const petPlugins = require(process.env.CGA_DIR_PATH+'/leo/pet.js');
     if(!petPlugins) {
         await leo.log('缺少抓宠插件pet.js')
         return leo.delay(1000*60*60*24);
     }else{
-        await petPlugins.tips(cga);
+        await petPlugins.tips(cga)
         console.log('')
     }
     const petOptions = petPlugins.getPetConfig(petName);
     if(!petOptions){
-        await leo.log('抓宠插件中没有指定宠物配置：' + petName);
+        await leo.log('抓宠插件中没有指定宠物配置：' + petName)
         return leo.delay(1000*60*60*24);
+    }
+
+    if(!leo.checkPetCard(petName)){
+        await leo.log('缺少宠物图鉴，5秒后重新获取')
+        await leo.delay(5000)
+        if(!leo.checkPetCard(petName)){
+            await leo.log('缺少宠物图鉴，请检查：' + petName)
+            return leo.delay(1000*60*60*24);
+        }
     }
 
     leo.baseInfoPrint();
@@ -178,10 +191,10 @@ require('./common').then(async (cga) => {
                     await leo.delay(1000*60*60*24)
                     return leo.reject();
                 } else {
-                    let petToSave = cga.GetPetsInfo().filter(p=>p.realname==petName && p.level==1);
+                    let petToSave = cga.GetPetsInfo().filter(p=>p.level==1);
                     for (var i = 0; i < petToSave.length; i++) {
                         let pet = petToSave[i];
-                        let emptyIndex = leo.getPetEmptyIndex(true);
+                        let emptyIndex = await leo.getPetEmptyIndex(true);
                         if(emptyIndex != undefined){
                             await leo.movePet(pet.index, emptyIndex)
                         }else{
@@ -197,15 +210,7 @@ require('./common').then(async (cga) => {
                         petIndexMap[pet.index] = 1;
                     }
                 }
-                try{
-                    //角色信息同步
-                    const {syncInfo} = require('./syncInfo');
-                    const isbank = true;
-                    const silently = true;
-                    await syncInfo(cga,isbank,silently)
-                }catch(e){
-                    console.log('没有信息同步插件，跳过信息同步功能，e:'+e);
-                }
+                await leo.syncInfo(cga,true,true,true)
             }
             var sealCardCount = cga.getItemCount(petOptions.sealCardName);
             if (sealCardCount < 2) {
@@ -217,6 +222,7 @@ require('./common').then(async (cga) => {
             await leo.encounterTeamLeader(protect)
             protect.checker()
             console.log(leo.logTime() + "触发回补")
+            await leo.syncInfo(cga,true)
             await leo.logBack()
         })
     }catch(e){

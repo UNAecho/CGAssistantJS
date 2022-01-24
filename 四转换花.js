@@ -1,4 +1,4 @@
-var cga = require('./cgaapi')(function(){
+var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 
 	/* tips:龙心id 622042，type = 26
 	* 黑色方舟顶层出去，后传送至白色方舟index 59934，x= 145,y=56

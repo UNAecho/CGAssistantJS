@@ -1,4 +1,4 @@
-require('./common').then(cga=>{
+require(process.env.CGA_DIR_PATH+'/leo').then(async (cga) => {
     //leo.baseInfoPrint();
     leo.monitor.config.keepAlive = false;   //关闭防掉线
     leo.monitor.config.logStatus = false;
@@ -141,7 +141,7 @@ require('./common').then(cga=>{
                         .then(()=>leo.delay(5000));
                     }
                     if(mapInfo.name.indexOf('牛鬼的洞窟')!=-1){
-                        return leo.findOne(targetFinder, todo, true)
+                        return leo.findOne(targetFinder, todo, false)
                         .then(()=>leo.walkRandomMazeUntil(() => {
                             var mapInfo = leo.getMapInfo();
                             if (mapInfo.indexes.index3 == 11019) {

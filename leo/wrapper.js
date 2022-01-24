@@ -1,4 +1,4 @@
-/**version 1.2
+/**version 2.1
  * health 0 1-25(白) 26-50(黄) 51-75(粉) 76-100(红)
  * direction 0(右上)
  * 高速移动中不可丢东西
@@ -287,6 +287,9 @@ module.exports = new Promise(resolve => {
 				if (result.reason == 4) { // Unexcepted map changed
 					if (destination === '*') {
 						return;
+					}else{
+						console.log('移动失败：未预期的地图切换');
+						return Promise.reject();
 					}
 				} else if (result.reason == 2 || result.reason == 5) { // 2 battle, 5 force to move back by server
 					return Promise.reject(7);
@@ -296,14 +299,15 @@ module.exports = new Promise(resolve => {
 				console.log('walkTo error', result);
 				return Promise.reject();
 			}
-		});
+		})
+		//.catch(e=>cga.emogua.walkTo(target,currentMapInfo));
 	};
 	// [ [x, y, destination] ]
 	cga.emogua.walkList = (list) => list.reduce(
 		(r, t) => r.then(() => cga.emogua.walkTo(t)),
 		Promise.resolve()
 	);
-	const excludedMaps = [27001,61001,43600,43000,15592,15593,15594,15595,15596,11032,11034,11035,11036,11037,15000,15001,15002,15003,15004,15005,15006,14000,14001,14002,14014,4400,5008,11000,11001,11002,11003,11004,11005,59501,2400,14010,14013,14015];
+	const excludedMaps = [27001,61001,43600,43000,15592,15593,15594,15595,15596,11032,11034,11035,11036,11037,15000,15001,15002,15003,15004,15005,15006,14000,14001,14002,14014,4400,5008,11000,11001,11002,11003,11004,11005,59501,2400,14010,14013,14015,13016,13017,13018,13019,13020,13021,14003,14004,14005,14006,14007,15400,13500,13501,13502,13503,13504,13505,13506,13507,13508,13509,15542];
 	cga.emogua.isMapDownloaded = (walls = cga.buildMapCollisionMatrix(), mapIndex = cga.GetMapIndex()) => {
 		if (mapIndex.index1 === 0 && excludedMaps.indexOf(mapIndex.index3) > -1) return true;
 		const downloadedFlag = mapIndex.index1 === 1 ? 0 : 1;
@@ -311,6 +315,7 @@ module.exports = new Promise(resolve => {
 	};
 	cga.emogua.downloadMap = (mapIndex = cga.GetMapIndex()) => {
 		const walls = cga.buildMapCollisionMatrix();
+		return walls;
 		if(!cga.emogua.isMapDownloaded(walls, mapIndex)) {
 			return new Promise((resolve, reject) => {
 				console.log('当前地图：'+cga.GetMapName()+'，等待下载地图');
@@ -321,12 +326,13 @@ module.exports = new Promise(resolve => {
 				};
 				const recursiveDownload = (xfrom, yfrom, xsize, ysize, times = 0) => {
 					if (xfrom < xsize && yfrom < ysize) {
-						cga.RequestDownloadMap(xfrom, yfrom, xfrom + 24, yfrom + 24);
+						let xxx = 24;
+						cga.RequestDownloadMap(xfrom, yfrom, xfrom + xxx, yfrom + xxx);
 						cga.AsyncWaitDownloadMap((error, info) => setTimeout(() => {
 							const currentMap = cga.emogua.getMapInfo();
 							if (error) {
-								if (times <= 2) {
-									setTimeout(() => recursiveDownload(xfrom, yfrom, xsize, ysize, times + 1), 1000);
+								if (times <= 1000) {
+									setTimeout(() => recursiveDownload(xfrom, yfrom, xsize, ysize, times + 1), 500);
 								} else {
 									console.log('下载地图出错 ' + error);
 									reject();
@@ -335,10 +341,10 @@ module.exports = new Promise(resolve => {
 								console.log('下载地图出错: 地图改变 last=' + mapIndex.index3 + ' info=' + currentMap);
 								reject();
 							} else {
-								xfrom += 24;
+								xfrom += xxx;
 								if (xfrom >= xsize) {
 									xfrom = 0;
-									yfrom += 24;
+									yfrom += xxx;
 								}
 								setTimeout(() => recursiveDownload(xfrom, yfrom, xsize, ysize), 500);
 							}
@@ -400,8 +406,14 @@ module.exports = new Promise(resolve => {
 				if (target[2]) path[path.length - 1][2] = target[2];
 				return cga.emogua.walkList(path);
 			}
-			console.log(`Can not find path to ${target}`);
-			return Promise.reject();
+			//console.log(`Can not find path to ${target}`);
+			console.log(`未预期的目的，无法寻路到 ${target}`);
+			console.log(`1.检查地图是否已下载`);
+			console.log(`2.检查地图中唯一的通路是否被楼梯出入口阻断`);
+			//cga.LogOut();
+			//return Promise.reject();
+			return cga.emogua.delay(10000)
+			.then(()=>Promise.reject())
 		});
 	}).then(
 		() => {
@@ -410,9 +422,9 @@ module.exports = new Promise(resolve => {
 				// 非切图，防止遇敌或强制回退
 				return Promise.resolve().then(() => {
 					if (SafeMaps.includes(currentMapName)) return;
-					return cga.emogua.delay(2000).then(
-						() => cga.emogua.waitAfterBattle()
-					);
+					return cga.emogua.delay(2000)
+					.then(()=>cga.emogua.waitAfterBattle())
+					.then(()=>cga.emogua.delay(5000));
 				}).then(() => {
 					const p = cga.emogua.getMapInfo();
 					if (p.x != target[0] || p.y != target[1]) {
@@ -423,7 +435,9 @@ module.exports = new Promise(resolve => {
 		}, r => {
 			if (typeof r == 'number') {
 				if (r == 7) {
-					return cga.emogua.waitAfterBattle().then(() => {
+					return cga.emogua.waitAfterBattle()
+					.then(()=>cga.emogua.delay(5000))
+					.then(() => {
 						const currentMapInfo = cga.emogua.getMapInfo();
 						if (cga.emogua.arrived(target[2], mapInfo, currentMapInfo)) {
 							return;
@@ -433,12 +447,14 @@ module.exports = new Promise(resolve => {
 				}
 				if (r == 3) {
 					console.log('被卡住');
+					//return cga.emogua.autoWalk(target, walls, currentMapInfo, options);
 				}
 			}
 			//console.log('自动寻路失败', target, r);
 			return Promise.reject(r);
 		}
-	);
+	)
+	//.catch(e=>cga.emogua.autoWalk(target, walls, mapInfo, options));
 	// [ [x, y, destination] ]
 	cga.emogua.autoWalkList = (list) => list.reduce((a, c) => a.then(() => cga.emogua.autoWalk(c)), Promise.resolve());
 	cga.emogua.goto = require('./goto')(cga);
@@ -460,8 +476,10 @@ module.exports = new Promise(resolve => {
 	 *   0 迷宫出入口
 	 * return [最远，最近]
 	 */
-	cga.emogua.getMazeEntries = async () => {
-		await cga.emogua.downloadMap();
+	cga.emogua.getMazeEntries = async (download=true) => {
+		if(download){
+			await cga.emogua.downloadMap();
+		}
 		const mapObjects = cga.getMapObjects();
 		const current = cga.GetMapXY();
 		const entryIcons = cga.buildMapCollisionRawMatrix().matrix;
@@ -485,7 +503,7 @@ module.exports = new Promise(resolve => {
 				return await cga.emogua.autoWalk([target.x, target.y, '*']);
 			}
 		}
-		throw 'Fail to walk random maze ' + entries;
+		throw '迷宫寻路出现异常： ' + entries;
 	};
 	cga.emogua.walkRandomMazeUntil = async (check, entryFilter) => {
 		let times = 0;
@@ -554,9 +572,9 @@ module.exports = new Promise(resolve => {
 			const next = remain.shift();
 			if (next) {
 				if(cga.isPathAvailable(centre.x, centre.y, next.x, next.y)){
-					return cga.emogua.autoWalk([next.x,next.y],undefined,undefined,{compress: false}).then(
-						() => getTarget()
-					).then(() => toNextPoint(remain,next))
+					return cga.emogua.autoWalk([next.x,next.y],undefined,undefined,{compress: false})
+					.then(() => getTarget())
+					.then(() => toNextPoint(remain,next))
 				}
 				else{
 					return getTarget().then(() => toNextPoint(remain,next))
@@ -633,7 +651,13 @@ module.exports = new Promise(resolve => {
 				cga.TurnTo(current.x + 2, current.y - 2); break;
 			default:
 		}
-		if (destination) return cga.emogua.waitDestination(destination, current);
+		if (destination) { 
+			return cga.emogua.waitDestination(destination, current)
+			.catch(e=>{
+				console.log('人物转向重试');
+				return cga.emogua.turnOrientation(orientation, destination);
+			})
+		}
 		return cga.emogua.delay(1500); // 避免后续事件延迟导致判断有误
 	};
 	cga.emogua.getOrientation = (x, y) => {
@@ -719,7 +743,7 @@ module.exports = new Promise(resolve => {
 		return false;
 	};
 	cga.emogua.talkNpcSelectorNo = cga.emogua.talkNpcSelectorNoFixTimes();
-	cga.emogua.talkNpc = function(x, y, select, dest) {
+	cga.emogua.talkNpc = function(x, y, select, dest, retryTimes) {
 		let selector, orientation, targetx, targety, destination;
 		for (let i = 0; i < arguments.length; i++) {
 			switch (typeof arguments[i]) {
@@ -764,7 +788,21 @@ module.exports = new Promise(resolve => {
 				);
 			}).then(
 				() => cga.emogua.waitDestination(destination, mapInfo)
-			);
+			).catch(e=>{
+				if(!retryTimes) {
+					retryTimes = 0;
+				}
+				retryTimes++;
+				let maxTimes = cga.emogua.talkNpcRetryTimes || 20;
+				if(retryTimes>=maxTimes){
+					//超过N次无法切图，登出游戏
+					console.log('超过' + retryTimes + '次无法切图，登出游戏');
+					return cga.LogOut();
+				}else{
+					console.log('对话NPC重试，次数：' + retryTimes);
+					return cga.emogua.talkNpc(x, y, select, dest, retryTimes);
+				}
+			});
 		}
 		console.log('Talk npc wrong arguments');
 		return Promise.reject();
@@ -1162,7 +1200,12 @@ module.exports = new Promise(resolve => {
 		return false;
 	};
 	cga.emogua.encounter = (protect) => {
-		if (!encounterStopped) return Promise.reject('repeated encounter');
+		if (!encounterStopped){
+			console.log('repeated encounter,restart at 30s.')
+			encounterStopped = false;
+			return cga.emogua.delay(1000*30)
+			.then(()=>cga.emogua.encounter(protect));
+		}
 		else return cga.emogua.downloadMap().then(() => {
 			encounterStopped = false;
 			let stopEncounter = false;
@@ -1377,7 +1420,7 @@ module.exports = new Promise(resolve => {
 		});
 		else return Promise.resolve();
 	};
-	cga.emogua.sell = function(x, y, filter) {
+	cga.emogua.sell = function(x, y, filter, retryTimes) {
 		if (typeof y == 'function') {
 			filter = y;
 			y = null;
@@ -1402,9 +1445,20 @@ module.exports = new Promise(resolve => {
 				if (dialog.type == 7) {
 					cga.SellNPCStore(sellList);
 				}
-			}).then(() => cga.emogua.delay(1000)).then(
-				() => cga.emogua.sell(x, y, filter)
-			);
+			})
+			.then(() => cga.emogua.delay(1000))
+			.then(() => {
+				if(!retryTimes) {
+					retryTimes = 0;
+				}
+				retryTimes++;
+				if(retryTimes>=10){
+					//超过10次无法售出
+					console.log('超过' + retryTimes + '次无法售出，结束本次售出');
+					return Promise.resolve();
+				}
+				return cga.emogua.sell(x, y, filter, retryTimes);
+			})
 		}
 		return Promise.resolve();
 	};
@@ -2189,6 +2243,7 @@ module.exports = new Promise(resolve => {
 	cga.emogua.setBattlePet2 = (set = true) => {
 		pet2 = set;
 	};
+	let lastEnemies = [];
 	const battle = (state, context) => {
 		context.isFront = BattlePositionMatrix.isFront;
 		context.getMaxTPosition = BattlePositionMatrix.getMaxTPosition;
@@ -2204,6 +2259,19 @@ module.exports = new Promise(resolve => {
 		context.enemies.back = context.enemies.filter(e => !context.isFront(e.pos));
 		//1级宠信息
 		context.enemies.lv1 = context.enemies.filter(e => e.level == 1);
+		//援军或召唤类型判断
+		//判断依据是，本轮怪物名字中出现了与上一轮不同的怪物名字，或者本轮怪物数量大于上一轮怪物数量
+		context.lastEnemies = [...lastEnemies];
+		lastEnemies = [...context.enemies];
+		if(context.lastEnemies.length>0) {
+			const names = context.enemies.map(e=>e.name).filter((v,i,r)=>r.indexOf(v)===i);
+			const newEnemie = context.lastEnemies.find(e=>!names.includes(e.name));
+			if(newEnemie || context.enemies.length > context.lastEnemies.length){
+				context.secondary = true;
+			}else{
+				context.secondary = false;
+			}
+		}
 		context.teammates = context.units.filter(e =>
 			(context.player_pos > 9 && e.pos > 9) ||
 			(context.player_pos <= 9 && e.pos <= 9)
@@ -2291,7 +2359,9 @@ module.exports = new Promise(resolve => {
 		cga.AsyncWaitBattleAction((error, state) => {
 			if (typeof state == 'number') {
 				if (BattleActionFlags.END & state) {
-					cga.emogua.waitAfterBattle().then(() => {
+					cga.emogua.waitAfterBattle()
+					.then(() => cga.emogua.delay(5000))
+					.then(() => {
 						cga.emogua.pile().then(
 							() => cga.emogua.dropItems()
 						);
@@ -2299,10 +2369,12 @@ module.exports = new Promise(resolve => {
 					isFirstBattleAction = true;
 					lastRound = -1;
 					isBossBattle = false;
+					lastEnemies = [];
 				} else if (BattleActionFlags.BEGIN & state) {
 					isFirstBattleAction = true;
 					lastRound = -1;
 					isBossBattle = false;
+					lastEnemies = [];
 				} else {
 					if (playerStrategies.length > 0) {
 						const context = cga.GetBattleContext();

@@ -1,6 +1,5 @@
-var fs = require('fs');
-var path = require('path');
-var cga = require('./cgaapi')(function(){
+
+var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 
 	var playerinfo = cga.GetPlayerInfo();
 	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦

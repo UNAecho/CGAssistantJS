@@ -15,6 +15,15 @@ var moveThinkInterrupt = new interrupt();
 var playerThinkInterrupt = new interrupt();
 var playerThinkRunning = false;
 
+var randomMazeArgs = {
+	table : [[263, 149], [284, 140], [295, 127]],
+	filter : (obj)=>{
+		return obj.cell == 3 && obj.mapx >= 260 && obj.mapx <= 273 && obj.mapy >= 133 && obj.mapy <= 164;
+	},
+	blacklist : [],
+	expectmap : '诅咒之迷宫地下1楼',
+};
+
 var supplyArray = [supplyMode, supplyCastle];
 
 var getSupplyObject = (map, mapindex)=>{
@@ -204,26 +213,6 @@ var playerThinkTimer = ()=>{
 	setTimeout(playerThinkTimer, 1500);
 }
 
-var getMazeEntrance = (cb)=>{
-	console.log('正在下载地图')
-	cga.downloadMapEx(260, 260+24, 133, 133+24*2, ()=>{
-		console.log('地图已下载完成')
-		
-		var objs = cga.getMapObjects();
-		var entrance = objs.find((obj)=>{
-			return (obj.cell == 3 && obj.mapx >= 260 && obj.mapx <= 273 && obj.mapy >= 133 && obj.mapy <= 164)
-		})
-		
-		if(entrance == undefined){
-			console.log('迷宫入口未找到,等待15秒后重试')
-			setTimeout(getMazeEntrance, 15000, cb);
-			return;
-		}
-		
-		cb(entrance);
-	});
-}
-
 var loop = ()=>{
 
 	var map = cga.GetMapName();
@@ -241,11 +230,7 @@ var loop = ()=>{
 			cga.walkList([
 				[22, 88, '芙蕾雅'],
 			], ()=>{
-				getMazeEntrance((obj)=>{
-					cga.walkList([
-						[obj.mapx, obj.mapy, '诅咒之迷宫地下1楼']
-					], loop);
-				})
+				cga.getRandomMazeEntrance(randomMazeArgs, loop);
 			});
 			return;
 		}
@@ -259,8 +244,7 @@ var loop = ()=>{
 			supplyMode.func(loop);
 			return;
 		}
-		if(map == '诅咒之迷宫地下1楼')
-		{
+		if(map == '诅咒之迷宫地下1楼'){
 			playerThinkInterrupt.hasInterrupt();//restore interrupt state
 			console.log('playerThink on');
 			playerThinkRunning = true;

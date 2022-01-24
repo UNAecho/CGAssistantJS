@@ -3,7 +3,7 @@ module.exports = require('./wrapper').then( async (cga) => {
     leo.messageServer = false;
     leo.appId = '';
     leo.appSecret = '';
-    leo.version = '8.0';
+    leo.version = '9.2';
     leo.qq = '158583461'
     leo.copyright = '红叶散落';
     leo.FORMAT_DATE = 'yyyy-MM-dd';
@@ -257,7 +257,7 @@ module.exports = require('./wrapper').then( async (cga) => {
         });
     }
     //队员进入队伍，参数为队长名字
-    leo.enterTeam = (teamLeader,waitPos = cga.GetMapXY()) => {
+    leo.enterTeam = async (teamLeader,waitPos = cga.GetMapXY()) => {
         var teamplayers = cga.getTeamPlayers();
         if (teamplayers.length > 0 && teamplayers[0].name == teamLeader) {
             return leo.done();
@@ -295,11 +295,39 @@ module.exports = require('./wrapper').then( async (cga) => {
             });
         }
     }
-    leo.enterTeamBlock = (teamLeader)=>{
+    leo.enterTeamBlock = async (teamLeader)=>{
+        if(leo.monitor.config.autoChangeLineForLeader) {
+            await leo.changeLineForLeader(teamLeader)
+        }
         return leo.enterTeam(teamLeader)
         .then(() => {
             return leo.log('已进入队伍，队长[' + cga.getTeamPlayers()[0].name + ']');
         });
+    }
+    leo.enterTeamOnce = async (teamLeader)=>{
+        const leaderInfo = cga.findPlayerUnit(teamLeader);
+        if(leaderInfo){
+            await leo.turnTo(leaderInfo.xpos,leaderInfo.ypos)
+            cga.DoRequest(cga.REQUEST_TYPE_JOINTEAM)
+            await leo.waitNPCDialog(dialog => {
+                if (dialog.type === 2) {
+                    cga.ClickNPCDialog(-1, dialog.message.split('\n').findIndex(e => e === teamLeader) - 2);
+                    return leo.delay(1000);
+                }
+            })
+            if(leo.isInTeam()){
+                await leo.log('已进入队伍，队长[' + cga.getTeamPlayers()[0].name + ']');
+            }
+        }
+    }
+
+    leo.checkNearPos = (x1,y1,x2,y2,distance) => {
+        let dx = Math.abs(x1-x2);
+        let dy = Math.abs(y1-y2);
+        if(dx <= distance && dy <= distance){
+            return true;
+        }
+        return false;
     }
 
     //招魂
@@ -321,41 +349,70 @@ module.exports = require('./wrapper').then( async (cga) => {
             return leo.done();
         }
     }
-    //飞碟治疗人物，优先找指定名字的医生，如果找不到，则找随机的医生
-    leo.healPlayer = (doctorName) => {
-        var playerinfo = cga.GetPlayerInfo();
-        if (playerinfo.health > 0) {
-            return leo.log('触发登出补给:人物受伤')
-            .then(()=>leo.goto(n => n.castle.x))
-            .then(() => {
+    //飞碟治疗人物，优先找指定名字的医生，如果找不到，其次找认证的医生，仍找不到，则找随机的医生
+    const sysDoctors = ['医道之殇','⌒雪医师∨','Me丶医生'];
+    const blackDoctors = ['黑名单医生'];
+    leo.healPlayer = async (doctorName) => {
+        let doctorNames = [];
+        if(doctorName == undefined) {
+
+        }else if(typeof doctorName == 'string') {
+            doctorNames.push(doctorName);
+        }else if(doctorName instanceof Array) {
+            doctorNames = doctorName;
+        }
+
+        if(cga.GetPlayerInfo().health !== 0 ){
+            let thanks = '';
+            await leo.loop(async ()=>{
+                if(cga.GetPlayerInfo().health === 0 ){
+                    return leo.reject();
+                }
+                await leo.log('触发登出补给:人物受伤')
+                let mapInfo = cga.getMapInfo();
+                if(mapInfo.name!='里谢里雅堡'){
+                    await leo.goto(n=>n.castle.x)
+                    mapInfo = cga.getMapInfo();
+                }
+                const location = [27,82];
+                const distance = 10;
+                if(!leo.checkNearPos(mapInfo.x,mapInfo.y,location[0],location[1],distance)) {
+                    await leo.autoWalk(location)
+                }
                 const units = cga.GetMapUnits();
                 let doctor;
-                if (doctorName) {
-                    doctor = units.find(u => (u.flags & leo.UnitFlags.Player) && u.unit_name == doctorName);
+                if (doctorNames.length>0) {
+                    doctor = units.find(u => (u.flags & leo.UnitFlags.Player)
+                        && doctorNames.includes(u.unit_name));
                 }
-                //console.log(111,doctor);
                 if (!doctor) {
-                    //console.log(222);
-                    doctor = units.find(u => (u.flags & leo.UnitFlags.Player) && (u.nick_name.indexOf('治疗') >= 0 || u.nick_name.indexOf('医') >= 0 || u.title_name.indexOf('医') >= 0));
+                    doctor = units.find(u => (u.flags & leo.UnitFlags.Player) 
+                        && sysDoctors.includes(u.unit_name));
                 }
-                //console.log(333,doctor);
+                if (!doctor) {
+                    doctor = units.find(u => (u.flags & leo.UnitFlags.Player) 
+                        && ( u.nick_name.includes('治疗') 
+                            || u.nick_name.includes('医') 
+                            || u.title_name.includes('医') 
+                            || u.unit_name.includes('医生')
+                        ) 
+                        && !blackDoctors.includes(u.unit_name));
+                }
                 if (doctor) {
-                    //console.log(444);
-                    return leo.walkTo(cga.getRandomSpace(doctor.xpos, doctor.ypos)).then(
-                        () => leo.enterTeam(doctor.unit_name)).then(
-                        () => leo.delay(8000)).then(leo.leaveTeam).then(() => {
-                        playerinfo = cga.GetPlayerInfo();
-                        if (playerinfo.health > 0) {
-                            return leo.healPlayer(doctorName);
-                        } else {
-                            return leo.done();
-                        }
-                    });
+                    thanks = doctor.unit_name;
+                    console.log(leo.logTime()+'发现医生：【'+doctor.unit_name+'】，坐标('+doctor.xpos+','+doctor.ypos+')');
+                    const waitPos = cga.getRandomSpace(doctor.xpos, doctor.ypos);
+                    await leo.autoWalk(waitPos)
+                    await leo.enterTeamOnce(doctor.unit_name)
+                    await leo.delay(1000*10)
+                    if(leo.isInTeam()){
+                        await leo.leaveTeam()
+                    }
+                }else{
+                    await leo.delay(1000*10)
                 }
-                return leo.delay(10000).then(() => leo.healPlayer(doctorName));
-            });
-        }else{
-            return leo.done();
+            })
+            await leo.log('已完成人物治疗，感谢医生【'+thanks+'】')
         }
     }
     //治疗宠物
@@ -381,10 +438,37 @@ module.exports = require('./wrapper').then( async (cga) => {
     //护士补血魔，方向(0-东，2-南，4-西，6-北)
     leo.supplyDir = leo.recharge;
     //护士补血魔，x,y为护士坐标
+    let supplyFailureTimes = 0;
     leo.supply = (x, y) => {
-        return leo.turnTo(x, y).then(() => leo.delay(5000));
+        return leo.turnTo(x, y)
+        .then(() => leo.delay(5000))
+        .then(()=>{
+            var playerinfo = cga.GetPlayerInfo();
+            if(playerinfo.hp < playerinfo.maxhp || playerinfo.mp < playerinfo.maxmp){
+                supplyFailureTimes++;
+                if(supplyFailureTimes<10){
+                    console.log('护士补给失败，重新进行补给');
+                    return leo.todo()
+                    .then(()=>{
+                        leo.panel.autosupply(false);
+                        return leo.delay(1000);
+                    })
+                    .then(()=>{
+                        leo.panel.autosupply(true);
+                        return leo.delay(1000);
+                    })
+                    .then(()=>leo.supply(x, y));
+                }else{
+                    cga.LogOut();
+                    return leo.delay(1000*60*60*24);
+                }
+            }
+        });
     }
-    leo.supplyCastle = () => {
+    leo.supplyCastle = async (isLogBack = false) => {
+        if(isLogBack){
+            await leo.logBack()
+        }
         var needSupply = false;
         var playerinfo = cga.GetPlayerInfo();
         if(playerinfo.hp < playerinfo.maxhp || playerinfo.mp < playerinfo.maxmp){
@@ -433,6 +517,19 @@ module.exports = require('./wrapper').then( async (cga) => {
                 .then(()=>leo.sell(4))
                 .then(()=>leo.logBack());
             }
+        }
+    }
+    leo.assessNpc = async (name) => {
+        if(leo.has(name)){
+            if(cga.GetPlayerInfo().gold<10000){
+                await leo.getMoneyFromBank(500000)
+            }
+            if(cga.GetMapName()!='凯蒂夫人的店'){
+                await leo.goto(n=>n.falan.s2)
+                await leo.autoWalk([196,78,'凯蒂夫人的店'])
+            }
+            await leo.autoWalk([15,12])
+            await leo.assessRepairFromNpc(0,i=>i.name==name)
         }
     }
     leo.checkHealth = (doctorName,needSupply = true) => {
@@ -488,99 +585,61 @@ module.exports = require('./wrapper').then( async (cga) => {
     }
     //自动购买和换平民装
     //装备栏顺序 0 头 1 衣服 2 左手 3 右手 4 鞋 5 左饰品 6 右饰品 7 水晶
-    leo.autoEquipLv1 = (weaponName) => {
-        var protectValue = 50;
-        return leo.todo()
-        .then(()=>{
-            //检查头的耐久，未装备或者装备的耐久低于protectValue，则去更换
-            var equipName = '平民帽';
-            var equip = cga.GetItemsInfo().find(i => i.pos == 0);
-            if(equip && cga.getEquipEndurance(equip)[0] > protectValue){
-                return leo.next();
-            }else{
-                var equip2 = cga.GetItemsInfo().find(i => i.pos >= 8 && i.name == equipName && cga.getEquipEndurance(i)[0] == 150);
-                if(equip2){
-                    return leo.useItemEx(equip2.pos)
-                    .then(() => leo.delay(2000))
-                    .then(()=>leo.dropItemEx(equipName));
-                }else{
-                    console.log(leo.logTime()+'购买装备【' + equipName + '】');
-                    return leo.buyEquipProtectLv1(equipName)
-                    .then(() => leo.delay(2000))
-                    .then(()=>leo.useItemEx(cga.GetItemsInfo().find(i => i.pos >= 8 && i.name == equipName && cga.getEquipEndurance(i)[0] == 150).pos))
-                    .then(() => leo.delay(2000))
-                    .then(()=>leo.dropItemEx(equipName));
-                }
-            }
-        })
-        .then(()=>{
-            //检查衣服的耐久，未装备或者装备的耐久低于protectValue，则去更换
-            var equipName = '平民衣';
-            var equip = cga.GetItemsInfo().find(i => i.pos == 1);
-            if(equip && cga.getEquipEndurance(equip)[0] > protectValue){
-                return leo.next();
-            }else{
-                var equip2 = cga.GetItemsInfo().find(i => i.pos >= 8 && i.name == equipName && cga.getEquipEndurance(i)[0] == 150);
-                if(equip2){
-                    return leo.useItemEx(equip2.pos)
-                    .then(() => leo.delay(2000))
-                    .then(()=>leo.dropItemEx(equipName));
-                }else{
-                    console.log(leo.logTime()+'购买装备【' + equipName + '】');
-                    return leo.buyEquipProtectLv1(equipName)
-                    .then(() => leo.delay(2000))
-                    .then(()=>leo.useItemEx(cga.GetItemsInfo().find(i => i.pos >= 8 && i.name == equipName && cga.getEquipEndurance(i)[0] == 150).pos))
-                    .then(() => leo.delay(2000))
-                    .then(()=>leo.dropItemEx(equipName));
-                }
-            }
-        })
-        .then(()=>{
-            //检查鞋的耐久，未装备或者装备的耐久低于protectValue，则去更换
-            var equipName = '平民鞋';
-            var equip = cga.GetItemsInfo().find(i => i.pos == 4);
-            if(equip && cga.getEquipEndurance(equip)[0] > protectValue){
-                return leo.next();
-            }else{
-                var equip2 = cga.GetItemsInfo().find(i => i.pos >= 8 && i.name == equipName && cga.getEquipEndurance(i)[0] == 150);
-                if(equip2){
-                    return leo.useItemEx(equip2.pos)
-                    .then(() => leo.delay(2000))
-                    .then(()=>leo.dropItemEx(equipName));
-                }else{
-                    console.log(leo.logTime()+'购买装备【' + equipName + '】');
-                    return leo.buyEquipProtectLv1(equipName)
-                    .then(() => leo.delay(2000))
-                    .then(()=>leo.useItemEx(cga.GetItemsInfo().find(i => i.pos >= 8 && i.name == equipName && cga.getEquipEndurance(i)[0] == 150).pos))
-                    .then(() => leo.delay(2000))
-                    .then(()=>leo.dropItemEx(equipName));
-                }
-            }
-        })
-        .then(()=>{
-            //检查武器的耐久，未装备或者装备的耐久低于protectValue，则去更换
-            if(weaponName){
-                var equipName = weaponName;
-                var equip = cga.GetItemsInfo().find(i => (i.pos == 2 || i.pos == 3) && i.name == equipName);
+    leo.autoEquipLv1 = async (weaponName, protectValue = 50) => {
+        const equipCheckArr = [
+            {name:'平民帽',pos:0},
+            {name:'平民衣',pos:1},
+            {name:'平民鞋',pos:4},
+        ];
+        for (var i = 0; i < equipCheckArr.length; i++) {
+            const equipCheck = equipCheckArr[i];
+            await leo.loop(async ()=>{
+                //1.检查身上是否已经装备有高耐久的装备
+                const equip = cga.GetItemsInfo().find(i => i.pos == equipCheck.pos);
                 if(equip && cga.getEquipEndurance(equip)[0] > protectValue){
-                    return leo.next();
-                }else{
-                    var equip2 = cga.GetItemsInfo().find(i => i.pos >= 8 && i.name == equipName && cga.getEquipEndurance(i)[0] == 150);
-                    if(equip2){
-                        return leo.useItemEx(equip2.pos)
-                        .then(() => leo.delay(2000))
-                        .then(()=>leo.dropItemEx(equipName));
-                    }else{
-                        console.log(leo.logTime()+'购买装备【' + equipName + '】');
-                        return leo.buyEquipWeaponLv1(equipName)
-                        .then(() => leo.delay(2000))
-                        .then(()=>leo.useItemEx(cga.GetItemsInfo().find(i => i.pos >= 8 && i.name == equipName && cga.getEquipEndurance(i)[0] == 150).pos))
-                        .then(() => leo.delay(2000))
-                        .then(()=>leo.dropItemEx(equipName));
-                    }
+                    return leo.reject();
                 }
-            }
-        });
+                //2.检查包里是否已经有可更换的备用装备（以前是要满耐久，现在改成高耐久就行）
+                const equip2 = cga.GetItemsInfo().find(i => i.pos >= 8 && i.name == equipCheck.name && cga.getEquipEndurance(i)[0] > protectValue);
+                if(equip2){
+                    //3.1找到了，装备到身上
+                    await leo.waitAfterBattle()
+                    await leo.useItemEx(equip2.pos)
+                    await leo.delay(2000)
+                    //丢弃，建议注释，改成用定时检测自动丢弃
+                    //await leo.dropItemEx(equipCheck.name) 
+                }else{
+                    //3.2没找到，去桥头购买
+                    console.log(leo.logTime()+'桥头购买装备【' + equipCheck.name + '】');
+                    await leo.buyEquipProtectLv1(equipCheck.name)
+                }
+                await leo.delay(1000)
+            })
+        }
+        if(weaponName) {
+            await leo.loop(async ()=>{
+                //1.检查身上是否已经装备该武器
+                const equip = cga.GetItemsInfo().find(i => (i.pos == 2 || i.pos == 3) && i.name == weaponName);
+                if(equip && cga.getEquipEndurance(equip)[0] > protectValue){
+                    return leo.reject();
+                }
+                //2.检查包里是否已经有可更换的备用武器
+                const equip2 = cga.GetItemsInfo().find(i => i.pos >= 8 && i.name == weaponName && cga.getEquipEndurance(i)[0] > protectValue);
+                if(equip2){
+                    //3.1找到了，装备到身上
+                    await leo.waitAfterBattle()
+                    await leo.useItemEx(equip2.pos)
+                    await leo.delay(2000)
+                    //丢弃，建议注释，改成用定时检测自动丢弃
+                    //await leo.dropItemEx(weaponName) 
+                }else{
+                    //3.2没找到，去桥头购买
+                    console.log(leo.logTime()+'桥头购买武器【' + weaponName + '】');
+                    await leo.buyEquipWeaponLv1(weaponName)
+                }
+                await leo.delay(1000)
+            })
+        }
     }
 
     //魔币操作： cga.MOVE_GOLD_TOBANK = 1;cga.MOVE_GOLD_FROMBANK =  2;cga.MOVE_GOLD_DROP = 3
@@ -613,10 +672,10 @@ module.exports = require('./wrapper').then( async (cga) => {
             }
             await leo.turnDir(0)
             const pos = [100,101,102,103,104];
-            return pos.find(i=>cga.IsPetValid(i));
+            return pos.find(i=>!cga.IsPetValid(i));
         }else{
             const pos = [0,1,2,3,4];
-            return pos.find(i=>cga.IsPetValid(i));
+            return pos.find(i=>!cga.IsPetValid(i));
         }
     }
     //银行全存
@@ -842,6 +901,11 @@ module.exports = require('./wrapper').then( async (cga) => {
         if(leo.isInTeam()){
             await leo.leaveTeam()
         }
+        var emptyIndexes = leo.getEmptyBagIndexes();
+        if(emptyIndexes && emptyIndexes.length == 0){
+            await leo.logBack()
+            await leo.sellCastle()
+        }
         return leo.goto(n => n.falan.w1).then(() => leo.autoWalkList([
             [94, 78, '达美姊妹的店'],
             [17, 18]
@@ -927,8 +991,10 @@ module.exports = require('./wrapper').then( async (cga) => {
         if(leo.isInTeam()){
             await leo.leaveTeam()
         }
-        return leo.goto(n => n.falan.sell)
-        .then(() => leo.autoWalk([150,123]))
+        if(cga.GetMapName()!='法兰城'){
+            await leo.goto(n => n.falan.sell)
+        }
+        return leo.autoWalk([150,123])
         .then(() => {
             return leo.talkNpc(6, dialog => {
                 if (dialog.type == 5) {
@@ -965,7 +1031,10 @@ module.exports = require('./wrapper').then( async (cga) => {
         if(leo.isInTeam()){
             await leo.leaveTeam()
         }
-        return leo.goto(n => n.falan.sell)
+        if(cga.GetMapName()!='法兰城'){
+            await leo.goto(n => n.falan.sell)
+        }
+        return leo.autoWalk([156,123])
         .then(() => {
             return leo.talkNpc(6, dialog => {
                 if (dialog.type == 5) {
@@ -1058,11 +1127,11 @@ module.exports = require('./wrapper').then( async (cga) => {
                 isPrint = e.name == petOptions.name;
             }
             if(isPrint){
-                let flag = (e.maxhp >= petOptions.minHp && e.maxmp >= petOptions.minMp)
+                let flag = (e.maxhp >= petOptions.minHp && e.maxmp >= petOptions.minMp) && e.name == petOptions.name;
 
                 if(!flag){
                     //如果实际的血+魔总和也大于等于过滤的血+魔总和
-                    flag = (e.maxhp + e.maxmp) >= (petOptions.minHp + petOptions.minMp);
+                    flag = (e.maxhp + e.maxmp) >= (petOptions.minHp + petOptions.minMp) && e.name == petOptions.name;
                 }
 
                 let flagStr = flag?'，抓！':'';
@@ -1485,19 +1554,36 @@ module.exports = require('./wrapper').then( async (cga) => {
         }
         return false;
     }
+    leo.checkBattle = async (waitTime = 0) => {
+        const world = cga.GetWorldStatus();
+        const game = cga.GetGameStatus();
+        if (world == 9 && game == 3) {
+            return leo.next();
+        }
+        await leo.waitAfterBattle()
+        if(leo.highspeed){
+            const seconds = parseInt(waitTime / 1000);
+            console.log(leo.logTime()+'战斗结束，等待'+seconds+'秒');
+            await leo.delay(waitTime)
+            console.log(leo.logTime()+'等待完毕，继续移动');
+        }
+    }
     leo.contactStatus = false;
     //队长遇敌程序
     leo.contactTeamLeader = async (protect) => {
         //contactType遇敌类型：-1-旧遇敌(高效)，0-按地图自适应，1-东西移动，2-南北移动，3-随机移动，
         //4-画小圈圈，5-画中圈圈，6-画大圈圈，7-画十字，8-画8字
-        var contactType = protect.contactType || -1;
+        var contactType = protect.contactType || 0;
         if(contactType == -1){
             return leo.encounter(protect);
         }
         if (leo.contactStatus){
-            return leo.reject('遇敌程序错误：重复启动遇敌程序');
+            console.log(leo.logTime()+'遇敌程序错误：重复启动遇敌程序，等待30秒进行重启')
+            leo.contactStatus = false;
+            await leo.delay(1000*30)
+            //return leo.reject('遇敌程序错误：重复启动遇敌程序');
         }
-        await leo.downloadMap();
+        //await leo.downloadMap();
         var currentMapInfo = cga.getMapInfo();
         var contactMovePos = leo.getContactMovePos(currentMapInfo,contactType);
         //console.log(contactMovePos)
@@ -1511,6 +1597,11 @@ module.exports = require('./wrapper').then( async (cga) => {
             x: cga.GetMapXY().x,
             y: cga.GetMapXY().y
         };
+        //先往返移动一格位置，避免因为刚切了图，导致的遇敌无效
+        let checkPos = contactMovePos.find((v)=>v.index!=curPos.index);
+        await leo.walkTo([checkPos.x,checkPos.y])
+        await leo.delay(1000)
+        await leo.walkTo([curPos.x,curPos.y])
         leo.waitMessageUntil((chat) => {
             if (chat.msg && chat.msg.indexOf('触发战斗保护') >= 0) {
                 if (leo.getTeammates().find(t => t.unit_id == chat.unitid)) {
@@ -1520,16 +1611,20 @@ module.exports = require('./wrapper').then( async (cga) => {
             }
         });
         await leo.loop(async () => {
-            await leo.waitAfterBattle()
+            let afterBattleWaitTime = leo.afterBattleWaitTime || 5000;
+            await leo.checkBattle(afterBattleWaitTime)
             if(!leo.contactStatus){
+                await leo.delay(2000)
                 return leo.reject();
             }
             const isStop = await leo.contactCheck(protect, false, true);
             if(isStop || currentMapInfo.name != cga.GetMapName()){
                 leo.contactStatus = false; //标记遇敌程序停止
+                await leo.delay(2000)
                 return leo.reject();
             }
             if (cga.isInNormalState()) {
+                //console.log(curPos)
                 try{
                     let movePos;
                     if(contactType<3){
@@ -1564,12 +1659,14 @@ module.exports = require('./wrapper').then( async (cga) => {
                         }
                     }
                     //console.log('moveto',movePos.index)
-                    let dir = leo.getDir(movePos.x,movePos.y,curPos.x,curPos.y);
+                    //let dir = leo.getDir(movePos.x,movePos.y,curPos.x,curPos.y);
                     let visible = protect.visible || false;
-                    cga.ForceMove(dir, visible);
-                    //cga.ForceMoveTo(movePos.x, movePos.y, visible);
+                    //cga.ForceMove(dir, visible);
+                    cga.ForceMoveTo(movePos.x, movePos.y, visible);
                     curPos = movePos;
-                    await leo.delay(leo.moveTimeout)
+                    const speedFix = 100;
+                    const realTimeout = leo.moveTimeout - speedFix;
+                    await leo.delay(realTimeout)
                     return leo.next();
                 } catch(e) {
                     console.log(leo.logTime()+'遇敌程序错误：移动失败', e);
@@ -1728,10 +1825,22 @@ module.exports = require('./wrapper').then( async (cga) => {
         }
     }
     //随机往旁边移动1格（队长使用，方便队员进组）
-    leo.moveAround = (mapInfo = leo.getMapInfo()) => {
+    leo.moveAround = async (mapInfo = leo.getMapInfo()) => {
         var movablePos = leo.getMovablePositionsAround(mapInfo);
         if(movablePos && movablePos.length > 0){
-            return leo.autoWalk([movablePos[0].x,movablePos[0].y]);
+            await leo.loop(async()=>{
+                for (var i = 0; i < movablePos.length; i++) {
+                    try{
+                        await leo.autoWalk([movablePos[i].x,movablePos[i].y])
+                    }catch(e){
+                        //do nothing
+                    }
+                    let newPos = cga.getMapXY();
+                    if(newPos.x != mapInfo.x || newPos.y != mapInfo.y){
+                        return leo.reject();
+                    }
+                }
+            })
         }else{
             return leo.autoWalk([mapInfo.x+1,mapInfo.y]);
         }
@@ -1772,14 +1881,14 @@ module.exports = require('./wrapper').then( async (cga) => {
     }
 
     //地图搜索范围
-    leo.getMovablePoints = (map, start) => {
+    leo.getMovablePoints = (map, start,all=false) => {
         const foundedPoints = {};
         foundedPoints[start.x + '-' + start.y] = start;
         const findByNextPoints = (centre) => {
             const nextPoints = [];
             const push = (p) => {
                 if (p.x > map.x_bottom && p.x < map.x_size && p.y > map.y_bottom && p.y < map.y_size) {
-                    if (map.matrix[p.y][p.x] === 0) {
+                    if ( (map.matrix[p.y][p.x] === 0) || all ) {
                         const key = p.x + '-' + p.y;
                         if (!foundedPoints[key]) {
                             foundedPoints[key] = p;
@@ -1789,27 +1898,56 @@ module.exports = require('./wrapper').then( async (cga) => {
                 }
             };
             push({x: centre.x + 1, y: centre.y});
-            // push({x: centre.x + 1, y: centre.y + 1});
+            //push({x: centre.x + 1, y: centre.y + 1});
             push({x: centre.x, y: centre.y + 1});
-            // push({x: centre.x - 1, y: centre.y + 1});
+            //push({x: centre.x - 1, y: centre.y + 1});
             push({x: centre.x - 1, y: centre.y});
-            // push({x: centre.x - 1, y: centre.y - 1});
+            //push({x: centre.x - 1, y: centre.y - 1});
             push({x: centre.x, y: centre.y - 1});
-            // push({x: centre.x + 1, y: centre.y - 1});
+            //push({x: centre.x + 1, y: centre.y - 1});
             nextPoints.forEach(findByNextPoints);
         };
         findByNextPoints(start);
         return foundedPoints;
     }
+    leo.getMazeEntry = () => {
+        const mapObjects = cga.getMapObjects();
+        const current = cga.GetMapXY();
+        const entryIcons = cga.buildMapCollisionRawMatrix().matrix;
+        const entries = mapObjects.filter(o => {
+            if (o.cell == 3) {
+                o.icon = entryIcons[o.y][o.x];
+                return true;
+            }
+            return false;
+        }).sort((a,b) => {
+            const aDistance = Math.abs(a.x - current.x) + Math.abs(a.y - current.y);
+            const bDistance = Math.abs(b.x - current.x) + Math.abs(b.y - current.y);
+            return bDistance - aDistance;
+        });
+        if(entries.length==0){
+            throw '没有找到迷宫出入口或上下楼梯：' + entries;
+        }
+        if(entries.length==1){
+            return entries[0];
+        }
+        let entry0 = entries.find(entry=>entry.icon==0);
+        if(entry0){
+            return entry0;
+        }else{
+            return entries[0];
+        }
+    }
     leo.getEntry = (entries,up = true) => {
         /**
          * icon
-         *   大 down, 小 up (不全是)
+         *   小 down, 大 up (不全是)
          *   12002 down 12000 up (狗洞)
          *   17967 down 17966 up (海底墓场-保证书)
          *   13273 down 13272 up (虫洞)
          *   17981 down 17980 up (黑色方舟)
          *   17975 down 17974 up (黑色的祈祷)
+         *   13997 down 13996 up (半山)
          *   0 迷宫出入口
          * return [最远，最近]
          */
@@ -1835,24 +1973,65 @@ module.exports = require('./wrapper').then( async (cga) => {
         //   }
         // ]
         if(entries.length==0){
-        throw 'leo.getEntry:Fail to walk random maze ' + entries;
+            throw '没有找到迷宫出入口或上下楼梯：' + entries;
         }
         if(entries.length==1){
-        return entries[0];
+            return entries[0];
         }
-        let entry0 = entries.find(entry=>entry.icon==0);//有迷宫出入口，无法正确地判断，只能选取离入口最远的
-        if(entry0){
-        return entries[0];
+        if(entries.length>2){
+            //超出2个迷宫入口，随机返回
+            const index = Math.floor((Math.random()*entries.length));
+            return entries[index];
         }
-        let ups = [12000,17966,13272,17980,17974];
-        let upFlag = entries.find(entry=>ups.includes(entry.icon));
-        if(upFlag){
-        up = !up;//特殊迷宫地图，上下楼梯置反
+        //两个楼梯的icon一样的，无法正确地判断，只能选取离入口最远的
+        if(entries[0].icon == entries[1].icon){
+            return entries[0];
         }
-        let entrySort = entries.sort((a,b) => {
-            return b.icon - a.icon;
+        //特殊的迷宫地图
+        const mazeSpecial = [12000,12002,17966,17967,13272,13273,17980,17981,17974,17975,13996,13997]; //楼梯是往下走，层数越高
+        const mazeSpecialFlag = entries.find(entry=>mazeSpecial.includes(entry.icon));
+        const entrySpecial = [12000,12002,17966,17967,13272,13273,17980,17981,17974,17975]; //楼梯是往下走
+        const entrySpecialFlag = entries.find(entry=>entrySpecial.includes(entry.icon));
+        const entryFlag = entries.find(entry=>entry.icon===0);
+        const elist = entries.map((v,i,arr)=>{
+            if(entryFlag) {
+                const regStr = '([^0-9]+1[^0-9]+)|([^0-9]+100[^0-9]+)|([^0-9]+1100[^0-9]+)';
+                const reg = new RegExp(regStr,"g");
+                const mapName = cga.GetMapName();
+                const isMatch = reg.test(mapName);
+                //console.log('isMatch:'+isMatch);
+                if(isMatch){
+                    if(v.icon === 0){
+                        v.up = false;
+                    }else{
+                        v.up = true;
+                    }
+                }else{
+                    if(v.icon === 0){
+                        v.up = true;
+                    }else{
+                        v.up = false;
+                    }
+                }
+                if(entrySpecialFlag){
+                    v.up = !v.up;
+                }
+            }else{
+                const e1 = v;
+                const e2 = arr.find((v2,i2)=>i!=i2);
+                if(e1.icon > e2.icon){
+                    v.up = true;
+                }else{
+                    v.up = false;
+                }
+                if(mazeSpecialFlag){
+                    v.up = !v.up;
+                }
+            }
+            return v;
         })
-        return up? entrySort[0] : entrySort[1];
+        //console.log(elist);
+        return elist.find(e=>e.up === up);
     }
     //迷宫搜索
     leo.searchInMaze = (targetFinder, recursion = true, up = true, parameters = {}) => leo.downloadMap().then(async walls => {
@@ -1883,9 +2062,9 @@ module.exports = require('./wrapper').then( async (cga) => {
             const next = remain.shift();
             if (next) {
                 if(cga.isPathAvailable(centre.x, centre.y, next.x, next.y)){
-                    return leo.autoWalk([next.x,next.y],undefined,undefined,{compress: false}).then(
-                        () => getTarget()
-                    ).then(() => toNextPoint(remain,next))
+                    return leo.autoWalk([next.x,next.y],undefined,undefined,{compress: false})
+                    .then(() => getTarget())
+                    .then(() => toNextPoint(remain,next))
                 } else {
                     return getTarget().then(() => toNextPoint(remain,next))
                 }
@@ -1956,6 +2135,364 @@ module.exports = require('./wrapper').then( async (cga) => {
             console.log('寻找迷宫出错(findOne),error:'+error);
         });
     }
+    const PF = require('pathfinding');
+    leo.findPathList = ([curX,curY],[targetX,targetY,destination],compress = true) => {
+        const walls = cga.buildMapCollisionMatrix();
+        const matrix = walls.matrix;
+        const grid = new PF.Grid(matrix);
+        const finder = new PF.AStarFinder({
+            allowDiagonal: true,
+            dontCrossCorners: true
+        });
+        let path = finder.findPath(curX, curY, targetX, targetY, grid);
+        let list = compress ? PF.Util.compressPath(path) : path;
+        if(list.length>0 && destination) {
+            list[list.length - 1][2] = destination;
+        }
+        return list;
+    }
+    leo.autoWalkEx = async ([x,y,destination],compress = true) => {
+        const mapInfo = cga.getMapInfo();
+        const list = leo.findPathList([mapInfo.x,mapInfo.y],[x,y,destination],compress);
+        //console.log(list)
+        if(list && list.length>0) {
+            try{
+                await leo.walkList(list)
+            }catch(e) {
+                const world = cga.GetWorldStatus();
+                const game = cga.GetGameStatus();
+                if (world == 10) {
+                    console.log(leo.logTime()+'自动寻路中，进入战斗')
+                }
+                let afterBattleWaitTime = leo.afterBattleWaitTime || 5000;
+                await leo.checkBattle(afterBattleWaitTime)
+                if(cga.GetMapName()==mapInfo.name){
+                    return leo.autoWalkEx([x,y,destination],compress);
+                }else{
+                    return leo.reject('迷宫刷新');
+                }
+            }
+        }else{
+            return leo.reject('无法到达的坐标：['+destination+'] ['+x+','+y+']');
+        }
+    }
+    leo.autoWalk = async (target, walls = cga.buildMapCollisionMatrix(), mapInfo = leo.getMapInfo(), options = {compress: true}) => {
+        if (
+            (target[2] && leo.arrived(target[2], mapInfo, mapInfo)) ||
+            (!target[2] && mapInfo.x == target[0] && mapInfo.y == target[1])
+        ) {
+            return leo.done();
+        } else if (target[2] && mapInfo.x == target[0] && mapInfo.y == target[1]) {
+            return leo.walkTo(target, mapInfo);
+        }
+        return leo.autoWalkEx(target,options.compress);
+    }
+    leo.walkRandomMaze1 = async (up, protect) => {
+        const toNextPoint = async (points, centre, up, randomSize = 12) => {
+            const remain = points.filter(p => {
+                const xd = Math.abs(p.x - centre.x);
+                const yd = Math.abs(p.y - centre.y);
+                p.d = xd + yd;
+                return !(xd < randomSize && yd < randomSize);
+            }).sort((a,b) => a.d - b.d);
+            const next = remain.shift();
+            if (next) {
+                const pathList = leo.findPathList([centre.x,centre.y],[next.x,next.y],false);
+                if(pathList.length>0){
+                    await leo.autoWalkEx([next.x,next.y],false)
+                    const entries = await leo.getMazeEntries(false);
+                    if(entries.length>1) {
+                        const targetEntry = leo.getEntry(entries, up);
+                        if(targetEntry) {
+                            return leo.done();
+                        }
+                    }
+                    if(protect && protect()) {
+                        return leo.reject('触发保护');
+                    }
+                }
+                return toNextPoint(remain,next,up,randomSize);
+            }
+            const current = cga.GetMapXY();
+            await leo.loop(async ()=>{
+                //等待加载周围的地图块
+                if(cga.getRandomSpace(current.x, current.y) != null){
+                    return leo.reject();
+                }
+                await leo.delay(2000)
+            })
+            randomSize = randomSize - 1;
+            if(randomSize<1) randomSize = 12;
+            console.log(leo.logTime()+'重新寻找，当前坐标：['+cga.GetMapName()+'] ['+current.x+','+current.y+']，randomSize='+randomSize);
+            points = leo.getMovablePoints(walls, current);
+            return toNextPoint(Object.values(points), current,up,randomSize);
+            //return Promise.resolve();
+        }
+
+        const entries = await leo.getMazeEntries(false);
+        let targetEntry = null;
+        if(entries && entries.length>1) {
+            targetEntry = leo.getEntry(entries, up)
+        }
+        if(targetEntry) {
+            console.log(leo.logTime()+'找到出口坐标：['+cga.GetMapName()+'] ['+targetEntry.x+','+targetEntry.y+']')
+            const current = cga.GetMapXY();
+            //找到出口
+            const list = leo.findPathList([current.x,current.y],[targetEntry.x, targetEntry.y, '*']);
+            if(list.length>0) {
+                //找到通路
+                await leo.autoWalkEx([targetEntry.x, targetEntry.y, '*'])
+                return leo.delay(2000);
+            }else{
+                //没有通路，继续开图
+            }
+        }else{
+            //没有找到出口，继续开图
+        }
+        //开图逻辑，以原始坐标为中心，向四周逐步寻找可移动的坐标点（顺时针方向）
+        const current = cga.GetMapXY();
+        await leo.loop(async ()=>{
+            //等待加载周围的地图块
+            if(cga.getRandomSpace(current.x, current.y) != null){
+                return leo.reject();
+            }
+            await leo.delay(2000)
+        })
+        const walls = cga.buildMapCollisionMatrix();
+        console.log(leo.logTime()+'开始寻找，当前坐标：['+cga.GetMapName()+'] ['+current.x+','+current.y+']');
+        const points = leo.getMovablePoints(walls, current);
+        //console.log(points)
+        await toNextPoint(Object.values(points), current,up)
+        return leo.walkRandomMaze(up);
+    }
+    leo.walkRandomMaze = async (up, protect) => {
+        let excludePoints = [];
+        let pointList = [];
+        const checkEntry = async (up) => {
+            let targetEntry = null;
+            const entries = await leo.getMazeEntries(false);
+            if(entries.length>1) {
+                targetEntry = leo.getEntry(entries, up);
+            }
+            if(targetEntry) {
+                //找到出口
+                const current = cga.GetMapXY();
+                const list = leo.findPathList([current.x,current.y],[targetEntry.x, targetEntry.y, '*']);
+                if(list.length>0) {
+                    //找到通路
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        const addExclude = (pathList) => {
+            //console.log('pathList');
+            //console.log(pathList);
+            const current = cga.GetMapXY();
+            const walls = cga.buildMapCollisionMatrix();
+            const points = Object.values(leo.getMovablePoints(walls, current))
+            .filter(p=>{
+                p.key = p.x + '-' + p.y;
+                return !excludePoints.includes(p.key);
+            });
+
+            for (let i = 0; i < pathList.length; i++) {
+                const position = pathList[i];
+                points.forEach(p=>{
+                    let xd = p.x - position[0];
+                    let yd = p.y - position[1];
+                    let distance = Math.abs(xd) + Math.abs(yd);
+                    let key = p.x + '-' + p.y;
+                    if(distance<=6 && !excludePoints.includes(key)){
+                        //console.log('新增排除点：' + p.key);
+                        excludePoints.push(p.key);
+                    }
+                })
+            }
+            //console.log('排除点数量：' + excludePoints.length);
+        }
+
+        const toNextPoint = async (points, centre, up) => {
+            const allPoint = points
+            .map(p=>{
+                let xd = p.x - centre.x;
+                let yd = p.y - centre.y;
+                let distance = Math.abs(xd) + Math.abs(yd);
+                p.distance = distance;
+                if(xd>=0&&yd<0){
+                    p.quadrant = 0; 
+                }else if(xd>0&&yd>=0){
+                    p.quadrant = 1;
+                }else if(xd<=0&&yd>0){
+                    p.quadrant = 2;
+                }else if(xd<0&&yd<=0){
+                    p.quadrant = 3;
+                }
+                p.key = p.x + '-' + p.y;
+                return p;
+            })
+            .filter(p=>{
+                p.key = p.x + '-' + p.y;
+                return !excludePoints.includes(p.key);
+            });
+            for (var i = 0; i < 4; i++) {
+                let maxDistance = -1;
+                const quadrantList = allPoint.filter(p=>p.quadrant===i);
+                quadrantList.forEach(p=>{
+                    if(p.distance>maxDistance) {
+                        maxDistance = p.distance;
+                    }
+                })
+                const furthestList = quadrantList.filter(p=>p.distance===maxDistance);
+                if(furthestList.length>0) {
+                    const index = Math.floor((Math.random()*furthestList.length));
+                    const next = furthestList[index];
+                    pointList.push(next);
+                }
+            }
+            //console.log('坐标点列表：')
+            //console.log(pointList);
+
+            await leo.loop(async ()=>{
+                if(pointList.length===0) {
+                    return leo.reject();
+                }
+                const check = await checkEntry(up)
+                if(check){
+                    return leo.reject();
+                }
+                const current = cga.GetMapXY();
+                const next = pointList.shift();
+                //console.log('当前目标：')
+                //console.log(next);
+                const pathList = leo.findPathList([current.x,current.y],[next.x,next.y],false);
+                if(pathList.length>0) {
+                    await leo.autoWalkEx([next.x,next.y],false)
+                    addExclude(pathList)
+                    if(protect && protect()) {
+                        return leo.reject('触发保护');
+                    }
+                    //检查是否因为走到新的坐标点，同象限有新的可移动坐标出现
+                    await leo.loop(async ()=>{
+                        const check = await checkEntry(up)
+                        if(check){
+                            return leo.reject();
+                        }
+                        const current2 = cga.GetMapXY();
+                        const walls = cga.buildMapCollisionMatrix();
+                        const newPoints = Object.values(leo.getMovablePoints(walls, current2))
+                        .filter(p=>{
+                            p.key = p.x + '-' + p.y;
+                            return !excludePoints.includes(p.key);
+                        })
+                        .map(p=>{
+                            let xd = p.x - current2.x;
+                            let yd = p.y - current2.y;
+                            let distance = Math.abs(xd) + Math.abs(yd);
+                            p.distance = distance;
+                            if(xd>=0&&yd<0){
+                                p.quadrant = 0; 
+                            }else if(xd>0&&yd>=0){
+                                p.quadrant = 1;
+                            }else if(xd<=0&&yd>0){
+                                p.quadrant = 2;
+                            }else if(xd<0&&yd<=0){
+                                p.quadrant = 3;
+                            }
+                            p.key = p.x + '-' + p.y;
+                            return p;
+                        })
+                        .filter(p=>p.quadrant===next.quadrant&&p.distance>0);
+                        if(newPoints.length==0) {
+                            return leo.reject();
+                        }
+                        //继续往前开图
+                        const index2 = Math.floor((Math.random()*newPoints.length));
+                        const next2 = newPoints[index2];
+                        console.log(leo.logTime()+'继续往前开图，坐标：['+next2.x+','+next2.y+']')
+                        const pathList2 = leo.findPathList([current2.x,current2.y],[next2.x,next2.y],false);
+                        if(pathList2.length>0){
+                            await leo.autoWalkEx([next2.x,next2.y],false)
+                            addExclude(pathList2);
+                            if(protect && protect()) {
+                                return leo.reject('触发保护');
+                            }
+                        }
+                    })
+                }else{
+                    addExclude([next]);
+                }
+                await leo.delay(1000)
+            })
+            const check = await checkEntry(up)
+            if(check){
+                return leo.done();
+            }
+
+            const current = cga.GetMapXY();
+            await leo.loop(async ()=>{
+                //等待加载周围的地图块
+                if(cga.getRandomSpace(current.x, current.y) != null){
+                    return leo.reject();
+                }
+                await leo.delay(2000)
+            })
+            const walls = cga.buildMapCollisionMatrix();
+            //console.log(leo.logTime()+'重新寻找，当前坐标：['+cga.GetMapName()+'] ['+current.x+','+current.y+']');
+            points = leo.getMovablePoints(walls, current);
+            return toNextPoint(Object.values(points), current,up);
+            //return Promise.resolve();
+        }
+
+        const walkMaze = async (up = true) => {
+            //console.log('开始寻路...');
+            const entries = await leo.getMazeEntries(false);
+            let targetEntry = null;
+            if(entries && entries.length>1) {
+                targetEntry = leo.getEntry(entries, up)
+            }
+            if(targetEntry) {
+                const current = cga.GetMapXY();
+                //找到出口
+                const list = leo.findPathList([current.x,current.y],[targetEntry.x, targetEntry.y, '*']);
+                if(list.length>0) {
+                    //找到通路
+                    console.log(leo.logTime()+'找到出口坐标：['+targetEntry.x+','+targetEntry.y+']')
+                    await leo.autoWalkEx([targetEntry.x, targetEntry.y, '*'])
+                    return leo.delay(2000);
+                }else{
+                    //没有通路，继续开图
+                }
+            }else{
+                //没有找到出口，继续开图
+            }
+            //开图逻辑，以原始坐标为中心，向四周逐步寻找可移动的坐标点（顺时针方向）
+            const current = cga.GetMapXY();
+            await leo.loop(async ()=>{
+                //等待加载周围的地图块
+                if(cga.getRandomSpace(current.x, current.y) != null){
+                    return leo.reject();
+                }
+                await leo.delay(2000)
+            })
+            const walls = cga.buildMapCollisionMatrix();
+            console.log(leo.logTime()+'开始寻找，当前坐标：['+cga.GetMapName()+'] ['+current.x+','+current.y+']');
+            const points = leo.getMovablePoints(walls, current);
+            //console.log(points)
+            await toNextPoint(Object.values(points), current,up)
+            return leo.walkRandomMaze(up,protect);
+        }
+        return walkMaze(up);
+    }
+    leo.walkRandomMazeUntil = async (check, entryFilter, protect) => {
+        let times = 0;
+        //console.log(entryFilter)
+        while (times <= 101 && !check()) {
+            times++;
+            await leo.walkRandomMaze(entryFilter,protect);
+        }
+    };
 
     //哥拉尔镇定居登出
     leo.logBackG = async ()=>{
@@ -2141,7 +2678,29 @@ module.exports = require('./wrapper').then( async (cga) => {
             return leo.logBackA()
             .then(()=>leo.autoWalkList([[117,155,'夏姆吉诊所'],[22,17]]))
             .then(()=>leo.supplyDir(6))
-            .then(()=>leo.delay(2000));
+            .then(()=>leo.delay(2000))
+            .then(()=>{
+                playerinfo = cga.GetPlayerInfo();
+                if(playerinfo.hp < playerinfo.maxhp || playerinfo.mp < playerinfo.maxmp){
+                    supplyFailureTimes++;
+                    if(supplyFailureTimes<10){
+                        console.log('护士补给失败，重新进行补给');
+                        return leo.todo()
+                        .then(()=>{
+                            leo.panel.autosupply(false);
+                            return leo.delay(1000);
+                        })
+                        .then(()=>{
+                            leo.panel.autosupply(true);
+                            return leo.delay(1000);
+                        })
+                        .then(()=>leo.supplyA());
+                    }else{
+                        cga.LogOut();
+                        return leo.delay(1000*60*60*24);
+                    }
+                }
+            });
         }
     }
     leo.checkHealthA = (doctorName,needSupply = true) => {
@@ -2326,10 +2885,10 @@ module.exports = require('./wrapper').then( async (cga) => {
         return leo.done();
     }
     //退出脚本
-    leo.exit = () => {
-        return leo.log('脚本即将结束')
-        .then(()=>leo.delay(2000))
-        .then(()=>process.abort());
+    leo.exit = async (time = 2000) => {
+        await leo.log('脚本即将结束')
+        await leo.delay(time)
+        process.abort();
     }
     //判断身上是否有指定物品
     leo.has = (name) => {
@@ -2484,13 +3043,13 @@ module.exports = require('./wrapper').then( async (cga) => {
 
     //合并属性（深层合并）
     leo.deepMerge = (target, source) => {
-      for (let key in source) {
-        // 如果target(也就是target[key])存在，且是对象的话再去调用deepMerge，否则就是target[key]里面没这个对象，需要与source[key]合并
-        target[key] = target[key] && target[key].toString() === "[object Object]"
-          ? leo.deepMerge(target[key], source[key])
-          : (target[key] = source[key]);
-      }
-      return target;
+        for (let key in source) {
+            // 如果target(也就是target[key])存在，且是对象的话再去调用deepMerge，否则就是target[key]里面没这个对象，需要与source[key]合并
+            target[key] = target[key] && target[key].toString() === "[object Object]"
+              ? leo.deepMerge(target[key], source[key])
+              : (target[key] = source[key]);
+        }
+        return target;
     }
 
     //获取面板设置
@@ -2507,6 +3066,11 @@ module.exports = require('./wrapper').then( async (cga) => {
             resolve({});
         }
     });
+    leo.getSubSettings = async (attribute,subAttr) => {
+        const settings = await leo.getSettings(attribute)
+        return settings[subAttr];
+    }
+    
     //更新面板设置
     leo.loadSettings = (config) => new Promise( async (resolve, reject) => {
         if(cga.gui){
@@ -2908,6 +3472,190 @@ module.exports = require('./wrapper').then( async (cga) => {
             leo.log('已加载自动战斗：攻击')
             leo.panel.autoBattle(false);
         },
+        seal: (options)=>{
+            let petOptions = [];
+            if(options === undefined) {
+                console.log('加载自动战斗：封印(过滤)发生异常：缺少配置参数')
+            }else if(options instanceof Array) {
+                petOptions = options;
+            }else {
+                petOptions.push(options);
+            }
+            const sets = [];
+            for (let i = 0; i < petOptions.length; i++) {
+                const petOption = petOptions[i];
+                const set = {
+                    user: 1, //1-人 2-宠 3-人宠 4-人二动 5-人一动和二动
+                    check: context => {
+                        if ((context.isFirstBattleAction || context.secondary)
+                            && context.enemies.lv1 && context.enemies.lv1.length > 0){
+                            leo.isCatchPet(context.enemies.lv1,petOption,(petOptions.length>1)||(petOption.isNameOnly===true));
+                        }
+                        return leo.findCatchPet(context.enemies.lv1,petOption) && cga.getInventoryItems().find(i => i.name == petOption.sealCardName);
+                    },
+                    type: '物品',
+                    item: context => cga.getInventoryItems().find(i => i.name == petOption.sealCardName).pos,
+                    targets: context => [leo.findCatchPet(context.enemies.lv1,petOption).pos]
+                };
+                sets.push(set);
+            }
+            for (let i = 0; i < petOptions.length; i++) {
+                const petOption = petOptions[i];
+                const autoBattleSets = petOption.autoBattle;
+                if(autoBattleSets && autoBattleSets.length>0){
+                    for (let j = 0; j < autoBattleSets.length; j++) {
+                        const autoBattleSet = autoBattleSets[j];
+                        sets.push(autoBattleSet);
+                    }
+                }
+            }
+            sets.push({
+                user: 1,
+                check: context => true,
+                type: '逃跑',
+                targets: context => [context.player_pos]
+            });
+            for (let i = 0; i < petOptions.length; i++) {
+                const petOption = petOptions[i];
+                const set = {
+                    user: 2,
+                    check: context => leo.findCatchPet(context.enemies.lv1,petOption,true) && cga.getInventoryItems().find(i => i.name == petOption.sealCardName),
+                    skillName: petOption.petSkillName || '强力陨石魔法-Ⅰ',
+                    targets: context => [leo.findCatchPet(context.enemies.lv1,petOption,true).pos]
+                };
+                sets.push(set);
+            }
+            sets.push({
+                user: 2,
+                check: context => true,
+                skillName: '防御',
+                targets: context => [context.petUnit.pos]
+            });
+
+            let firstRoundDelay = 1;    //首回合延迟
+            let roundDelay = 4000       //每回合延迟
+            let force = true ;          //是否强制启用战斗配置
+            leo.setBattlePet2(false);   //关闭宠物二动
+            leo.autoBattle(sets,firstRoundDelay,roundDelay,force);
+            leo.log('已加载自动战斗：封印(过滤)')
+            leo.panel.autoBattle(false);//关闭CGA面板的自动战斗
+        },
+        stolen: (enemieName,supplyRate = 0.6)=>{
+            let enemieNames = [];
+            if(enemieName == undefined) {
+                console.log('加载自动战斗：偷窃卡片发生异常：缺少配置参数')
+            }else if(typeof enemieName == 'string') {
+                enemieNames.push(enemieName);
+            }else if(doctorName instanceof Array) {
+                enemieNames = enemieName;
+            }
+            //自动战斗设置部分
+            var stolenPos = [];
+            const needHealChecker = (unit) => unit && unit.curhp > 0 && unit.hpRatio <= supplyRate;
+            const enemieCheck = (context) => {
+                let check = false;
+                if(context.round_count == 0){
+                    //第一回合，重置战斗信息
+                    stolenPos = [];
+                }
+                if (context.isFirstBattleAction && context.enemies.lv1 && context.enemies.lv1.length > 0){
+                    context.enemies.lv1.forEach(e => {
+                        console.log(leo.logTime()+'1级怪:【' + e.name + '】【' + e.maxhp + '/' + e.maxmp + '】');
+                    });
+                }
+                let enemies = context.enemies.filter(e=>enemieNames.includes(e.name));
+                if(enemies && enemies.length>0){
+                    var enemieFound = enemies.find(e=>!stolenPos.includes(e.pos));
+                    if(enemieFound && enemieFound.pos>-1){
+                        check = true;
+                    }
+                }
+                return check;
+            }
+            const enemieTarget = (context) => {
+                let target = [];
+                let enemies = context.enemies.filter(e=>enemieNames.includes(e.name));
+                if(enemies && enemies.length>0){
+                    var enemieFound = enemies.find(e=>!stolenPos.includes(e.pos));
+                    if(enemieFound && enemieFound.pos>-1){
+                        target.push(enemieFound.pos);
+                        stolenPos.push(enemieFound.pos);
+                        //console.log(enemies,stolenPos);
+                    }
+                }
+                return target;
+            }
+
+            //技能设置
+            const sets = [];
+            sets.push({
+                user: 1,
+                check: context => !enemieCheck(context),
+                type: '逃跑',
+                targets: context => [context.player_pos]
+            });
+            sets.push({
+                user: 1,
+                check: context => [context.playerUnit, context.petUnit].filter(needHealChecker).length > 0,
+                type: '技能', skillName: '补血魔法', 
+                targets: context => [context.playerUnit, context.petUnit].filter(needHealChecker).sort((a, b) => a.hpRatio - b.hpRatio).map(t => t.pos)
+            });
+            sets.push({
+                user: 1,
+                check: context => [context.playerUnit, context.petUnit].filter(needHealChecker).length > 0,
+                type: '技能', skillName: '明镜止水', 
+                targets: context => [context.player_pos]
+            });
+            sets.push({
+                user: 1,
+                check: context => [context.playerUnit, context.petUnit].filter(needHealChecker).length > 0,
+                type: '技能', skillName: '恢复魔法', 
+                targets: context => [context.playerUnit, context.petUnit].filter(needHealChecker).sort((a, b) => a.hpRatio - b.hpRatio).map(t => t.pos)
+            });
+            sets.push({
+                user: 1,
+                check: context => enemieCheck(context),
+                type: '技能', skillName: '窃盗', skillLevel: 10,
+                targets: context => enemieTarget(context)
+            });
+            sets.push({
+                user: 4,
+                check: context => true,
+                type: '防御',
+                targets: context => context.enemies.map(e => e.pos)
+            });
+            sets.push({
+                user: 1,
+                check: context => true,
+                type: '逃跑',
+                targets: context => [context.player_pos]
+            });
+            sets.push({
+                user: 2,
+                check: context => context.petUnit.hpRatio <= supplyRate,
+                skillName: '明镜止水',
+                targets: context => [context.petUnit.pos]
+            });
+            sets.push({
+                user: 2,
+                check: context => true,
+                skillName: '防御',
+                targets: context => context.enemies.map(e => e.pos)
+            });
+            sets.push({
+                user: 2,
+                check: context => true,
+                skillName: '圣盾',
+                targets: context => context.enemies.map(e => e.pos)
+            });
+            var firstRoundDelay = 1;    //首回合延迟
+            var roundDelay = 1          //每回合延迟
+            var force = true ;          //是否强制启用战斗配置
+            leo.autoBattle(sets,firstRoundDelay,roundDelay,force);
+            leo.log('已加载自动战斗：偷窃卡片')
+            leo.panel.autoBattle(false);
+            leo.panel.itemdroplistDel('卡片？')
+        },
         custom: ()=>{
             const needHealChecker = (unit) => unit && unit.curhp > 0 && unit.hpRatio <= 0.6;
             //技能设置
@@ -3123,6 +3871,47 @@ module.exports = require('./wrapper').then( async (cga) => {
                             leo.upgradePlayer(attr);
                         }
                     }
+                }else{
+                    //有默认加点设置的话，按默认加点方案
+                    if(leo.pointSetting.player && leo.pointSetting.player['默认']){
+                        var setting = leo.pointSetting.player['默认'];
+                        // setting = [
+                        //     {attr:1,max:333,maxTo:0},
+                        //     {attr:1,max:333,maxTo:0},
+                        //     {attr:0},
+                        //     {attr:3,max:120,maxTo:0}
+                        // ]
+                        var points = leo.checkUpgradePlayer();
+                        var index = (4 - (points % 4)) % 4;
+                        var obj = setting[index];
+                        var attr = -1;
+                        if(obj && typeof obj.attr == 'number'){
+                            var maxPoint = 15 + (playerInfo.level - 1) * 2;
+                            var currentPoint = leo.getPlayerPoints(obj.attr);
+                            if(currentPoint < maxPoint){
+                                if(obj.max && currentPoint >= obj.max){
+                                    //大于等于设定值
+                                    if(obj.maxTo === undefined){
+                                        console.log('人物加点配置有误，请检查' + obj);
+                                    }else{
+                                        attr = obj.maxTo;
+                                    }
+                                }else{
+                                    attr = obj.attr;
+                                }
+                            }else{
+                                //大于等于等级最大加点值
+                                if(obj.maxTo === undefined){
+                                    console.log('人物加点配置有误，请检查' + obj);
+                                }else{
+                                    attr = obj.maxTo;
+                                }
+                            }
+                            if(attr>=0 && attr<=4){
+                                leo.upgradePlayer(attr);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -3198,226 +3987,344 @@ module.exports = require('./wrapper').then( async (cga) => {
     }
 
     leo.getMoneyFromBank = async (money)=>{
-        await leo.waitAfterBattle()
-        if(leo.isInTeam()){
-            await leo.leaveTeam()
+        try{
+            await leo.waitAfterBattle()
+            if(leo.isInTeam()){
+                await leo.leaveTeam()
+            }
+            if(cga.GetMapName()!='银行'){
+                try{
+                    await leo.goto(n => n.falan.bank)
+                }catch(e){
+                    console.log(leo.logTime()+'出错，e:' + e);
+                }
+            }
+            if(cga.GetMapName()=='银行'){
+                await leo.autoWalk([11,8])
+                await leo.turnDir(0)
+                var bankGold = cga.GetBankGold();
+                if(bankGold < money){
+                    money = bankGold;
+                }
+                await leo.moveGold(money,cga.MOVE_GOLD_FROMBANK)
+            }
+        }catch(e){
+            console.log('出错，e：' + e);
+            await leo.logBack()
+            return leo.getMoneyFromBank(money);
         }
-        await leo.goto(n=>n.falan.bank)
-        await leo.turnDir(0)
-        await leo.moveGold(money,cga.MOVE_GOLD_FROMBANK)
+    }
+
+    leo.autoForgetSkill = async (skillName) => {
+        var skill = cga.findPlayerSkill(skillName);
+        if(skill){
+            await leo.log('去删除技能【'+skillName+'】');
+            if(leo.isInTeam()){
+                await leo.leaveTeam()
+            }
+            if(cga.GetMapName()!='法兰城') {
+                await leo.goto(n => n.castle.x)
+                await leo.autoWalkList([[17, 54, '法兰城']])
+            }
+            await leo.loop(async ()=>{
+                await leo.autoWalk([120, 65])
+                await leo.forgetPlayerSkill(120, 64, skillName)
+                await leo.delay(2000)
+                if(!cga.findPlayerSkill(skillName)){
+                    await leo.log('已经删除技能【'+skillName+'】')
+                    return leo.reject();
+                } else{
+                    await leo.log('未能删除技能【'+skillName+'】，请检查！')
+                }
+                await leo.delay(1000)
+            })
+        }else{
+            await leo.log('人物没有学习技能【'+skillName+'】');
+        }
     }
 
     leo.autoLearnSkill = async (skillName) => {
-        if(skillName=='气功弹'){
-            var skill = cga.findPlayerSkill(skillName);
-            if(!skill){
-                await leo.log('去学习技能【'+skillName+'】');
-                if(leo.isInTeam()){
-                    await leo.leaveTeam()
-                }
-                if(cga.GetPlayerInfo().gold<100){
-                    await leo.getMoneyFromBank(1000)
-                }
-                await leo.goto(n=>n.falan.s1)
-                await leo.autoWalk([124, 161])
-                await leo.loop(async ()=>{
-                    if(cga.GetMapName()=='竞技场的入口'){
-                        return leo.reject();
+        try{
+            if(skillName=='气功弹'){
+                var skill = cga.findPlayerSkill(skillName);
+                if(!skill){
+                    await leo.log('去学习技能【'+skillName+'】');
+                    if(leo.isInTeam()){
+                        await leo.leaveTeam()
                     }
-                    await leo.turnDir(4)
-                })
-                await leo.autoWalk([15,6,'*'])
-                await leo.autoWalk([15,57])
-                await leo.learnPlayerSkill(15, 56)
-                if(cga.findPlayerSkill(skillName)){
-                    await leo.log('已经完成技能【'+skillName+'】的学习');
-                } else{
-                    await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
+                    if(cga.GetPlayerInfo().gold<100){
+                        await leo.getMoneyFromBank(1000)
+                    }
+                    await leo.goto(n=>n.falan.s1)
+                    await leo.autoWalk([124, 161])
+                    await leo.loop(async ()=>{
+                        if(cga.GetMapName()=='竞技场的入口'){
+                            return leo.reject();
+                        }
+                        await leo.turnDir(4)
+                    })
+                    await leo.autoWalk([15,6,'*'])
+                    await leo.loop(async ()=>{
+                        await leo.autoWalk([15,57])
+                        await leo.learnPlayerSkill(15, 56)
+                        await leo.delay(2000)
+                        if(cga.findPlayerSkill(skillName)){
+                            await leo.log('已经完成技能【'+skillName+'】的学习')
+                            return leo.reject();
+                        } else{
+                            await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
+                        }
+                        await leo.delay(1000)
+                    })
+                }else{
+                    await leo.log('已经存在技能【'+skillName+'】');
                 }
-            }else{
-                await leo.log('已经存在技能【'+skillName+'】');
             }
-        }
-        if(skillName=='乾坤一掷'){
-            var skill = cga.findPlayerSkill(skillName);
-            if(!skill){
-                await leo.log('去学习技能【'+skillName+'】');
-                if(leo.isInTeam()){
-                    await leo.leaveTeam()
+            if(skillName=='乾坤一掷'){
+                var skill = cga.findPlayerSkill(skillName);
+                if(!skill){
+                    await leo.log('去学习技能【'+skillName+'】');
+                    if(leo.isInTeam()){
+                        await leo.leaveTeam()
+                    }
+                    if(cga.GetPlayerInfo().gold<100){
+                        await leo.getMoneyFromBank(1000)
+                    }
+                    await leo.goto(n=>n.falan.w2)
+                    await leo.autoWalkList([[102,131,'安其摩酒吧']])
+                    await leo.loop(async ()=>{
+                        await leo.autoWalk([10,13])
+                        await leo.learnPlayerSkill(11, 13)
+                        await leo.delay(2000)
+                        if(cga.findPlayerSkill(skillName)){
+                            await leo.log('已经完成技能【'+skillName+'】的学习')
+                            return leo.reject();
+                        } else{
+                            await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
+                        }
+                        await leo.delay(1000)
+                    })
+                }else{
+                    await leo.log('已经存在技能【'+skillName+'】');
                 }
-                if(cga.GetPlayerInfo().gold<100){
-                    await leo.getMoneyFromBank(1000)
-                }
-                await leo.goto(n=>n.falan.w2)
-                await leo.autoWalkList([[102,131,'安其摩酒吧'],[10,13]])
-                await leo.learnPlayerSkill(11, 13)
-                if(cga.findPlayerSkill(skillName)){
-                    await leo.log('已经完成技能【'+skillName+'】的学习');
-                } else{
-                    await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
-                }
-            }else{
-                await leo.log('已经存在技能【'+skillName+'】');
             }
-        }
-        if(skillName=='调教'){
-            var skill = cga.findPlayerSkill(skillName);
-            if(!skill){
-                await leo.log('去学习技能【'+skillName+'】');
-                if(leo.isInTeam()){
-                    await leo.leaveTeam()
+            if(skillName=='调教'){
+                var skill = cga.findPlayerSkill(skillName);
+                if(!skill){
+                    await leo.log('去学习技能【'+skillName+'】');
+                    if(leo.isInTeam()){
+                        await leo.leaveTeam()
+                    }
+                    if(cga.GetPlayerInfo().gold<100){
+                        await leo.getMoneyFromBank(1000)
+                    }
+                    await leo.goto(n=>n.falan.e1)
+                    await leo.autoWalkList([[219,136,'科特利亚酒吧'],[27,20,'酒吧里面'],[10,6,'客房']])
+                    await leo.loop(async ()=>{
+                        await leo.autoWalk([10,5])
+                        await leo.learnPlayerSkill(11, 5)
+                        await leo.delay(2000)
+                        if(cga.findPlayerSkill(skillName)){
+                            await leo.log('已经完成技能【'+skillName+'】的学习')
+                            return leo.reject();
+                        } else{
+                            await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
+                        }
+                        await leo.delay(1000)
+                    })
+                }else{
+                    await leo.log('已经存在技能【'+skillName+'】');
                 }
-                if(cga.GetPlayerInfo().gold<100){
-                    await leo.getMoneyFromBank(1000)
-                }
-                await leo.goto(n=>n.falan.e1)
-                await leo.autoWalkList([[219,136,'科特利亚酒吧'],[27,20,'酒吧里面'],[10,6,'客房'],[10,5]])
-                await leo.learnPlayerSkill(11, 5)
-                if(cga.findPlayerSkill(skillName)){
-                    await leo.log('已经完成技能【'+skillName+'】的学习');
-                } else{
-                    await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
-                }
-            }else{
-                await leo.log('已经存在技能【'+skillName+'】');
             }
-        }
-        if(skillName=='宠物强化'){
-            var skill = cga.findPlayerSkill(skillName);
-            if(!skill){
-                await leo.log('去学习技能【'+skillName+'】');
-                if(leo.isInTeam()){
-                    await leo.leaveTeam()
-                }
-                if(cga.GetPlayerInfo().gold<100){
-                    await leo.getMoneyFromBank(1000)
-                }
-                await leo.goto(n => n.castle.x)
-                await leo.autoWalkList([[41, 14, '法兰城'],[122, 36, '饲养师之家'],[13,4]])
-                await leo.learnPlayerSkill(14, 4)
-                if(cga.findPlayerSkill(skillName)){
-                    await leo.log('已经完成技能【'+skillName+'】的学习');
-                } else{
-                    await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
-                }
-            }else{
-                await leo.log('已经存在技能【'+skillName+'】');
-            }
-        }
-        if(skillName=='石化魔法'){
-            var skill = cga.findPlayerSkill(skillName);
-            if(!skill){
-                await leo.log('去学习技能【'+skillName+'】');
-                if(leo.isInTeam()){
-                    await leo.leaveTeam()
-                }
-                if(cga.GetPlayerInfo().gold<100){
-                    await leo.getMoneyFromBank(1000)
-                }
-                await leo.goto(n => n.castle.x)
-                await leo.autoWalkList([[17, 54, '法兰城'],[120, 65]])
-                await leo.learnPlayerSkill(120, 64)
-                if(cga.findPlayerSkill(skillName)){
-                    await leo.log('已经完成技能【'+skillName+'】的学习');
-                } else{
-                    await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
-                }
-            }else{
-                await leo.log('已经存在技能【'+skillName+'】');
-            }
-        }
-        if(skillName=='补血魔法'){
-            var skill = cga.findPlayerSkill(skillName);
-            if(!skill){
-                await leo.log('去学习技能【'+skillName+'】');
-                if(leo.isInTeam()){
-                    await leo.leaveTeam()
-                }
-                if(cga.GetPlayerInfo().gold<100){
-                    await leo.getMoneyFromBank(1000)
-                }
-                if(cga.getMapInfo().indexes.index3!=1208){
+            if(skillName=='宠物强化'){
+                var skill = cga.findPlayerSkill(skillName);
+                if(!skill){
+                    await leo.log('去学习技能【'+skillName+'】');
+                    if(leo.isInTeam()){
+                        await leo.leaveTeam()
+                    }
+                    if(cga.GetPlayerInfo().gold<100){
+                        await leo.getMoneyFromBank(1000)
+                    }
                     await leo.goto(n => n.castle.x)
-                    await leo.autoWalkList([
-                        [41, 14, '法兰城'],
-                        [154, 29, '大圣堂的入口'],
-                        [14, 7, '礼拜堂'],
-                        [23, 0,'大圣堂里面'],
-                        [13, 6]
-                    ])
-                    await leo.talkNpc(0,leo.talkNpcSelectorYes)
+                    await leo.autoWalkList([[41, 14, '法兰城'],[122, 36, '饲养师之家']])
+                    await leo.loop(async ()=>{
+                        await leo.autoWalk([13,4])
+                        await leo.learnPlayerSkill(14, 4)
+                        await leo.delay(2000)
+                        if(cga.findPlayerSkill(skillName)){
+                            await leo.log('已经完成技能【'+skillName+'】的学习')
+                            return leo.reject();
+                        } else{
+                            await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
+                        }
+                        await leo.delay(1000)
+                    })
+                }else{
+                    await leo.log('已经存在技能【'+skillName+'】');
                 }
-                await leo.autoWalk([13, 10])
-                await leo.learnPlayerSkill(14, 10)
-                if(cga.findPlayerSkill(skillName)){
-                    await leo.log('已经完成技能【'+skillName+'】的学习');
-                } else{
-                    await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
-                }
-            }else{
-                await leo.log('已经存在技能【'+skillName+'】');
             }
-        }
-        if(skillName=='强力补血魔法'){
-            var skill = cga.findPlayerSkill(skillName);
-            if(!skill){
-                await leo.log('去学习技能【'+skillName+'】');
-                if(leo.isInTeam()){
-                    await leo.leaveTeam()
-                }
-                if(cga.GetPlayerInfo().gold<100){
-                    await leo.getMoneyFromBank(1000)
-                }
-                if(cga.getMapInfo().indexes.index3!=1208){
+            if(skillName=='石化魔法'){
+                var skill = cga.findPlayerSkill(skillName);
+                if(!skill){
+                    await leo.log('去学习技能【'+skillName+'】');
+                    if(leo.isInTeam()){
+                        await leo.leaveTeam()
+                    }
+                    if(cga.GetPlayerInfo().gold<100){
+                        await leo.getMoneyFromBank(1000)
+                    }
                     await leo.goto(n => n.castle.x)
-                    await leo.autoWalkList([
-                        [41, 14, '法兰城'],
-                        [154, 29, '大圣堂的入口'],
-                        [14, 7, '礼拜堂'],
-                        [23, 0,'大圣堂里面'],
-                        [13, 6]
-                    ])
-                    await leo.talkNpc(0,leo.talkNpcSelectorYes)
+                    await leo.autoWalkList([[17, 54, '法兰城']])
+                    await leo.loop(async ()=>{
+                        await leo.autoWalk([120, 65])
+                        await leo.learnPlayerSkill(120, 64)
+                        await leo.delay(2000)
+                        if(cga.findPlayerSkill(skillName)){
+                            await leo.log('已经完成技能【'+skillName+'】的学习')
+                            return leo.reject();
+                        } else{
+                            await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
+                        }
+                        await leo.delay(1000)
+                    })
+                }else{
+                    await leo.log('已经存在技能【'+skillName+'】');
                 }
-                await leo.autoWalk([18, 12])
-                await leo.learnPlayerSkill(19, 12)
-                if(cga.findPlayerSkill(skillName)){
-                    await leo.log('已经完成技能【'+skillName+'】的学习');
-                } else{
-                    await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
-                }
-            }else{
-                await leo.log('已经存在技能【'+skillName+'】');
             }
-        }
-        if(skillName=='气绝回复'){
-            var skill = cga.findPlayerSkill(skillName);
-            if(!skill){
-                await leo.log('去学习技能【'+skillName+'】');
-                if(leo.isInTeam()){
-                    await leo.leaveTeam()
+            if(skillName=='补血魔法'){
+                var skill = cga.findPlayerSkill(skillName);
+                if(!skill){
+                    await leo.log('去学习技能【'+skillName+'】');
+                    if(leo.isInTeam()){
+                        await leo.leaveTeam()
+                    }
+                    if(cga.GetPlayerInfo().gold<100){
+                        await leo.getMoneyFromBank(1000)
+                    }
+                    if(cga.getMapInfo().indexes.index3!=1208){
+                        await leo.goto(n => n.castle.x)
+                        await leo.autoWalkList([
+                            [41, 14, '法兰城'],
+                            [154, 29, '大圣堂的入口'],
+                            [14, 7, '礼拜堂'],
+                            [23, 0,'大圣堂里面'],
+                            [13, 6]
+                        ])
+                        await leo.talkNpc(0,leo.talkNpcSelectorYes)
+                    }
+                    await leo.loop(async ()=>{
+                        await leo.autoWalk([13, 10])
+                        await leo.learnPlayerSkill(14, 10)
+                        await leo.delay(2000)
+                        if(cga.findPlayerSkill(skillName)){
+                            await leo.log('已经完成技能【'+skillName+'】的学习')
+                            return leo.reject();
+                        } else{
+                            await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
+                        }
+                        await leo.delay(1000)
+                    })
+                }else{
+                    await leo.log('已经存在技能【'+skillName+'】');
                 }
-                if(cga.GetPlayerInfo().gold<100){
-                    await leo.getMoneyFromBank(1000)
-                }
-                try{
-                    await leo.goto(n => n.teleport.aleut)
-                }catch(e){
-                    await leo.log('无法到达【亚留特村】，请确认传送是否开启')
-                }
-                if(cga.GetMapName()=='亚留特村'){
-                    await leo.autoWalk([47,72])
-                    await leo.learnPlayerSkill(48, 72)
-                }
-                if(cga.findPlayerSkill(skillName)){
-                    await leo.log('已经完成技能【'+skillName+'】的学习');
-                } else{
-                    await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
-                }
-            }else{
-                await leo.log('已经存在技能【'+skillName+'】');
             }
+            if(skillName=='强力补血魔法'){
+                var skill = cga.findPlayerSkill(skillName);
+                if(!skill){
+                    await leo.log('去学习技能【'+skillName+'】');
+                    if(leo.isInTeam()){
+                        await leo.leaveTeam()
+                    }
+                    if(cga.GetPlayerInfo().gold<100){
+                        await leo.getMoneyFromBank(1000)
+                    }
+                    if(cga.getMapInfo().indexes.index3!=1208){
+                        await leo.goto(n => n.castle.x)
+                        await leo.autoWalkList([
+                            [41, 14, '法兰城'],
+                            [154, 29, '大圣堂的入口'],
+                            [14, 7, '礼拜堂'],
+                            [23, 0,'大圣堂里面'],
+                            [13, 6]
+                        ])
+                        await leo.talkNpc(0,leo.talkNpcSelectorYes)
+                    }
+                    await leo.loop(async ()=>{
+                        await leo.autoWalk([18, 12])
+                        await leo.learnPlayerSkill(19, 12)
+                        await leo.delay(2000)
+                        if(cga.findPlayerSkill(skillName)){
+                            await leo.log('已经完成技能【'+skillName+'】的学习')
+                            return leo.reject();
+                        } else{
+                            await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
+                        }
+                        await leo.delay(1000)
+                    })
+                }else{
+                    await leo.log('已经存在技能【'+skillName+'】');
+                }
+            }
+            if(skillName=='气绝回复'){
+                var skill = cga.findPlayerSkill(skillName);
+                if(!skill){
+                    await leo.log('去学习技能【'+skillName+'】');
+                    if(leo.isInTeam()){
+                        await leo.leaveTeam()
+                    }
+                    if(cga.GetPlayerInfo().gold<100){
+                        await leo.getMoneyFromBank(1000)
+                    }
+                    try{
+                        await leo.goto(n => n.teleport.aleut)
+                    }catch(e){
+                        await leo.log('无法到达【亚留特村】，请确认传送是否开启')
+                    }
+                    if(cga.GetMapName()=='亚留特村'){
+                        await leo.loop(async ()=>{
+                            await leo.autoWalk([47,72])
+                            await leo.learnPlayerSkill(48, 72)
+                            await leo.delay(2000)
+                            if(cga.findPlayerSkill(skillName)){
+                                await leo.log('已经完成技能【'+skillName+'】的学习')
+                                return leo.reject();
+                            } else{
+                                await leo.log('未能完成技能【'+skillName+'】的学习，请检查！')
+                            }
+                            await leo.delay(1000)
+                        })
+                    }
+                }else{
+                    await leo.log('已经存在技能【'+skillName+'】');
+                }
+            }
+        }catch(e){
+            console.log(leo.logTime()+'autoLearnSkill出现异常：' + e);
+            await leo.delay(5000)
+            return leo.autoLearnSkill(skillName);
         }
+    }
+
+    //调用await leo.learnPetSkill([0],0,1,2)
+    leo.learnPetSkill = async ([x, y], skillIndex, petIndex, petSkillIndex) => {
+        await leo.talkNpc(x, y, async (dialog) => {
+            //console.log(dialog)
+            if (dialog.type == 24) {
+                cga.ClickNPCDialog(0, skillIndex)
+                await leo.delay(1000)
+            }
+            if (dialog.type == 25) {
+                cga.ClickNPCDialog(0, petIndex)
+                await leo.delay(1000)
+            }
+            if (dialog.type == 26) {
+                cga.ClickNPCDialog(0, petSkillIndex)
+                await leo.delay(1000)
+                return false;
+            }
+            return true;
+        })
     }
 
     leo.getRoleIndex = (roleName) => {
@@ -3466,32 +4373,177 @@ module.exports = require('./wrapper').then( async (cga) => {
         });
     });
 
-    leo.logServer = async (type,message) => {
+    leo.logServer = async (type, message) => {
         if (leo['\x6d\x65\x73\x73\x61\x67\x65\x53\x65\x72\x76\x65\x72']) {
-            if (type == '') return leo['\x6c\x6f\x67']('\u6d88\u606f\u8bb0\u5f55\u51fa\u9519\uff1a\x74\x79\x70\x65\u4e0d\u80fd\u4e3a\u7a7a');
-            var typeArr = ['\u6d4b\u8bd5', '\u6293\u5ba0', '\u767e\u4eba', '\u9c81\u6751', '\u9500\u552e', '\u72e9\u730e', '\u5341\u5e74', '\u5b9d\u7bb1', '\u81ea\u5b9a\u4e49'];
-            if (!typeArr['\x69\x6e\x63\x6c\x75\x64\x65\x73'](type)) return leo['\x6c\x6f\x67']('\u6d88\u606f\u8bb0\u5f55\u51fa\u9519\uff1a\x74\x79\x70\x65\u53ea\u80fd\u662f\u6307\u5b9a\u7684\u3010' + typeArr['\x6a\x6f\x69\x6e']() + '\u3011\u5176\u4e2d\u7684\u4e00\u79cd');
-            if (message == '') return leo['\x6c\x6f\x67']('\u6d88\u606f\u8bb0\u5f55\u51fa\u9519\uff1a\x6d\x65\x73\x73\x61\x67\x65\u4e0d\u80fd\u4e3a\u7a7a');
-            if (message['\x6c\x65\x6e\x67\x74\x68'] > 0x1f4) return leo['\x6c\x6f\x67']('\u6d88\u606f\u8bb0\u5f55\u51fa\u9519\uff1a\x6d\x65\x73\x73\x61\x67\x65\u4e0d\u80fd\u8d85\u8fc7\x35\x30\x30\u4e2a\u5b57\u7b26');
-            var _0x29625c = '\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x6c\x65\x6f\x78\x2e\x63\x63\x2f\x6c\x65\x6f\x2f\x63\x6f\x6d\x6d\x6f\x6e\x2f\x6d\x65\x73\x73\x61\x67\x65\x2e\x64\x6f',
-            name = cga['\x47\x65\x74\x50\x6c\x61\x79\x65\x72\x49\x6e\x66\x6f']()['\x6e\x61\x6d\x65'],
-            data = {
-                '\x61\x70\x70\x49\x64': leo['\x61\x70\x70\x49\x64'],
-                '\x61\x70\x70\x53\x65\x63\x72\x65\x74': leo['\x61\x70\x70\x53\x65\x63\x72\x65\x74'],
-                '\x6e\x61\x6d\x65': name,
-                '\x74\x79\x70\x65': type,
-                '\x6d\x65\x73\x73\x61\x67\x65': message
-            },
-            _0xb9e8ba = {
-                '\x64\x61\x74\x61': JSON['\x73\x74\x72\x69\x6e\x67\x69\x66\x79'](data)
-            },
-            _0x40d2a0 = await leo['\x73\x65\x6e\x64\x50\x6f\x73\x74'](_0x29625c, _0xb9e8ba),
-            _0x30c35e = JSON['\x70\x61\x72\x73\x65'](_0x40d2a0);
-            if (_0x30c35e && _0x30c35e['\x73\x74\x61\x74\x75\x73'] == '\x59') {} else return leo['\x6c\x6f\x67']('\u6d88\u606f\u8bb0\u5f55\u51fa\u9519\uff1a' + _0x30c35e['\x6d\x65\x73\x73\x61\x67\x65']);
+            if (leo['\x61\x70\x70\x49\x64'] == '')
+                return leo['\x6c\x6f\x67']('\u6d88\u606f\u8bb0\u5f55\u51fa\u9519\uff1a\x6c\x65\x6f\x2e\x61\x70\x70\x49\x64\u4e0d\u80fd\u4e3a\u7a7a');
+            if (leo['\x61\x70\x70\x53\x65\x63\x72\x65\x74'] == '')
+                return leo['\x6c\x6f\x67']('\u6d88\u606f\u8bb0\u5f55\u51fa\u9519\uff1a\x6c\x65\x6f\x2e\x61\x70\x70\x53\x65\x63\x72\x65\x74\u4e0d\u80fd\u4e3a\u7a7a');
+            if (type == '')
+                return leo['\x6c\x6f\x67']('\u6d88\u606f\u8bb0\u5f55\u51fa\u9519\uff1a\x74\x79\x70\x65\u4e0d\u80fd\u4e3a\u7a7a');
+            var _0x69a47c = [
+                '\u6d4b\u8bd5',
+                '\u6293\u5ba0',
+                '\u767e\u4eba',
+                '\u9c81\u6751',
+                '\u9500\u552e',
+                '\u72e9\u730e',
+                '\u5341\u5e74',
+                '\u5b9d\u7bb1',
+                '\u5237\u5237',
+                '\u81ea\u5b9a\u4e49'
+            ];
+            if (!_0x69a47c['\x69\x6e\x63\x6c\x75\x64\x65\x73'](type))
+                return leo['\x6c\x6f\x67']('\u6d88\u606f\u8bb0\u5f55\u51fa\u9519\uff1a\x74\x79\x70\x65\u53ea\u80fd\u662f\u6307\u5b9a\u7684\u3010' + _0x69a47c['\x6a\x6f\x69\x6e']() + '\u3011\u5176\u4e2d\u7684\u4e00\u79cd');
+            if (message == '')
+                return leo['\x6c\x6f\x67']('\u6d88\u606f\u8bb0\u5f55\u51fa\u9519\uff1a\x6d\x65\x73\x73\x61\x67\x65\u4e0d\u80fd\u4e3a\u7a7a');
+            if (message['\x6c\x65\x6e\x67\x74\x68'] > 0x1f4)
+                return leo['\x6c\x6f\x67']('\u6d88\u606f\u8bb0\u5f55\u51fa\u9519\uff1a\x6d\x65\x73\x73\x61\x67\x65\u4e0d\u80fd\u8d85\u8fc7\x35\x30\x30\u4e2a\u5b57\u7b26');
+            var _0x102892 = '\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x6c\x65\x6f\x78\x2e\x63\x63\x2f\x6c\x65\x6f\x2f\x63\x6f\x6d\x6d\x6f\x6e\x2f\x6d\x65\x73\x73\x61\x67\x65\x2e\x64\x6f', _0x2fd582 = cga['\x47\x65\x74\x50\x6c\x61\x79\x65\x72\x49\x6e\x66\x6f']()['\x6e\x61\x6d\x65'], _0x4100da = {
+                    '\x61\x70\x70\x49\x64': leo['\x61\x70\x70\x49\x64'],
+                    '\x61\x70\x70\x53\x65\x63\x72\x65\x74': leo['\x61\x70\x70\x53\x65\x63\x72\x65\x74'],
+                    '\x6e\x61\x6d\x65': _0x2fd582,
+                    '\x74\x79\x70\x65': type,
+                    '\x6d\x65\x73\x73\x61\x67\x65': message
+                }, _0x23aa6a = { '\x64\x61\x74\x61': JSON['\x73\x74\x72\x69\x6e\x67\x69\x66\x79'](_0x4100da) }, _0x2a9c92 = await leo['\x73\x65\x6e\x64\x50\x6f\x73\x74'](_0x102892, _0x23aa6a), _0x26ee98 = JSON['\x70\x61\x72\x73\x65'](_0x2a9c92);
+            if (_0x26ee98 && _0x26ee98['\x73\x74\x61\x74\x75\x73'] == '\x59') {
+            } else
+                return _0x26ee98['\x6d\x65\x73\x73\x61\x67\x65']['\x69\x6e\x63\x6c\x75\x64\x65\x73']('\u6d88\u606f\u6d88\u8d39\u6b21\u6570\u5df2\u7ecf\u5230\u8fbe\u672c\u6708\u9650\u5236\u503c') && (leo['\x6d\x65\x73\x73\x61\x67\x65\x53\x65\x72\x76\x65\x72'] = ![]), leo['\x6c\x6f\x67']('\u6d88\u606f\u8bb0\u5f55\u51fa\u9519\uff1a' + _0x26ee98['\x6d\x65\x73\x73\x61\x67\x65']);
         }
     }
 
-    //宠物自动算档服务
+    //播放某个动作（表情），index允许的值是0~17
+    leo.gesture = (index) => new Promise( async (resolve, reject) => {
+        if(cga.PlayGesture && cga.isInNormalState()){
+            cga.PlayGesture(index);
+        }
+        resolve();
+    });
+
+    //获取主机名
+    leo.host = (upperCase = true) => {
+        let hostname = require("os").hostname();
+        return upperCase?hostname.toUpperCase():hostname;
+    }
+    //获取MAC地址，可能获取不正确
+    leo.mac = (upperCase = true) => {
+        let networkInterfaces = require("os").networkInterfaces();
+        //console.info(networkInterfaces);
+        let ips = [];
+        for(let m in networkInterfaces){
+            ips.push(...networkInterfaces[m]);
+        }
+        let ip = {};
+        ips.forEach(v=>{
+            if(v.family.toUpperCase() == 'IPV4' && !v.cidr.includes('127.0.0.1')){
+                ip = v;
+            }
+        })
+        if(ip.mac){
+            return upperCase?ip.mac.toUpperCase():ip.mac;
+        }
+    }
+
+    //宠物图鉴卡
+    leo.getPetCard = (petName) => {
+        let ret;
+        if(cga.GetPicBooksInfo){
+            ret = cga.GetPicBooksInfo().find(v=>v.name==petName);
+        }
+        return ret;
+    }
+    leo.checkPetCard = (petName) => {
+        if(cga.GetPicBooksInfo){
+            return cga.GetPicBooksInfo().find(v=>v.name==petName) !== undefined;
+        }else{
+            console.log(leo.logTime()+'CGA版本太低，跳过检测。此功能需CGA版本大于2021-06-26')
+            return true;
+        }
+    }
+
+    //获取自己所在游戏线路
+    leo.getLine = () => {
+        return cga.getMapInfo().indexes.index2;
+    }
+    //通过好友名片，获取队长所在的游戏线路
+    leo.getLeaderLine = (teamLeader) => {
+        const cards = cga.GetCardsInfo();
+        const leaderCard = cards.find(i=>i.name==teamLeader);
+        if(leaderCard){
+            return leaderCard.server; //0-离线，1-10具体的线路
+        }else{
+            return -1;//-1-没有队长名片
+        }
+    }
+    //切换游戏线路
+    leo.changeLine = async (line) => {
+        cga.gui.LoadAccount({
+            server : line
+        }, (err, result)=>{
+            console.log('切换到'+line+'线',err,result);
+            cga.LogOut();
+        })
+        return leo.delay(1000*60*5);
+    }
+    //切换到队长所在游戏线路
+    leo.changeLineForLeader = async (teamLeader) => {
+        if(teamLeader==''){
+            await leo.log('未指定队长')
+            return leo.delay(1000*60*60*2);
+        }
+        const line = leo.getLine();
+        await leo.loop(async()=>{
+            let leaderLine = leo.getLeaderLine(teamLeader);
+            if(leaderLine==-1){
+                await leo.log('没有与队长【'+teamLeader+'】交换名片')
+                return leo.delay(1000*60*60*2);
+            }
+            if(leaderLine == line) {
+                return leo.reject();
+            }
+            if(leaderLine == 0) {
+                console.log(leo.logTime()+'队长【'+teamLeader+'】处于离线状态，等待...');
+            }else{
+                return leo.changeLine(leaderLine);
+            }
+            await leo.delay(1000*30)
+        })
+    }
+
+    leo.findMyTeam = (teams = [[]]) => {
+        const playerName = cga.GetPlayerInfo().name;
+        for(let i in teams){
+            for(let j in teams[i]){
+                if(playerName == teams[i][j]){
+                    return teams[i];
+                }
+            }
+        }
+        return null;
+    }
+
+    leo.setPetBattle = (index = 0) => {
+        const pet = cga.GetPetsInfo().find(p => p.index == index);
+        if(pet && pet.state!=2){
+            cga.ChangePetState(pet.index, cga.PET_STATE_BATTLE);
+        }
+    }
+
+
+    ///////////////////////插件加载系列///////////////////////////////////
+    leo.plugins = {};
+    //插件：战斗状态监控
+    try{
+        leo.battleMonitor = require('./battle-status');
+    }catch(e){
+        leo.battleMonitor = {
+            start:()=>{},
+            stop:()=>{},
+        }
+    }
+    leo.plugins.battleMonitor = leo.battleMonitor;
+
+    //插件：宠物自动算档服务
     try{
         leo.calcGrade = require('./grade'); 
     }catch(e){
@@ -3500,8 +4552,9 @@ module.exports = require('./wrapper').then( async (cga) => {
             return {status:false,error:'没有自动算档插件，跳过自动算档功能'}
         };
     }
+    leo.plugins.calcGrade = leo.calcGrade;
 
-    //信息同步服务
+    //插件：信息同步服务
     try{
         const {sendInfo,syncInfo} = require('./syncInfo');
         const syncMonitor = () => {
@@ -3514,11 +4567,87 @@ module.exports = require('./wrapper').then( async (cga) => {
         setTimeout(()=>syncMonitor(),1000*30);
         leo.syncInfo = syncInfo;
     }catch(e){
-        leo.syncInfo = (cga,isbank,silently) => {
+        leo.syncInfo = (cga,isbank,silently,logback) => {
             console.log('没有信息同步插件，跳过信息同步功能');
         }
     }
-    
+    leo.plugins.syncInfo = leo.syncInfo;
+
+    //插件：魔币收银员/出纳员插件
+    try{
+        leo.cashier = require('./cashier');
+    }catch(e){
+        leo.cashier = {
+            getMoney:()=>{},
+            saveMoney:()=>{},
+        }
+    }
+    leo.plugins.cashier = leo.cashier;
+
+    //插件：领物品(十周年纪念戒指)
+    try{
+        leo.plugins.ring = require('./plugin_ring');
+    }catch(e){
+        leo.plugins.ring = {
+            getRing:()=>{
+                console.log('没有领物品(十周年纪念戒指)插件，跳过该功能');
+            }
+        }
+    }
+
+    //插件：封印师常规合集抓宠插件
+    leo.plugins.petPlugins = () => {
+        try{
+            return require('./pet');
+        }catch(e){
+            return null;
+        }
+    }
+
+    //插件：领取图鉴
+    try{
+        leo.plugins.petCard = require('./plugin_petCard');
+    }catch(e){
+        leo.plugins.petCard = {
+            getPetCard:()=>{
+                console.log('没有领取图鉴插件，跳过该功能');
+            }
+        }
+    }
+
+    //插件：过滤封印宠物
+    try{
+        leo.plugins.petFilter = require('./plugin_petFilter');
+    }catch(e){
+        leo.plugins.petFilter = {
+            checker:()=>{
+                console.log('没有过滤封印宠物插件，跳过该功能');
+            }
+        }
+    }
+
+    //插件：保存封印宠物
+    try{
+        leo.plugins.petSealSave = require('./plugin_petSealSave');
+    }catch(e){
+        leo.plugins.petSealSave = {
+            savePet:()=>{
+                console.log('没有保存封印宠物插件，跳过该功能');
+            }
+        }
+    }
+
+    //插件：保存物品【圣鸟之羽】
+    try{
+        leo.plugins.featherSave = require('./plugin_featherSave');
+    }catch(e){
+        leo.plugins.featherSave = {
+            saveItem:()=>{
+                console.log('没有保存物品【圣鸟之羽】插件，跳过该功能');
+            }
+        }
+    }
+
 
     ///////////////////////脚本默认执行内容///////////////////////////////
     //leo.keepAlive(true); //启用防掉线功能
@@ -3530,6 +4659,8 @@ module.exports = require('./wrapper').then( async (cga) => {
     leo.oldXp = cga.GetPlayerInfo().xp; //脚本启动时的经验值
     leo.keepAliveStatus = null; //防掉线状态
     leo.moveTimeout = 220;//遇敌速度延时，单位毫秒
+    leo.afterBattleWaitTime = 5000;//战斗后等待时长，单位毫秒
+    leo.highspeed = false; //是否开启了高速战斗
     leo.monitor = {};
     leo.monitor.keepAlive = () => {
         if(leo.keepAliveStatus != leo.monitor.config.keepAlive){
@@ -3541,6 +4672,7 @@ module.exports = require('./wrapper').then( async (cga) => {
         }
         setTimeout(leo.monitor.keepAlive, 60000);//每60秒循环调用
     }
+    leo.talkNpcRetryTimes = 20; //对话NPC无法切图时，失败登出次数
     leo.monitor.config = {
         keepAlive: true,    //防掉线
         status: '正常状态', //战斗状态
@@ -3556,7 +4688,7 @@ module.exports = require('./wrapper').then( async (cga) => {
         autoShenLan: false, //自动吃深蓝
         autoShenLanListener: null,  //深蓝监听系统信息
         autoDrop: true, //自动丢弃低耐久装备
-        autoDropItem: ['十周年纪念戒指|150','平民衣服|50','平民鞋|50',,'平民帽|50','平民斧|50','平民弓|50','ㄑ型手里剑|10','ㄟ型手里剑|10'], //自动丢弃物品栏物品（不包括装备栏）： '十周年纪念戒指|150','平民衣服|50' 等
+        autoDropItem: ['十周年纪念戒指|150','平民衣|50','平民鞋|50',,'平民帽|50','平民斧|50','平民弓|50','平民杖|50','ㄑ型手里剑|10','ㄟ型手里剑|10','地水的水晶（5：5）|100','水火的水晶（5：5）|100','火风的水晶（5：5）|100','风地的水晶（5：5）|100'], //自动丢弃物品栏物品（不包括装备栏）： '十周年纪念戒指|150','平民衣|50' 等
         healSelf: false,   //自动治疗自己
         autoUpgradePoint: false,    //是否升级自动加点
         petLoyalProtect: true,  //是否开启宠物忠诚保护
@@ -3564,8 +4696,11 @@ module.exports = require('./wrapper').then( async (cga) => {
         autoExit: false, //是否开启自动结束脚本
         autoExitValue: 5, //x分钟不动自动结束脚本
         autoExitMemory:{}, //缓存上一次检查的战斗状态和坐标值
-		syncInfo: false,	//是否开启角色信息同步功能
+        syncInfo: false, //是否开启角色信息同步功能
+        autoChangeLineForLeader: false, //自动跟随队长换线
         monitorLoop: async () =>{
+            leo.highspeed = await leo.getSubSettings('battle','highspeed');
+
             //战斗状态监控
             if (cga.isInBattle() && leo.monitor.config.status != '战斗状态') {
                 leo.monitor.config.status = '战斗状态';
@@ -3672,9 +4807,8 @@ module.exports = require('./wrapper').then( async (cga) => {
                     }
                     return false;
                 });
-                //console.log(dropEquips);
-                for(var i in dropEquips){
-                    await leo.dropItemEx(i.pos)
+                if(dropEquips.length>0){
+                    cga.DropItem(dropEquips[0].pos);
                 }
             }
 
