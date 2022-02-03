@@ -62,7 +62,7 @@
     ],
     "player": {
         "autosupply": true,
-        "movespd": 129,
+        "movespd": 100,
         "noswitchanim": true,
         "workacc": 100,
         "workdelay": 1500

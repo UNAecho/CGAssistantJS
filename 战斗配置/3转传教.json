@@ -223,7 +223,7 @@
     ],
     "player": {
         "autosupply": true,
-        "movespd": 129,
+        "movespd": 100,
         "noswitchanim": true,
         "petfood": false,
         "petfoodat": "",
