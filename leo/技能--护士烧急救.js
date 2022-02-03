@@ -1,15 +1,8 @@
-<<<<<<< HEAD
-require('./common').then(cga=>{
+require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 
-	// 是否刷急救双百
-	var forgetflag = true
-
-	// 扣血道具
-=======
-require(process.env.CGA_DIR_PATH+'/leo').then(async (cga) => {
 	//leo.baseInfoPrint();
 	leo.say('红叶の护士烧急救脚本，启动~');
->>>>>>> f3f2aaaf9a644efcbe736bb0620ce13698c016f7
+
 	var itemName = '血之耳环的仿造品'
 	var playerinfo = cga.GetPlayerInfo();
 
