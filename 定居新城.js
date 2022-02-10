@@ -31,6 +31,6 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	}
 	else
 	{
-		throw new Error('无法从'+map+'启动脚本，只能从法兰城、里堡、阿凯鲁法、哥拉尔启动！');
+		cga.travel.falan.toCity('艾尔莎岛', next);
 	}
 });

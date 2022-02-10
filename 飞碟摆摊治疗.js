@@ -5,15 +5,6 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 
 	// 如需私人治疗，请自定义名字中的特殊字符
 	var namefilter = "UNA"
-	
-	if(cga.GetMapName() != '里谢里雅堡')
-	{
-		cga.travel.falan.toStone('C', (r)=>{
-			originalPos = cga.GetMapXY();
-			originalDir = cga.GetPlayerInfo().direction;
-		});
-	}
-	
 	var skill = cga.findPlayerSkill('治疗');
 	
 	if(!skill)
@@ -22,6 +13,14 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	}
 	
 	var loop = ()=>{
+
+		if(cga.GetMapName() != '里谢里雅堡')
+		{
+			cga.travel.falan.toStone('C', (r)=>{
+				originalPos = cga.GetMapXY();
+				originalDir = cga.GetPlayerInfo().direction;
+			});
+		}
 		
 		if(skill)
 		{
