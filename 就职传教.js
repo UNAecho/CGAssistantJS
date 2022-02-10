@@ -1,3 +1,4 @@
+var fs = require('fs');
 var cga = require('./cgaapi')(function () {
 
 	var dialogHandler = (err, dlg) => {
@@ -41,7 +42,17 @@ var cga = require('./cgaapi')(function () {
 							} else {
 								console.log('技能学习完毕')
 								if (cb) {
-									cb(true)
+									// 原来是完成任务，现在耦合一个跳转学技能的脚本，因为多数情况下，就职传教都是角色首次创建时，才使用。
+									// cb(true)
+									global.cga = cga
+									var rootdir = cga.getrootdir()
+									var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+									var body = {
+										path : rootdir + "\\交通脚本\\学习必要技能.js",
+									}
+									var settingpath = rootdir +'\\战斗配置\\生产赶路.json';
+									var setting = JSON.parse(fs.readFileSync(settingpath))
+									scriptMode.call_ohter_script(body,setting)
 								}
 							}
 						});

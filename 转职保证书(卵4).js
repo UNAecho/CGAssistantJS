@@ -1,4 +1,4 @@
-
+var fs = require('fs');
 var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 
 	var playerinfo = cga.GetPlayerInfo();
