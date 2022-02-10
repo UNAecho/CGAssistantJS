@@ -28,6 +28,8 @@ var getSupplyObject = (map, mapindex)=>{
 // 队伍最低和最高等级
 var minlv = null
 var maxlv = null
+// 界定是否是大号的阈值，大于则是，否则不是
+var nannylv = 150
 
 //卖石
 var sellArray = [sellCastle];
@@ -319,8 +321,8 @@ var playerThink = ()=>{
 
 	if(cga.isTeamLeaderEx())
 	{	
-		console.log('ctx.result = ' + ctx.result)
-		console.log('playerThinkInterrupt.hasInterrupt() = ' + playerThinkInterrupt.hasInterrupt())
+		// console.log('ctx.result = ' + ctx.result)
+		// console.log('playerThinkInterrupt.hasInterrupt() = ' + playerThinkInterrupt.hasInterrupt())
 		var interruptFromMoveThink = false;
 		
 		if(ctx.result == null && playerThinkInterrupt.hasInterrupt())
@@ -484,7 +486,8 @@ var minmaxlv= (teamplayers)=>{
 		minlv = teamplayers[0].level
 		maxlv = teamplayers[0].level
 	}else{
-		minlv = playerinfo.level
+		minlv = cga.GetPlayerInfo().playerinfo.level
+		console.log('没队员，自己等级作为最小等级 : ' + minlv)
 	}
 	for (i = 0 ; i< teamplayers.length ; i++){
 		minlv = minlv < teamplayers[i].level ? minlv : teamplayers[i].level
@@ -496,7 +499,7 @@ var minmaxlv= (teamplayers)=>{
 }
 var getMazeEntrance = (cb)=>{
 	console.log('正在下载地图')
-	cga.downloadMapEx(260, 260+24, 133, 133+24*2, ()=>{
+	cga.downloadMap(()=>{
 		console.log('地图已下载完成')
 		
 		var objs = cga.getMapObjects();
@@ -546,7 +549,7 @@ var chooseArea = (cb)=>{
 					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 1
 					// 没有大号带就打刀鸡
-					if(maxlv <= 100)
+					if(maxlv <= nannylv)
 					thisobj.battleArea = battleAreaArray[2];
 				}
 				//诅咒4层怪等级29-34
@@ -554,14 +557,14 @@ var chooseArea = (cb)=>{
 					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 4
 					// 没有大号带就打龙骨
-					if(maxlv <= 100)
+					if(maxlv <= nannylv)
 					thisobj.battleArea = battleAreaArray[3];
 				}//诅咒5层怪等级31-36
 				else if(minlv >=31 && minlv < 36){
 					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 5
 					// 没有大号带就打黄金龙骨
-					if(maxlv <= 100){
+					if(maxlv <= nannylv){
 						thisobj.battleArea = battleAreaArray[4];
 						global.battleAreaName = battleAreaArray[4].name
 					}
@@ -571,14 +574,14 @@ var chooseArea = (cb)=>{
 					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 6
 					// 没有大号带就打黄金龙骨
-					if(maxlv <= 100)
+					if(maxlv <= nannylv)
 					thisobj.battleArea = battleAreaArray[4];
 				}//诅咒7层怪等级39-45
 				else if(minlv >=40 && minlv < 44){
 					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 7
 					// 没有大号带就打银狮
-					if(maxlv <= 100){
+					if(maxlv <= nannylv){
 						thisobj.battleArea = battleAreaArray[5];
 						global.battleAreaName = battleAreaArray[5].name
 					}
@@ -587,7 +590,7 @@ var chooseArea = (cb)=>{
 					thisobj.battleArea = battleAreaArray[6];
 					thisobj.layerLevel = 8
 					// 没有大号带就打银狮
-					if(maxlv <= 100)
+					if(maxlv <= nannylv)
 					thisobj.battleArea = battleAreaArray[5];
 				}//回廊
 				else if(minlv >=50 && minlv < 60){
