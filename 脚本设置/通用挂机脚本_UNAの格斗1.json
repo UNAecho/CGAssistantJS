@@ -1,1 +1,34 @@
-{"mainPlugin":"自动1-50","subPlugins":["受伤宠物医院治疗","受伤飞碟治疗","回补提醒","换水晶","掉魂自动招魂","监听回补","自动加点","自动存取魔币","队员卖石","说话防掉线"],"supplyMode":2,"teamMode":0,"teammates":["UNAの格斗1","UNAの传教士","UNAの厨师","UNAの药剂","UNAの格斗2"],"battleArea":0,"minHp":"25%","minMp":"10%","buyCrystal":"水火的水晶（5：5）","maxEndurance":200,"maxStrength":300,"maxDefense":0,"maxAgility":80,"maxMagical":0}
+{
+    "mainPlugin": "自动1-50",
+    "subPlugins": [
+        "受伤宠物医院治疗",
+        "受伤飞碟治疗",
+        "回补提醒",
+        "换水晶",
+        "掉魂自动招魂",
+        "监听回补",
+        "自动加点",
+        "自动存取魔币",
+        "队员卖石",
+        "说话防掉线"
+    ],
+    "supplyMode": 2,
+    "teamMode": 0,
+    "teammates": [
+        "UNAの传教士",
+        "UNAの格斗1",
+        "UNAの厨师",
+        "UNAの药剂",
+        "UNAの格斗2"
+    ],
+    "battleArea": 0,
+    "minHp": "25%",
+    "minMp": "10%",
+    "buyCrystal": "水火的水晶（5：5）",
+    "maxEndurance": 200,
+    "maxStrength": 300,
+    "maxDefense": 0,
+    "maxAgility": 80,
+    "maxMagical": 0,
+    "petpoint": 1
+}

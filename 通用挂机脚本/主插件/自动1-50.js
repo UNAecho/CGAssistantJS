@@ -369,12 +369,13 @@ var playerThink = ()=>{
 				return false;
 			}
 			else
-			{	console.log('interruptFromMoveThink..else!!!!!!!')
+			{	
+				// console.log('interruptFromMoveThink..else!!!!!!!')
 				moveThinkInterrupt.requestInterrupt(()=>{
 					if(cga.isInNormalState()){
-						console.log('index3 = ' + cga.GetMapIndex().index3)
-						console.log('cga.GetMapXY().x = ' + cga.GetMapXY().x)
-						console.log('cga.GetMapXY().y = ' + cga.GetMapXY().y)
+						// console.log('index3 = ' + cga.GetMapIndex().index3)
+						// console.log('cga.GetMapXY().x = ' + cga.GetMapXY().x)
+						// console.log('cga.GetMapXY().y = ' + cga.GetMapXY().y)
 						// 如果由于进回廊导致的队伍解散，强制更改思考逻辑，改为不登出，去回廊练级
 						if(cga.GetMapIndex().index3 == 27213 && cga.GetMapXY().y ==20){
 							console.log('队长去回廊等待队员')
@@ -407,7 +408,7 @@ var playerThink = ()=>{
 									});
 								});	
 						}else{// 正常playerthink逻辑
-							console.log('正常登出！！！！！！')
+							// console.log('正常登出！！！！！！')
 							logbackEx.func(loop);
 							return true;
 						}
@@ -420,7 +421,8 @@ var playerThink = ()=>{
 		}
 	} else {
 		if( ctx.result == 'logback_forced' )
-		{	console.log('logback_forced!!!!!!!!!!!!!!!!!!!!')
+		{	
+			// console.log('logback_forced!!!!!!!!!!!!!!!!!!!!')
 			logbackEx.func(loop);
 			return false;
 		}

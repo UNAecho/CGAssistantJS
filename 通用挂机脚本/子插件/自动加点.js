@@ -38,12 +38,32 @@ var thisobj = {
 			pair.value = pair.value;
 			pair.translated = true;
 			return true;
+		}		
+		if(pair.field == 'petpoint'){
+			pair.field = '出战宠物加点方案';
+			pair.value = pair.value;
+			pair.translated = true;
+			return true;
 		}
 		
 		return false;
 	},
 	think : (ctx)=>{
-		if(ctx.playerinfo.detail.points_remain == 0 || cga.isInBattle()){
+		// 战斗时无法加点
+		if(cga.isInBattle()){
+			return
+		}
+		// 宠物加点
+		if(thisobj.petpoint != undefined && thisobj.petpoint > 0 && ctx.petinfo !=undefined && ctx.petinfo !=null && ctx.petinfo.detail.points_remain > 0){
+			if (thisobj.petpoint <6){
+				// 减1是因为cga的API为0-体力，1-力量，2-防御，3-敏捷，4-魔法
+				cga.UpgradePet(ctx.petinfo.index,thisobj.petpoint-1)
+			}else{
+				console.log('宠物加点属性有误,仅可输入1体力2力量3强度4敏捷5魔法这五种数字。')
+			}
+		}
+		// 人物加点
+		if(ctx.playerinfo.detail.points_remain == 0){
 			return;
 		}
 		var maxPoint = 15 + (ctx.playerinfo.level - 1) * 2
@@ -54,7 +74,7 @@ var thisobj = {
 				case 0:
 					var loss = thisobj.maxEndurance - ctx.playerinfo.detail.points_endurance
 					// console.log('当前[体力]('+ctx.playerinfo.detail.points_endurance+')与目标值('+thisobj.maxEndurance+')残差为:['+loss+']')
-					if(loss!=0 && loss <= minLoss){
+					if(loss!=0 && loss <= minLoss && ctx.playerinfo.detail.points_endurance < maxPoint){
 						targetIndex = i
 						minLoss = loss
 						// console.log('准备加['+targetIndex+']点数')
@@ -63,7 +83,7 @@ var thisobj = {
 				case 1:
 					var loss = thisobj.maxStrength - ctx.playerinfo.detail.points_strength
 					// console.log('当前[力量]('+ctx.playerinfo.detail.points_strength+')与目标值('+thisobj.maxStrength+')残差为:['+loss+']')
-					if(loss!=0 && loss <= minLoss ){
+					if(loss!=0 && loss <= minLoss && ctx.playerinfo.detail.points_strength < maxPoint){
 						targetIndex = i
 						minLoss = loss
 						// console.log('准备加['+targetIndex+']点数')
@@ -72,7 +92,7 @@ var thisobj = {
 				case 2:
 					var loss = thisobj.maxDefense - ctx.playerinfo.detail.points_defense
 					// console.log('当前[强度]('+ctx.playerinfo.detail.points_defense+')与目标值('+thisobj.maxDefense+')残差为:['+loss+']')
-					if(loss!=0 && loss<= minLoss ){
+					if(loss!=0 && loss<= minLoss && ctx.playerinfo.detail.points_defense < maxPoint){
 						targetIndex = i
 						minLoss = loss
 						// console.log('准备加['+targetIndex+']点数')
@@ -81,7 +101,7 @@ var thisobj = {
 				case 3:
 					var loss = thisobj.maxAgility - ctx.playerinfo.detail.points_agility
 					// console.log('当前[敏捷]('+ctx.playerinfo.detail.points_agility+')与目标值('+thisobj.maxAgility+')残差为:['+loss+']')
-					if(loss!=0 && loss <= minLoss ){
+					if(loss!=0 && loss <= minLoss && ctx.playerinfo.detail.points_agility < maxPoint){
 						targetIndex = i
 						minLoss = loss
 						// console.log('准备加['+targetIndex+']点数')
@@ -90,7 +110,7 @@ var thisobj = {
 				case 4:
 					var loss = thisobj.maxMagical - ctx.playerinfo.detail.points_magical
 					// console.log('当前[魔法]('+ctx.playerinfo.detail.points_magical+')与目标值('+thisobj.maxMagical+')残差为:['+loss+']')
-					if(loss!=0 && loss <= minLoss ){
+					if(loss!=0 && loss <= minLoss && ctx.playerinfo.detail.points_magical < maxPoint){
 						targetIndex = i
 						minLoss = loss
 						// console.log('准备加['+targetIndex+']点数')
@@ -226,11 +246,30 @@ var thisobj = {
 			return false;
 		}
 
+		if(obj.petpoint != undefined)
+		{
+			if(typeof obj.petpoint == 'string')
+			{
+				configTable.petpoint = obj.petpoint;
+				thisobj.petpoint = parseInt(obj.petpoint);
+			}
+			else
+			{
+				configTable.petpoint = obj.petpoint;
+				thisobj.petpoint = obj.petpoint;
+			}
+		}
+		
+		if(thisobj.petpoint === undefined){
+			console.log('读取配置:宠物加点配置，失败!默认不使用自动宠物加点');
+			configTable.petpoint = 0;
+			thisobj.petpoint = 0;
+		}
 		return true;
 	},
 	inputcb : (cb)=>{
 		var ask = (cb2, name, varName)=>{
-			var sayString = '【UNA自动加点插件】请选择【'+name+'】加点目标数值:';
+			var sayString = '【UNA人物自动加点插件】请选择【'+name+'】加点目标数值:';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val)=>{
 				if (msg.length>0){
@@ -239,7 +278,6 @@ var thisobj = {
 					{
 						configTable['max'+varName] = val;
 						thisobj['max'+varName] = val + '%';
-						
 						var sayString2 = '已选择:['+name+']加到[' + configTable['max'+varName] + ']点为止。';
 						cga.sayLongWords(sayString2, 0, 3, 1);
 						
@@ -257,13 +295,58 @@ var thisobj = {
 
 			});
 		}
-		
+		var askpet = (cb2)=>{
+			var sayString = '【UNA人物自动加点插件】请输入出战宠物加点方案(仅输入数字,不加则输入0),1体力2力量3强度4敏捷5魔法:';
+			cga.sayLongWords(sayString, 0, 3, 1);
+			cga.waitForChatInput((msg, val)=>{
+				if (msg.length>0){
+					var val = parseInt(msg);
+					if(val !== NaN && val >= 0 && val <6)
+					{
+						configTable['petpoint'] = val;
+						thisobj['petpoint'] = val;
+						switch (val) {
+							case 0:
+								cga.sayLongWords('已选择[跳过宠物加点方案],请手动处理', 0, 3, 1);
+								break
+							case 1:
+								cga.sayLongWords('已选择出战宠物升级时加[体力]', 0, 3, 1);
+								break
+							case 2:
+								cga.sayLongWords('已选择出战宠物升级时加[力量]', 0, 3, 1);
+								break
+							case 3:
+								cga.sayLongWords('已选择出战宠物升级时加[强度]', 0, 3, 1);
+								break
+							case 4:
+								cga.sayLongWords('已选择出战宠物升级时加[敏捷]', 0, 3, 1);
+								break
+							case 5:
+								cga.sayLongWords('已选择出战宠物升级时加[魔法]', 0, 3, 1);
+								break
+							default:
+								cga.sayLongWords('异常数字,请检查', 0, 3, 1);
+								break
+						}
+						cb2(null);
+						return false;
+					}else if (val !== NaN && val < 0){
+						cga.sayLongWords("错误:异常范围数据,你是想反向加点吗", 0, 3, 1);
+					}else{
+						console.log("错误:仅可输入数值型数据,如你打算加纯血,输入1");
+					}
+					return true
+				}
+			});
+		}
 		ask(()=>{
 			ask(()=>{
 				ask(()=>{
 					ask(()=>{
 						ask(()=>{
-							cb(null);
+							askpet(()=>{
+								cb(null);
+							});
 						}, '魔法', 'Magical');
 					}, '速度', 'Agility');
 				}, '强度', 'Defense');

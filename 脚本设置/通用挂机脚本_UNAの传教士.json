@@ -15,8 +15,8 @@
     "supplyMode": 2,
     "teamMode": 0,
     "teammates": [
-        "UNAの格斗1",
         "UNAの传教士",
+        "UNAの格斗1",
         "UNAの厨师",
         "UNAの药剂",
         "UNAの格斗2"
@@ -29,5 +29,5 @@
     "maxStrength": 0,
     "maxDefense": 0,
     "maxAgility": 80,
-    "maxMagical": 200
+    "maxMagical": 200,"petpoint":1
 }
