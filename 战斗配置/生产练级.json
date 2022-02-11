@@ -1,6 +1,7 @@
 {
     "battle": {
         "autobattle": true,
+        "beep": false,
         "bossprot": false,
         "delayfrom": 4000,
         "delayto": 4500,
@@ -135,18 +136,10 @@
         "lockcd": false,
         "lv1prot": false,
         "pet2action": false,
-        "playerforceaction": false,
         "r1nodelay": false,
-        "showhpmp": false
+        "waitafterbattle": false
     },
     "chat": {
-        "displayname": true,
-        "displaytime": true,
-        "mychat": true,
-        "npcmsg": true,
-        "playerchat": true,
-        "sysmsg": true,
-        "todayonly": true
     },
     "itemdroplist": [
         "#18047",
@@ -174,7 +167,8 @@
         "#450535",
         "#18194",
         "#14848",
-        "#14885"
+        "#14885",
+        "#17200"
     ],
     "itemidmap": {
     },
@@ -190,7 +184,9 @@
         "隐秘的徽记（风）|20"
     ],
     "player": {
+        "antiafkkick": false,
         "autosupply": true,
+        "gametextui": false,
         "movespd": 100,
         "noswitchanim": true,
         "petfood": false,
