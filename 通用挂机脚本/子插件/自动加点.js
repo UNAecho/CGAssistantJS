@@ -47,28 +47,82 @@ var thisobj = {
 			return;
 		}
 		var maxPoint = 15 + (ctx.playerinfo.level - 1) * 2
+		var targetIndex = -1
+		var minLoss = 999
+		for (i=0;i<5;i++){
+			switch (i) {
+				case 0:
+					var loss = thisobj.maxEndurance - ctx.playerinfo.detail.points_endurance
+					// console.log('当前[体力]('+ctx.playerinfo.detail.points_endurance+')与目标值('+thisobj.maxEndurance+')残差为:['+loss+']')
+					if(loss!=0 && loss <= minLoss){
+						targetIndex = i
+						minLoss = loss
+						// console.log('准备加['+targetIndex+']点数')
+					}
+					break
+				case 1:
+					var loss = thisobj.maxStrength - ctx.playerinfo.detail.points_strength
+					// console.log('当前[力量]('+ctx.playerinfo.detail.points_strength+')与目标值('+thisobj.maxStrength+')残差为:['+loss+']')
+					if(loss!=0 && loss <= minLoss ){
+						targetIndex = i
+						minLoss = loss
+						// console.log('准备加['+targetIndex+']点数')
+					}
+					break
+				case 2:
+					var loss = thisobj.maxDefense - ctx.playerinfo.detail.points_defense
+					// console.log('当前[强度]('+ctx.playerinfo.detail.points_defense+')与目标值('+thisobj.maxDefense+')残差为:['+loss+']')
+					if(loss!=0 && loss<= minLoss ){
+						targetIndex = i
+						minLoss = loss
+						// console.log('准备加['+targetIndex+']点数')
+					}
+					break
+				case 3:
+					var loss = thisobj.maxAgility - ctx.playerinfo.detail.points_agility
+					// console.log('当前[敏捷]('+ctx.playerinfo.detail.points_agility+')与目标值('+thisobj.maxAgility+')残差为:['+loss+']')
+					if(loss!=0 && loss <= minLoss ){
+						targetIndex = i
+						minLoss = loss
+						// console.log('准备加['+targetIndex+']点数')
+					}
+					break
+				case 4:
+					var loss = thisobj.maxMagical - ctx.playerinfo.detail.points_magical
+					// console.log('当前[魔法]('+ctx.playerinfo.detail.points_magical+')与目标值('+thisobj.maxMagical+')残差为:['+loss+']')
+					if(loss!=0 && loss <= minLoss ){
+						targetIndex = i
+						minLoss = loss
+						// console.log('准备加['+targetIndex+']点数')
+					}
+					break
+				default:
+					targetIndex = -1
+					break
+			}
+		}
 
-		if(thisobj.maxEndurance !== undefined && ctx.playerinfo.detail.points_endurance < maxPoint && ctx.playerinfo.detail.points_endurance < thisobj.maxEndurance){
+		if(thisobj.maxEndurance !== undefined && thisobj.Endurance==targetIndex && ctx.playerinfo.detail.points_endurance < maxPoint && ctx.playerinfo.detail.points_endurance < thisobj.maxEndurance){
 			cga.UpgradePlayer(thisobj.Endurance)
 			console.log('增加1点[体力],目标:['+thisobj.maxEndurance+']点,当前等级最高加至['+maxPoint+']点')
 			return;
 		}
-		if(thisobj.maxStrength !== undefined && ctx.playerinfo.detail.points_strength < maxPoint && ctx.playerinfo.detail.points_strength < thisobj.maxStrength){
+		if(thisobj.maxStrength !== undefined && thisobj.Strength==targetIndex && ctx.playerinfo.detail.points_strength < maxPoint && ctx.playerinfo.detail.points_strength < thisobj.maxStrength){
 			cga.UpgradePlayer(thisobj.Strength)
 			console.log('增加1点[力量],目标:['+thisobj.maxStrength+'],当前等级最高加至['+maxPoint+']点')
 			return;
 		}
-		if(thisobj.maxDefense !== undefined && ctx.playerinfo.detail.points_defense < maxPoint && ctx.playerinfo.detail.points_defense < thisobj.maxDefense){
+		if(thisobj.maxDefense !== undefined && thisobj.Defense==targetIndex && ctx.playerinfo.detail.points_defense < maxPoint && ctx.playerinfo.detail.points_defense < thisobj.maxDefense){
 			cga.UpgradePlayer(thisobj.Defense)
 			console.log('增加1点[强度],目标:['+thisobj.maxDefense+'],当前等级最高加至['+maxPoint+']点')
 			return;
 		}
-		if(thisobj.maxAgility !== undefined && ctx.playerinfo.detail.points_agility < maxPoint && ctx.playerinfo.detail.points_agility < thisobj.maxAgility){
+		if(thisobj.maxAgility !== undefined && thisobj.Agility==targetIndex && ctx.playerinfo.detail.points_agility < maxPoint && ctx.playerinfo.detail.points_agility < thisobj.maxAgility){
 			cga.UpgradePlayer(thisobj.Agility)
 			console.log('增加1点[敏捷],目标:['+thisobj.maxAgility+'],当前等级最高加至['+maxPoint+']点')
 			return;
 		}
-		if(thisobj.maxMagical !== undefined && ctx.playerinfo.detail.points_magical < maxPoint && ctx.playerinfo.detail.points_magical < thisobj.maxMagical){
+		if(thisobj.maxMagical !== undefined && thisobj.Magical==targetIndex && ctx.playerinfo.detail.points_magical < maxPoint && ctx.playerinfo.detail.points_magical < thisobj.maxMagical){
 			cga.UpgradePlayer(thisobj.Magical)
 			console.log('增加1点[魔法],目标:['+thisobj.maxMagical+'],当前等级最高加至['+maxPoint+']点')
 			return;
