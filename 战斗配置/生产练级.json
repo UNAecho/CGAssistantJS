@@ -188,7 +188,7 @@
         "autosupply": true,
         "gametextui": false,
         "movespd": 100,
-        "noswitchanim": true,
+        "noswitchanim": false,
         "petfood": false,
         "petfoodat": "",
         "petmed": false,

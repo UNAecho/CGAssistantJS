@@ -150,7 +150,7 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
         doctorName: 'UNAの护士'
     };
     // leo.log('红叶の自动抓【' + petOptions.name + '】自动算档脚本，启动~');
-    var setting = '预设五围是：【' + petOptions.minHp + '/' + petOptions.minMp + '/' + petOptions.minAttack + '/' + petOptions.minDefensive + '/' + petOptions.minAgility + '】，自动扔宠：【' + (petOptions.autoDropPet ? '已启用' : '未启用') + '】';
+    var setting = '预设五围是：【' + petOptions.minHp + '/' + petOptions.minMp + '/' + petOptions.minAttack + '/' + petOptions.minDefensive + '/' + petOptions.minAgility + '】';
     leo.log(setting);
     cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, false); //关闭队聊
     cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false); //关闭组队

@@ -3,7 +3,7 @@ var configTable = global.configTable;
 
 
 // 移动银行名称关键字，注意这个需要在名称开头才行。
-var namefilter = 'UNA'
+var namefilters = ['UNA','砂の']
 // 暗号物品名称
 var ciphername = '瓶子'
 // 暗号物品数量意义，1存，7取
@@ -229,12 +229,16 @@ var thisobj = {
 				
 			}
 			var retry = (cb)=>{
-				console.log('尝试寻找移动银行人物..')
+				// console.log('尝试寻找移动银行人物..')
 				var portablebank = cga.findPlayerUnit((u)=>{
 					// 检测移动银行是否是目标，方法暂时使用名称fliter+坐标
-					if(u.unit_name.indexOf(namefilter) == 0 && u.xpos == waitXY.x && u.ypos == waitXY.y)
-						return true;
-					return false
+					for (var filter in namefilters){
+						if(u.unit_name.indexOf(filter) == 0 && u.xpos == waitXY.x && u.ypos == waitXY.y){
+							console.log('发现移动银行人物:'+ u.unit_name)
+							return true;
+						}
+						return false
+					}
 				});
 				if(portablebank && cga.getTeamPlayers().length == 0){
 					var target = cga.getRandomSpace(portablebank.xpos,portablebank.ypos);

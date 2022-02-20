@@ -4,8 +4,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	
 	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦
 	var teammates = [
+		"UNAの传教士",
 		"UNAの格斗2",
-		"UNAの传教",
 	];
 	
 	// 本次任务自由组队人数

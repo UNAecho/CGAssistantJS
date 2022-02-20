@@ -186,7 +186,7 @@
         "lv1prot": false,
         "pet2action": false,
         "r1nodelay": false,
-        "waitafterbattle": false
+        "waitafterbattle": true
     },
     "chat": {
     },
@@ -234,7 +234,7 @@
         "autosupply": true,
         "gametextui": false,
         "movespd": 100,
-        "noswitchanim": true,
+        "noswitchanim": false,
         "petfood": false,
         "petfoodat": "",
         "petmed": false,

@@ -1,6 +1,7 @@
 {
     "battle": {
         "autobattle": true,
+        "beep": false,
         "bossprot": false,
         "delayfrom": 4000,
         "delayto": 4500,
@@ -154,18 +155,10 @@
         "lockcd": false,
         "lv1prot": false,
         "pet2action": false,
-        "playerforceaction": false,
         "r1nodelay": false,
-        "showhpmp": false
+        "waitafterbattle": true
     },
     "chat": {
-        "displayname": true,
-        "displaytime": true,
-        "mychat": true,
-        "npcmsg": true,
-        "playerchat": true,
-        "sysmsg": true,
-        "todayonly": true
     },
     "itemdroplist": [
         "#18047",
@@ -184,7 +177,9 @@
         "红头盔",
         "#14848",
         "#14942",
-        "#18005"
+        "#18005",
+        "#450536",
+        "#450535"
     ],
     "itemidmap": {
     },
@@ -200,9 +195,19 @@
         "隐秘的徽记（风）|20"
     ],
     "player": {
+        "antiafkkick": false,
         "autosupply": true,
+        "gametextui": false,
         "movespd": 100,
-        "noswitchanim": true,
+        "noswitchanim": false,
+        "petfood": false,
+        "petfoodat": "0",
+        "petmed": false,
+        "petmedat": "0",
+        "usefood": false,
+        "usefoodat": "0",
+        "usemed": false,
+        "usemedat": "0",
         "workacc": 100,
         "workdelay": 6500
     }

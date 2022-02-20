@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "自动1-50",
+    "mainPlugin": "全自动肯吉罗岛练级",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
@@ -25,9 +25,10 @@
     "minHp": "25%",
     "minMp": "10%",
     "buyCrystal": "水火的水晶（5：5）",
-    "maxEndurance": 200,
+    "maxEndurance": 300,
     "maxStrength": 0,
     "maxDefense": 0,
     "maxAgility": 80,
-    "maxMagical": 200,"petpoint":1
+    "maxMagical": 100,"petpoint":1,
+    "sellStore":1,"layerLevel":1
 }

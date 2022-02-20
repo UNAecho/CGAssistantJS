@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "自动1-50",
+    "mainPlugin": "全自动肯吉罗岛练级",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
@@ -29,5 +29,6 @@
     "maxStrength": 300,
     "maxDefense": 0,
     "maxAgility": 80,
-    "maxMagical": 0
+    "maxMagical": 0,
+    "sellStore":1,"layerLevel":1
 }
