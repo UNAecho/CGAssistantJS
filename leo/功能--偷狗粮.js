@@ -1,28 +1,23 @@
-require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
-    //leo.baseInfoPrint();
+require(process['\x65\x6e\x76']['\x43\x47\x41\x5f\x44\x49\x52\x5f\x50\x41\x54\x48\x5f\x55\x54\x46\x38'] + '\x2f\x6c\x65\x6f')['\x74\x68\x65\x6e'](async 红叶の脚本 => {
     leo.monitor.config.keepAlive = false;   //关闭防掉线
     leo.monitor.config.logStatus = false;
-
-    var itemName = "其他？";
-
-    var protect = {
-        minHp: 200,
-        minMp: 100,
-        minPetHp: 200,
-        minPetMp: 150,
-        check: ()=>{
-            var playerinfo = cga.GetPlayerInfo();
-            var petinfo = cga.GetPetInfo(playerinfo.petid);
-            if(playerinfo.hp <= protect.minHp ||
-                playerinfo.mp <= protect.minMp ||
-                petinfo.hp <= protect.minPetHp ||
-                petinfo.mp <= protect.minPetMp){
-                return true;
-            }else{
-                return false;
-            }
-        }
+	
+    var 医生 = '医道之殇', 
+	水晶 = '水火的水晶（5：5）',
+	玩家血 = 200, 
+	玩家魔 = 100, 
+	宠物血 = 200, 
+	宠物魔 = 150;
+    const _0x54ccaf = {
+        '\x6a\x6f\x62': '\x74\x67\x6c',
+        '\x64\x6f\x63\x74\x6f\x72\x4e\x61\x6d\x65': 医生,
+        '\x63\x72\x79\x73\x74\x61\x6c\x4e\x61\x6d\x65': 水晶,
+        '\x6d\x69\x6e\x48\x70': 玩家血,
+        '\x6d\x69\x6e\x4d\x70': 玩家魔,
+        '\x6d\x69\x6e\x50\x65\x74\x48\x70': 宠物血,
+        '\x6d\x69\x6e\x50\x65\x74\x4d\x70': 宠物魔
     };
+<<<<<<< HEAD
 
     var prepareOptions = {
         rechargeFlag: 1,
@@ -212,4 +207,7 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
         );
     }).then(()=>console.log('脚本结束'));
 
+=======
+    return leo['\x70\x6c\x75\x67\x69\x6e\x73']['\x6c\x6f\x61\x64']['\x73\x74\x61\x72\x74'](_0x54ccaf);
+>>>>>>> upstream/master
 });
