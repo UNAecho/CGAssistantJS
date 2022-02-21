@@ -23,7 +23,7 @@
     ],
     "battleArea": 0,
     "minHp": "25%",
-    "minMp": "10%",
+    "minMp": "25%",
     "buyCrystal": "水火的水晶（5：5）",
     "maxEndurance": 200,
     "maxStrength": 0,
