@@ -1,0 +1,1 @@
+info = ["battle","manufactory","collect","store",]
