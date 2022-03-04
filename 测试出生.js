@@ -1,6 +1,30 @@
 var fs = require('fs');
 var cga = require('./cgaapi')(function () {
-
+	// 人物已经默认做完全部乐园之卵任务，继续下一步跳转
+	var jump =()=>{
+		global.cga = cga
+		var rootdir = cga.getrootdir()
+		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+		var body = {
+			path : rootdir + "\\取出生启动金.js",
+		}
+		var settingpath = rootdir +'\\战斗配置\\生产赶路.json';
+		var setting = JSON.parse(fs.readFileSync(settingpath))
+		scriptMode.call_ohter_script(body,setting)
+	}
+	// 人物并未做完乐园之卵，需要删除重建
+	var fail =()=>{
+		global.cga = cga
+		var rootdir = cga.getrootdir()
+		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+		var body = {
+			path : rootdir + "\\取出生启动金.js",
+			autorestart :false,
+		}
+		var settingpath = rootdir +'\\战斗配置\\生产赶路.json';
+		var setting = JSON.parse(fs.readFileSync(settingpath))
+		scriptMode.call_ohter_script(body,setting)
+	}
 	var next = () => {
 		cga.walkList([
 			[141, 105]
@@ -33,16 +57,8 @@ var cga = require('./cgaapi')(function () {
 													return;
 												}
 												console.log('恭喜，角色已经做完全部乐园之卵任务，可以继续培养了')
-												console.log('准备跳转至新建角色准备工作，顺序是【手动分配魔币、宠物】-【就职传教并学补血】-【学习其他必要技能】')
-												global.cga = cga
-												var rootdir = cga.getrootdir()
-												var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
-												var body = {
-													path : rootdir + "\\就职传教.js",
-												}
-												var settingpath = rootdir +'\\战斗配置\\生产赶路.json';
-												var setting = JSON.parse(fs.readFileSync(settingpath))
-												scriptMode.call_ohter_script(body,setting)
+												console.log('准备跳转至新建角色准备工作，顺序是【取出生启动金.js】-【就职传教-全自动流程.js并学补血】-【学习其他必要技能.js】')
+												jump()
 											});
 										});
 									});
@@ -76,18 +92,13 @@ var cga = require('./cgaapi')(function () {
 
 	else if (map == '法兰城' || map == '里谢里雅堡') {
 		cga.travel.falan.toCity('艾尔莎岛', next);
+	}else if (map == '艾尔莎岛') {
+		next()
+	}else if (map == '盖雷布伦森林' && cga.GetMapXY().x ==246 && cga.GetMapXY().y ==76) {
+		fail()
 	}
 	else {
-		// cga.travel.newisland.toStone('X', next)
-		global.cga = cga
-		var rootdir = cga.getrootdir()
-		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
-		var body = {
-			path : rootdir + "\\就职传教.js",
-		}
-		var settingpath = rootdir +'\\战斗配置\\生产赶路.json';
-		var setting = JSON.parse(fs.readFileSync(settingpath))
-		scriptMode.call_ohter_script(body,setting)
+		jump()
 	}
 
 
