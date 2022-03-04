@@ -1,6 +1,7 @@
 {
     "battle": {
         "autobattle": true,
+        "beep": false,
         "bossprot": false,
         "delayfrom": 4000,
         "delayto": 4500,
@@ -26,18 +27,10 @@
         "lockcd": false,
         "lv1prot": false,
         "pet2action": false,
-        "playerforceaction": false,
         "r1nodelay": true,
-        "showhpmp": false
+        "waitafterbattle": false
     },
     "chat": {
-        "displayname": true,
-        "displaytime": true,
-        "mychat": true,
-        "npcmsg": true,
-        "playerchat": true,
-        "sysmsg": true,
-        "todayonly": true
     },
     "itemdroplist": [
         "绿头盔",
@@ -100,9 +93,11 @@
         "海苔|40"
     ],
     "player": {
+        "antiafkkick": false,
         "autosupply": true,
+        "gametextui": false,
         "movespd": 100,
-        "noswitchanim": true,
+        "noswitchanim": false,
         "petfood": false,
         "petfoodat": "",
         "petmed": false,
