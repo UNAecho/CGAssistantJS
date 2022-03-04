@@ -1,5 +1,6 @@
 var Async = require('async');
 var supplyKengiro = require('../公共模块/肯吉罗岛回补');
+var supplyCastle = require('./../公共模块/里堡回补');
 var sellKengiro = require('../公共模块/肯吉罗岛卖石');
 var sellCastle = require('../公共模块/里堡卖石');
 var teamMode = require('../公共模块/组队模式');
@@ -30,9 +31,9 @@ var enemymaxlv = 0
 var hasoutputmaxlvflag = false
 
 // 注意回补模块顺序，先从泛用性低的开始放入数组
-// 比如在矮人城镇练级，判断当前地图是肯吉罗岛之后，回补模块会直接根据（肯吉罗岛）返回去营地回补了，这是不对的。所以要先放矮人回补在前
-// 整合了营地和矮人回补方式，变为一个模块
-var supplyArray = [supplyKengiro];
+// 比如在矮人城镇练级，判断当前地图是肯吉罗岛之后，回补模块会直接根据（肯吉罗岛）返回去营地回补了，这是不对的。所以要先放矮人回补在前将后面回补方式短路
+// supplyArray中，如果前面的回补方式isAvailable()返回false的话，就找下一个回补模块
+var supplyArray = [supplyKengiro,supplyCastle];
 
 var getSupplyObject = (map, mapindex)=>{
 	if(typeof map != 'string')
@@ -474,7 +475,7 @@ var loop = ()=>{
 					});
 				});
 			}
-			
+
 			supplyKengiro.func(()=>{
 				if(thisobj.sellStore == 1){
 					var sellObject = getSellObject(map, mapindex);
@@ -655,7 +656,8 @@ var loop = ()=>{
 	}
 	
 	if(cga.needSupplyInitial())
-	{
+	{	
+		console.log('需要回补..')
 		var supplyObject = getSupplyObject(map, mapindex);
 		if(supplyObject)
 		{

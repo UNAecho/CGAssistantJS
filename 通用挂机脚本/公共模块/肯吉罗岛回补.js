@@ -2,6 +2,7 @@ var supplyModeArray = [
 	{
 		name : '肯吉罗岛全域资深护士回补',
 		func : (cb)=>{
+			console.log('肯吉罗岛全域资深护士回补...')
 			var map = cga.GetMapName();
 			var mapXY = cga.GetMapXY();
 			var mapindex = cga.GetMapIndex().index3;
@@ -57,6 +58,7 @@ var supplyModeArray = [
 	{
 		name: '肯吉罗岛全域普通护士回补',
 		func: (cb)=>{
+			console.log('肯吉罗岛全域普通护士回补...')
 			var map = cga.GetMapName();
 			var mapXY = cga.GetMapXY();
 			var mapindex = cga.GetMapIndex().index3;
@@ -112,6 +114,7 @@ var supplyModeArray = [
 	{
 		name : '登出飞碟回补',
 		func : (cb)=>{
+			console.log('登出飞碟回补...')
 			cga.travel.falan.toCastleHospital(()=>{
 				setTimeout(cb, 5000);
 			});
