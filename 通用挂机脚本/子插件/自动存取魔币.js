@@ -233,12 +233,12 @@ var thisobj = {
 				var portablebank = cga.findPlayerUnit((u)=>{
 					// 检测移动银行是否是目标，方法暂时使用名称fliter+坐标
 					for (var filter in namefilters){
-						if(u.unit_name.indexOf(filter) == 0 && u.xpos == waitXY.x && u.ypos == waitXY.y){
+						if(u.unit_name.indexOf(namefilters[filter]) == 0 && u.xpos == waitXY.x && u.ypos == waitXY.y){
 							console.log('发现移动银行人物:'+ u.unit_name)
 							return true;
 						}
-						return false
 					}
+					return false
 				});
 				if(portablebank && cga.getTeamPlayers().length == 0){
 					var target = cga.getRandomSpace(portablebank.xpos,portablebank.ypos);
@@ -259,11 +259,6 @@ var thisobj = {
 				} else {
 					setTimeout(retry, 1500,cb);
 				}
-			}
-			if(cipher == save){
-	
-			}else{
-	
 			}
 			// 判断是否需要购买暗号物品
 			var item = cga.getInventoryItems().find((it)=>{

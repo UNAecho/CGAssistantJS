@@ -10,6 +10,7 @@ var waitXY = {x:48,y:39}
 // 移动银行最低最高持有金币。少取多存。
 var upperlimit = 500000
 var lowerlimit = 200000
+var newbornlimit = 500
 // 每次给前来提款的人多少金币
 var drawmoney = lowerlimit
 
@@ -24,6 +25,8 @@ var cipherDraw = 7
 // 暗号内容，区分存取动作
 var save = '头目万岁'
 var draw = '魔术'
+// 注意该暗号需要在后面跟上特殊符号一起使用，需要配合[取出生启动金.js]使用
+var newborn = '朵拉'
 
 // 银行里是否有充足金钱
 var enoughmoney = true
@@ -62,6 +65,20 @@ var waitcipher = ()=>{
 			console.log('取钱暗号接头成功')
 			stuffs.gold = drawmoney
 			cga.waitTrade(stuffs, checkParty, (result)=>{
+				if(result && result.success == true){
+					console.log('已从【'+player.name+'】处收取存款')
+				}else if(result && result.success == false){
+					console.log('交易中止，已被取消或包满')
+				}
+				// 不管成功与否，都禁止再次交易。由对方再说出暗号才可继续交易
+				cga.EnableFlags(cga.ENABLE_FLAG_TRADE, false);
+			});
+		}
+		
+		if(msg.indexOf(newborn) >= 0 && msg.charAt(msg.length - 1) == '$'){
+			console.log('出生学技能扶持暗号街头成功')
+			stuffs.gold = newbornlimit
+			cga.waitTrade(stuffs, null, (result)=>{
 				if(result && result.success == true){
 					console.log('已从【'+player.name+'】处收取存款')
 				}else if(result && result.success == false){
