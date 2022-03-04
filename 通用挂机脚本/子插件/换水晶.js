@@ -21,7 +21,6 @@ var buyArray = [
 ]
 
 const repairFilter = (eq) => {
-	const durability = cga.getEquipEndurance(eq);
 	if (eq.type == 22) {
 		const durability = cga.getEquipEndurance(eq);
 		return durability && durability[0] < 150;
@@ -32,6 +31,14 @@ const repairFilter = (eq) => {
 const hasFilter = (eq) => {
 	if (eq.type == 22) {
 		return true;
+	}
+	return false;
+}
+
+const hasrepairedFilter = (eq) => {
+	if (eq.type == 22) {
+		const durability = cga.getEquipEndurance(eq);
+		return durability && durability[0] == durability[1];
 	}
 	return false;
 }
@@ -49,11 +56,16 @@ const putdownEquipments = (cb)=>{
 		setTimeout(putdownEquipments, 1000, cb);
 		return;
 	}
+	cb(null)
 	return false;
 }
 
 const putupEquipments = (buyCrystal, cb)=>{
-	var currentEquip = cga.getEquipItems();
+	var equipCrystal = cga.getEquipItems().filter(hasrepairedFilter);
+	if(equipCrystal.length){
+		cb(null)
+		return;
+	}
 	var item = cga.getInventoryItems().find((eq)=>{
 		
 		//必须满耐
@@ -67,13 +79,15 @@ const putupEquipments = (buyCrystal, cb)=>{
 
 		return false;
 	});
-	
+	// 此处注意，原版代码在设计上有bug。
+	// 因为是遍历检查是否有水晶可以装备，所以在身上有多个满足条件的水晶时，会无限反复装备。
+	// 修复方式为在方法之初添加cga.getEquipItems().filter(hasrepairedFilter);来验证是否已经装备好了新水晶
 	if(item != undefined){
 		cga.UseItem(item.pos)
+		console.log('开始装备')
 		setTimeout(putupEquipments, 500, buyCrystal, cb);
 		return;
 	}
-	
 	setTimeout(cb, 1000);
 }
 
@@ -101,7 +115,8 @@ const repairEquipments = (buyCrystal, cb)=>{
 			
 			cga.BuyNPCStore([{index: buyitem.index, count:1}]);
 			cga.AsyncWaitNPCDialog((err, dlg)=>{
-				if(dlg && dlg.message.indexOf('谢谢') >= 0){					
+				if(dlg && dlg.message.indexOf('谢谢') >= 0){		
+					console.log('购买完成')			
 					cb(null);
 					return;
 				}
@@ -120,11 +135,13 @@ var thisobj = {
 		var anyitems = cga.getEquipItems().filter(hasFilter);
 		var items = cga.getEquipItems().filter(repairFilter);
 		if(!items.length && anyitems.length){
+			console.log('身上有水晶，并且不需要更换')
 			cb(null);
 			return;
 		}
 
 		if(cga.GetPlayerInfo().gold < 600){
+			console.log('没钱了，无法换水晶。注意身上资金！')
 			cb(null);
 			return;
 		}
@@ -135,6 +152,7 @@ var thisobj = {
 			return;
 		}
 
+		console.log('水晶状态异常，需要更换')
 		var buy = (cb)=>{
 			putdownEquipments(()=>{
 				repairEquipments(thisobj.buyCrystal, ()=>{
