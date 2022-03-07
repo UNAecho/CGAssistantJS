@@ -25,6 +25,7 @@ var thisobj = {
 		if(thisobj.minHpPercent !== undefined)
 		{
 			if(ctx.playerinfo.hp < ctx.playerinfo.maxhp * thisobj.minHpPercent / 100 && curTime >= thisobj.muteUntil){
+				console.log(new Date().toLocaleString())
 				cga.SayWords('人物血量不够，需要回补!', 0, 3, 1);
 				thisobj.muteUntil = curTime + 1000 * thisobj.mute;
 				ctx.result = 'supply';
@@ -32,6 +33,7 @@ var thisobj = {
 				return;
 			}
 			if(ctx.petinfo != null && ctx.petinfo.hp < ctx.petinfo.maxhp * thisobj.minHpPercent / 100 && curTime >= thisobj.muteUntil){
+				console.log(new Date().toLocaleString())
 				cga.SayWords('宠物血量不够，需要回补!', 0, 3, 1);
 				thisobj.muteUntil = curTime + 1000 * thisobj.mute;
 				ctx.result = 'supply';

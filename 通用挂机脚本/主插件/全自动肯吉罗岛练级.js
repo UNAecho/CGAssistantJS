@@ -444,7 +444,7 @@ var loop = ()=>{
 	var mapXY = cga.GetMapXY();
 
 	var isleader = cga.isTeamLeaderEx();
-	// console.log('ctx.result = '  + ctx.result)
+	console.log('loop...............')
 	if(isleader && teamMode.is_enough_teammates()){
 
 		// 判断练级地点

@@ -1,0 +1,22 @@
+本文件保存一些经典的快速创建角色造型
+
+// 脚本参数参考
+-autocreatechara 自动创建人物打勾
+
+-createcharaname=自动创建的人物名称（最长16个字符 or 8个中文汉字）
+
+-createcharachara=自动创建的人物类型（1~28）
+
+-createcharaeye=自动创建的人物眼睛类型（1~5）
+
+-createcharamouth=自动创建的人物嘴巴类型（1~5）
+
+-createcharacolor=自动创建的人物颜色（1~4）
+
+-createcharapoints=自动创建的人物初始点数（必须是类似“0,15,0,15,0”这样的格式，按血攻防敏魔的顺序来填写）
+
+-createcharaelements=自动创建的人物初始水晶（必须是类似“0,0,5,5”这样的格式，按地水火风的顺序来填写）
+
+
+// 黄色头发，辛
+-createcharachara=3 -createcharacolor=2
