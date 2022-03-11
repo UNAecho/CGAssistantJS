@@ -246,6 +246,12 @@ var thisobj = {
 			return false;
 		}
 
+		if(thisobj.maxEndurance + thisobj.maxStrength + thisobj.maxDefense + thisobj.maxAgility + thisobj.maxMagical > 666){
+			console.log('【警告】：输入的加点配置大于人物可获得的最大点数:【1*30+159*4=666】点，单个人物属性最高【333】点')
+		}else if(thisobj.maxEndurance + thisobj.maxStrength + thisobj.maxDefense + thisobj.maxAgility + thisobj.maxMagical < 0){
+			console.error('【错误】：负数加点不可取')
+		}
+
 		if(obj.petpoint != undefined)
 		{
 			if(typeof obj.petpoint == 'string')
@@ -284,11 +290,11 @@ var thisobj = {
 						cb2(null);
 						return false;
 					}else if (val !== NaN && val > 333){
-						cga.sayLongWords("错误:异常范围数据，人物单一属性最高加到333点，别贪", 0, 3, 1);
+						cga.sayLongWords("错误:异常范围数据，人物单一属性最高加到333点", 0, 3, 1);
 					}else if (val !== NaN && val < 0){
-						cga.sayLongWords("错误:异常范围数据，你是想反向加点吗", 0, 3, 1);
+						cga.sayLongWords("错误:异常范围数据，反向加点不可取", 0, 3, 1);
 					}else{
-						console.log("错误:仅可输入数值型数据，如你打算给保姆弓加100点血，输入[100]");
+						console.log("错误:仅可输入数值型数据，如你打算给保姆弓加100点血，输入100");
 					}
 					return true
 				}
