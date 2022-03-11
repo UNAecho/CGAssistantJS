@@ -5920,5 +5920,25 @@ module.exports = function(callback){
 		return false
 	}
 
+    cga.getTimeRange = ()=>{
+        var stages = ['黎明','白天','黄昏','夜晚'];
+        var sysTime = cga.GetSysTime();
+        if(!sysTime){
+            return stages[1];
+        }
+        console.log('当前游戏内时间:'+sysTime.hours+':'+sysTime.mins+':'+sysTime.secs);
+        if(sysTime.hours < 4){
+            return stages[3];
+        }else if(sysTime.hours <= 6){
+            return stages[0];
+        }else if(sysTime.hours < 16){
+            return stages[1];
+        }else if(sysTime.hours <= 18){
+            return stages[2];
+        }else{
+            return stages[3];
+        }
+    }
+
 	return cga;
 }
