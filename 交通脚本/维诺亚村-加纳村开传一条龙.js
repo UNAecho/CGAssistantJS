@@ -2,17 +2,66 @@ var cga = require('../cgaapi')(function(){
 
 	var playerinfo = cga.GetPlayerInfo();
 	
-	var teammates = [];
+	var teammates = [
+        "UNAの格斗2",
+        "UNAの传教士",
+        "UNAの格斗1",
+        "UNAの厨师",
+        "UNAの药剂",
+	];
 	
 	var teamplayers = cga.getTeamPlayers();
 
-	for(var i in teamplayers)
-		teammates[i] = teamplayers[i].name;
+	// for(var i in teamplayers)
+	// 	teammates[i] = teamplayers[i].name;
 	
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
 	
 	var task = cga.task.Task('维诺亚-加纳开传送一条龙', [
 	{//0
+		intro: '0.队员集合',
+		workFunc: function(cb2){
+			var gather = ()=>{
+					if(cga.isTeamLeader){
+						cga.WalkTo(140, 106);
+						cga.waitTeammates(teammates, (r)=>{
+							if(r){
+								cga.travel.falan.toStone('C', (r)=>{
+									cga.walkList([
+										[34, 89],
+										[34, 88],
+										[34, 89],
+										[34, 88],
+										[34, 89],
+									], (r)=>{
+										cga.TurnTo(36, 87);
+										setTimeout(()=>{
+											cb2(true)
+										}, 3500);
+									});
+								});	
+								return;
+							}
+							setTimeout(gather, 1000);
+						});
+			
+					} else {
+						cga.addTeammate(teammates[0], (r)=>{
+							if(r){
+								cb2(true)
+								return;
+							}
+							setTimeout(gather, 1000);
+						});
+					}
+			}
+			// 入口
+			cga.travel.newisland.toStone('X', ()=>{
+				gather()
+			})
+		}
+	},
+	{//1
 		intro: '1.先去维诺亚村开传送',
 		workFunc: function(cb2){
 			//队员进入维诺亚洞穴，找队长组队
@@ -74,6 +123,7 @@ var cga = require('../cgaapi')(function(){
 					[4,4],
 					[4,3],
 					], ()=>{
+						cga.TurnTo(5, 4);
 						setTimeout(()=>{
 							cga.SayWords('1', 0, 3, 1);						
 						}, 1500);
@@ -82,8 +132,7 @@ var cga = require('../cgaapi')(function(){
 						});
 					
 			}
-
-			// 程序第一步入口
+			// 本步骤入口
 			if(cga.isTeamLeader){
 				var settle = ()=>{
 					if(cga.GetMapName() != '法兰城'){
@@ -146,7 +195,7 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//1
+	{//2
 		intro: '2.过海底',
 		workFunc: function(cb2){
 
@@ -196,7 +245,7 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//2 
+	{//3
 		intro: '3.去奇力村开传送',
 		workFunc: function(cb2){
 			var leader_go_1 = ()=>{
@@ -246,7 +295,7 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//3
+	{//4
 		intro: '4.在奇力村补给，并过洪恩大风洞（角笛大风穴）',
 		workFunc: function(cb2){
 			var leader_go_1 = ()=>{
@@ -286,7 +335,7 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//4
+	{//5
 		intro: '5.出了洪恩大风洞之后，去加纳村开传送。',
 		workFunc: function(cb2){
 			var leader_go_1 = ()=>{
@@ -332,6 +381,20 @@ var cga = require('../cgaapi')(function(){
 			} else {
 				cga.waitForLocation({mapname : '加纳村的传送点',leaveteam : false}, teammates_go_1);
 			}
+		}
+	},
+	{//6
+		intro: '6.加纳村开完传送，切换至杰诺瓦-蒂娜-阿巴尼斯一条龙',
+		workFunc: function(cb2){
+			// global.cga是给【公共模块\\跳转其它脚本】使用的
+			global.cga = cga
+			var rootdir = cga.getrootdir()
+			var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+			var body = {
+				path : rootdir + "\\交通脚本\\杰诺瓦镇-蒂娜村-阿巴尼斯村开传一条龙.js",
+			}
+			scriptMode.call_ohter_script(body)
+			cb2(true);
 		}
 	},
 	],

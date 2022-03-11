@@ -283,7 +283,7 @@ var thisobj = {
 					if(val !== NaN && val >= 0 && val <= 333)
 					{
 						configTable['max'+varName] = val;
-						thisobj['max'+varName] = val + '%';
+						thisobj['max'+varName] = val;
 						var sayString2 = '已选择:['+name+']加到[' + configTable['max'+varName] + ']点为止。';
 						cga.sayLongWords(sayString2, 0, 3, 1);
 						

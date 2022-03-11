@@ -1,11 +1,17 @@
 var cga = require('../cgaapi')(function(){
 	//队员信息
 	var playerinfo = cga.GetPlayerInfo();
-	var teammates = [];
+	var teammates = [
+        "UNAの格斗2",
+        "UNAの传教士",
+        "UNAの格斗1",
+        "UNAの厨师",
+        "UNAの药剂",
+	];
 	var teamplayers = cga.getTeamPlayers();
 
-	for(var i in teamplayers)
-		teammates[i] = teamplayers[i].name;
+	// for(var i in teamplayers)
+	// 	teammates[i] = teamplayers[i].name;
 	
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
 
@@ -36,9 +42,16 @@ var cga = require('../cgaapi')(function(){
 						});
 					}
 			}
-			cga.travel.newisland.toStone('X', ()=>{
-				gather()
-			})
+			// 如果脚本已经跑完，到了阿巴尼斯传送点。这时如果自动重启脚本，会又走一遍流程，这里卡住，防止循环
+			if (cga.GetMapIndex().index3 == 4399){
+				while (true){
+					
+				}
+			}else{
+				cga.travel.newisland.toStone('X', ()=>{
+					gather()
+				})
+			}
 		}
 	},
 	{//1

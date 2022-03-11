@@ -22,7 +22,7 @@ var cga = require('../cgaapi')(function(){
 	var loadplayerconfig = () =>{
 		console.log('【注意】即将长途跋涉，已调整为【逃跑】【100%移动速度】，防止人物阵亡过多和移速过快掉线')
 		var rootdir = cga.getrootdir()
-		var settingpath = rootdir +'\\生产赶路.json';
+		var settingpath = rootdir +'\\战斗配置\\生产赶路.json';
 		var setting = JSON.parse(fs.readFileSync(settingpath))
 		cga.gui.LoadSettings(setting,(err, result)=>{})
 	}
@@ -275,7 +275,7 @@ var cga = require('../cgaapi')(function(){
 		function(){
 
 				if(category == '物理系' || category == '魔法系' || category == '魔物系'){
-					if(cga.findPlayerSkill('气绝回复')){
+					if(cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化') && cga.findPlayerSkill('气绝回复')){
 						return true
 					}else{
 						return false
@@ -287,7 +287,7 @@ var cga = require('../cgaapi')(function(){
 		function(){
 
 				if(category == '物理系' || category == '魔法系' || category == '魔物系'){
-					if(cga.findPlayerSkill('石化魔法')){
+					if(cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化') && cga.findPlayerSkill('气绝回复') && cga.findPlayerSkill('石化魔法')){
 						return true
 					}else{
 						return false
