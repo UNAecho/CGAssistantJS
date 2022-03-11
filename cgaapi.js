@@ -2326,6 +2326,47 @@ module.exports = function(callback){
 		});
 	}
 
+	cga.travel.weinuoya = {};
+	
+	cga.travel.weinuoya.toHospital = (cb, isPro)=>{
+		var name = '维诺亚村'
+		var mapindex = cga.GetMapIndex().index3
+		if(mapindex < 2100 && mapindex >= 2200){
+			cb(new Error('必须从'+name+'启动'));
+			return;
+		}
+		var walklist = 		[
+			[61, 53, '医院'],
+			isPro == true ? [15, 9] : [11, 5],
+		]
+		switch (mapindex) {
+			case 2199:
+				list.unshift(
+					[5, 1, '村长家的小房间']
+					[0, 5, '村长的家'],
+					[10, 16, '维诺亚村'],
+					);
+				break;
+			case 2198:
+				list.unshift(
+					[0, 5, '村长的家'],
+					[10, 16, '维诺亚村'],
+					);
+				break;
+			case 2112:
+				list.unshift(
+					[10, 16, '维诺亚村'],
+					);
+				break;
+			default:
+				break;
+		}
+		cga.walkList(
+			walklist, ()=>{
+			cga.turnDir(isPro == true ? 0 : 6);
+			cb(null);
+		});
+	}
 
 	cga.travel.minuojiya = {};
 	
