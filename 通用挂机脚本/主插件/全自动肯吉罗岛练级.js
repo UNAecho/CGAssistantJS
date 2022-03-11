@@ -238,6 +238,9 @@ var choosearea = ()=>{
 	}else{
 		console.log('去【' + area + '】练级')
 	}
+	// 传递练级的场所，给其他插件调用
+	global.area = area
+	console.log('global.area已写入：'+global.area)
 }
 
 var moveThink = (arg)=>{
@@ -635,8 +638,10 @@ var loop = ()=>{
 		}
 	} else if(!isleader){
 
-		// 判断练级地点
-		choosearea()
+		// 人满了再判断练级地点
+		if(teamMode.is_enough_teammates()){
+			choosearea()
+		}
 		// 五转碎片不加hasInterrupt，原因未知，如果有问题，请注释
 		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 

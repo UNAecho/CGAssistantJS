@@ -23,11 +23,31 @@ var buyArray = [
 		area : ['沙滩','地洞'],//地洞为任意水晶，沿用前一个练级地点（沙滩）的水晶
 	},
 ]
-
+// 这里加入了自动练级的自动换水晶功能
 const repairFilter = (eq) => {
 	if (eq.type == 22) {
+		if (global.area == undefined){
+			console.log('global.area为undefined,跳过根据练级场所更换水晶')
+			return false
+		}
+		for(var i in buyArray){
+			// console.log('buyArray[i].name='+buyArray[i].name)
+			// console.log('buyArray[i].area='+buyArray[i].area)
+			// console.log('global.area='+global.area)
+			if(buyArray[i].area.indexOf(global.area) !=-1){
+				// console.log('提示：thisobj.buyCrystal即将被复写为'+buyArray[i].name)
+				thisobj.buyCrystal = buyArray[i];
+				break;
+			}
+		}
 		const durability = cga.getEquipEndurance(eq);
-		return durability && durability[0] < 150;
+		if (durability && durability[0] < 150){
+			console.log('水晶耐久不足，更换')
+			return true
+		}else if (eq.name != thisobj.buyCrystal.name){
+			console.log('当前水晶：'+eq.name+'与目标水晶：'+thisobj.buyCrystal.name+'不符，更换')
+			return true
+		}
 	}
 	return false;
 }
@@ -65,6 +85,7 @@ const putdownEquipments = (cb)=>{
 }
 
 const putupEquipments = (buyCrystal, cb)=>{
+	// 下面提到的设计bug，修复的部分。
 	var equipCrystal = cga.getEquipItems().filter(hasrepairedFilter);
 	if(equipCrystal.length){
 		cb(null)
