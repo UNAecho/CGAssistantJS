@@ -26,8 +26,13 @@ var buyArray = [
 // 这里加入了自动练级的自动换水晶功能
 const repairFilter = (eq) => {
 	if (eq.type == 22) {
+		const durability = cga.getEquipEndurance(eq);
 		if (global.area == undefined){
-			console.log('global.area为undefined,跳过根据练级场所更换水晶')
+			console.log('global.area为undefined,使用离线静态方式换水晶')
+			if (durability && durability[0] < 150){
+				console.log('水晶耐久不足，更换')
+				return true
+			}
 			return false
 		}
 		for(var i in buyArray){
@@ -40,7 +45,6 @@ const repairFilter = (eq) => {
 				break;
 			}
 		}
-		const durability = cga.getEquipEndurance(eq);
 		if (durability && durability[0] < 150){
 			console.log('水晶耐久不足，更换')
 			return true
