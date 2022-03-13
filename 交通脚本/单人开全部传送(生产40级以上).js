@@ -1,10 +1,10 @@
 var cga = require('../cgaapi')(function(){
 
 	var transferstatus = {
-		shenglaluka:true,
-		yier:true,
-		yaliute:true,
-		weinuoya:true,
+		shenglaluka:false,
+		yier:false,
+		yaliute:false,
+		weinuoya:false,
 		qili:false,
 		jiana:false,
 		jienuowa:false,
@@ -12,15 +12,17 @@ var cga = require('../cgaapi')(function(){
 		abanisi:false,
 	}
 	
-	var waitResponse = (cb3)=>{
+	var waitResponse = (cb3,villageName)=>{
 		// 等待NPC响应
 		cga.AsyncWaitNPCDialog((err, dlg)=>{
 			if(dlg && dlg.message.indexOf('金币') >= 0){
+				transferstatus[villageName] = true
 				console.log('传送石管理员:'+dlg.message)
 				console.log('传送石已经开启过，无需重复开启')
 				setTimeout(cb3, 3000, true);
 			}
 			else if(dlg && dlg.message.indexOf('欢迎') >= 0){
+				transferstatus[villageName] = true
 				console.log('传送石管理员:'+dlg.message)
 				console.log('开传成功')
 				setTimeout(cb3, 3000, true);
@@ -63,7 +65,7 @@ var cga = require('../cgaapi')(function(){
 						[15, 4,],
 					], ()=>{
 						cga.TurnTo(15,3);
-						setTimeout(waitResponse, 1000, cb2);
+						setTimeout(waitResponse, 1000, cb2,'shenglaluka');
 					})
 				}, 2500);
 			})
@@ -83,7 +85,7 @@ var cga = require('../cgaapi')(function(){
 						[20, 10,],
 					], ()=>{
 						cga.TurnTo(22,10);
-						setTimeout(waitResponse, 1000, cb2);
+						setTimeout(waitResponse, 1000, cb2,'yier');
 					})
 				}, 2500);
 			})
@@ -114,7 +116,7 @@ var cga = require('../cgaapi')(function(){
 								[5,13],[4,14],[5,13],[4,14],[5,13]
 								], ()=>{
 									cga.turnTo(5, 14);
-									setTimeout(waitResponse, 1000, cb2);
+									setTimeout(waitResponse, 1000, cb2,'yaliute');
 								});
 						});
 				}, 2500);
@@ -151,7 +153,7 @@ var cga = require('../cgaapi')(function(){
 									[4,3],
 									], ()=>{
 										cga.TurnTo(5, 4);
-										setTimeout(waitResponse, 1000, cb2);
+										setTimeout(waitResponse, 1000, cb2,'weinuoya');
 										});
 								});
 							});
@@ -247,7 +249,7 @@ var cga = require('../cgaapi')(function(){
 				[12, 8]
 			], ()=>{
 				cga.TurnTo(13, 8);
-				setTimeout(waitResponse, 1000, cb2);
+				setTimeout(waitResponse, 1000, cb2,'qili');
 				});
 		}
 	},
@@ -309,7 +311,7 @@ var cga = require('../cgaapi')(function(){
 			[15, 8],
 		], ()=>{
 			cga.TurnTo(15, 7);
-			setTimeout(waitResponse, 1000, cb2);
+			setTimeout(waitResponse, 1000, cb2,'jiana');
 			});}
 	},
 	{//9
@@ -344,7 +346,7 @@ var cga = require('../cgaapi')(function(){
 										[7,8],
 										], ()=>{
 											cga.TurnTo(7, 7);
-											setTimeout(waitResponse, 1000, cb2);
+											setTimeout(waitResponse, 1000, cb2,'jienuowa');
 											});
 									});
 								});
@@ -436,7 +438,7 @@ var cga = require('../cgaapi')(function(){
 				cga.walkList(
 					tmplist, ()=>{
 					cga.TurnTo(6, 5);
-					setTimeout(waitResponse, 1000, cb6);
+					setTimeout(waitResponse, 1000, cb6,'dina');
 					});
 				}
 			// 在村口等天亮
@@ -505,7 +507,7 @@ var cga = require('../cgaapi')(function(){
 				[5,14],
 			], ()=>{
 				cga.TurnTo(5,15)
-				setTimeout(waitResponse, 1000, cb2);
+				setTimeout(waitResponse, 1000, cb2,'abanisi');
 			});}
 	},
 	],
