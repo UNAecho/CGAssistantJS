@@ -1809,7 +1809,7 @@ module.exports = function(callback){
 	}
 	
 	cga.travel.yaliute = {};
-	
+	// 亚留特村医院
 	cga.travel.yaliute.toHospital = (cb, isPro)=>{
 		if(cga.GetMapName() != '亚留特村'){
 			cb(new Error('必须从亚留特村启动'));
@@ -1826,22 +1826,101 @@ module.exports = function(callback){
 	}
 
 	cga.travel.qili = {};
-	
+
+	// 奇利村医院
 	cga.travel.qili.toHospital = (cb, isPro)=>{
-		if(cga.GetMapName() != '奇利村'){
-			cb(new Error('必须从奇利村启动'));
+		var name = '奇利村'
+		var mapindex = cga.GetMapIndex().index3
+		if(mapindex < 3200 || mapindex >= 3300){
+			cb(new Error('必须从'+name+'启动'));
 			return;
 		}
-		cga.walkList(
-		[
-			[64, 56, '医院'],
+		var tmplist = 		[
 			isPro == true ? [7, 2] : [11, 6],
-		], ()=>{
-			isPro == true ? cga.turnDir(0) : cga.turnDir(6)
+		]
+		switch (mapindex) {
+			case 3299:
+				tmplist.unshift(
+					// 去传送房间的过道房间是3214
+					[7, 6, 3214],
+					// 村长的家map.index3是3212
+					[7, 1, 3212],
+					[1, 8, '奇利村'],
+					[64, 56,'医院'],
+					);
+				break;
+			case 3214:
+				tmplist.unshift(
+					[7, 1, 3212],
+					[1, 8, '奇利村'],
+					[64, 56,'医院'],
+					);
+				break;
+			case 3212:
+				tmplist.unshift(
+					[1, 8, '奇利村'],
+					[64, 56,'医院'],
+					);
+				break;
+			case 3200:
+				tmplist.unshift(
+					[64, 56, '医院'],
+					);
+				break;
+			case 3210:
+				break;
+			default:
+				break;
+		}
+		cga.walkList(
+		tmplist, ()=>{
+			cga.turnDir(isPro == true ? 0 : 6);
 			cb(null);
 		});
 	}
 
+	cga.travel.jienuowa = {};
+	
+	// 杰诺瓦镇医院
+	cga.travel.jienuowa.toHospital = (cb, isPro)=>{
+		var name = '杰诺瓦镇'
+		var mapindex = cga.GetMapIndex().index3
+		if(mapindex < 4000 || mapindex >= 4100){
+			cb(new Error('必须从'+name+'启动'));
+			return;
+		}
+		var tmplist = 		[
+			isPro == true ? [15, 9] : [10, 5],
+		]
+		switch (mapindex) {
+			case 4099:
+				tmplist.unshift(
+					// 村长的家map.index3是4012
+					[14, 6, 4012],
+					[1, 9, '杰诺瓦镇'],
+					[44, 33,'医院'],
+					);
+				break;
+			case 4012:
+				tmplist.unshift(
+					[1, 9, '杰诺瓦镇'],
+					[44, 33,'医院'],
+					);
+				break;
+			case 4000:
+				tmplist.unshift(
+					[44, 33,'医院'],
+					);
+				break;
+			default:
+				break;
+		}
+		cga.walkList(
+		tmplist, ()=>{
+			cga.turnDir(isPro == true ? 6 : 0);
+			cb(null);
+		});
+	}
 	//从法兰坐船前往某城镇
 	cga.travel.falan.toCity = function(city, cb){
 		switch(city){
@@ -2331,39 +2410,43 @@ module.exports = function(callback){
 	cga.travel.weinuoya.toHospital = (cb, isPro)=>{
 		var name = '维诺亚村'
 		var mapindex = cga.GetMapIndex().index3
-		if(mapindex < 2100 && mapindex >= 2200){
+		if(mapindex < 2100 || mapindex >= 2200){
 			cb(new Error('必须从'+name+'启动'));
 			return;
 		}
-		var walklist = 		[
-			[61, 53, '医院'],
+		var tmplist = 		[
 			isPro == true ? [15, 9] : [11, 5],
 		]
 		switch (mapindex) {
 			case 2199:
-				list.unshift(
-					[5, 1, '村长家的小房间']
+				tmplist.unshift(
+					[5, 1, '村长家的小房间'],
 					[0, 5, '村长的家'],
 					[10, 16, '维诺亚村'],
+					[61, 53, '医院'],
 					);
 				break;
 			case 2198:
-				list.unshift(
+				tmplist.unshift(
 					[0, 5, '村长的家'],
 					[10, 16, '维诺亚村'],
+					[61, 53, '医院'],
 					);
 				break;
 			case 2112:
-				list.unshift(
+				tmplist.unshift(
 					[10, 16, '维诺亚村'],
+					[61, 53, '医院'],
 					);
+				break;
+			case 2110:
 				break;
 			default:
 				break;
 		}
 		cga.walkList(
-			walklist, ()=>{
-			cga.turnDir(isPro == true ? 0 : 6);
+			tmplist, ()=>{
+			cga.turnDir(isPro == true ? 6 : 0);
 			cb(null);
 		});
 	}
@@ -5967,7 +6050,7 @@ module.exports = function(callback){
         if(!sysTime){
             return stages[1];
         }
-        console.log('当前游戏内时间:'+sysTime.hours+':'+sysTime.mins+':'+sysTime.secs);
+        // console.log('当前游戏内时间:'+sysTime.hours+':'+sysTime.mins+':'+sysTime.secs);
         if(sysTime.hours < 4){
             return stages[3];
         }else if(sysTime.hours <= 6){
