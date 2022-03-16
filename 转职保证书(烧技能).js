@@ -14,8 +14,11 @@ require('./leo/common').then(cga => {
 	//当前称号进度百分比
 	var percentage = 0.0
 
-	const profession = cga.emogua.getPlayerProfession();
-	console.log('当前人物职业：【'+profession.name+'】，称号：【'+title+'】');
+	// 提取本地职业信息
+	const getprofessionalInfos = require('../常用数据/ProfessionalInfo.js');
+	var professionalInfo = getprofessionalInfos(playerinfo.job)
+
+	console.log('当前人物职业：【'+professionalInfo.jobmainname+'】，称号：【'+title+'】');
 	
 	var changeScript = ()=>{
 		var rootdir = cga.getrootdir()
@@ -23,7 +26,7 @@ require('./leo/common').then(cga => {
 		var body = {
 			path : rootdir + "\\转职保证书(卵4).js",
 		}
-		var settingpath = rootdir +'\\战斗配置\\保证书小号.json';
+		var settingpath = rootdir +'\\战斗配置\\BOSS合击.json';
 		var setting = JSON.parse(fs.readFileSync(settingpath))
 		scriptMode.call_ohter_script(body,setting)
 	}
@@ -69,7 +72,7 @@ require('./leo/common').then(cga => {
 
 
 
-    if(profession.name == '传教士'){
+    if(professionalInfo.jobmainname == '传教士'){
     	//检查是否有气绝回复技能
     	var skill = cga.findPlayerSkill('气绝回复');
     	if(!skill){
@@ -107,7 +110,7 @@ require('./leo/common').then(cga => {
 			var force = true ;			//是否强制启用战斗配置
 			leo.autoBattle(sets,firstRoundDelay,roundDelay,force);
     	}
-    }else if(profession.name == '咒术师'){
+    }else if(professionalInfo.jobmainname == '咒术师'){
     	//检查是否有石化魔法技能
     	var skill = cga.findPlayerSkill('石化魔法');
     	if(!skill){
@@ -145,7 +148,7 @@ require('./leo/common').then(cga => {
 			var force = true ;			//是否强制启用战斗配置
 			leo.autoBattle(sets,firstRoundDelay,roundDelay,force);
     	}
-    }else if(profession.name == '巫师'){
+    }else if(professionalInfo.jobmainname == '巫师'){
     	//检查是否有恢复魔法技能
     	var skill = cga.findPlayerSkill('恢复魔法');
     	if(!skill){
@@ -268,11 +271,11 @@ require('./leo/common').then(cga => {
 				playerinfo = cga.GetPlayerInfo();
 				const reputationInfos = require('./常用数据/reputation.js');
 				var skillcount = reputationInfos(leo.getPlayerSysTitle(playerinfo.titles),percentage)
-				if(profession.name == '传教士'){
+				if(professionalInfo.jobmainname == '传教士'){
 					needGold = skillcount * 5 + 1000
-				}else if(profession.name == '咒术师'){
+				}else if(professionalInfo.jobmainname == '咒术师'){
 					needGold = skillcount * 5 + 1000
-				}else if(profession.name == '巫师'){
+				}else if(professionalInfo.jobmainname == '巫师'){
 					needGold = skillcount * 15 + 1000
 				}else{
 					console.log('脚本结束：人物的职业有误，必须是传教士或者咒术师、巫师');
