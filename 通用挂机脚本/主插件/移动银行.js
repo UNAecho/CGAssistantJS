@@ -14,6 +14,8 @@ var newbornlimit = 500
 // 每次给前来提款的人多少金币
 var drawmoney = lowerlimit
 
+// 余额不足提示次数
+var mute = 5
 // 暗号物品名称
 var ciphername = '瓶子'
 var cipherid = 18314
@@ -164,7 +166,8 @@ var loop = ()=>{
 	var curgold = cga.GetPlayerInfo().gold
 	var teamplayers = cga.getTeamPlayers();			
 
-	if(!enoughmoney){
+	if(!enoughmoney && mute>0){
+		mute -=1
 		console.log('【警告】：银行里没钱了，请留意是真的没钱了，还是脚本哪个环节出错导致金钱流失。')
 	}
 
@@ -188,7 +191,10 @@ var loop = ()=>{
 					bankgold = cga.GetBankGold()
 					if(typeofact == 'draw' && bankgold < lowerlimit){
 						enoughmoney = false
-						setTimeout(loop, 2000);
+						console.log('银行余额不足以维持移动银行的现金流了，全部取出')
+						setTimeout(() => {
+							GoldAct(bankgold, typeofact,loop)
+						}, 2000);
 						return
 					}
 					setTimeout(() => {
