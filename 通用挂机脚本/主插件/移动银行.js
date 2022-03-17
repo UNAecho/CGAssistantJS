@@ -1,7 +1,12 @@
 var cga = global.cga;
 var configTable = global.configTable;
+var switchAccount = require('./../公共模块/切换同类账号');
 
 var stuffs = { gold : 0 };
+
+// 普通账户/银行大客户的金币上限
+var normallimit = 1000000
+var bigcustomerlimit = 1000000
 
 // 移动银行站立地点
 var waitmapname = '里谢里雅堡'
@@ -30,8 +35,8 @@ var draw = '魔术'
 // 注意该暗号需要在后面跟上特殊符号一起使用，需要配合[取出生启动金.js]使用
 var newborn = '朵拉'
 
-// 银行里是否有充足金钱
-var enoughmoney = true
+// 银行里是否有充足金钱取，或者有充足位置存
+var isAvailable = false
 
 var waitcipher = ()=>{
 	/* plarer:
@@ -166,9 +171,9 @@ var loop = ()=>{
 	var curgold = cga.GetPlayerInfo().gold
 	var teamplayers = cga.getTeamPlayers();			
 
-	if(!enoughmoney && mute>0){
+	if(!isAvailable && mute>0){
 		mute -=1
-		console.log('【警告】：银行里没钱了，请留意是真的没钱了，还是脚本哪个环节出错导致金钱流失。')
+		console.log('【提示】：发现账号金币已满或者不足，需要切换账号。请留意是否是真正需要切换，而不是哪个环节出错导致的财产流失。')
 	}
 
 	var inventory = cga.getInventoryItems();
@@ -178,7 +183,7 @@ var loop = ()=>{
 		return;
 	}
 
-	if(enoughmoney && (curgold < lowerlimit || curgold > upperlimit)) {
+	if(isAvailable && (curgold < lowerlimit || curgold > upperlimit)) {
 
 		var typeofact = curgold >= upperlimit  ? 'save' : 'draw'
 
@@ -190,20 +195,39 @@ var loop = ()=>{
 				cga.AsyncWaitNPCDialog(() => {
 					bankgold = cga.GetBankGold()
 					if(typeofact == 'draw' && bankgold < lowerlimit){
-						enoughmoney = false
+						isAvailable = false
 						console.log('银行余额不足以维持移动银行的现金流了，全部取出')
 						setTimeout(() => {
 							GoldAct(bankgold, typeofact,loop)
 						}, 2000);
 						return
+					}else if(typeofact == 'save' && bankgold + curgold >= normallimit){
+						isAvailable = false
+						console.log('银行满了，准备换号')
+						setTimeout(() => {
+							GoldAct(normallimit - bankgold, typeofact,loop)
+						}, 2000);
+						return
 					}
 					setTimeout(() => {
-						GoldAct(typeofact == 'save' ? 500000:(500000-curgold), typeofact,loop)
+						GoldAct(typeofact == 'save' ? upperlimit:(upperlimit-curgold), typeofact,loop)
 					}, 2000);
 				}, 1000);
 			});
 		});
 		return;
+	}
+	// 如果不满足站岗条件，就切号继续站岗
+	if(!isAvailable){
+		var switchObject = switchAccount
+		if(switchObject)
+		{
+			console.log('准备换号..')
+			switchObject.func(loop,'仓库');
+			return;
+		}else{
+			console.log('读取自动更换账号异常，请检查')
+		}
 	}
 
 	if(cga.GetMapName() == waitmapname && playerPos.x == waitXY.x && playerPos.y == waitXY.y){
