@@ -316,8 +316,25 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 				start();
 			});
 		}
-		
-		stage1();
+		if (cga.GetPlayerInfo().name.indexOf('仓库') != -1){
+			Async.series([	
+				(cb)=>{
+					configTable.mainPlugin = '移动银行'
+					// 从configTable.mainPlugin的名字中读取主插件
+					loadPlugin();
+					console.log('检测到名字中带有仓库字样，自动写入主插件为【移动银行】。如有其他需求请自行更改主插件内容')
+					fs.mkdir(configPath, ()=>{
+						fs.writeFile(configName, JSON.stringify(configTable), cb);
+					});	
+				}
+				], (err, results)=>{
+					if(err)
+						throw err;
+					start();
+				});
+		}else{
+			stage1();
+		}
 	}
 	
 });

@@ -36,7 +36,10 @@ var draw = '魔术'
 var newborn = '朵拉'
 
 // 银行里是否有充足金钱取，或者有充足位置存
-var isAvailable = false
+var isAvailable = true
+
+// 换号种类，自动识别，不要更改
+var switchtype = 0
 
 var waitcipher = ()=>{
 	/* plarer:
@@ -196,6 +199,7 @@ var loop = ()=>{
 					bankgold = cga.GetBankGold()
 					if(typeofact == 'draw' && bankgold < lowerlimit){
 						isAvailable = false
+						switchtype = -1
 						console.log('银行余额不足以维持移动银行的现金流了，全部取出')
 						setTimeout(() => {
 							GoldAct(bankgold, typeofact,loop)
@@ -203,6 +207,7 @@ var loop = ()=>{
 						return
 					}else if(typeofact == 'save' && bankgold + curgold >= normallimit){
 						isAvailable = false
+						switchtype = 1
 						console.log('银行满了，准备换号')
 						setTimeout(() => {
 							GoldAct(normallimit - bankgold, typeofact,loop)
@@ -219,15 +224,19 @@ var loop = ()=>{
 	}
 	// 如果不满足站岗条件，就切号继续站岗
 	if(!isAvailable){
-		var switchObject = switchAccount
-		if(switchObject)
-		{
-			console.log('准备换号..')
-			switchObject.func(loop,'仓库');
-			return;
-		}else{
-			console.log('读取自动更换账号异常，请检查')
+		try {
+			var switchObject = switchAccount
+			if(switchObject)
+			{
+				console.log('准备换号..switchtype = ' + switchtype)
+				switchObject.func(loop,'仓库',switchtype == 0 ? 1 : switchtype);
+				return;
+			}
+		} catch(e) {
+			console.log('读取自动更换账号异常 , message : ', e);
+			loop()
 		}
+
 	}
 
 	if(cga.GetMapName() == waitmapname && playerPos.x == waitXY.x && playerPos.y == waitXY.y){

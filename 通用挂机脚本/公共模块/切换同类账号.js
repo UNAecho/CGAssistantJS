@@ -74,13 +74,12 @@ module.exports = {
 
 		var accountobj = getaccount(category,bias)
 
-		// console.log('开始顺序切换同为【' + category+'】类的账号');
-
-		// cga.gui.LoadAccount(body, (err, result)=>{
-		// 	console.log(result);
-		// })
-		console.log('准备切换至目标账号：')
-		console.log(accountobj)
+		console.log('开始顺序切换同为【' + category+'】类的账号');
+		
+		cga.gui.LoadAccount(accountobj, (err, result)=>{
+			console.log('登出!');
+			cga.LogOut();
+		})
 	},
 	isAvailable : ()=>{
 		return true;
