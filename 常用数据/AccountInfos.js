@@ -1,5 +1,6 @@
 /**
  * category：自定义类别
+ * 每个category为一【大类】
  * user:通行证账号
  * gid：子账号
  * pwd：密码，如果和切换前密码相同，则不填。
@@ -12,23 +13,27 @@ const AccountInfos = [
 				{	user:'',
 					pwd:'',
 					gid: [
-						
+
 					],
 				},
-				{	account:'',
+				{	user:'',
 					pwd:'',
-					gid: ['haha'],
+					gid: [],
+				},
+				{	user:'',
+					pwd:'',
+					gid: [],
 				},
 		],
 	},	
 	{
-		category: '生产系',
+		category: '生产',
 		info:[
 				{	user:'',
 					pwd:'',
 					gid: [],
 				},
-				{	account:'',
+				{	user:'',
 					pwd:'',
 					gid: [],
 				},
