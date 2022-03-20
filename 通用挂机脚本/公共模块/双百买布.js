@@ -92,15 +92,27 @@ var thisobj = {
 
 				setTimeout(repeat, 1500);
 			}
-			
-			cga.travel.falan.toStone('C', ()=>{
+			// 由于买布脚本登出过于频繁，容易被禁用登出，所以改为徒步走路
+			var curmap = cga.GetMapName()
+			if (curmap == '流行商店'){
 				cga.walkList([
-				[33, 88]
-				], ()=>{
-					cga.turnTo(35, 88);
-					setTimeout(repeat, 1000);
+					[0, 9, '法兰城'],
+					[141, 89, '里谢里雅堡'],
+					[33, 88]
+					], ()=>{
+						cga.turnTo(35, 88);
+						setTimeout(repeat, 1000);
+					});
+			}else{
+				cga.travel.falan.toStone('C', ()=>{
+					cga.walkList([
+					[33, 88]
+					], ()=>{
+						cga.turnTo(35, 88);
+						setTimeout(repeat, 1000);
+					});
 				});
-			});
+			}
 		},
 		state : 'gathering',
 		gatherCount : {},
