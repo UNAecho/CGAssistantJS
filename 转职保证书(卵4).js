@@ -4,11 +4,11 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	var playerinfo = cga.GetPlayerInfo();
 	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦
 	var teammates = [
-		"UNAの传教",
+		"UNAの传教士",
+		"UNAの格斗1",
 		"UNAの格斗2",
-		"UNAの饲养师2",
-		"UNAの封印4",
-		"UNAの弓箭",
+		"UNAの战斧2",
+		"UNAの战斧3",
 		// "UNAの剑士",
 		// "UNAの游侠",
 		// "UNAの饲养师",
@@ -168,6 +168,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	var zhanglaozhizheng = (cb)=>{
 		if(cga.isTeamLeader){
 			cga.WalkTo(131, 62);
+			cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, true);
 			if(cga.getTeamPlayers().length >= maxteammate){
 				goodToGoZLZZ(cb);
 				return;
