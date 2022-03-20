@@ -66,14 +66,16 @@ var getaccount = (category,bias)=>{
 	return result
 }
 module.exports = {
-	func : (cb,category,bias)=>{
+	func : (cb,category,bias,assignobj)=>{
 		if(!category || category.length == 0){
 			console.log('未输入账号类别，【切换同类别账号】逻辑结束')
 			return;
 		}
 
 		var accountobj = getaccount(category,bias)
-
+		if (assignobj !=null && assignobj != undefined){
+			Object.assign(accountobj, assignobj)
+		}
 		console.log('开始顺序切换同为【' + category+'】类的账号');
 		
 		cga.gui.LoadAccount(accountobj, (err, result)=>{
