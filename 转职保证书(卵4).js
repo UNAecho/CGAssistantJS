@@ -869,7 +869,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 							var body = {
 								path : rootdir + "\\转职保证书(传咒互转).js",
 							}
-							var settingpath = rootdir +'\\生产赶路.json';
+							var settingpath = rootdir +'\\战斗配置\\生产赶路.json';
 							var setting = JSON.parse(fs.readFileSync(settingpath))
 							scriptMode.call_ohter_script(body,setting)
 

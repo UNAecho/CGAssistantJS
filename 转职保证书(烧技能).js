@@ -15,7 +15,7 @@ require('./leo/common').then(cga => {
 	var percentage = 0.0
 
 	// 提取本地职业信息
-	const getprofessionalInfos = require('../常用数据/ProfessionalInfo.js');
+	const getprofessionalInfos = require('./常用数据/ProfessionalInfo.js');
 	var professionalInfo = getprofessionalInfos(playerinfo.job)
 
 	console.log('当前人物职业：【'+professionalInfo.jobmainname+'】，称号：【'+title+'】');
