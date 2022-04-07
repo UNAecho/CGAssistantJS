@@ -1,6 +1,7 @@
 {
     "battle": {
         "autobattle": false,
+        "beep": false,
         "bossprot": false,
         "delayfrom": 1,
         "delayto": 1,
@@ -41,18 +42,10 @@
         "lockcd": false,
         "lv1prot": false,
         "pet2action": false,
-        "playerforceaction": false,
         "r1nodelay": true,
-        "showhpmp": false
+        "waitafterbattle": false
     },
     "chat": {
-        "displayname": true,
-        "displaytime": true,
-        "mychat": true,
-        "npcmsg": true,
-        "playerchat": true,
-        "sysmsg": true,
-        "todayonly": true
     },
     "itemdroplist": [
         "#450993",
@@ -91,9 +84,19 @@
         "长老之证|3"
     ],
     "player": {
+        "antiafkkick": false,
         "autosupply": true,
+        "gametextui": false,
         "movespd": 100,
-        "noswitchanim": true,
+        "noswitchanim": false,
+        "petfood": false,
+        "petfoodat": "",
+        "petmed": false,
+        "petmedat": "",
+        "usefood": false,
+        "usefoodat": "",
+        "usemed": false,
+        "usemedat": "",
         "workacc": 100,
         "workdelay": 6500
     }
