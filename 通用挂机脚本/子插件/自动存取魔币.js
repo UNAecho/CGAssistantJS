@@ -26,6 +26,9 @@ var banklimit = 1000000
 var lowerlimit = 100000
 var upperlimit = 900000
 
+// 每次给移动银行多少的金币
+var batchlimit = 500000
+
 // 是否先使用个人银行
 var personalflag = true
 
@@ -213,7 +216,7 @@ var thisobj = {
 					
 					return false;
 				},
-					gold : cipher == save ? 500000 : 0 };
+					gold : cipher == save ? batchlimit : 0 };
 	
 				setTimeout(()=>{
 					cga.positiveTrade(targetname, stuffs, null, (result)=>{

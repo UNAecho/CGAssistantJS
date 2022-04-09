@@ -5260,13 +5260,22 @@ module.exports = function(callback){
 						reason : '交易成功',
 					});
 					return false;
-				} else if(msg.indexOf('交易中止') >= 0 || msg.indexOf('因物品栏已满所以无法交易') >= 0){
+				} else if(msg.indexOf('交易中止') >= 0){
 
 					cga.DoRequest(cga.REQUEST_TYPE_TRADE_REFUSE);
 					tradeFinished = true;
 					resolve({
 						success: false,
 						reason : '交易被拒绝',
+					});
+					return false;
+				} else if(msg.indexOf('因物品栏已满所以无法交易') >= 0){
+
+					cga.DoRequest(cga.REQUEST_TYPE_TRADE_REFUSE);
+					tradeFinished = true;
+					resolve({
+						success: false,
+						reason : '物品栏已满',
 					});
 					return false;
 				} else if(msg.indexOf('没有可交易的对象') >= 0){
