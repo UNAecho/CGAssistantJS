@@ -322,7 +322,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 				if(itempos != -1){
 					cga.DropItem(itempos);
 					dropcount+=1
-					setTimeout(dropUseless, 500, cb);
+					setTimeout(cb2, 500, 'restart stage');
 					return;
 				}
 			}else{
