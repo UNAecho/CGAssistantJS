@@ -4,9 +4,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	var playerinfo = cga.GetPlayerInfo();
 	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦
 	var teammates = [
+		"UNAの格斗2",
 		"UNAの传教士",
 		"UNAの格斗1",
-		"UNAの格斗2",
 		"UNAの战斧2",
 		"UNAの战斧3",
 		// "UNAの剑士",
@@ -312,7 +312,26 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	
 	var task = cga.task.Task('琥珀之卵4', [
 	{//0
-		intro: '◆在艾夏岛冒险者旅馆(102.115)内与时空之人(30.20)对话，输入“朵拉”选“是”，再选“确定”可重置本任务',
+		intro: '0.进行一些前期处理工作，如丢弃灵堂烧技能产生的小石像怪的卡片',
+		workFunc: function(cb2){
+			var dropcount = 0
+			if(dropcount < 9 && cga.getInventoryItems().find((inv)=>{
+				return inv.name == '小石像怪的卡片';
+			}) != undefined){
+				var itempos = cga.findItem('小石像怪的卡片');
+				if(itempos != -1){
+					cga.DropItem(itempos);
+					dropcount+=1
+					setTimeout(dropUseless, 500, cb);
+					return;
+				}
+			}else{
+				setTimeout(cb2, 1000, true);
+			}
+		}
+	},
+	{//1
+		intro: '1.在艾夏岛冒险者旅馆(102.115)内与时空之人(30.20)对话，输入“朵拉”选“是”，再选“确定”可重置本任务',
 		workFunc: function(cb2){
 			var thisstep = ()=>{
 				cga.travel.newisland.toPUB(()=>{
@@ -349,8 +368,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//1
-		intro: '1.黄昏或夜晚前往艾尔莎岛神殿·伽蓝（200.96）三楼神殿·里侧大厅，至（48.60）处进入约尔克神庙。调查(39.21)处，获得【琥珀之卵】。',
+	{//2
+		intro: '2.黄昏或夜晚前往艾尔莎岛神殿·伽蓝（200.96）三楼神殿·里侧大厅，至（48.60）处进入约尔克神庙。调查(39.21)处，获得【琥珀之卵】。',
 		workFunc: function(cb2){
 			
 			if(cga.getItemCount('琥珀之卵') > 0){
@@ -404,8 +423,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			});
 		}
 	},
-	{//2
-		intro: '2.前往盖雷布伦森林路路耶博士的家(244.76)，进入后再离开路路耶博士的家并传送至？？？。' + "\n" + '3.通过(142.69)或(122.69)处黄色传送石进入海底墓场外苑，寻找随机出现的守墓者并与之对话进入战斗。',
+	{//3
+		intro: '3.前往盖雷布伦森林路路耶博士的家(244.76)，进入后再离开路路耶博士的家并传送至？？？。' + "\n" + '3.通过(142.69)或(122.69)处黄色传送石进入海底墓场外苑，寻找随机出现的守墓者并与之对话进入战斗。',
 		workFunc: function(cb2){
 			var thisstep = ()=>{
 				if(cga.needSupplyInitial({  })){
@@ -463,8 +482,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//3
-		intro: '5.集齐7个【长老之证】后返回？？？，由持有7个【长老之证】的队员与荷特普(167.102)对话2次，选“是”交出【长老之证】并传送至盖雷布伦森林。',
+	{//4
+		intro: '4.集齐7个【长老之证】后返回？？？，由持有7个【长老之证】的队员与荷特普(167.102)对话2次，选“是”交出【长老之证】并传送至盖雷布伦森林。',
 		workFunc: function(cb2){
 
 			var sayshit = ()=>{
@@ -486,7 +505,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 				} else {
 					console.log('没打齐7个，但有队友集齐，跟着蹭吃蹭喝去');
 					cga.waitForLocation({mapname : '盖雷布伦森林'}, ()=>{
-						cb2(true);
+						setTimeout(() => {
+							cb2(true);
+						}, 2000);
 					});
 				}
 			}
@@ -518,8 +539,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//4
-		intro: '6.黄昏或夜晚时至神殿·伽蓝与荷特普(92.138)对话。',
+	{//5
+		intro: '5.黄昏或夜晚时至神殿·伽蓝与荷特普(92.138)对话。',
 		workFunc: function(cb2){
 			cga.travel.newisland.toStone('X', ()=>{
 				cga.walkList([
@@ -548,8 +569,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			});
 		}
 	},
-	{//5
-		intro: '前往艾夏岛冒险者旅馆(102.115)与安洁可(55.32)对话，获得【逆十字】。',
+	{//6
+		intro: '6.前往艾夏岛冒险者旅馆(102.115)与安洁可(55.32)对话，获得【逆十字】。',
 		workFunc: function(cb2){
 			
 			if(cga.getItemCount('逆十字') > 0){
@@ -577,7 +598,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			});
 		}
 	},
-	{//6
+	{//7
 		intro: '7.前往梅布尔隘地，持有【琥珀之卵】、【逆十字】与祭坛守卫(211.116)对话进入？？？。',
 		workFunc: function(cb2){
 			var thisstep = ()=>{
@@ -634,7 +655,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//7
+	{//8
 		intro: '8.击倒(136.197)一带的阻挡者后，进入(156.197)的传送石。9.击倒(213.226)、(235.202)等位置的任意一个阻挡者，随机被传送。',
 		workFunc: function(cb2){
 			cga.walkList([
@@ -662,8 +683,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			});
 		}
 	},
-	{//8
-		intro: '10.击倒(161.108)一带的阻挡者，经由(241.118)的传送石进入？？？。',
+	{//9
+		intro: '9.击倒(161.108)一带的阻挡者，经由(241.118)的传送石进入？？？。',
 		workFunc: function(cb2){
 			
 			var waitBOSS = ()=>{
@@ -748,8 +769,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			});
 		}
 	},
-	{//9
-		intro: '13.返回盖雷布伦森林，持有【觉醒的文言抄本】与纳塞(245.73)对话，获得【转职保证书】。',
+	{//10
+		intro: '10.返回盖雷布伦森林，持有【觉醒的文言抄本】与纳塞(245.73)对话，获得【转职保证书】。',
 		workFunc: function(cb2){
 			cga.travel.newisland.toStone('X', ()=>{
 				cga.walkList([
@@ -789,6 +810,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	},
 	],
 	[//任务阶段是否完成
+		function(){//前期处理
+			return false;
+		},
 		function(){//消除任务
 			return false;
 		},
@@ -829,18 +853,18 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		task.jumpToStep = 0;
 	}else if(index == 1){
 		firstmsg = '长老之证'
-		task.jumpToStep = 2;
+		task.jumpToStep = 3;
 	//else if(index == 2)
 	//	task.jumpToStep = 3;
 	}else if(index == 3){
 		firstmsg = '黄昏或夜晚找荷特普'
-		task.jumpToStep = 4;
+		task.jumpToStep = 5;
 	}else if(index == 4){
 		firstmsg = '打阻挡者'
-		task.jumpToStep = 6;
+		task.jumpToStep = 7;
 	}else if(index == 5){
 		firstmsg = '换保证书'
-		task.jumpToStep = 9;
+		task.jumpToStep = 10;
 	}
 	if(typeof task.jumpToStep != 'undefined'){
 		cga.SayWords('欢迎使用【UNAの脚本】转职保证书，当前从【'+ firstmsg + '】步骤开始任务', 0, 3, 1);

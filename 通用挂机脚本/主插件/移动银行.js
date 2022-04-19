@@ -6,7 +6,7 @@ var stuffs = { gold : 0 };
 
 // 普通账户/银行大客户的金币上限
 var normallimit = 1000000
-var bigcustomerlimit = 1000000
+var bigcustomerlimit = 10000000
 
 // 移动银行站立地点
 var waitmapname = '里谢里雅堡'
@@ -36,10 +36,14 @@ var draw = '魔术'
 var newborn = '朵拉'
 
 // 银行里是否有充足金钱取，或者有充足位置存
-var isAvailable = true
+var banksaveflag = true
+var bankdrawflag = true
 
 // 换号种类，自动识别，不要更改
 var switchtype = 0
+
+// 银行魔币缓存
+var bankgold = null
 
 var waitcipher = ()=>{
 	/* plarer:
@@ -64,7 +68,20 @@ var waitcipher = ()=>{
 				if(result && result.success == true){
 					console.log('已从【'+player.name+'】处收取存款')
 				}else if(result && result.success == false){
-					console.log('交易中止，已被取消或包满')
+					if (result.reason == '交易被拒绝'){
+						console.log('交易被人为终止')
+					}else if(result.reason == '物品栏已满'){
+						console.log('物品栏满了，可能是魔币、物品以及宠物，需要存银行或换号了。')
+						// 如果银行也满了就换下一个号
+						if(bankgold == normallimit){
+							setTimeout(() => {
+								switchlogic(1,loop)
+							}, 1000);
+						}else{// 没满就去存银行
+							cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+							setTimeout(loop, 1000);
+						}
+					}
 				}
 				// 不管成功与否，都禁止再次交易。由对方再说出暗号才可继续交易
 				cga.EnableFlags(cga.ENABLE_FLAG_TRADE, false);
@@ -76,9 +93,17 @@ var waitcipher = ()=>{
 			stuffs.gold = drawmoney
 			cga.waitTrade(stuffs, checkParty, (result)=>{
 				if(result && result.success == true){
-					console.log('已从【'+player.name+'】处收取存款')
-				}else if(result && result.success == false){
-					console.log('交易中止，已被取消或包满')
+					console.log('已支付【'+player.name+'】+【'+drawmoney+'】魔币')
+				}else if(result && result.success == false){// TODO 取钱，对方满了如何作出处理
+					if (result.reason == '交易被拒绝'){
+						console.log('交易被人为终止')
+					}else if(result.reason == '物品栏已满'){
+						console.log('物品栏满了，可能是魔币、物品以及宠物，需要存银行或换号了。')
+						setTimeout(() => {
+							switchlogic(-1,loop)
+						}, 1000);
+					}
+				
 				}
 				// 不管成功与否，都禁止再次交易。由对方再说出暗号才可继续交易
 				cga.EnableFlags(cga.ENABLE_FLAG_TRADE, false);
@@ -131,15 +156,20 @@ var GoldAct = (money, type,cb) => {
 	if(type == 'save'){
 		cga.MoveGold(money, cga.MOVE_GOLD_TOBANK);
 		console.log('本次存银行【'+money+'】元')
-		setTimeout(cb, 3000);
 	}else if(type == 'draw'){
 		cga.MoveGold(money, cga.MOVE_GOLD_FROMBANK);
 		console.log('本次从银行取【'+money+'】元')
-		setTimeout(cb, 3000);
 	}else{
 		console.log('非存取钱动作，跳过此操作')
-		setTimeout(cb, 3000);
 	}
+
+	setTimeout(() => {
+		console.log('原来缓存银行金额:'+bankgold)
+		bankgold = cga.GetBankGold()
+		console.log('更新缓存银行金额:'+bankgold)
+	}, 1500);
+
+	setTimeout(cb, 5000);
 	return
 
 }
@@ -168,16 +198,26 @@ var dropUseless = (cb)=>{
 		});
 	});
 }
+// 切号逻辑
+var switchlogic =(switchtype,cb)=>{
+	try {
+		var switchObject = switchAccount
+		if(switchObject)
+		{
+			console.log('准备换号..switchtype = ' + switchtype)
+			switchObject.func(loop,'仓库',switchtype == 0 ? 1 : switchtype);
+			return;
+		}
+	} catch(e) {
+		console.log('读取自动更换账号异常 , message : ', e);
+		setTimeout(cb, 1000);
+	}
+}
 var loop = ()=>{
 
-	var playerPos = cga.GetMapXY();
+	var playerPos = cga.GetMapXY()
 	var curgold = cga.GetPlayerInfo().gold
-	var teamplayers = cga.getTeamPlayers();			
-
-	if(!isAvailable && mute>0){
-		mute -=1
-		console.log('【提示】：发现账号金币已满或者不足，需要切换账号。请留意是否是真正需要切换，而不是哪个环节出错导致的财产流失。')
-	}
+	var teamplayers = cga.getTeamPlayers()
 
 	var inventory = cga.getInventoryItems();
 
@@ -185,61 +225,55 @@ var loop = ()=>{
 		dropUseless(loop);
 		return;
 	}
-
-	if(isAvailable && (curgold < lowerlimit || curgold > upperlimit)) {
+	// TODO 这里注意后续辨别一下大客户的一千万上限和普通不同
+	if(bankgold && (curgold < lowerlimit && bankgold >= lowerlimit) || (curgold > upperlimit && bankgold < normallimit)) {
 
 		var typeofact = curgold >= upperlimit  ? 'save' : 'draw'
-
-		cga.travel.falan.toBank(() => {
-			cga.walkList([
-				[11, 8],
-			], () => {
-				cga.turnDir(0);
-				cga.AsyncWaitNPCDialog(() => {
-					bankgold = cga.GetBankGold()
-					if(typeofact == 'draw' && bankgold < lowerlimit){
-						isAvailable = false
-						switchtype = -1
-						console.log('银行余额不足以维持移动银行的现金流了，全部取出')
-						setTimeout(() => {
-							GoldAct(bankgold, typeofact,loop)
-						}, 2000);
-						return
-					}else if(typeofact == 'save' && bankgold + curgold >= normallimit){
-						isAvailable = false
-						switchtype = 1
-						console.log('银行满了，准备换号')
-						setTimeout(() => {
-							GoldAct(normallimit - bankgold, typeofact,loop)
-						}, 2000);
-						return
-					}
-					setTimeout(() => {
-						GoldAct(typeofact == 'save' ? upperlimit:(upperlimit-curgold), typeofact,loop)
-					}, 2000);
-				}, 1000);
-			});
-		});
-		return;
-	}
-	// 如果不满足站岗条件，就切号继续站岗
-	if(!isAvailable){
-		try {
-			var switchObject = switchAccount
-			if(switchObject)
-			{
-				console.log('准备换号..switchtype = ' + switchtype)
-				switchObject.func(loop,'仓库',switchtype == 0 ? 1 : switchtype);
-				return;
+		
+		if(bankgold && typeofact == 'save' && bankgold == normallimit){
+			if (mute>0){
+				console.log('银行金币已到上限，无法继续存储。去集合点正常提供服务，如果遇到存钱的账号，则换下一个号继续收钱')
+				mute -=1
 			}
-		} catch(e) {
-			console.log('读取自动更换账号异常 , message : ', e);
-			loop()
+		}else if(bankgold && typeofact == 'draw' && bankgold == 0){
+			if (mute>0){
+				console.log('银行金币已为0，无法继续取钱。去集合点正常提供服务，如果遇到取钱的账号，则换下一个号继续提供钱')
+				mute -=1
+			}
+		}else{
+			cga.travel.falan.toBank(() => {
+				cga.walkList([
+					[11, 8],
+				], () => {
+					cga.turnDir(0);
+					cga.AsyncWaitNPCDialog(() => {
+						bankgold = cga.GetBankGold()
+						if(typeofact == 'draw' && bankgold < lowerlimit){
+							// bankdrawflag = false
+							// switchtype = -1
+							console.log('银行余额不足以维持移动银行的现金流了，全部取出')
+							setTimeout(() => {
+								GoldAct(bankgold, typeofact,loop)
+							}, 2000);
+							return
+						}else if(typeofact == 'save' && bankgold + curgold >= normallimit){
+							// banksaveflag = false
+							// switchtype = 1
+							console.log('银行满了')
+							setTimeout(() => {
+								GoldAct(normallimit - bankgold, typeofact,loop)
+							}, 2000);
+							return
+						}
+						setTimeout(() => {
+							GoldAct(typeofact == 'save' ? (upperlimit-lowerlimit):(upperlimit-curgold), typeofact,loop)
+						}, 2000);
+						return
+					}, 1000);
+				});
+			});
 		}
-
-	}
-
-	if(cga.GetMapName() == waitmapname && playerPos.x == waitXY.x && playerPos.y == waitXY.y){
+	}else if(cga.GetMapName() == waitmapname && playerPos.x == waitXY.x && playerPos.y == waitXY.y){
 	
 		var trade = ()=>{
 			if(cga.getTeamPlayers().length < 2){
@@ -262,16 +296,28 @@ var loop = ()=>{
 
 		setTimeout(loop, 1000);
 		return
+	}else{
+		callSubPluginsAsync('prepare', ()=>{
+			cga.travel.falan.toBank(() => {
+				cga.walkList([
+					[11, 8],
+				], () => {
+					cga.turnDir(0);
+					cga.AsyncWaitNPCDialog(() => {
+						bankgold = cga.GetBankGold()
+						console.log('银行现金:'+bankgold)
+						cga.travel.falan.toStone('C', ()=>{
+							cga.walkList([
+							[waitXY.x, waitXY.y],
+							], loop);
+						});
+					}, 1000);
+				});
+			});
+		});
+		return
 	}
 
-	callSubPluginsAsync('prepare', ()=>{
-		
-		cga.travel.falan.toStone('C', ()=>{
-			cga.walkList([
-			[waitXY.x, waitXY.y],
-			], loop);
-		});
-	});
 	return
 }
 

@@ -110,7 +110,7 @@ var thisobj = {
 
 		// 如果个人银行无法满足魔币调整，就进入移动银行逻辑
 		var portablebanklogic = (cb)=>{
-			console.log('【提示：】需要调整魔币数量，自动去找移动银行存取款')
+			// console.log('【提示：】需要调整魔币数量，自动去找移动银行存取款')
 			var inventory = cga.getInventoryItems();
 			// 如果背包满了，无法购买暗号物品，则本功能跳过
 			// TODO 如果开了付费移动背包，需要添加40、60、80等数量
@@ -193,6 +193,14 @@ var thisobj = {
 				});
 			}
 			var trade = (targetname,cb2)=>{
+				// 当移动银行掉线、登出换人物时
+				if(cga.getTeamPlayers().length == 0){
+					cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, false);
+					console.log('移动银行离队，重新等待..')
+					setTimeout(retry, 1500,cb2);
+					return
+				}
+
 				// 满足金币需求了就拍拍屁股走人
 				if(cga.GetPlayerInfo().gold >= lowerlimit && cga.GetPlayerInfo().gold <= upperlimit){
 					console.log('清点钱款完毕，退出此插件')
