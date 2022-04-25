@@ -111,6 +111,7 @@ var cga = require('../cgaapi')(function(){
 									[22,9,2499],
 									[5,13],[4,14],[5,13],[4,14],[5,13]
 									], ()=>{
+										// 顺便开传送
 										cga.turnTo(5, 14);
 										goandlearn()
 									});

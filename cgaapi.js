@@ -3130,7 +3130,8 @@ module.exports = function(callback){
 				} else  {
 					throw new Error('无效参数');
 				}
-			});
+			// 注意这里UNA添加了index参数进入任务的workFunc中，与cb同级别。目的是为了stage中可以拿到当前index的参数，判断当前task的进度。
+			},index);
 		}
 
 		this.doTask = function(cb){

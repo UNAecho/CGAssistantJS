@@ -48,6 +48,23 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 
 		return true;
 	});
+
+	var saveProgressConfig = (step) =>{
+		if(typeof step == 'number'){
+
+		}else{
+			throw new Error('saveProgressConfig 必须传入数字步骤，并且小于等于最大步骤')
+		}
+		
+		var config = cga.loadPlayerConfig();
+
+		if(!config)
+			config = {};
+
+		config.spawn4stage = step
+		cga.savePlayerConfig(config);
+		return
+	}
 	
 	var walkMazeForward = (cb)=>{
 		cga.walkRandomMaze(null, (err)=>{
@@ -104,11 +121,13 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 				setTimeout(battleAgain, 5000);
 				return;
 			}
+			// 集齐长老之证的人要喊出来已完成。
 			if(cga.getItemCount('长老之证') >= 7){
 				cga.SayWords('长老之证x7 GET', 0, 3, 1);
 				cb(true);
 				return;
 			}
+			// 因为全局有cga.waitTeammateSay，所以上面有人喊了之后，会把callZLZZ置为true，那么没有集齐长老之证的人，流程也会进行到下一步。
 			if(callZLZZ){
 				cb(true);
 				return;
@@ -313,21 +332,25 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	var task = cga.task.Task('琥珀之卵4', [
 	{//0
 		intro: '0.进行一些前期处理工作，如丢弃灵堂烧技能产生的小石像怪的卡片',
-		workFunc: function(cb2){
+		// 这里的stageIndex是从cgaapi中cga.task.Task传过来的任务index，可用于离线写入文件记录任务状态。
+		// 功能已实现，但本任务并不需要，故注掉
+		workFunc: function(cb2,stageIndex){
+			console.log('开始第'+stageIndex+'步骤')
 			var dropcount = 0
-			if(dropcount < 9 && cga.getInventoryItems().find((inv)=>{
-				return inv.name == '小石像怪的卡片';
-			}) != undefined){
-				var itempos = cga.findItem('小石像怪的卡片');
-				if(itempos != -1){
-					cga.DropItem(itempos);
+			var dropUseless = () =>{
+				var item = cga.getInventoryItems().find((it)=>{
+					return ((it.name == '小石像怪的卡片' || it.name == '魔石'))
+				});
+				if(item && dropcount < 10){
 					dropcount+=1
-					setTimeout(cb2, 500, 'restart stage');
-					return;
+					cga.DropItem(item.pos);
+					setTimeout(dropUseless, 1000);
+				}else{
+					// saveProgressConfig(stageIndex)
+					setTimeout(cb2, 1000, true);
 				}
-			}else{
-				setTimeout(cb2, 1000, true);
 			}
+			dropUseless()
 		}
 	},
 	{//1
@@ -845,8 +868,10 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		},
 	]
 	);
-	
+	// task.anyStepDone = false意为关掉下面步骤做完导致上面步骤直接跳过的方式。
+	// 详见cgaapi中的cga.task.Task源码
 	task.anyStepDone = false;
+
 	var firstmsg = ''
 	if(index == 0){
 		firstmsg = '朵拉重置任务'
