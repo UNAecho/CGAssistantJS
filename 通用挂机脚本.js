@@ -56,7 +56,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			if(typeof subPlugins[i][func] == 'function')
 				funcs.push(subPlugins[i][func]);
 		}
-		
+
 		Async.series(funcs, cb);
 	}
 	
@@ -119,8 +119,15 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		try{
 			//read plugin names from config
 			configTable.mainPlugin = obj.mainPlugin;
-			for(var i in obj.subPlugins)
-				configTable.subPlugins.push(obj.subPlugins[i]);
+			for(var i in obj.subPlugins){
+				// 防止没钱的时候先去运行其它子插件，导致卡住流程。因为执行子插件的Async.series方法是顺序执行的，非并行。
+				if (obj.subPlugins[i] == '自动存取魔币'){
+					console.log('读取到[自动存取魔币]插件，将其顺序置顶，防止因为金币不足导致其他流程受阻。')
+					configTable.subPlugins.unshift(obj.subPlugins[i]);
+				}else{
+					configTable.subPlugins.push(obj.subPlugins[i]);
+				}
+			}
 
 			return true;
 		}catch(e)
