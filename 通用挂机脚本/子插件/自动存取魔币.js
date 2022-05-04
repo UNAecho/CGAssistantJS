@@ -290,7 +290,21 @@ var thisobj = {
 			return
 		}
 
-		// main
+		// 清理背包，如果是烧声望来取钱，还要丢掉卡片
+		var dropcount = 0
+		var dropUseless = () =>{
+			var item = cga.getInventoryItems().find((it)=>{
+				return ((it.name == '小石像怪的卡片' || it.name == '魔石'))
+			});
+			if(item && dropcount < 10){
+				dropcount+=1
+				cga.DropItem(item.pos);
+				setTimeout(dropUseless, 1000);
+			}
+		}
+
+		dropUseless()
+
 		if (personalflag){
 			personalbanklogic(cb)
 		}else{

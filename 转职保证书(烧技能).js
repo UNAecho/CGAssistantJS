@@ -270,7 +270,7 @@ require('./leo/common').then(cga => {
 				// 计算还需使用多少次得意技
 				playerinfo = cga.GetPlayerInfo();
 				const reputationInfos = require('./常用数据/reputation.js');
-				var skillcount = reputationInfos(leo.getPlayerSysTitle(playerinfo.titles),percentage)
+				var skillcount = reputationInfos.skillCount(leo.getPlayerSysTitle(playerinfo.titles),percentage)
 				if(professionalInfo.jobmainname == '传教士'){
 					needGold = skillcount * 5 + 1000
 				}else if(professionalInfo.jobmainname == '咒术师'){

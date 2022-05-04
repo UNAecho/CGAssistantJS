@@ -4,8 +4,23 @@
 
 const reputationList = [
 	{
+		reputation: '恶人',
+		min: -1,
+		max: -3000,
+	}, 
+	{
+		reputation: '忌讳的人',
+		min: -2999,
+		max: -2000,
+	}, 
+	{
+		reputation: '受挫折的人',
+		min: -1999,
+		max: -1000,
+	}, 
+	{
 		reputation: '无名的旅人',
-		min: 0,
+		min: -999,
 		max: 1999,
 	}, {
 		reputation: '路旁的落叶',
@@ -53,7 +68,7 @@ const reputationList = [
 		max: 999999,
 	},
 ];
-const calculate =(inputreputation,percentage) => {
+var calculate =(inputreputation,percentage) => {
 	let count = 0;
 	reputationList.forEach(p => {
 		if(p.reputation == inputreputation){
@@ -72,7 +87,7 @@ const calculate =(inputreputation,percentage) => {
 	return count;
 };
 
-module.exports = function(inputreputation,percentage) {
+module.exports.skillCount = function(inputreputation,percentage) {
 	var result = 0
 	if(inputreputation == null){
 		inputreputation ='路旁的落叶'
@@ -87,3 +102,20 @@ module.exports = function(inputreputation,percentage) {
 	}
 	return result;
 };
+
+module.exports.getReputation = function(titles) {
+	// 如果是异常称号，返回树旁的落叶默认
+	var defaultReputation = '路旁的落叶'
+	reputationList.forEach(p => {
+		for(var i in titles){
+			if(titles[i].length == 0){
+				continue
+			}
+			if(titles[i] == p.reputation){
+				defaultReputation = titles[i];
+				break
+			}
+		}
+	});
+	return defaultReputation
+}

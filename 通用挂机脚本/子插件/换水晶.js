@@ -1,6 +1,8 @@
 var cga = global.cga;
 var configTable = global.configTable;
 
+var skipMainPluginName = ['烧声望']
+
 var buyArray = [
 	{
 		name : '地水的水晶（5：5）',
@@ -159,10 +161,24 @@ const repairEquipments = (buyCrystal, cb)=>{
 	});
 }
 
+// 跳过提示，日志仅打印一次
+var once = false
+
 var thisobj = {
 	prepare : (cb)=>{
+		// 如果主插件是skipMainPluginName中的任务，跳过换水晶
+		if (configTable && (global.is_array_contain(skipMainPluginName,configTable.mainPlugin))){
+			if(!once)
+				console.log('当前主插件【'+configTable.mainPlugin+'】'+'不需要换水晶，跳过换水晶子插件')
+			once = true
+			cb(null)
+			return
+		}
+		
 		var anyitems = cga.getEquipItems().filter(hasFilter);
 		var items = cga.getEquipItems().filter(repairFilter);
+
+
 		if(!items.length && anyitems.length){
 			console.log('身上有水晶，并且不需要更换')
 			cb(null);

@@ -3,6 +3,7 @@ var fs = require('fs');
 var supplyMode = require('./../公共模块/灵堂回补');
 var supplyCastle = require('./../公共模块/里堡回补');
 var logbackEx = require('./../公共模块/登出防卡住');
+var updateConfig = require('./../公共模块/修改配置文件');
 var cga = global.cga;
 var configTable = global.configTable;
 
@@ -30,15 +31,18 @@ var getSupplyObject = (map, mapindex)=>{
 // 提取本地职业数据
 const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
 var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
+// 声望数据
+const reputationInfos = require('../../常用数据/reputation.js');
 
-// 烧技能单词技能消耗，用于计算使用次数
+// 用于对比称号是否有进展，如有则继续刷
+var originInfo = null
+
+// 烧技能单次技能消耗，用于计算使用次数
 var skillcast = professionalInfo.jobmainname == '咒术师' ? 5 : 10 
-// 应该烧技能的次数，通过阿蒙和阿梅确定声望进度，然后估计需要使用多少次得意技
-var skillcount = null 
+// 回补次数，通过阿蒙和阿梅确定声望进度，然后估计回补多少次即可到达下一级别声望
+var supplycount = 0 
 // 声望进度百分比
 var per = null
-// 是否去刷新声望进度
-var getTitleFlag = true
 
 var loadBattleConfig = ()=>{
 
@@ -71,7 +75,7 @@ var loadBattleConfig = ()=>{
 }
 
 // 获取称号进度百分比
-var getPercentage = (cb) =>{
+var getPercentage = (cb,playerInfo) =>{
 	console.log('刷新称号，并获取进度百分比')
 
 	cga.travel.falan.toStone('E2', ()=>{
@@ -96,8 +100,26 @@ var getPercentage = (cb) =>{
 							}else{
 								per = 1
 							}
-							console.log('当前声望进度:【'+(per==null? '读取失败' : per * 100)+'%】')
-							getTitleFlag = false
+							var reputationState = (per == null? '读取失败' : (per * 100).toString() + '%')
+							var title = reputationInfos.getReputation(playerInfo.titles)
+							var skillcount = reputationInfos.skillCount(title,per)
+							supplycount = Math.ceil(skillcount / Math.floor(playerInfo.maxmp / skillcast))
+
+							console.log('职业：【'+professionalInfo.jobmainname+'】，称号：【'+title+'】，进度：【'+reputationState+'】，需要使用【'+skillcount+'】次得意技，或回补【'+supplycount+'】次才能升级至下一称号')
+
+							if (originInfo === null){
+								originInfo = {
+									title : title,
+									percentage : per
+								}
+							}else{
+								if (originInfo.title == title && originInfo.percentage == per){
+									console.log('声望无进展，该去做保证书任务了')
+									jump()
+								}else{
+									console.log('声望有进展，继续烧声望')
+								}
+							}
 							setTimeout(cb, 2000, null);
 						});
 					});
@@ -130,6 +152,7 @@ var playerThink = ()=>{
 	var ctx = {
 		playerinfo : playerinfo,
 		petinfo : playerinfo.petid >= 0 ? cga.GetPetInfo(playerinfo.petid) : null,
+		job : professionalInfo.jobmainname ,
 		teamplayers : cga.getTeamPlayers(),
 		dangerlevel : thisobj.getDangerLevel(),
 		inventory : items.filter((item)=>{
@@ -176,8 +199,8 @@ var playerThink = ()=>{
 			{
 				moveThinkInterrupt.requestInterrupt(()=>{
 					if(cga.isInNormalState()){
-						console.log('moveThinkInterrupt.requestInterrupt + supplyMode.func(loop)')
-						ctx.supplycount += 1
+						console.log('触发回补，升级至下一个称号还需回补:【'+supplycount+'】次')
+						supplycount -= 1
 						supplyMode.func(loop);
 						return true;
 					}
@@ -231,6 +254,9 @@ var jump = ()=>{
 	// 恢复出战宠物
 	// 详细逻辑请看cga.findbattlepet()注释
 	cga.ChangePetState(cga.findbattlepet(), cga.PET_STATE_BATTLE);
+	setTimeout(()=>{
+		updateConfig.update_config('mainPlugin','转职保证书')
+	},5000)
 }
 
 var loop = ()=>{
@@ -239,7 +265,7 @@ var loop = ()=>{
 	var mapindex = cga.GetMapIndex().index3;
 	var playerinfo = cga.GetPlayerInfo();
 
-	if(cga.needSupplyInitial()){
+	if(cga.needSupplyInitial() && playerinfo.gold > 10000){
 		var supplyObject = getSupplyObject(map, mapindex);
 		if(supplyObject)
 		{
@@ -248,8 +274,8 @@ var loop = ()=>{
 		}
 	}
 
-	if(getTitleFlag){
-		setTimeout(getPercentage, 2000,loop);
+	if(supplycount == 0){
+		setTimeout(getPercentage, 2000, loop, playerinfo);
 		return
 	}
 

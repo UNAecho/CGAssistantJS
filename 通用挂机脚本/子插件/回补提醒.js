@@ -58,6 +58,15 @@ var thisobj = {
 				return true;
 			}
 		}
+		// TODO think方法一直在刷，导致thisobj.minMpPercent一直在覆盖，需要换实现方式
+		// 如果主插件是烧声望，则强行修改回补蓝量（为了更高效的耗蓝），以避免频繁改写脚本设置中的minMp
+		if (configTable && configTable.mainPlugin == '烧声望'){
+			// 跳过百分比逻辑
+			thisobj.minMpPercent = undefined
+			thisobj.minMpValue = (ctx.job == '咒术师' ? 5 : 10)
+			console.log('当前主插件【'+configTable.mainPlugin+'】'+'强行修改最低耗蓝' + thisobj.minMpValue)
+		}
+				
 		if(thisobj.minMpPercent !== undefined)
 		{			
 			if(ctx.playerinfo.mp < ctx.playerinfo.maxmp * thisobj.minMpPercent / 100 && curTime >= thisobj.muteUntil){
