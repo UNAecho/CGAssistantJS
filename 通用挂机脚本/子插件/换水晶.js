@@ -168,16 +168,23 @@ var thisobj = {
 	prepare : (cb)=>{
 		// 如果主插件是skipMainPluginName中的任务，跳过换水晶
 		if (configTable && (global.is_array_contain(skipMainPluginName,configTable.mainPlugin))){
-			if(!once)
-				console.log('当前主插件【'+configTable.mainPlugin+'】'+'不需要换水晶，跳过换水晶子插件')
-			once = true
+			var items = cga.getEquipItems().filter(hasFilter);
+			if(items.length){
+				console.log('当前主插件【'+configTable.mainPlugin+'】'+'需要卸下水晶避免浪费耐久度')
+				var emptyslot = cga.findInventoryEmptySlot();
+				if(emptyslot == -1){
+					console.log('物品栏没有空位，保留水晶')
+					cb(null);
+					return;
+				}
+				cga.MoveItem(items[0].pos, emptyslot, -1)
+			}
 			cb(null)
 			return
 		}
-		
+
 		var anyitems = cga.getEquipItems().filter(hasFilter);
 		var items = cga.getEquipItems().filter(repairFilter);
-
 
 		if(!items.length && anyitems.length){
 			console.log('身上有水晶，并且不需要更换')

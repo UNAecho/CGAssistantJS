@@ -199,8 +199,8 @@ var playerThink = ()=>{
 			{
 				moveThinkInterrupt.requestInterrupt(()=>{
 					if(cga.isInNormalState()){
-						console.log('触发回补，升级至下一个称号还需回补:【'+supplycount+'】次')
 						supplycount -= 1
+						console.log('触发回补，升级至下一个称号还需回补:【'+supplycount+'】次')
 						supplyMode.func(loop);
 						return true;
 					}
@@ -327,9 +327,6 @@ var thisobj = {
 		return false;
 	},
 	loadconfig : (obj)=>{
-		
-		configTable.listenPort = obj.listenPort;
-		thisobj.listenPort = obj.listenPort
 
 		if(!supplyMode.loadconfig(obj))
 			return false;

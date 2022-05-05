@@ -1,3 +1,7 @@
+// 提取本地职业数据
+const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
+var job = getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname
+
 var thisobj = {
 	muteUntil : 0,
 	mute : 15,
@@ -58,15 +62,6 @@ var thisobj = {
 				return true;
 			}
 		}
-		// TODO think方法一直在刷，导致thisobj.minMpPercent一直在覆盖，需要换实现方式
-		// 如果主插件是烧声望，则强行修改回补蓝量（为了更高效的耗蓝），以避免频繁改写脚本设置中的minMp
-		if (configTable && configTable.mainPlugin == '烧声望'){
-			// 跳过百分比逻辑
-			thisobj.minMpPercent = undefined
-			thisobj.minMpValue = (ctx.job == '咒术师' ? 5 : 10)
-			console.log('当前主插件【'+configTable.mainPlugin+'】'+'强行修改最低耗蓝' + thisobj.minMpValue)
-		}
-				
 		if(thisobj.minMpPercent !== undefined)
 		{			
 			if(ctx.playerinfo.mp < ctx.playerinfo.maxmp * thisobj.minMpPercent / 100 && curTime >= thisobj.muteUntil){
@@ -128,7 +123,7 @@ var thisobj = {
 			console.error('读取配置：回补血量失败！');
 			return false;
 		}
-		
+
 		//legacy
 		if(obj.minMpPercent != undefined)
 		{
@@ -147,6 +142,16 @@ var thisobj = {
 				configTable.minMp = obj.minMp;
 				thisobj.minMpValue = obj.minMp;
 			}
+		}
+
+		// 如果主插件烧声望，强行修改回补蓝量为最低得意技耗魔
+		if (configTable && configTable.mainPlugin == '烧声望'){
+			// 消去百分比读取，防止数值配置minMp被短路
+			thisobj.minMpPercent = undefined
+			thisobj.minMpValue = job == '咒术师' ? 5 : 10
+			// 修改configTable仅是为了在translate给控制台显示被修改后的回补最小蓝量信息，注意此时如果将configTable写入磁盘，将改变原有文件配置(最小蓝量变为得意技耗蓝)。
+			configTable.minMp = thisobj.minMpValue
+			console.log('发现主插件为【'+configTable.mainPlugin+'】，'+'强行修改最低耗蓝' + thisobj.minMpValue)
 		}
 		
 		if(thisobj.minMpPercent === undefined && thisobj.minMpValue === undefined){
