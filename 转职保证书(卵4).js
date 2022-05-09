@@ -66,6 +66,48 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		return
 	}
 	
+	var loadBattleConfig = ()=>{
+		// TODO 如果队里一个人也没有4级以上补血魔法怎么办
+		var checkSkill = ()=>{
+			var skills = cga.GetSkillsInfo();
+			var job = '其他';
+			skills.filter((sk)=>{
+				if(sk.name.indexOf('补血魔法') >= 0 && sk.lv >= 4){
+					job = '传教士'
+				}else if(sk.name.indexOf('恢复魔法') >= 0 && sk.lv >= 4){
+					job = '巫师'
+				}
+				return '';
+			});
+			return job;
+		}
+		
+
+		var settingpath = cga.getrootdir() + '\\战斗配置\\'
+		var role = checkSkill()
+		if (role == '传教士'){
+			settingpath = settingpath + 'BOSS传教.json'
+	
+		}else if (role == '巫师'){
+			settingpath = settingpath + 'BOSS巫师.json'
+	
+		}else{
+			settingpath = settingpath + 'BOSS合击.json'
+		}
+	
+		var setting = JSON.parse(fs.readFileSync(settingpath))
+	
+		cga.gui.LoadSettings(setting, (err, result)=>{
+			if(err){
+				console.log(err);
+				return;
+			}else{
+				console.log('读取战斗配置【'+settingpath+'】成功')
+			}
+		})
+		return
+	}
+
 	var walkMazeForward = (cb)=>{
 		cga.walkRandomMaze(null, (err)=>{
 			console.log(err);
@@ -351,6 +393,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 				}
 			}
 			dropUseless()
+			loadBattleConfig()
 		}
 	},
 	{//1

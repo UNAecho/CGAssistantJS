@@ -27,8 +27,8 @@
                 "condition2": 0,
                 "condition2rel": 0,
                 "condition2val": "",
-                "conditionrel": 2,
-                "conditionval": "10",
+                "conditionrel": 3,
+                "conditionval": "5",
                 "index": 1,
                 "petaction": -1,
                 "pettarget": -1,
@@ -42,8 +42,8 @@
                 "condition2": 0,
                 "condition2rel": 0,
                 "condition2val": "",
-                "conditionrel": 1,
-                "conditionval": "10",
+                "conditionrel": 0,
+                "conditionval": "5",
                 "index": 2,
                 "petaction": -1,
                 "pettarget": -1,
@@ -51,8 +51,8 @@
                 "playeraction": 100,
                 "playerskilllevel": 1,
                 "playerskillname": "气绝回复",
-                "playertarget": 0,
-                "playertargetsel": 0
+                "playertarget": 2,
+                "playertargetsel": -1
             },
             {
                 "condition": 1,

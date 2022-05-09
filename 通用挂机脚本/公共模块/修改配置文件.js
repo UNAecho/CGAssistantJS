@@ -1,9 +1,10 @@
 var fs = require('fs');
 
 var configModeArray = [
-{
+{	
 	name : '修改配置文件',
-	update_config : (key,value)=>{
+	//noExit : 禁止自动结束脚本，以便做其他操作。
+	update_config : (key,value,noExit)=>{
 
 		if(!key || configTable[key] == undefined || configTable[key].length == 0){
 			console.error('输入的configTable key有误，请检查')
@@ -13,6 +14,11 @@ var configModeArray = [
 		if(!value || typeof configTable[key] !== typeof value){
 			console.error('输入的configTable value类型有误，请检查')
 			return;
+		}
+
+		if(configTable[key] == value){
+			console.log('目标值已存在，无需写入')
+			return
 		}
 		
 		// 注意此处强制设定脚本自动重启，不然程序无法自动执行下一个脚本。
@@ -37,11 +43,12 @@ var configModeArray = [
 				  console.log(err);
 				else {
 				  console.log('写入成功，通过自动重启脚本重新启动。')
-				  setTimeout(process.exit(0), 5000);
 				}
 			  });
 		});	
-
+		if (noExit === undefined || !noExit)
+			console.log('通过自动重启脚本重新启动。')
+			setTimeout(process.exit(0), 5000);
 		return
 	},
 	think : (ctx)=>{

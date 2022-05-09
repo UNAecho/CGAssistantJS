@@ -1,6 +1,5 @@
 // 提取本地职业数据
 const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
-var job = getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname
 
 var thisobj = {
 	muteUntil : 0,
@@ -148,7 +147,7 @@ var thisobj = {
 		if (configTable && configTable.mainPlugin == '烧声望'){
 			// 消去百分比读取，防止数值配置minMp被短路
 			thisobj.minMpPercent = undefined
-			thisobj.minMpValue = job == '咒术师' ? 5 : 10
+			thisobj.minMpValue = 5
 			// 修改configTable仅是为了在translate给控制台显示被修改后的回补最小蓝量信息，注意此时如果将configTable写入磁盘，将改变原有文件配置(最小蓝量变为得意技耗蓝)。
 			configTable.minMp = thisobj.minMpValue
 			console.log('发现主插件为【'+configTable.mainPlugin+'】，'+'强行修改最低耗蓝' + thisobj.minMpValue)

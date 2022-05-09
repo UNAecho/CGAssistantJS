@@ -1,4 +1,5 @@
 var fs = require('fs');
+var updateMode = require('./通用挂机脚本/公共模块/修改配置文件');
 require('./leo/common').then(cga=>{
 	//leo.baseInfoPrint();
 	//没有转职保证书也强制转职，可设置成true，默认false，
@@ -46,14 +47,14 @@ require('./leo/common').then(cga=>{
 	var nexttask = ()=>{
 		global.cga = cga
 		console.log('准备进入刷声望环节');
+		// TODO 将传咒互转改为通用挂机版本
+		// updateMode.update_config('mainPlugin','烧声望',true)
 		var rootdir = cga.getrootdir()
 		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
 		var body = {
-			path : rootdir + "\\转职保证书(烧技能).js",
+			path : rootdir + "\\通用挂机脚本.js",
 		}
-		var settingpath = rootdir +'\\战斗配置\\灵堂烧声望.json';
-		var setting = JSON.parse(fs.readFileSync(settingpath))
-		scriptMode.call_ohter_script(body,setting)
+		scriptMode.call_ohter_script(body)
 	
 	}
 	leo.todo()
