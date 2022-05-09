@@ -161,9 +161,6 @@ const repairEquipments = (buyCrystal, cb)=>{
 	});
 }
 
-// 跳过提示，日志仅打印一次
-var once = false
-
 var thisobj = {
 	prepare : (cb)=>{
 		// 如果主插件是skipMainPluginName中的任务，跳过换水晶
@@ -183,15 +180,27 @@ var thisobj = {
 			return
 		}
 
+		// 如果已经装备好全新水晶，则装备
 		var anyitems = cga.getEquipItems().filter(hasFilter);
 		var items = cga.getEquipItems().filter(repairFilter);
-
 		if(!items.length && anyitems.length){
 			console.log('身上有水晶，并且不需要更换')
 			cb(null);
 			return;
 		}
+		// 如果背包有现成的全新水晶，则装备。
+		// 注意cga.getInventoryItems()返回的是数组，因为装备是复数的。所以要用下标指定装备
+		// 由于水晶都是一样的，所以装备第0个下标就好
+		var usefulitem = cga.getInventoryItems().filter(hasrepairedFilter)
 
+		if(usefulitem.length && usefulitem[0].name == thisobj.buyCrystal.name){
+			cga.UseItem(usefulitem[0].pos)
+			console.log('有现成的'+usefulitem[0].name+'可供使用')
+			setTimeout(thisobj.prepare, 1000, cb);
+			return;
+		}
+
+		// 金币不足，退出
 		if(cga.GetPlayerInfo().gold < 600){
 			console.log('没钱了，无法换水晶。注意身上资金！')
 			cb(null);
