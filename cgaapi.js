@@ -3110,7 +3110,7 @@ module.exports = function(callback){
 			console.log('开始执行第'+(index+1)+'阶段：');
 			console.log(this.stages[index].intro);
 			var objThis = this;
-			objThis.stages[index].workFunc(function(r){
+			objThis.stages[index].workFunc(function(r,jumpIndex){
 				if(r === false || r instanceof Error){
 					if(cb)
 						cb(r);
@@ -3127,6 +3127,9 @@ module.exports = function(callback){
 				} else if( r == 'restart task' ){
 					console.log('第'+(index+1)+'阶段请求重新执行。');
 					objThis.doNext(index, cb);
+				} else if( r == 'jump' && typeof jumpIndex == 'number'){
+					console.log('第'+(index+1)+'阶段请求跳转至第'+(jumpIndex+1)+'阶段');
+					objThis.doNext(jumpIndex, cb);
 				} else  {
 					throw new Error('无效参数');
 				}

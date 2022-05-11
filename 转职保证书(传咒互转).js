@@ -74,14 +74,6 @@ require('./leo/common').then(cga=>{
 		}
 	})
 	.then(()=>{
-		var crystal = cga.GetItemsInfo().find(i => i.pos == 7);
-		if(!crystal){
-			var crystalName = '水火的水晶（5：5）';
-			return leo.buyCrystal(crystalName,1)
-			.then(()=>leo.useItemEx(crystalName));
-		}
-	})
-	.then(()=>{
 		if(isCanChange){
 			var playerinfo = cga.GetPlayerInfo();
 			var profession = leo.getPlayerProfession();

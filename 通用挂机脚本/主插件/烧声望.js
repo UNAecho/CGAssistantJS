@@ -38,7 +38,7 @@ const reputationInfos = require('../../常用数据/reputation.js');
 var originInfo = null
 
 // 烧技能单次技能消耗，用于计算使用次数
-var skillcast = professionalInfo.jobmainname == '咒术师' ? 5 : 10 
+var skillcast = 5
 // 回补次数，通过阿蒙和阿梅确定声望进度，然后估计回补多少次即可到达下一级别声望
 var supplycount = 0 
 // 声望进度百分比
@@ -46,16 +46,10 @@ var per = null
 
 var loadBattleConfig = ()=>{
 
-	var playerJobInfo = {}
-
 	var settingpath = cga.getrootdir() + '\\战斗配置\\'
 
 	if (professionalInfo.jobmainname == '咒术师'){
 		settingpath = settingpath + '咒术烧声望.json'
-
-		playerJobInfo.jobname = professionalInfo.jobmainname
-		playerJobInfo.skillcast = 10
-		playerJobInfo.jobname = professionalInfo.jobmainname
 
 	}else{
 		settingpath = settingpath + '传教烧声望.json'
@@ -75,7 +69,7 @@ var loadBattleConfig = ()=>{
 }
 
 // 获取称号进度百分比
-var getPercentage = (cb,playerInfo) =>{
+var getPercentage = (cb) =>{
 	console.log('刷新称号，并获取进度百分比')
 
 	cga.travel.falan.toStone('E2', ()=>{
@@ -100,6 +94,9 @@ var getPercentage = (cb,playerInfo) =>{
 							}else{
 								per = 1
 							}
+							// 刷新内存中的称号信息，不然还是和阿蒙对话前的称号
+							var playerInfo = cga.GetPlayerInfo()
+							// 制定接下来的烧声望计划
 							var reputationState = (per == null? '读取失败' : (per * 100).toString() + '%')
 							var title = reputationInfos.getReputation(playerInfo.titles)
 							var skillcount = reputationInfos.skillCount(title,per)
@@ -107,13 +104,17 @@ var getPercentage = (cb,playerInfo) =>{
 
 							console.log('职业：【'+professionalInfo.jobmainname+'】，称号：【'+title+'】，进度：【'+reputationState+'】，需要使用【'+skillcount+'】次得意技，或回补【'+supplycount+'】次才能升级至下一称号')
 
+							if (title == '无尽星空' || title == '敬畏的寂静'){
+								console.log('称号已满，烧声望脚本结束')
+								jump()
+							}
 							if (originInfo === null){
 								originInfo = {
 									title : title,
 									percentage : per
 								}
 							}else{
-								if (originInfo.title == title && originInfo.percentage == per){
+								if(originInfo.title == title && originInfo.percentage == per){
 									console.log('声望无进展，该去做保证书任务了')
 									jump()
 								}else{
@@ -254,9 +255,20 @@ var jump = ()=>{
 	// 恢复出战宠物
 	// 详细逻辑请看cga.findbattlepet()注释
 	cga.ChangePetState(cga.findbattlepet(), cga.PET_STATE_BATTLE);
-	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','转职保证书')
-	},5000)
+
+	var changeScript = ()=>{
+		var rootdir = cga.getrootdir()
+		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+		var body = {
+			path : rootdir + "\\转职保证书(卵4).js",
+		}
+		scriptMode.call_ohter_script(body)
+	}
+	changeScript()
+	// TODO 转职保证书通用挂机版
+	// setTimeout(()=>{
+	// 	updateConfig.update_config('mainPlugin','转职保证书')
+	// },5000)
 }
 
 var loop = ()=>{
@@ -275,7 +287,7 @@ var loop = ()=>{
 	}
 
 	if(supplycount == 0){
-		setTimeout(getPercentage, 2000, loop, playerinfo);
+		setTimeout(getPercentage, 2000, loop);
 		return
 	}
 
