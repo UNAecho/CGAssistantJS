@@ -247,7 +247,7 @@ var thisobj = {
 		}
 
 		if(thisobj.maxEndurance + thisobj.maxStrength + thisobj.maxDefense + thisobj.maxAgility + thisobj.maxMagical > 666){
-			console.log('【警告】：输入的加点配置大于人物可获得的最大点数:【1*30+159*4=666】点，单个人物属性最高【333】点')
+			console.log('【警告】：输入的加点配置大于人物可获得的最大点数:【1*30+159*4=666】点，单个属性最高【1*15+159*2=333】点')
 		}else if(thisobj.maxEndurance + thisobj.maxStrength + thisobj.maxDefense + thisobj.maxAgility + thisobj.maxMagical < 0){
 			console.error('【错误】：负数加点不可取')
 		}

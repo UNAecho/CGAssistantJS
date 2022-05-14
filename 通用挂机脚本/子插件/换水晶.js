@@ -64,11 +64,11 @@ const hasFilter = (eq) => {
 	}
 	return false;
 }
-
+// 为了节约，改为150耐即视为可用
 const hasrepairedFilter = (eq) => {
 	if (eq.type == 22) {
 		const durability = cga.getEquipEndurance(eq);
-		return durability && durability[0] == durability[1];
+		return (durability && durability[0] > 150);
 	}
 	return false;
 }

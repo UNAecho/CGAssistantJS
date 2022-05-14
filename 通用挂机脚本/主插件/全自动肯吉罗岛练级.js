@@ -1,13 +1,19 @@
+var fs = require('fs');
 var Async = require('async');
 var supplyKengiro = require('../公共模块/肯吉罗岛回补');
 var supplyCastle = require('./../公共模块/里堡回补');
 var sellKengiro = require('../公共模块/肯吉罗岛卖石');
 var sellCastle = require('../公共模块/里堡卖石');
 var teamMode = require('../公共模块/组队模式');
-var logbackEx = require('../公共模块/登出防卡住');
 
 var cga = global.cga;
 var configTable = global.configTable;
+var logbackEx = require('../公共模块/登出防卡住');
+
+// 提取本地职业数据
+const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
+var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
+
 var sellStoreArray = ['不卖石', '卖石'];
 
 var interrupt = require('../公共模块/interrupt');
@@ -152,13 +158,51 @@ var walkMazeBack = (cb)=>{
 	});
 }
 
+var loadBattleConfig = ()=>{
+
+	var settingpath = cga.getrootdir() + '\\战斗配置\\'
+
+	if (professionalInfo.jobmainname == '传教士'){
+		settingpath = settingpath + '传教练级.json'
+
+	}else if(professionalInfo.jobmainname == '格斗士'){
+		settingpath = settingpath + '格斗练级.json'
+	}else if(professionalInfo.jobmainname == '弓箭手'){
+		settingpath = settingpath + '弓箭练级.json'
+	}else if(professionalInfo.jobmainname == '剑士'){
+		settingpath = settingpath + '剑士练级.json'
+	}else if(professionalInfo.jobmainname == '战斧斗士'){
+		settingpath = settingpath + '战斧练级.json'
+	}else if(professionalInfo.jobmainname == '魔术师'){
+		settingpath = settingpath + '法师练级.json'
+	}else if(professionalInfo.jobmainname == '巫师'){
+		settingpath = settingpath + '巫师练级.json'
+	}else if(professionalInfo.jobmainname == '封印师'){
+		settingpath = settingpath + '封印师练级.json'
+	}else{
+		settingpath = settingpath + '营地组队普攻刷声望.json'
+	}
+
+	var setting = JSON.parse(fs.readFileSync(settingpath))
+
+	cga.gui.LoadSettings(setting, (err, result)=>{
+		if(err){
+			console.log(err);
+			return;
+		}else{
+			console.log('读取战斗配置【'+settingpath+'】成功')
+		}
+	})
+	return
+}
+
 var minmaxlv= (teamplayers)=>{
 
 	if(teamplayers.length>=2){
 		minlevel = teamplayers[0].level
 		maxlevel = teamplayers[0].level
 	}else{
-		minlevel = playerinfo.level
+		minlevel = cga.GetPlayerInfo().level
 	}
 	for (i = 0 ; i< teamplayers.length ; i++){
 		minlevel = minlevel < teamplayers[i].level ? minlevel : teamplayers[i].level
@@ -168,7 +212,6 @@ var minmaxlv= (teamplayers)=>{
 	console.log('队员最高等级 : ' + maxlevel)
 	return
 }
-
 
 var choosearea = ()=>{
 	var teamplayers = cga.getTeamPlayers();
@@ -845,6 +888,7 @@ var thisobj = {
 		cga.registerMoveThink(moveThink);
 		callSubPlugins('init');
 		logbackEx.init();
+		loadBattleConfig()
 		loop();
 	},
 };

@@ -805,8 +805,8 @@ var thisobj = {
 	},
 	translate : (pair)=>{
 		
-		if(teamMode.translate(pair))
-			return true;
+		// if(teamMode.translate(pair))
+		// 	return true;
 		
 		// if(pair.field == 'listenPort'){
 		// 	pair.field = '监听端口';
@@ -818,8 +818,8 @@ var thisobj = {
 	},
 	loadconfig : (obj)=>{
 
-		if(!teamMode.loadconfig(obj))
-			return false;
+		// if(!teamMode.loadconfig(obj))
+		// 	return false;
 		
 		// configTable.listenPort = obj.listenPort;
 		// thisobj.listenPort = obj.listenPort
