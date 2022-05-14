@@ -21,7 +21,7 @@ var thisobj = {
 			return true;
 		}		
 		if(pair.field == 'maxDefense'){
-			pair.field = '强度目标点数';
+			pair.field = '防御目标点数';
 			pair.value = pair.value;
 			pair.translated = true;
 			return true;
@@ -41,7 +41,26 @@ var thisobj = {
 		}		
 		if(pair.field == 'petpoint'){
 			pair.field = '出战宠物加点方案';
-			pair.value = pair.value;
+			switch (pair.value) {
+				case 1:
+					pair.value = '加体力';
+					break
+				case 2:
+					pair.value = '加力量';
+					break
+				case 3:
+					pair.value = '加防御';
+					break
+				case 4:
+					pair.value = '加敏捷';
+					break
+				case 5:
+					pair.value = '加魔法';
+					break
+				// 不设置加点方案
+				default:
+					pair.value = null
+			}
 			pair.translated = true;
 			return true;
 		}
@@ -59,7 +78,7 @@ var thisobj = {
 				// 减1是因为cga的API为0-体力，1-力量，2-防御，3-敏捷，4-魔法
 				cga.UpgradePet(ctx.petinfo.index,thisobj.petpoint-1)
 			}else{
-				console.log('宠物加点属性有误,仅可输入1体力2力量3强度4敏捷5魔法这五种数字。')
+				console.log('宠物加点属性有误,仅可输入1体力2力量3防御4敏捷5魔法这五种数字。')
 			}
 		}
 		// 人物加点
@@ -91,7 +110,7 @@ var thisobj = {
 					break
 				case 2:
 					var loss = thisobj.maxDefense - ctx.playerinfo.detail.points_defense
-					// console.log('当前[强度]('+ctx.playerinfo.detail.points_defense+')与目标值('+thisobj.maxDefense+')残差为:['+loss+']')
+					// console.log('当前[防御]('+ctx.playerinfo.detail.points_defense+')与目标值('+thisobj.maxDefense+')残差为:['+loss+']')
 					if(loss!=0 && loss<= minLoss && ctx.playerinfo.detail.points_defense < maxPoint){
 						targetIndex = i
 						minLoss = loss
@@ -134,7 +153,7 @@ var thisobj = {
 		}
 		if(thisobj.maxDefense !== undefined && thisobj.Defense==targetIndex && ctx.playerinfo.detail.points_defense < maxPoint && ctx.playerinfo.detail.points_defense < thisobj.maxDefense){
 			cga.UpgradePlayer(thisobj.Defense)
-			console.log('增加1点[强度],目标:['+thisobj.maxDefense+'],当前等级最高加至['+maxPoint+']点')
+			console.log('增加1点[防御],目标:['+thisobj.maxDefense+'],当前等级最高加至['+maxPoint+']点')
 			return;
 		}
 		if(thisobj.maxAgility !== undefined && thisobj.Agility==targetIndex && ctx.playerinfo.detail.points_agility < maxPoint && ctx.playerinfo.detail.points_agility < thisobj.maxAgility){
@@ -204,7 +223,7 @@ var thisobj = {
 		}
 		
 		if(thisobj.maxDefense === undefined){
-			console.error('读取配置:自动加点【强度】，失败!');
+			console.error('读取配置:自动加点【防御】，失败!');
 			return false;
 		}
 
@@ -302,7 +321,7 @@ var thisobj = {
 			});
 		}
 		var askpet = (cb2)=>{
-			var sayString = '【UNA人物自动加点插件】请输入出战宠物加点方案(仅输入数字,不加则输入0),1体力2力量3强度4敏捷5魔法:';
+			var sayString = '【UNA人物自动加点插件】请输入出战宠物加点方案(仅输入数字,不加则输入0),1体力2力量3防御4敏捷5魔法:';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val)=>{
 				if (msg.length>0){
@@ -322,7 +341,7 @@ var thisobj = {
 								cga.sayLongWords('已选择出战宠物升级时加[力量]', 0, 3, 1);
 								break
 							case 3:
-								cga.sayLongWords('已选择出战宠物升级时加[强度]', 0, 3, 1);
+								cga.sayLongWords('已选择出战宠物升级时加[防御]', 0, 3, 1);
 								break
 							case 4:
 								cga.sayLongWords('已选择出战宠物升级时加[敏捷]', 0, 3, 1);
@@ -355,7 +374,7 @@ var thisobj = {
 							});
 						}, '魔法', 'Magical');
 					}, '速度', 'Agility');
-				}, '强度', 'Defense');
+				}, '防御', 'Defense');
 			}, '力量', 'Strength');
 		}, '体力', 'Endurance');
 	}
