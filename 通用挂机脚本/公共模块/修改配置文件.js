@@ -42,13 +42,15 @@ var configModeArray = [
 				if (err)
 				  console.log(err);
 				else {
-				  console.log('写入成功，通过自动重启脚本重新启动。')
+					if (noExit === undefined || !noExit){
+						console.log('写入成功，通过自动重启脚本重新启动。')
+						setTimeout(process.exit(0), 5000);
+					}else{
+						console.log('写入成功，但不重启脚本。')
+					}
 				}
 			  });
 		});	
-		if (noExit === undefined || !noExit)
-			console.log('通过自动重启脚本重新启动。')
-			setTimeout(process.exit(0), 5000);
 		return
 	},
 	think : (ctx)=>{

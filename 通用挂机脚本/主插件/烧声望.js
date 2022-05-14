@@ -115,10 +115,10 @@ var getPercentage = (cb) =>{
 								}
 							}else{
 								if(originInfo.title == title && originInfo.percentage == per){
-									console.log('声望无进展，该去做保证书任务了')
+									console.log('声望【无】进展，该去做保证书任务了')
 									jump()
 								}else{
-									console.log('声望有进展，继续烧声望')
+									console.log('声望【有】进展，继续烧声望')
 								}
 							}
 							setTimeout(cb, 2000, null);
@@ -256,19 +256,9 @@ var jump = ()=>{
 	// 详细逻辑请看cga.findbattlepet()注释
 	cga.ChangePetState(cga.findbattlepet(), cga.PET_STATE_BATTLE);
 
-	var changeScript = ()=>{
-		var rootdir = cga.getrootdir()
-		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
-		var body = {
-			path : rootdir + "\\转职保证书(卵4).js",
-		}
-		scriptMode.call_ohter_script(body)
-	}
-	changeScript()
-	// TODO 转职保证书通用挂机版
-	// setTimeout(()=>{
-	// 	updateConfig.update_config('mainPlugin','转职保证书')
-	// },5000)
+	setTimeout(()=>{
+		updateConfig.update_config('mainPlugin','转职保证书')
+	},5000)
 }
 
 var loop = ()=>{
