@@ -148,6 +148,12 @@ var teamModeArray = [
 
 var cga = global.cga;
 var configTable = global.configTable;
+// 提取本地职业数据
+const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
+var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
+var commonJob = professionalInfo.jobmainname
+// 在烧声望模式中，传咒职业单人在灵堂刷即可，需要单人模式
+var skipTeamModeJob = ['传教士','咒术师']
 
 var playerinfo = cga.GetPlayerInfo();
 
@@ -196,8 +202,14 @@ var thisobj = {
 		}
 		
 		if(thisobj.object.name == '固定组队'){
-			configTable.teammates = obj.teammates;
-			thisobj.teammates = obj.teammates;
+			if(configTable.mainPlugin == '烧声望' && global.is_array_contain(skipTeamModeJob,commonJob)){
+				configTable.teammates = [];
+				thisobj.teammates = [];
+				console.log('烧技能主插件中，传教士与咒术师需要单人刷，将组队置空')
+			}else{
+				configTable.teammates = obj.teammates;
+				thisobj.teammates = obj.teammates;
+			}
 			if(!(thisobj.teammates instanceof Array)){
 				console.error('读取配置：队伍成员列表失败！');
 				return false;

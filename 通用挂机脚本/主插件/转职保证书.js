@@ -366,8 +366,13 @@ var zudangzhe = (cb)=>{
 					if(r === true){
 						callWYW = true
 						console.log('全员持有觉醒的文言抄本，BOSS战时直接登出。')
+						setTimeout(()=>{
+							cga.SayWords('统计完毕，全员持有觉醒的文言抄本，BOSS战时直接登出。', 0, 3, 1);
+						}, 1500);
 					}else{
-						console.log('部分队员没有文言抄本，BOSS战需要打完。')
+						setTimeout(()=>{
+							cga.SayWords('统计完毕，部分队员没有文言抄本，BOSS战需要打完。', 0, 3, 1);
+						}, 1500);
 					}
 					goodToGoZDZ(cb);
 				});
@@ -384,21 +389,16 @@ var zudangzhe = (cb)=>{
 			setTimeout(zudangzhe, 1000, cb);
 		}
 
-		// cga.waitTeammates(teammates, (r)=>{
-		// 	if(r){
-		// 		goodToGoZDZ(cb);
-		// 		return;
-		// 	}
-		// 	setTimeout(zudangzhe, 1000, cb);
-		// });
 	} else {
 		cga.addTeammate(teammates[0], (r)=>{
 			if(r){
+				// UNA:猜测这里的(player, msg)=>{}的cb，如果return true，对应着cga.waitTeammateSay递归执行，一直重复至return false才停止。
 				cga.waitTeammateSay((player, msg)=>{
 					if(player.index == 0 && msg.indexOf('持有情况')  >= 0){
 						var randomtime = Math.ceil(Math.random()*9000) + Math.ceil(Math.random()*1000)
 						console.log('采用随机延迟，防止间隔过小导致统计疏漏。当前延迟：'+randomtime+'毫秒。')
 						if(cga.getItemCount('觉醒的文言抄本') > 0){
+							callWYW = true
 							setTimeout(() => {
 								cga.SayWords('1', 0, 3, 1);
 							}, randomtime);
@@ -407,8 +407,13 @@ var zudangzhe = (cb)=>{
 								cga.SayWords('2', 0, 3, 1);
 							}, randomtime);
 						}
+						return true
+					}else if(msg == '2'){// 如果听到队友没有文言抄本，那就需要陪着打BOSS。
+						callWYW = false
+						return true
+					}else if(player.index == 0 && msg.indexOf('统计完毕')  >= 0){
 						goodToGoZDZ(cb);
-						return true;
+						return false
 					}
 					return true;
 				});
@@ -815,6 +820,12 @@ var task = cga.task.Task('琥珀之卵4', [
 					// 	setTimeout(cb2, 1000, true);
 					// 	return;
 					// }
+
+					// 由上面的【自己有文言抄本即登出，不管队友】修改为，视队友持有情况而选择登出还是留战。
+					// 这里的callWYW数值，取决于之前zudangzhe()统计保证书的持有情况。
+					if(callWYW){
+						setTimeout(cb2, 1000, true);
+					}
 					setTimeout(waitBOSS, 1000);
 					return;
 				}
@@ -931,7 +942,7 @@ var task = cga.task.Task('琥珀之卵4', [
 					});
 			}
 			
-			// cga.travel.newisland.toStone('X', ()=>{
+			cga.travel.newisland.toStone('X', ()=>{
 				cga.walkList([
 				[130, 50, '盖雷布伦森林'],
 				[244, 74],
@@ -966,7 +977,7 @@ var task = cga.task.Task('琥珀之卵4', [
 						setTimeout(getbook, 2500);
 					}
 				});
-			// });
+			});
 		}
 	},
 	],

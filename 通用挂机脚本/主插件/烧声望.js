@@ -1,21 +1,28 @@
-var Async = require('async');
 var fs = require('fs');
+var Async = require('async');
 var supplyMode = require('./../公共模块/灵堂回补');
+var supplyCamp = require('./../公共模块/营地回补');
 var supplyCastle = require('./../公共模块/里堡回补');
+// var sellCamp = require('./../公共模块/营地卖石');
+// var sellCastle = require('./../公共模块/里堡卖石');
+var teamMode = require('./../公共模块/组队模式');
 var logbackEx = require('./../公共模块/登出防卡住');
 var updateConfig = require('./../公共模块/修改配置文件');
+
 var cga = global.cga;
 var configTable = global.configTable;
-
+// var sellStoreArray = ['不卖石', '卖石'];
 
 var interrupt = require('./../公共模块/interrupt');
+
 var moveThinkInterrupt = new interrupt();
 var playerThinkInterrupt = new interrupt();
 var playerThinkRunning = false;
 
 var supplyArray = [
 	supplyMode, 
-	supplyCastle
+	supplyCastle,
+	supplyCamp
 ];
 
 var getSupplyObject = (map, mapindex)=>{
@@ -28,9 +35,22 @@ var getSupplyObject = (map, mapindex)=>{
 	})
 }
 
+// var sellArray = [sellCamp, sellCastle];
+
+// var getSellObject = (map, mapindex)=>{
+// 	if(typeof map != 'string')
+// 		map = cga.GetMapName();
+// 	if(typeof mapindex != 'number')
+// 		mapindex = cga.GetMapIndex().index3;
+// 	return sellArray.find((s)=>{
+// 		return s.isAvailable(map, mapindex);
+// 	})
+// }
 // 提取本地职业数据
 const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
 var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
+var commonJob = professionalInfo.jobmainname
+
 // 声望数据
 const reputationInfos = require('../../常用数据/reputation.js');
 
@@ -48,11 +68,12 @@ var loadBattleConfig = ()=>{
 
 	var settingpath = cga.getrootdir() + '\\战斗配置\\'
 
-	if (professionalInfo.jobmainname == '咒术师'){
+	if (commonJob == '咒术师'){
 		settingpath = settingpath + '咒术烧声望.json'
-
-	}else{
+	}else if(commonJob == '传教士'){
 		settingpath = settingpath + '传教烧声望.json'
+	}else{
+		settingpath = settingpath + '营地组队普攻刷声望.json'
 	}
 
 	var setting = JSON.parse(fs.readFileSync(settingpath))
@@ -102,7 +123,7 @@ var getPercentage = (cb) =>{
 							var skillcount = reputationInfos.skillCount(title,per)
 							supplycount = Math.ceil(skillcount / Math.floor(playerInfo.maxmp / skillcast))
 
-							console.log('职业：【'+professionalInfo.jobmainname+'】，称号：【'+title+'】，进度：【'+reputationState+'】，需要使用【'+skillcount+'】次得意技，或回补【'+supplycount+'】次才能升级至下一称号')
+							console.log('职业：【'+commonJob+'】，称号：【'+title+'】，进度：【'+reputationState+'】，需要使用【'+skillcount+'】次得意技，或回补【'+supplycount+'】次才能升级至下一称号')
 
 							if (title == '无尽星空' || title == '敬畏的寂静'){
 								console.log('称号已满，烧声望脚本结束')
@@ -153,7 +174,7 @@ var playerThink = ()=>{
 	var ctx = {
 		playerinfo : playerinfo,
 		petinfo : playerinfo.petid >= 0 ? cga.GetPetInfo(playerinfo.petid) : null,
-		job : professionalInfo.jobmainname ,
+		job : commonJob ,
 		teamplayers : cga.getTeamPlayers(),
 		dangerlevel : thisobj.getDangerLevel(),
 		inventory : items.filter((item)=>{
@@ -164,6 +185,8 @@ var playerThink = ()=>{
 		}),
 		result : null,
 	}
+
+	teamMode.think(ctx);
 
 	global.callSubPlugins('think', ctx);
 
@@ -192,7 +215,6 @@ var playerThink = ()=>{
 		{
 			if(interruptFromMoveThink)
 			{
-				console.log('interruptFromMoveThink + supplyMode.func(loop)')
 				supplyMode.func(loop);
 				return false;
 			}
@@ -200,8 +222,13 @@ var playerThink = ()=>{
 			{
 				moveThinkInterrupt.requestInterrupt(()=>{
 					if(cga.isInNormalState()){
-						supplycount -= 1
-						console.log('触发回补，升级至下一个称号还需回补:【'+supplycount+'】次')
+						// TODO 实现驯兽师的声望刷新机制，目前暂无，一直遇敌，请定时手动查看声望情况。
+						if(jobmainname == '驯兽师'){
+							console.log('实现驯兽师的声望刷新机制，目前暂无，一直遇敌，请定时手动查看声望情况。')
+						}else{
+							supplycount -= 1
+							console.log('触发回补，升级至下一个称号还需回补:【'+supplycount+'】次')
+						}
 						supplyMode.func(loop);
 						return true;
 					}
@@ -266,8 +293,119 @@ var loop = ()=>{
 	var map = cga.GetMapName();
 	var mapindex = cga.GetMapIndex().index3;
 	var playerinfo = cga.GetPlayerInfo();
+	var isleader = cga.isTeamLeaderEx();
 
-	if(cga.needSupplyInitial() && playerinfo.gold > 10000){
+	// 由于传咒需要单人在灵堂烧声望，所以在组队模式中已经将teammate置空数组。故传咒模式下isleader && teamMode.is_enough_teammates()均为true。
+	if(isleader && teamMode.is_enough_teammates()){
+		if((commonJob == '传教士' || commonJob == '咒术师') && !cga.ismaxbattletitle()){
+			if(cga.needSupplyInitial() && playerinfo.gold > 10000){
+				var supplyObject = getSupplyObject(map, mapindex);
+				if(supplyObject)
+				{
+					supplyObject.func(loop);
+					return;
+				}
+			}
+		
+			if(supplycount == 0){
+				setTimeout(getPercentage, 2000, loop);
+				return
+			}
+		
+			callSubPluginsAsync('prepare', ()=>{
+				//传咒单刷设置宠物不出战，驯兽需要保证宠物出战，否则虽然有声望，但是调教不加经验。最后5转需要10级调教的。
+				var petIndex = playerinfo.petid;
+				if(commonJob !='驯兽师' && petIndex!=-1){
+					cga.ChangePetState(petIndex, 0);
+				}
+				
+				if(map == '里谢里雅堡' && mapindex == 1500){
+					cga.walkList([
+					[47, 85, '召唤之间']
+					], loop);
+				}else if(map == '召唤之间' && mapindex == 1530){
+					cga.walkList([
+						[27, 8, '回廊']
+						], loop);
+				} else if(map == '回廊' && mapindex == 1531){
+					cga.walkList([
+					[23, 19, '灵堂']
+					], loop);
+				}else if(map == '灵堂' && mapindex == 11015){
+					
+					playerThinkInterrupt.hasInterrupt();//restore interrupt state
+					console.log('playerThink on');
+					playerThinkRunning = true;
+					cga.walkList([
+						[30, 49],
+					], ()=>{
+						cga.freqMove(0);
+					});
+				}else{
+					cga.travel.falan.toStone('C', loop);
+				}
+				return
+			});
+			return
+		}
+
+		// if(map == '医院' && mapindex == 44692){
+		// 	if(thisobj.sellStore == 1){
+		// 		var sellObject = getSellObject(map, mapindex);
+		// 		if(sellObject)
+		// 		{
+		// 			sellObject.func(loop);
+		// 			return;
+		// 		}
+		// 	}
+		// } 
+		if(map == '工房' && mapindex == 44693){
+			cga.walkList([
+			[30, 37, '圣骑士营地']
+			], loop);
+			return;
+		}
+		if(map == '肯吉罗岛'){
+			supplyMode.func(loop);
+			return;
+		}
+		if(map == '圣骑士营地'){
+			callSubPluginsAsync('prepare', ()=>{
+				if(cga.GetMapName() != '圣骑士营地'){
+					loop();
+					return;
+				}
+				playerThinkInterrupt.hasInterrupt();//restore interrupt state
+				console.log('playerThink on');
+				playerThinkRunning = true;
+				cga.walkList([
+					[36, 87, '肯吉罗岛'],
+					[548, 332],
+				], ()=>{
+					cga.freqMove(0);
+				});
+			});
+			return;
+		}
+	} else if(!isleader){
+		playerThinkInterrupt.hasInterrupt();//restore interrupt state
+		console.log('playerThink on');
+		playerThinkRunning = true;
+		return;		
+	}
+	
+	// if(thisobj.sellStore == 1 && cga.getSellStoneItem().length > 0)
+	// {
+	// 	var sellObject = getSellObject(map, mapindex);
+	// 	if(sellObject)
+	// 	{
+	// 		sellObject.func(loop);
+	// 		return;
+	// 	}
+	// }
+	
+	if(cga.needSupplyInitial())
+	{
 		var supplyObject = getSupplyObject(map, mapindex);
 		if(supplyObject)
 		{
@@ -275,55 +413,41 @@ var loop = ()=>{
 			return;
 		}
 	}
-
-	if(supplycount == 0){
-		setTimeout(getPercentage, 2000, loop);
-		return
-	}
-
+	
 	callSubPluginsAsync('prepare', ()=>{
-		//设置宠物不出战
-		var petIndex = playerinfo.petid;
-		if(petIndex!=-1){
-			cga.ChangePetState(petIndex, 0);
-		}
-		
-		if(map == '里谢里雅堡' && mapindex == 1500){
+		cga.travel.falan.toCamp(()=>{
 			cga.walkList([
-			[47, 85, '召唤之间']
-			], loop);
-		}else if(map == '召唤之间' && mapindex == 1530){
-			cga.walkList([
-				[27, 8, '回廊']
-				], loop);
-		} else if(map == '回廊' && mapindex == 1531){
-			cga.walkList([
-			[23, 19, '灵堂']
-			], loop);
-		}else if(map == '灵堂' && mapindex == 11015){
-			
-			playerThinkInterrupt.hasInterrupt();//restore interrupt state
-			console.log('playerThink on');
-			playerThinkRunning = true;
-			cga.walkList([
-				[30, 49],
+			cga.isTeamLeader ? [96, 86] : [97, 86],
 			], ()=>{
-				cga.freqMove(0);
+				teamMode.wait_for_teammates(loop);
 			});
-		}else{
-			cga.travel.falan.toStone('C', loop);
-		}
-		return
+		});
 	});
+
 }
 
 var thisobj = {
 	getDangerLevel : ()=>{
+		var map = cga.GetMapName();
+		
+		if(map == '肯吉罗岛' )
+			return 2;
+
 		return 0;
 	},
 	translate : (pair)=>{
 
+		// if(pair.field == 'sellStore'){
+		// 	pair.field = '是否卖石';
+		// 	pair.value = pair.value == 1 ? '卖石' : '不卖石';
+		// 	pair.translated = true;
+		// 	return true;
+		// }
+		
 		if(supplyMode.translate(pair))
+			return true;
+				
+		if(teamMode.translate(pair))
 			return true;
 		
 		return false;
@@ -332,39 +456,49 @@ var thisobj = {
 
 		if(!supplyMode.loadconfig(obj))
 			return false;
-
+		
+		if(!teamMode.loadconfig(obj))
+			return false;
+		
+		// configTable.sellStore = obj.sellStore;
+		// thisobj.sellStore = obj.sellStore
+		
+		// if(thisobj.sellStore == undefined){
+		// 	console.error('读取配置：是否卖石失败！');
+		// 	return false;
+		// }
+		
 		return true;
 	},
 	inputcb : (cb)=>{
-		
-		var stage1 = (cb2)=>{
-			
-			var sayString = '【烧声望插件】请选择服务监听端口（和乐园之卵4保持相同）: 1000~65535';
-			cga.sayLongWords(sayString, 0, 3, 1);
-			cga.waitForChatInput((msg, val)=>{
-				if(val !== null && val >= 1000 && val <= 65535){
-					configTable.listenPort = val;
-					thisobj.listenPort = val;
+		Async.series([supplyCamp.inputcb, teamMode.inputcb, 
+		// 	(cb2)=>{
+		// 	var sayString = '【烧声望插件】请选择是否卖石: 0不卖石 1卖石';
+		// 	cga.sayLongWords(sayString, 0, 3, 1);
+		// 	cga.waitForChatInput((msg, val)=>{
+		// 		if(val !== null && val >= 0 && val <= 1){
+		// 			configTable.sellStore = val;
+		// 			thisobj.sellStore = val;
 					
-					var sayString2 = '当前已选择:监听端口='+thisobj.listenPort+'。';
-					cga.sayLongWords(sayString2, 0, 3, 1);
+		// 			var sayString2 = '当前已选择:'+sellStoreArray[thisobj.sellStore]+'。';
+		// 			cga.sayLongWords(sayString2, 0, 3, 1);
 					
-					cb2(null);
+		// 			cb2(null);
 					
-					return false;
-				}
+		// 			return false;
+		// 		}
 				
-				return true;
-			});
-		}
-		
-		Async.series([stage1], cb);
+		// 		return true;
+		// 	});
+		// }
+	], cb);
 	},
 	execute : ()=>{
 		loadBattleConfig()
 		playerThinkTimer();
 		cga.registerMoveThink(moveThink);
 		callSubPlugins('init');
+		logbackEx.init();
 		loop();
 	},
 };

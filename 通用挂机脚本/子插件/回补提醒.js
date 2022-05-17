@@ -1,5 +1,7 @@
 // 提取本地职业数据
 const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
+var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
+var commonJob = professionalInfo.jobmainname
 
 var thisobj = {
 	muteUntil : 0,
@@ -144,7 +146,7 @@ var thisobj = {
 		}
 
 		// 如果主插件烧声望，强行修改回补蓝量为最低得意技耗魔
-		if (configTable && configTable.mainPlugin == '烧声望'){
+		if (configTable && configTable.mainPlugin == '烧声望' && (commonJob == '传教士' || commonJob == '咒术师')){
 			// 消去百分比读取，防止数值配置minMp被短路
 			thisobj.minMpPercent = undefined
 			thisobj.minMpValue = 5
