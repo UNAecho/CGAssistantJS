@@ -216,7 +216,9 @@ module.exports = function(callback){
 	cga.logBack = (cb)=>{
 		cga.waitSysMsgTimeout((err, msg)=>{
 			if(err){
-				throw new Error('异步登出无反应，可能网络不稳定或者已经掉线！');
+				console.log('异步登出无反应，可能网络不稳定或者已经掉线！');
+				if(cb) cb(null);
+				return
 			}
 
 			if(msg == '注销回到传送点。')
@@ -4314,16 +4316,21 @@ module.exports = function(callback){
 					teammate_state[player.name] = false;
 					teammate_notready ++;
 				}
+				// console.log(teammate_state)
+				// console.log('teammate_ready:' + teammate_ready)
+				// console.log('teammate_notready:' + teammate_notready)
 			}
 
 			if((teammates.length && teammate_ready >= teammates.length) || (!teammates.length && teammate_ready == 1)){
 				//all teammates are ready
+				// console.log('all teammates are ready')
 				cb(true);
 				return false;
 			}
 			
 			if((teammates.length && teammate_ready + teammate_notready >= teammates.length) || (!teammates.length && teammate_ready + teammate_notready == 1)){
 				//some teammates are not ready
+				// console.log('some teammates are not ready')
 				cb(false);
 				return false;
 			}
