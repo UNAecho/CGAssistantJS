@@ -4,10 +4,10 @@ var cga = require('../cgaapi')(function(){
 	
 	var teammates = [
         "UNAの格斗2",
-        "UNAの传教士",
-        "UNAの格斗1",
-        "UNAの厨师",
-        "UNAの药剂",
+        // "UNAの传教士",
+        // "UNAの格斗1",
+        "UNAの战斧2",
+        "UNAの战斧3",
 	];
 	
 	var teamplayers = cga.getTeamPlayers();

@@ -1,3 +1,4 @@
+var fs = require('fs');
 var cga = require('../cgaapi')(function(){
 
 	var transferstatus = {
@@ -12,6 +13,23 @@ var cga = require('../cgaapi')(function(){
 		abanisi:false,
 	}
 	
+	var loadBattleConfig = ()=>{
+
+		var settingpath = cga.getrootdir() + '\\战斗配置\\生产赶路.json'
+	
+		var setting = JSON.parse(fs.readFileSync(settingpath))
+	
+		cga.gui.LoadSettings(setting, (err, result)=>{
+			if(err){
+				console.log(err);
+				return;
+			}else{
+				console.log('读取战斗配置【'+settingpath+'】成功')
+			}
+		})
+		return
+	}
+
 	var waitResponse = (cb3,villageName)=>{
 		// 等待NPC响应
 		cga.AsyncWaitNPCDialog((err, dlg)=>{
@@ -568,6 +586,6 @@ var cga = require('../cgaapi')(function(){
 		},
 	]
 	);
-	
+	loadBattleConfig()
 	task.doTask();
 });
