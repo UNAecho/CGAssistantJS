@@ -3,6 +3,7 @@ var cga = require('./cgaapi')(function () {
 	global.cga = cga
 	
 	var playerinfo = cga.GetPlayerInfo();
+	// 人物名字必须是前缀+编号格式，例如【UNAの仓库01】
 	var prefix = playerinfo.name.replace(/\d+/g,''); 
 	var num = parseInt(playerinfo.name.replace(/[^0-9]/ig,"") , 10);
 	
