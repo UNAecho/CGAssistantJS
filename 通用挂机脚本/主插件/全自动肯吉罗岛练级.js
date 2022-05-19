@@ -161,10 +161,13 @@ var walkMazeBack = (cb)=>{
 var loadBattleConfig = ()=>{
 
 	var settingpath = cga.getrootdir() + '\\战斗配置\\'
-
+	// 因为传教士可能还有正在刷声望的小号，这样可以区分是保姆还是小号
 	if (professionalInfo.jobmainname == '传教士'){
-		settingpath = settingpath + '传教练级.json'
-
+		if(cga.GetPlayerInfo().job.indexOf('见习') != -1){
+			settingpath = settingpath + '营地组队普攻刷声望.json'
+		}else{
+			settingpath = settingpath + '传教练级.json'
+		}
 	}else if(professionalInfo.jobmainname == '格斗士'){
 		settingpath = settingpath + '格斗练级.json'
 	}else if(professionalInfo.jobmainname == '弓箭手'){
