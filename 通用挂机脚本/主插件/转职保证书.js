@@ -6,6 +6,9 @@ var teamMode = require('./../公共模块/组队模式');
 var cga = global.cga;
 var configTable = global.configTable;
 
+// 提取本地职业数据
+const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
+var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
 
 var jump = ()=>{
 	setTimeout(()=>{
@@ -1026,25 +1029,31 @@ var loop = ()=>{
 	callSubPluginsAsync('prepare', ()=>{
 		cga.SayWords('欢迎使用【UNAの脚本】全自动保证书+转职+刷声望流程，当前正在进行：【'+configTable.mainPlugin+'】阶段。', 0, 3, 1);
 		task.doTask(()=>{
-			console.log('任务完成，去阿蒙刷新一下称号。');
-			cga.travel.falan.toStone('E2', ()=>{
-				cga.walkList([
-					[230, 82],
-				], ()=>{
-					cga.turnTo(230, 83);
-					setTimeout(() => {
-						if(cga.ismaxbattletitle() || cga.getItemCount('转职保证书') == 0){
-							console.log('称号已满或包中没有保证书，重新做本任务。')
-							setTimeout(loop, 3000);
-							return
-						}else{
-							console.log('未到达满称号，开始转职刷声望')
-							setTimeout(jump, 3000);
-							return
-						}
-					}, 3000);
+			if(professionalInfo.jobmainname == '暗黑骑士' || professionalInfo.jobmainname == '教团骑士'){
+				console.log('暗黑骑士和教团骑士无法通过保证书刷称号，直接进入陪打循环。')
+				setTimeout(loop, 3000);
+				return
+			}else{
+				console.log('任务完成，去阿蒙刷新一下称号。');
+				cga.travel.falan.toStone('E2', ()=>{
+					cga.walkList([
+						[230, 82],
+					], ()=>{
+						cga.turnTo(230, 83);
+						setTimeout(() => {
+							if(cga.ismaxbattletitle() || cga.getItemCount('转职保证书') == 0){
+								console.log('称号已满或包中没有保证书，重新做本任务。')
+								setTimeout(loop, 3000);
+								return
+							}else{
+								console.log('未到达满称号，开始转职刷声望')
+								setTimeout(jump, 3000);
+								return
+							}
+						}, 3000);
+					});
 				});
-			});
+			}
 		});
 		return false;
 	});
