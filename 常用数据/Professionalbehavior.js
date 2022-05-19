@@ -2,7 +2,7 @@ module.exports = function(cga,job,behavior,cb) {
     // 提取本地职业信息
     const getprofessionalInfos = require('./ProfessionalInfo.js');
     var professionalInfo = getprofessionalInfos(job)
-
+    console.log('目标职业:【' + professionalInfo.jobmainname + '】动作:【' + behavior + '】')
     // 通用学习动作
     var learn = ()=>{
         cga.AsyncWaitNPCDialog(()=>{

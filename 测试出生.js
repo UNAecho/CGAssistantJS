@@ -200,8 +200,11 @@ var cga = require('./cgaapi')(function () {
 								}
 								// return;
 							}else{
-								console.log('纳塞没体现出结果，往下一步继续测试')
-								setTimeout(test2, 3000);
+								console.log('纳塞没体现出结果，推荐重新建号，请自行判断。')
+								// setTimeout(test2, 3000);
+								while (true) {
+								
+								}
 							}
 
 						});
