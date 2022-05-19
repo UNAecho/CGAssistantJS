@@ -14,6 +14,7 @@ var threshold = cipherSave > cipherDraw ? cipherSave : cipherDraw
 // 暗号内容，区分存取动作
 var save = '头目万岁'
 var draw = '魔术'
+var borncipher = "朵拉$"
 
 // 移动银行名字核心处
 // 移动银行站立地点
@@ -121,15 +122,22 @@ var thisobj = {
 			}
 	
 			var curgold = cga.GetPlayerInfo().gold
+			var cipher = curgold >= upperlimit  ? save : draw
+			var ciphercnt = cipher == save ? cipherSave : cipherDraw
+			// 如果是1级出生小号没有钱买暗号物品，先提取一点启动资金
+			if (curgold == 0){
+				cipher = borncipher
+				lowerlimit = 1000
+			}else{
+				lowerlimit = 100000
+			}
+
 			if(curgold >= lowerlimit && curgold <= upperlimit)
 			{
 				cb(null);
 				return;
 			}
-	
-			var cipher = curgold >= upperlimit  ? save : draw
-			var ciphercnt = cipher == save ? cipherSave : cipherDraw
-	
+
 			// 丢弃暗号物品，一个pos最多丢弃9个物品
 			var dropcount = 0
 			var dropUseless = (cb2)=>{
@@ -206,15 +214,17 @@ var thisobj = {
 					console.log('清点钱款完毕，退出此插件')
 					if(cga.getTeamPlayers().length > 0){
 						cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
-						setTimeout(cb2, 1500);
-						return;
 					}
-					cb2(null);
+					setTimeout(thisobj.prepare, 1000, cb2);
 					return;
 				}
-	
-				cga.SayWords(cipher, 0, 3, 1);
-	
+
+				if(cga.getTeamPlayers().length > 1){
+					cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, true);
+					setTimeout(() => {
+						cga.SayWords(cipher, 0, 3, 1);
+					}, 1000);
+				}
 	
 				var stuffs = { 				
 					itemFilter : (item)=>{
@@ -275,7 +285,8 @@ var thisobj = {
 			var item = cga.getInventoryItems().find((it)=>{
 				return ((it.name == ciphername) && it.count == ciphercnt)
 			});
-			if(item){
+			// 如果是取出生启动金，或者包里已经有交易暗号物品，才进入交易模式
+			if(cipher == borncipher || item){
 				cga.travel.falan.toStone('C', ()=>{
 					cga.walkList([
 					[48, 38],
@@ -285,25 +296,25 @@ var thisobj = {
 				});
 			}
 			else{
-				dropUseless(buycipher)
+				setTimeout(buycipher, 1000,cb);
 			}
 			return
 		}
 
 		// 清理背包，如果是烧声望来取钱，还要丢掉卡片
 		var dropcount = 0
-		var dropUseless = () =>{
+		var dropUseless = (cb) =>{
 			var item = cga.getInventoryItems().find((it)=>{
 				return ((it.name == '小石像怪的卡片' || it.name == '魔石'))
 			});
 			if(item && dropcount < 10){
 				dropcount+=1
 				cga.DropItem(item.pos);
-				setTimeout(dropUseless, 1000);
+				setTimeout(dropUseless, 1000,cb);
 			}
 		}
 
-		dropUseless()
+		dropUseless(cb)
 
 		if (personalflag){
 			personalbanklogic(cb)

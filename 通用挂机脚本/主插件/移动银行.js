@@ -15,7 +15,7 @@ var waitXY = {x:48,y:39}
 // 移动银行最低最高持有金币。少取多存。
 var upperlimit = 500000
 var lowerlimit = 200000
-var newbornlimit = 500
+var newbornlimit = 1000
 // 每次给前来提款的人多少金币
 var drawmoney = lowerlimit
 

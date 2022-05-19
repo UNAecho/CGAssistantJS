@@ -14,7 +14,9 @@ var thisobj = {
 			cga.ChangePetState(playerinfo.petid, 0)
 			var tempmsg = '出战宠物低于设置最低【'+thisobj.minLoyality+'】忠诚，取消宠物出战'
 			console.log(tempmsg)
-			setTimeout(cga.sayLongWords(tempmsg, 0, 3, 1), 1000);
+			setTimeout(() => {
+				cga.SayWords(tempmsg, 0, 3, 1)
+			}, 1000);
 			
 		}
 		cb(null)
@@ -35,7 +37,9 @@ var thisobj = {
 			cga.ChangePetState(playerinfo.petid, 0)
 			var tempmsg = '出战宠物低于设置最低【'+thisobj.minLoyality+'】忠诚，取消宠物出战'
 			console.log(tempmsg)
-			setTimeout(cga.sayLongWords(tempmsg, 0, 3, 1), 1000);
+			setTimeout(() => {
+				cga.SayWords(tempmsg, 0, 3, 1)
+			}, 1000);
 		}
 		return
 	},
@@ -44,7 +48,9 @@ var thisobj = {
 			cga.ChangePetState(ctx.petinfo.index, 0)
 			var tempmsg = '出战宠物低于设置最低【'+thisobj.minLoyality+'】忠诚，取消宠物出战'
 			console.log(tempmsg)
-			setTimeout(cga.sayLongWords(tempmsg, 0, 3, 1), 1000);
+			setTimeout(() => {
+				cga.SayWords(tempmsg, 0, 3, 1)
+			}, 1000);
 		}
 	},
 	loadconfig : (obj, cb)=>{
@@ -63,7 +69,7 @@ var thisobj = {
 	inputcb : (cb)=>{
 		var sayString = '【监听宠物忠诚度】请宠物最低忠诚度(不包含，例如输入60，则59才触发保护。):';
 
-		cga.sayLongWords(sayString, 0, 3, 1);
+		cga.SayWords(sayString, 0, 3, 1);
 		cga.waitForChatInput((msg, val)=>{
 			
 			if(val !== null && val >= 0 && val <= 100){
@@ -71,7 +77,7 @@ var thisobj = {
 				thisobj['minLoyality'] = val;
 				
 				var sayString2 = '当前已选择宠物忠诚小于[' + configTable['minLoyality'] + ']收回宠物。';
-				cga.sayLongWords(sayString2, 0, 3, 1);
+				cga.SayWords(sayString2, 0, 3, 1);
 				
 				cb(null);
 				return false;
