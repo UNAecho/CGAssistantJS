@@ -93,7 +93,7 @@ var cga = require('./cgaapi')(function () {
 		});
 	}
 
-	var taskObj = cga.task.Task('就职厨师', [
+	var taskObj = cga.task.Task('就职【'+targetJob+'】', [
 		{
 			intro: '1.前往法兰城里谢里雅堡1楼厨房（103.21）与料理长米其巴（8.6）对话，选“是”获得【水果蕃茄】。',
 			workFunc: function (cb2) {

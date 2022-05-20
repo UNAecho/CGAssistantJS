@@ -30,7 +30,7 @@ module.exports = function(cga,job,behavior,cb) {
 
     }
     // 转职、晋级、就职动作
-    var choose = () =>{
+    var choose = (cb,targetJob) =>{
         cga.AsyncWaitNPCDialog(()=>{
             //转职
             if(behavior == 'transfer'){
@@ -43,6 +43,7 @@ module.exports = function(cga,job,behavior,cb) {
                             cga.ClickNPCDialog(0, 0);
                             cga.AsyncWaitNPCDialog(()=>{
                                 console.log('转职完毕')
+                                if(cb) cb(true)
                                 return true
                             });
                         }
@@ -56,14 +57,28 @@ module.exports = function(cga,job,behavior,cb) {
                         cga.ClickNPCDialog(0, 0);
                         cga.AsyncWaitNPCDialog(()=>{
                             console.log('晋级完毕')
+                            if(cb) cb(true)
                             return true
                         });
                     }
                 });	
             }else{//就职
                 cga.ClickNPCDialog(0, 0);
-                cga.AsyncWaitNPCDialog(()=>{
-                    console.log('就职完毕')
+                cga.AsyncWaitNPCDialog((err, dlg)=>{
+                    if(dlg && dlg.message.indexOf('我想转职') >= 0){
+                        cga.SayWords('已经有其他职业，请手动决策', 0, 3, 1);
+                        var retry = ()=>{
+                            if(targetJob && getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname == targetJob){
+                                setTimeout(cb, 2000,true);
+                            }else{
+                                setTimeout(retry, 3000);
+                            }
+                        }
+                        retry()
+                    }else{
+                        console.log('就职完毕')
+                        if(cb) cb(true)
+                    }
                     return true
                 });
             }
@@ -213,6 +228,20 @@ module.exports = function(cga,job,behavior,cb) {
                         });
                     });
                 }
+            }if(professionalInfo.tutorlocation == "圣拉鲁卡村"){
+                cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, ()=>{
+                    if(professionalInfo.jobmainname == '药剂师'){
+                        cga.travel.shenglaluka.toHospital(()=>{
+                            cga.walkList([
+                                [14, 11, 2311],
+                                [12, 6],
+                                ], ()=>{
+                                    cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                                    choose(cb,'药剂师')
+                            });
+                        },true)
+                    }
+                });
             }else{//法兰其他区域职业所
                     if (professionalInfo.jobmainname == '格斗士'){
                         cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, ()=>{

@@ -501,7 +501,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '厨师',
 		skill:'料理',
-		titles: ['料理学徒', '厨师', '资深大厨师', '御用厨师', '料理达人'],
+		titles: ['料理学徒', '厨师', '资深大厨师', '御用厨师', '料理铁人'],
         tutorlocation: '圣拉鲁卡村'
 	}, {
 		category: '制造系',
@@ -568,7 +568,7 @@ const Professions = [
 			[14, 4, '1楼小房间'],
 			[9, 3, '地下工房'],
 			[30, 35]
-			],
+		],
 		teacherpos : [31 ,36],
 	}, {
 		category: '制造系',
@@ -584,15 +584,13 @@ const Professions = [
 			[12, 6]
 			],
 		tutorpos : [12, 5],
+		teacherlocation:'法兰城',
 		teacherwalk:[
-			[7, 3, '村长的家'],
-			[2, 9, '圣拉鲁卡村'],
-			[32, 70, '装备品店'],
-			[14, 4, '1楼小房间'],
-			[9, 3, '地下工房'],
-			[12, 19]
+			CW,
+			[82, 83, '医院'],
+			[12, 6]
 			],
-		teacherpos : [12 ,18],
+		teacherpos : [12 ,5],
 	}, {
 		category: '制造系',
 		jobmainname: '造枪工',

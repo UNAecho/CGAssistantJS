@@ -1809,7 +1809,104 @@ module.exports = function(callback){
 	cga.travel.falan.toTeleRoomPromisify = (city)=>{
 		return cga.promisify(cga.travel.falan.toTeleRoom, [city]);
 	}
-	
+
+	cga.travel.shenglaluka = {}
+	// 圣拉鲁卡村医院
+	cga.travel.shenglaluka.toHospital = (cb, isPro)=>{
+		var name = '圣拉鲁卡村'
+		// 当前坐标
+		var mapindex = cga.GetMapIndex().index3
+		// 村、镇最小mapindex
+		var minindex = 2300
+		// 村、镇最大mapindex
+		var maxindex = 2399
+		// 目标index
+		var targetindex = 2310
+		
+		var tmplist = []
+		// 如果不是在村、镇范围内启动，抛出异常
+		if(mapindex < minindex || mapindex > maxindex){
+			cb(new Error('必须从'+name+'或其领域内启动'));
+			return;
+		}else if(mapindex == 2300){// 执行主逻辑，去医院
+			tmplist.unshift(
+				[37, 50, '医院'],
+				);
+		}else{
+			switch (mapindex) {
+				case 2399:// 传送石房间
+					tmplist.unshift(
+						[7, 3, 2312],
+						);
+					break;
+				case 2313:// 村长2楼
+					tmplist.unshift(
+						[7, 8, 2312],
+						);
+					break;
+				case 2312:// 村长的家
+					tmplist.unshift(
+						[2, 9, name],
+						);
+					break;
+				case 2308:// 酒吧
+					tmplist.unshift(
+						[2, 9, name],
+						);
+					break;
+				case 2306:// 食品店
+					tmplist.unshift(
+						[1, 8, name],
+						);
+					break;
+				case 2320:// 民家，学强力风刃魔法
+					tmplist.unshift(
+						[10, 16, name],
+						);
+					break;
+				case 2301:// 装备品店
+				tmplist.unshift(
+					[19, 15, name],
+					);
+					break;
+				case 2302:// 1楼小房间
+				tmplist.unshift(
+					[11, 5, 2301],
+					);
+					break;
+				case 2303:// 地下工房
+				tmplist.unshift(
+					[23, 4, 2302],
+					);
+					break;
+				case 2311:// 医院2楼
+				tmplist.unshift(
+					[14, 12, 2310],
+					);
+					break;
+				default:
+					break;
+			}
+		}
+		cga.walkList(
+			tmplist, ()=>{
+				if(cga.GetMapIndex().index3 == targetindex){
+					cga.walkList(
+						[
+							isPro == true ? [10, 3] : [15, 8]
+						], ()=>{
+							cga.turnDir(isPro == true ? 0 : 6);
+							if(cb){
+								setTimeout(cb, 1000,null);
+							}
+						});
+				}else{
+					cga.travel.shenglaluka.toHospital(cb,isPro)
+				}
+			});
+		return
+	}
+
 	cga.travel.yaliute = {};
 	// 亚留特村医院
 	cga.travel.yaliute.toHospital = (cb, isPro)=>{
