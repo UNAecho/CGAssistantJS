@@ -303,7 +303,7 @@ var thisobj = {
 					{
 						configTable['max'+varName] = val;
 						thisobj['max'+varName] = val;
-						var sayString2 = '已选择:['+name+']加到[' + configTable['max'+varName] + ']点为止。';
+						var sayString2 = '已选择:['+name+']加到[' + configTable['max'+varName] + ']点为止。【警告】该插件会监听出战宠物，如调整出战宠物请一并调整本插件，防止加错点数！';
 						cga.sayLongWords(sayString2, 0, 3, 1);
 						
 						cb2(null);

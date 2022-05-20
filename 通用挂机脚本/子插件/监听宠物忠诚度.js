@@ -12,7 +12,7 @@ var thisobj = {
 		
 		if(petinfo && petinfo.loyality < thisobj.minLoyality){
 			cga.ChangePetState(playerinfo.petid, 0)
-			var tempmsg = '出战宠物低于设置最低【'+thisobj.minLoyality+'】忠诚，取消宠物出战'
+			var tempmsg = '【UNA脚本警告】:出战宠物低于设置最低【'+thisobj.minLoyality+'】忠诚，取消宠物出战防止宠物逃跑。'
 			console.log(tempmsg)
 			setTimeout(() => {
 				cga.SayWords(tempmsg, 0, 3, 1)
@@ -35,7 +35,7 @@ var thisobj = {
 		
 		if(petinfo && petinfo.loyality < thisobj.minLoyality){
 			cga.ChangePetState(playerinfo.petid, 0)
-			var tempmsg = '出战宠物低于设置最低【'+thisobj.minLoyality+'】忠诚，取消宠物出战'
+			var tempmsg = '【UNA脚本警告】:出战宠物低于设置最低【'+thisobj.minLoyality+'】忠诚，取消宠物出战防止宠物逃跑。'
 			console.log(tempmsg)
 			setTimeout(() => {
 				cga.SayWords(tempmsg, 0, 3, 1)
@@ -46,8 +46,16 @@ var thisobj = {
 	think : (ctx)=>{// playerthink步骤时候取消低忠诚出战
 		if (ctx.petinfo != null && ctx.petinfo.loyality < thisobj.minLoyality){
 			cga.ChangePetState(ctx.petinfo.index, 0)
-			var tempmsg = '出战宠物低于设置最低【'+thisobj.minLoyality+'】忠诚，取消宠物出战'
+			var tempmsg = '【UNA脚本警告】:出战宠物低于设置最低【'+thisobj.minLoyality+'】忠诚，取消宠物出战防止宠物逃跑。'
 			console.log(tempmsg)
+			setTimeout(() => {
+				cga.SayWords(tempmsg, 0, 3, 1)
+			}, 1000);
+		}
+		var goodpetindex = cga.findbattlepet()
+		if (ctx.petinfo === null && goodpetindex != -1){
+			var tempmsg = '【UNA脚本提示】:宠物栏中有高于最低【'+thisobj.minLoyality+'】忠诚且未受伤的宠物，派出作战。'
+			cga.ChangePetState(goodpetindex, cga.PET_STATE_BATTLE)
 			setTimeout(() => {
 				cga.SayWords(tempmsg, 0, 3, 1)
 			}, 1000);
@@ -67,7 +75,7 @@ var thisobj = {
 		return true
 	},
 	inputcb : (cb)=>{
-		var sayString = '【监听宠物忠诚度】请宠物最低忠诚度(不包含，例如输入60，则59才触发保护。):';
+		var sayString = '【监听宠物忠诚度】请输入宠物最低忠诚度(不包含，例如输入60，则59才触发保护。):';
 
 		cga.SayWords(sayString, 0, 3, 1);
 		cga.waitForChatInput((msg, val)=>{
