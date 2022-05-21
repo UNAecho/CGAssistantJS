@@ -374,6 +374,22 @@ var cleanUseless = (cb)=>{
 		});
 	});
 }
+
+var sellFilter = (item)=>{
+	if (item.name != craft_target.name){
+		return false
+	}
+	// 料理type 23，血瓶43
+	if (item.type == 23 || item.type == 43){
+		if(item.count == 3){
+			return true
+		}
+		return false
+	}else{
+		return true
+	}
+}
+
 // 本方法需要多层if来避免循环判断带来的循环浪费
 var checkaim = (playerInfo)=>{
 	//如果每次制造循环都判断是否到达双百，性能过于浪费。通过开启warnflag来避免这一问题
@@ -453,7 +469,7 @@ var loop = ()=>{
 		
 		var inventory = cga.getInventoryItems();
 		// 新增法兰城判断：如果在法兰城，猜测刚卖完道具，临回去前做了一点东西，先卖掉再回里谢里雅堡等待材料，节约背包空间
-		if(inventory.length >= 15 || (cga.getItemCount(craft_target.name) >= 1 && cga.GetMapName() == '法兰城')){
+		if(inventory.length >= 15 || (cga.getItemCount(sellFilter) > 0 && cga.GetMapName() == '法兰城')){
 			cleanUseless(loop);
 			return;
 		}
