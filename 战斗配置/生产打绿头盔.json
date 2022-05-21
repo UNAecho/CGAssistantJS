@@ -1,6 +1,6 @@
 {
     "battle": {
-        "autobattle": true,
+        "autobattle": false,
         "beep": false,
         "bossprot": false,
         "delayfrom": 4000,
@@ -8,18 +8,64 @@
         "highspeed": true,
         "list": [
             {
-                "condition": 0,
+                "condition": 1,
                 "condition2": 0,
                 "condition2rel": 0,
                 "condition2val": "",
                 "conditionrel": 0,
-                "conditionval": "",
+                "conditionval": "25%",
                 "index": 0,
-                "petaction": 100,
-                "petskillname": "护卫-Ⅰ",
-                "pettarget": 2,
+                "petaction": -1,
+                "pettarget": -1,
+                "pettargetsel": -1,
+                "playeraction": 1,
+                "playertarget": 0,
+                "playertargetsel": 0
+            },
+            {
+                "condition": 1,
+                "condition2": 0,
+                "condition2rel": 0,
+                "condition2val": "",
+                "conditionrel": 2,
+                "conditionval": "25%",
+                "index": 1,
+                "petaction": -1,
+                "pettarget": -1,
                 "pettargetsel": -1,
                 "playeraction": 3,
+                "playertarget": -1,
+                "playertargetsel": -1
+            },
+            {
+                "condition": 3,
+                "condition2": 0,
+                "condition2rel": 0,
+                "condition2val": "",
+                "conditionrel": 1,
+                "conditionval": "25%",
+                "index": 2,
+                "petaction": 100,
+                "petskillname": "攻击",
+                "pettarget": 0,
+                "pettargetsel": 0,
+                "playeraction": -1,
+                "playertarget": -1,
+                "playertargetsel": -1
+            },
+            {
+                "condition": 3,
+                "condition2": 0,
+                "condition2rel": 0,
+                "condition2val": "",
+                "conditionrel": 2,
+                "conditionval": "25%",
+                "index": 3,
+                "petaction": 100,
+                "petskillname": "防御",
+                "pettarget": 0,
+                "pettargetsel": 0,
+                "playeraction": -1,
                 "playertarget": -1,
                 "playertargetsel": -1
             }
@@ -28,12 +74,11 @@
         "lv1prot": false,
         "pet2action": false,
         "r1nodelay": true,
-        "waitafterbattle": false
+        "waitafterbattle": true
     },
     "chat": {
     },
     "itemdroplist": [
-        "绿头盔",
         "红头盔",
         "#18026",
         "#18047",
@@ -41,7 +86,12 @@
         "#14848",
         "#17200",
         "#18028",
-        "#18005"
+        "#14942",
+        "#18005",
+        "#18313",
+        "#18312",
+        "#18310",
+        "#18311"
     ],
     "itemidmap": {
     },
