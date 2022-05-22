@@ -9,27 +9,26 @@
         "监听回补",
         "自动加点",
         "自动存取魔币",
-        "队员卖石",
-        "说话防掉线"
+        "队员卖石"
     ],
     "supplyMode": 1,
     "teamMode": 0,
-    "teammates": [
+    "teammates": [        
         "UNAの传教士",
         "UNAの格斗1",
-        "UNAの厨师",
-        "UNAの药剂",
-        "UNAの格斗2"
-    ],
+        "UNAの格斗2",
+        "UNAの战斧2",
+        "UNAの战斧3"],
+    "sellStore": 1,
     "battleArea": 0,
+    "layerLevel": 1,
     "minHp": "25%",
     "minMp": "25%",
     "buyCrystal": "水火的水晶（5：5）",
-    "maxEndurance": 200,
-    "maxStrength": 300,
+    "maxEndurance": 300,
+    "maxStrength": 246,
     "maxDefense": 0,
-    "maxAgility": 80,
-    "maxMagical": 0,
-    "petpoint": 1,
-    "sellStore":1,"layerLevel":1
+    "maxAgility": 90,
+    "maxMagical": 30,
+    "petpoint": 1
 }

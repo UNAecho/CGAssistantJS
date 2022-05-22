@@ -847,7 +847,6 @@ const titlesMap = (inputmsg) => {
 	}));
 	return obj
 };
-
 module.exports = function(inputmsg) {
 	var profession = null
 	if(inputmsg == null){
@@ -868,3 +867,5 @@ module.exports = function(inputmsg) {
 	// console.log('profession.category = ' + profession.category)
 	return profession;
 };
+
+module.exports.Professions = Professions
