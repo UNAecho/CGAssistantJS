@@ -1810,6 +1810,97 @@ module.exports = function(callback){
 		return cga.promisify(cga.travel.falan.toTeleRoom, [city]);
 	}
 
+	/**
+	 * 检查全部传送石开启状况，将结果保存在【个人配置】中。
+	 * 为了提高效率，仅检查没有记录或者未开启的部分。
+	 * */ 
+	 cga.travel.falan.checkAllTeleRoom = (cb)=>{
+		var config = cga.loadPlayerConfig();
+		if(!config)
+			config = {};
+		// 如果全部开传送，将config.allstonedone置为true，无需重复检查。
+		if(config.allstonedone){
+			console.log('人物已经全部开传送，无需检查。')
+			if (cb) setTimeout(cb, 1000,null);
+			return
+		}
+		var alldone = true
+		var check =(villageName,pos,npcPos,cb2)=>{
+			if (config[villageName]){
+				console.log(villageName + '已经开过传送，跳过')
+				if (cb2){
+					setTimeout(cb2, 1000,null);
+				}
+				return
+			}
+			cga.walkList([
+				pos
+			], ()=>{
+				cga.turnTo(npcPos[0], npcPos[1]);
+				cga.AsyncWaitNPCDialog((err, dlg)=>{
+					//try again if timeout
+					if(err && err.message.indexOf('timeout') > 0)
+					{
+						setTimeout(check, 1500);
+						return;
+					}
+					if(err){
+						cb2(err);
+						return;
+					}
+					if(typeof dlg.message == 'string' && (dlg.message.indexOf('对不起') >= 0 || dlg.message.indexOf('很抱歉') >= 0)){
+						alldone = false
+						config[villageName] = false
+						console.log('【' + villageName + '】没开传送，请开启')
+					}else if(typeof dlg.message == 'string' && (dlg.message.indexOf('金币') >= 0)){
+						config[villageName] = true
+					}else{
+						new Error('未知错误，请手动检查传送石状态')
+					}
+					if (cb2){
+						setTimeout(cb2, 1000,null);
+					}
+				});
+			});
+		}
+		var map = cga.GetMapName();
+		if (map == '启程之间'){
+			check('亚留特村', [43, 22],[44, 22],()=>{
+				check('伊尔村', [43, 32],[44, 32],()=>{
+					check('圣拉鲁卡村', [43, 43], [44, 43],()=>{
+						check('维诺亚村', [9, 23], [8, 22],()=>{
+							check('奇利村', [8, 33], [8, 32],()=>{
+								check('加纳村', [8, 44], [8, 43],()=>{
+									check('杰诺瓦镇', [15, 5], [16, 4],()=>{
+										check('蒂娜村', [25, 5], [26, 4],()=>{
+											check('阿巴尼斯村', [37, 5], [38, 4], ()=>{
+												console.log('检查完毕')
+												if(alldone){
+													cga.SayWords('恭喜，人物已经开启全部芙蕾雅传送石。', 0, 3, 1);
+													config.allstonedone = true
+												}
+												cga.savePlayerConfig(config, cb);
+											})
+										})
+									})
+								})
+							})
+						})
+					})
+				})
+			})
+		}else{
+			cga.travel.falan.toStone('C', ()=>{
+				cga.walkList([
+					[41, 50, '里谢里雅堡 1楼'],
+					[45, 20, '启程之间']
+					], ()=>{
+						cga.travel.falan.checkAllTeleRoom(cb)
+					});
+			});
+			return
+		}
+	}
 	cga.travel.shenglaluka = {}
 	// 圣拉鲁卡村医院
 	cga.travel.shenglaluka.toHospital = (cb, isPro)=>{
