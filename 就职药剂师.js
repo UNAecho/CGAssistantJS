@@ -152,7 +152,7 @@ var cga = require('./cgaapi')(function () {
 		}
 	],
 		[//任务阶段是否完成
-			function () {//是否在就职地图
+			function () {
 				return (cga.getItemCount('水果蕃茄') > 0) ? true : false;
 			},
 			function () {

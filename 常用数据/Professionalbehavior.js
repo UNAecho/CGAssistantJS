@@ -228,7 +228,7 @@ module.exports = function(cga,job,behavior,cb) {
                         });
                     });
                 }
-            }if(professionalInfo.tutorlocation == "圣拉鲁卡村"){
+            }else if(professionalInfo.tutorlocation == "圣拉鲁卡村"){
                 cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, ()=>{
                     if(professionalInfo.jobmainname == '药剂师'){
                         cga.travel.shenglaluka.toHospital(()=>{
@@ -238,6 +238,20 @@ module.exports = function(cga,job,behavior,cb) {
                                 ], ()=>{
                                     cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
                                     choose(cb,'药剂师')
+                            });
+                        },true)
+                    }
+                });
+            }else if(professionalInfo.tutorlocation == "伊尔村"){
+                cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, ()=>{
+                    if(professionalInfo.jobmainname == '猎人'){
+                        cga.travel.shenglaluka.toHospital(()=>{
+                            cga.walkList([
+                                [14, 11, 2311],
+                                [12, 6],
+                                ], ()=>{
+                                    cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                                    choose(cb,'猎人')
                             });
                         },true)
                     }
