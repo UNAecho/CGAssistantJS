@@ -1902,8 +1902,9 @@ module.exports = function(callback){
 		}
 	}
 	cga.travel.shenglaluka = {}
-	// 圣拉鲁卡村医院
-	cga.travel.shenglaluka.toHospital = (cb, isPro)=>{
+
+	cga.travel.shenglaluka.backToMainMap = (cb)=>{
+		
 		var name = '圣拉鲁卡村'
 		// 当前坐标
 		var mapindex = cga.GetMapIndex().index3
@@ -1912,17 +1913,16 @@ module.exports = function(callback){
 		// 村、镇最大mapindex
 		var maxindex = 2399
 		// 目标index
-		var targetindex = 2310
+		var targetindex = 2300
 		
 		var tmplist = []
 		// 如果不是在村、镇范围内启动，抛出异常
 		if(mapindex < minindex || mapindex > maxindex){
 			cb(new Error('必须从'+name+'或其领域内启动'));
 			return;
-		}else if(mapindex == 2300){// 执行主逻辑，去医院
-			tmplist.unshift(
-				[37, 50, '医院'],
-				);
+		}else if(mapindex == targetindex){// 回到主地图，结束。
+			if (cb) cb(null)
+			return
 		}else{
 			switch (mapindex) {
 				case 2399:// 传送石房间
@@ -1981,7 +1981,16 @@ module.exports = function(callback){
 		}
 		cga.walkList(
 			tmplist, ()=>{
-				if(cga.GetMapIndex().index3 == targetindex){
+				cga.travel.shenglaluka.backToMainMap(cb)
+			});
+		return
+	
+	}
+	// 去圣拉鲁卡村医院
+	cga.travel.shenglaluka.toHospital = (cb, isPro)=>{
+		cga.travel.shenglaluka.backToMainMap(()=>{
+			cga.walkList(
+				[[37, 50, '医院']], ()=>{
 					cga.walkList(
 						[
 							isPro == true ? [10, 3] : [15, 8]
@@ -1991,11 +2000,8 @@ module.exports = function(callback){
 								setTimeout(cb, 1000,null);
 							}
 						});
-				}else{
-					cga.travel.shenglaluka.toHospital(cb,isPro)
-				}
-			});
-		return
+				});
+		})
 	}
 
 	cga.travel.yaliute = {};
