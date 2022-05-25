@@ -1901,63 +1901,132 @@ module.exports = function(callback){
 			return
 		}
 	}
-	cga.travel.shenglaluka = {}
+	
+	cga.travel.freyja = {}
+	cga.travel.freyja.info = {
+		'圣拉鲁卡村':{
+			mainindex : 2300,
+			minindex : 2300,
+			maxindex : 2399,
+			mapTranslate:{
+				'装备品店':2301,
+				'1楼小房间':2302,
+				'地下工房':2303,
+				'食品店':2306,
+				'酒吧':2308,
+				'医院':2310,
+				'医院 2楼':2311,
+				'村长的家':2312,
+				'村长2楼':2313,
+				'民家':2320,//民家，学强力风刃魔法
+				'传送石':2399
+			},
+			pilot:{// 正向导航坐标，从主地图到对应地图的路线
+				// 医院
+				2310:[[37, 50, 2310]],
+				// 赛杰利亚酒吧
+				2308:[[39, 70, 2308]],
+				// 圣拉鲁卡村的传送点
+				2399:[[49, 81, 2312],[8, 10, 2399],],
+				// 地下工房
+				2303:[[32, 70, 2301],[14, 4, 2302],[9, 3, 2303],],
+			},
+			warningMapArr :[//如果目标地图名称出现重复，如【民家】，则放入这个arr中进行提示。如warningMapArr :['民家',]
 
-	cga.travel.shenglaluka.backToMainMap = (cb)=>{
+			],
+
+		}
+	}
+
+	cga.travel.freyja.autopilot = (villageName,targetMap, cb)=>{
+		if(!villageName || villageName.length ==0){
+			throw new Error('[UNA脚本警告]:villageName:[' + villageName +']输入有误，请确认。')
+		}
+
+		var targetindex = null
+		// 所有静态信息
+		const info = cga.travel.freyja.info[villageName]
 		
-		var name = '圣拉鲁卡村'
-		// 当前坐标
+		if(typeof targetMap == 'string'){
+			if(is_array_contain(info.warningMapArr, targetMap)){
+				cga.SayWords('[UNA脚本警告]:目标['+targetMap+']在当前领域中存在多个终点，请尽量使用地图唯一索引mapindex编号', 0, 3, 1);
+			}
+			targetindex = info.mapTranslate[targetMap]
+		}else if(typeof targetMap == 'number'){
+			targetindex = targetMap
+			console.log('目标index:' + targetMap)
+		}else{
+			cb(new Error('[UNA脚本警告]:targetMap[' + targetMap +']输入有误，必须输入目标地图名称或mapindex来索引'));
+		}
+		console.log('targetMap'+targetMap)
+		console.log('targetindex'+targetindex)
+		console.log('pilot[targetindex]'+info.pilot[targetindex])
+		if(!targetindex || !info.pilot[targetindex]){
+			throw new Error('[UNA脚本警告]:targetMap:[' + targetMap +']输入有误，请确认地图中是否有输入的名称地点。')
+		}
+
+		// 当前地图信息
 		var mapindex = cga.GetMapIndex().index3
-		// 村、镇最小mapindex
-		var minindex = 2300
-		// 村、镇最大mapindex
-		var maxindex = 2399
-		// 目标index
-		var targetindex = 2300
-		
+
 		var tmplist = []
 		// 如果不是在村、镇范围内启动，抛出异常
-		if(mapindex < minindex || mapindex > maxindex){
-			cb(new Error('必须从'+name+'或其领域内启动'));
+		if(mapindex < info.minindex || mapindex > info.maxindex){
+			cb(new Error('必须从'+villageName+'或其领域内启动'));
 			return;
-		}else if(mapindex == targetindex){// 回到主地图，结束。
+		}else if(mapindex == info.mainindex){
+			cga.walkList(
+				info.pilot[targetindex], ()=>{
+					if (cb) cb(null)
+				});
+				return
+		}else if(mapindex == targetindex){
 			if (cb) cb(null)
 			return
 		}else{
 			switch (mapindex) {
 				case 2399:// 传送石房间
-					tmplist.unshift(
-						[7, 3, 2312],
-						);
+				tmplist.unshift(
+					[7, 3, 2312],
+					);
 					break;
 				case 2313:// 村长2楼
-					tmplist.unshift(
-						[7, 8, 2312],
-						);
+				tmplist.unshift(
+					[7, 8, 2312],
+					);
 					break;
 				case 2312:// 村长的家
 					tmplist.unshift(
-						[2, 9, name],
+						[2, 9, info.mainindex],
 						);
-					break;
+						break;
+				case 2310:// 医院
+					tmplist.unshift(
+						[1, 9, 2300],
+						);
+						break;
+				case 2311:// 医院 2楼
+					tmplist.unshift(
+						[14, 12, 2310],
+						);
+						break;
 				case 2308:// 酒吧
 					tmplist.unshift(
-						[2, 9, name],
+						[2, 9, info.mainindex],
 						);
-					break;
+				break;
 				case 2306:// 食品店
 					tmplist.unshift(
-						[1, 8, name],
+						[1, 8, info.mainindex],
 						);
 					break;
 				case 2320:// 民家，学强力风刃魔法
 					tmplist.unshift(
-						[10, 16, name],
+						[10, 16, info.mainindex],
 						);
 					break;
 				case 2301:// 装备品店
 				tmplist.unshift(
-					[19, 15, name],
+					[19, 15, info.mainindex],
 					);
 					break;
 				case 2302:// 1楼小房间
@@ -1970,36 +2039,29 @@ module.exports = function(callback){
 					[23, 4, 2302],
 					);
 					break;
-				case 2311:// 医院2楼
-				tmplist.unshift(
-					[14, 12, 2310],
-					);
-					break;
 				default:
-					break;
+					throw new Error('[UNA脚本警告]:没有索引信息，请确认领域内地图索引信息是否完整')
 			}
 		}
 		cga.walkList(
 			tmplist, ()=>{
-				cga.travel.shenglaluka.backToMainMap(cb)
+				cga.travel.freyja.autopilot(villageName,targetMap,cb)
 			});
 		return
-	
 	}
+
+	cga.travel.shenglaluka = {}
 	// 去圣拉鲁卡村医院
 	cga.travel.shenglaluka.toHospital = (cb, isPro)=>{
-		cga.travel.shenglaluka.backToMainMap(()=>{
+		cga.travel.freyja.autopilot('圣拉鲁卡村','医院',()=>{
 			cga.walkList(
-				[[37, 50, '医院']], ()=>{
-					cga.walkList(
-						[
-							isPro == true ? [10, 3] : [15, 8]
-						], ()=>{
-							cga.turnDir(isPro == true ? 0 : 6);
-							if(cb){
-								setTimeout(cb, 1000,null);
-							}
-						});
+				[
+					isPro == true ? [10, 3] : [15, 8]
+				], ()=>{
+					cga.turnDir(isPro == true ? 0 : 6);
+					if(cb){
+						setTimeout(cb, 1000,null);
+					}
 				});
 		})
 	}
