@@ -254,6 +254,11 @@ module.exports = function(cga,job,behavior,cb) {
                                     choose(cb,'猎人')
                             });
                         },true)
+                    }else if(professionalInfo.jobmainname == '厨师'){
+                        cga.walkList(professionalInfo.tutorwalk, ()=>{
+                            cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                            choose()
+                        });
                     }
                 });
             }else{//法兰其他区域职业所

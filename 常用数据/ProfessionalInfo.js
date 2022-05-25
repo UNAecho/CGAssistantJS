@@ -502,7 +502,14 @@ const Professions = [
 		jobmainname: '厨师',
 		skill:'料理',
 		titles: ['料理学徒', '厨师', '资深大厨师', '御用厨师', '料理铁人'],
-        tutorlocation: '圣拉鲁卡村'
+        tutorlocation: '伊尔村',
+		tutorwalk:[
+			[12, 17, '村长的家'],
+			[6, 13, '伊尔村'],
+			[32, 65,'旧金山酒吧'],
+			[15, 5],
+			],
+		tutorpos : [15, 4],
 	}, {
 		category: '制造系',
 		jobmainname: '铠甲工',
