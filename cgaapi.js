@@ -527,6 +527,20 @@ module.exports = function(callback){
 	}
 
 	cga.travel = {};
+
+	cga.travel.switchMainMap = (mapindex)=>{
+		var result = null
+		console.log('mapindex:'+mapindex)
+		if(mapindex >= 2300 && mapindex<=2399){
+			result = '圣拉鲁卡村'
+			console.log('result:'+result)
+		}else if(mapindex >= 1000 && mapindex<=32830){
+			result = '法兰城'
+		}else{
+			throw new Error('[UNA脚本警告]:未知地图index，请联系作者更新。')
+		}
+		return result
+	}
 		
 	cga.travel.falan = {};
 
@@ -1904,6 +1918,55 @@ module.exports = function(callback){
 	
 	cga.travel.freyja = {}
 	cga.travel.freyja.info = {
+		'法兰城':{
+			mainindex : 1000,
+			minindex : 1000,
+			maxindex : 9999,
+			mapTranslate:{
+				'酒吧':1101,
+				'科特利亚酒吧':1101,
+				'酒吧里面':1102,
+				'公寓':1187,
+				'公寓2楼':1188,
+				'客房':{
+					1104:'病倒的厨师',
+					1105:'学调教',
+					32830:'空房间，以前是抽奖',
+				},
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 赛杰利亚酒吧
+				1101:[[219, 136, 1101],],
+				// 酒吧里面
+				1102:[[219, 136, 1101],[27, 20, 1102],],
+				// 客房
+				1104:[[219, 136, 1101],[27, 20, 1102],[10, 12, 1104],],
+				// 客房
+				1105:[[219, 136, 1101],[27, 20, 1102],[10, 6, 1105],],
+				// 公寓
+				1187:[[182, 132, 1187],],
+				// 公寓2楼
+				1188:[[182, 132, 1187],[16, 7, 1188],],
+				// 客房
+				32830:[[219, 136, 1101],[27, 20, 1102],[10, 17, 32830],],
+			},
+			walkReverse:{
+				// 赛杰利亚酒吧
+				1101:[[10, 16, 1000]],
+				// 酒吧里面
+				1102:[[4, 15, 1101]],
+				// 客房
+				1104:[[2, 7, 1102]],
+				// 客房
+				1105:[[3, 7, 1102]],
+				// 公寓
+				1187:[[15, 25, 1000]],
+				// 公寓2楼
+				1188:[[15, 9, 1187]],
+				// 客房
+				32830:[[2, 7, 1102]],
+			},
+		},
 		'圣拉鲁卡村':{
 			mainindex : 2300,
 			minindex : 2300,
@@ -1921,132 +1984,109 @@ module.exports = function(callback){
 				'民家':2320,//民家，学强力风刃魔法
 				'传送石':2399
 			},
-			pilot:{// 正向导航坐标，从主地图到对应地图的路线
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 医院
 				2310:[[37, 50, 2310]],
 				// 赛杰利亚酒吧
 				2308:[[39, 70, 2308]],
 				// 圣拉鲁卡村的传送点
 				2399:[[49, 81, 2312],[8, 10, 2399],],
+				// 装备品店
+				2301:[[32, 70, 2301],],
+				// 1楼小房间
+				2302:[[32, 70, 2301],[14, 4, 2302],],
 				// 地下工房
 				2303:[[32, 70, 2301],[14, 4, 2302],[9, 3, 2303],],
 			},
-			warningMapArr :[//如果目标地图名称出现重复，如【民家】，则放入这个arr中进行提示。如warningMapArr :['民家',]
+			walkReverse:{
+				// 装备品店
+				2301:[[19, 15, 2300],],
+				// 1楼小房间
+				2302:[[11, 5, 2301],[19, 15, 2300],],
+				// 地下工房
+				2303:[[23, 4, 2302],[11, 5, 2301],[19, 15, 2300],],
+				// 赛杰利亚酒吧
+				2308:[[2, 9, 2300]],
+			},
 
-			],
-
-		}
+		},
 	}
 
-	cga.travel.freyja.autopilot = (villageName,targetMap, cb)=>{
-		if(!villageName || villageName.length ==0){
-			throw new Error('[UNA脚本警告]:villageName:[' + villageName +']输入有误，请确认。')
+	cga.travel.freyja.autopilot = (mainMap,targetMap, cb)=>{
+
+		// 当前地图信息
+		var mapindex = cga.GetMapIndex().index3
+		// 获取当前主地图名称
+		var villageName = cga.travel.switchMainMap(mapindex)
+		// 修正输入的名字，递归的时候就不再提示了
+		if (mainMap && villageName != mainMap){
+			console.log('【UNA脚本提示】玩家手动输入领域为:【' + mainMap + '】')
+			console.log('【UNA脚本提示】实际领域为:【' + villageName + '】')
+			mainMap = villageName
 		}
 
 		var targetindex = null
 		// 所有静态信息
 		const info = cga.travel.freyja.info[villageName]
-		
 		if(typeof targetMap == 'string'){
-			if(is_array_contain(info.warningMapArr, targetMap)){
-				cga.SayWords('[UNA脚本警告]:目标['+targetMap+']在当前领域中存在多个终点，请尽量使用地图唯一索引mapindex编号', 0, 3, 1);
-			}
 			targetindex = info.mapTranslate[targetMap]
+			if(typeof targetindex == 'object'){
+				var sayString = '【UNA脚本提示】您输入的【' + targetMap + '】存在多个，请选择';
+				for(var i in targetindex){
+					sayString += '['+ (parseInt(i)) + ']' + targetindex[i] + ',';
+				}
+				cga.sayLongWords(sayString, 0, 3, 1);
+				cga.waitForChatInput((msg, val)=>{
+					if(val !== null && val > 0 && val <= 99999){
+						cga.travel.freyja.autopilot(mainMap,val,cb)
+						return false;
+					}
+					return true;
+				});
+				return
+			}
 		}else if(typeof targetMap == 'number'){
 			targetindex = targetMap
-			console.log('目标index:' + targetMap)
 		}else{
 			cb(new Error('[UNA脚本警告]:targetMap[' + targetMap +']输入有误，必须输入目标地图名称或mapindex来索引'));
 		}
-		console.log('targetMap'+targetMap)
-		console.log('targetindex'+targetindex)
-		console.log('pilot[targetindex]'+info.pilot[targetindex])
-		if(!targetindex || !info.pilot[targetindex]){
+
+		if(!targetindex || !info.walkForward[targetindex]){
 			throw new Error('[UNA脚本警告]:targetMap:[' + targetMap +']输入有误，请确认地图中是否有输入的名称地点。')
 		}
+		
+		try {
+			// 目标路径信息
+			var targetPath = info.walkForward[targetindex]
+			// 自动导航路径
+			var tmplist = null
 
-		// 当前地图信息
-		var mapindex = cga.GetMapIndex().index3
-
-		var tmplist = []
-		// 如果不是在村、镇范围内启动，抛出异常
-		if(mapindex < info.minindex || mapindex > info.maxindex){
-			cb(new Error('必须从'+villageName+'或其领域内启动'));
-			return;
-		}else if(mapindex == info.mainindex){
-			cga.walkList(
-				info.pilot[targetindex], ()=>{
-					if (cb) cb(null)
-				});
+			// 主逻辑分歧点
+			if(mapindex == targetindex){
+				if (cb) cb(null)
 				return
-		}else if(mapindex == targetindex){
-			if (cb) cb(null)
-			return
-		}else{
-			switch (mapindex) {
-				case 2399:// 传送石房间
-				tmplist.unshift(
-					[7, 3, 2312],
-					);
-					break;
-				case 2313:// 村长2楼
-				tmplist.unshift(
-					[7, 8, 2312],
-					);
-					break;
-				case 2312:// 村长的家
-					tmplist.unshift(
-						[2, 9, info.mainindex],
-						);
-						break;
-				case 2310:// 医院
-					tmplist.unshift(
-						[1, 9, 2300],
-						);
-						break;
-				case 2311:// 医院 2楼
-					tmplist.unshift(
-						[14, 12, 2310],
-						);
-						break;
-				case 2308:// 酒吧
-					tmplist.unshift(
-						[2, 9, info.mainindex],
-						);
-				break;
-				case 2306:// 食品店
-					tmplist.unshift(
-						[1, 8, info.mainindex],
-						);
-					break;
-				case 2320:// 民家，学强力风刃魔法
-					tmplist.unshift(
-						[10, 16, info.mainindex],
-						);
-					break;
-				case 2301:// 装备品店
-				tmplist.unshift(
-					[19, 15, info.mainindex],
-					);
-					break;
-				case 2302:// 1楼小房间
-				tmplist.unshift(
-					[11, 5, 2301],
-					);
-					break;
-				case 2303:// 地下工房
-				tmplist.unshift(
-					[23, 4, 2302],
-					);
-					break;
-				default:
-					throw new Error('[UNA脚本警告]:没有索引信息，请确认领域内地图索引信息是否完整')
+			}else if(mapindex == info.mainindex){
+				tmplist = targetPath
+			}else{// 自动导航逻辑
+				for (let i = 0; i < targetPath.length; i++) {
+					if(targetPath[i][2] == mapindex){
+						tmplist = targetPath.slice(i+1)
+						break
+					}
+				}
+				if(tmplist == null){
+					tmplist = info.walkReverse[mapindex].slice(0,1)
+				}
 			}
+			// 递归逻辑
+			cga.walkList(
+				tmplist, ()=>{
+					cga.travel.freyja.autopilot(mainMap,targetMap,cb)
+				});
+		} catch (error) {
+			console.log('[UNA脚本警告]:错误，请联系作者完善自动导航逻辑，error:')
+			console.error(error)
 		}
-		cga.walkList(
-			tmplist, ()=>{
-				cga.travel.freyja.autopilot(villageName,targetMap,cb)
-			});
 		return
 	}
 
