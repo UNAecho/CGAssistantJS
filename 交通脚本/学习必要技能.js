@@ -35,7 +35,7 @@ var cga = require('../cgaapi')(function(){
 				console.log('通常情况下,战斗系不学习治疗')
 				cb2(true)
 			}else{
-				professionalbehavior(cga, '医生','learning',cb2)
+				professionalbehavior(cga, '医师','learning',cb2)
 			}
 		}
 	},
@@ -311,7 +311,7 @@ var cga = require('../cgaapi')(function(){
 		},
 	]
 	);
-	
+	task.anyStepDone = false;
 	task.doTask(()=>{
 		while (true) {
 			

@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "自动1-50",
+    "mainPlugin": "回廊",
     "subPlugins": [
         "买桥头武器",
         "受伤宠物医院治疗",
@@ -22,12 +22,13 @@
         "UNAの饲养师",
         "UNAの猎人01"
     ],
+    "sellStore":1,
     "battleArea": 0,
     "buyWeapon": "平民回力镖",
     "minHp": "25%",
     "minMp": "25%",
     "buyCrystal": "水火的水晶（5：5）",
-    "minLoyality": 60,
+    "minLoyality": 40,
     "maxEndurance": 300,
     "maxStrength": 0,
     "maxDefense": 0,

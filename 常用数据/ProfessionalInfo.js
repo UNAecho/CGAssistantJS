@@ -804,7 +804,8 @@ const Professions = [
 			[281, 88, '芙蕾雅'],
 			//以下坐标是拉修出现过的坐标，目前收集中。白天及黄昏均有目击
 			[479, 201],
-			[486, 199]
+			[486, 199],
+			[482, 216],
 			],
 		teacherpos : [10 ,7],
 	}, {
@@ -856,6 +857,7 @@ const titlesMap = (inputmsg) => {
 	return obj
 };
 module.exports = function(inputmsg) {
+	// console.log('inputmsg' + inputmsg)
 	var profession = null
 	if(inputmsg == null){
 		return Professions

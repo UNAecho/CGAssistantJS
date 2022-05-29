@@ -245,15 +245,10 @@ module.exports = function(cga,job,behavior,cb) {
             }else if(professionalInfo.tutorlocation == "伊尔村"){
                 cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, ()=>{
                     if(professionalInfo.jobmainname == '猎人'){
-                        cga.travel.shenglaluka.toHospital(()=>{
-                            cga.walkList([
-                                [14, 11, 2311],
-                                [12, 6],
-                                ], ()=>{
-                                    cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
-                                    choose(cb,'猎人')
-                            });
-                        },true)
+                        cga.walkList(professionalInfo.tutorwalk, ()=>{
+                            cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                            choose(cb,'猎人')
+                        });
                     }else if(professionalInfo.jobmainname == '厨师'){
                         cga.walkList(professionalInfo.tutorwalk, ()=>{
                             cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
