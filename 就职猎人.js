@@ -71,43 +71,56 @@ var cga = require('./cgaapi')(function () {
 		{
 			intro: '1.前往伊尔村，与猎人亚烈格尔（48.76）对话，习得技能狩猎体验。',
 			workFunc: function (cb2) {
-
-				cga.travel.falan.toStone('C', ()=>{
-					cga.walkList([
-						[65, 53, '法兰城'],
-						[281, 88,'芙蕾雅'],
-						[681, 343, '伊尔村'],
-						[47, 83, '村长的家'],
-						[14, 17, '伊尔村的传送点'],
-						[20, 10,],
-					], (r)=>{
-						cga.TurnTo(22,10);
-						setTimeout(()=>{
-							cga.walkList([
-								[12, 17, '村长的家'],
-								[6, 13, '伊尔村'],
-								[48, 77],
-							], ()=>{
-								cga.turnTo(48, 75);
+				var go = ()=>{
+					cga.TurnTo(22,10);
+					setTimeout(()=>{
+						cga.walkList([
+							[12, 17, '村长的家'],
+							[6, 13, '伊尔村'],
+							[48, 77],
+						], ()=>{
+							cga.turnTo(48, 75);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(0, 0);
 								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(0, 0);
+									cga.ClickNPCDialog(0, -1);
 									cga.AsyncWaitNPCDialog(()=>{
-										cga.ClickNPCDialog(0, -1);
-										cga.AsyncWaitNPCDialog(()=>{
-											var skill = cga.findPlayerSkill('狩猎体验');
-											if(!skill){
-												cb2(new Error('狩猎体验学习失败！可能钱不够或技能栏已满。'));
-												return;
-											}
-											cb2(true);
-										});
+										var skill = cga.findPlayerSkill('狩猎体验');
+										if(!skill){
+											cb2(new Error('狩猎体验学习失败！可能钱不够或技能栏已满。'));
+											return;
+										}
+										cb2(true);
 									});
 								});
 							});
-						}, 2000);
+						});
+					}, 2000);
+				}
+				// 有传传送，没传走去
+				var config = cga.loadPlayerConfig()
+				if (config && config['伊尔村'] == true){
+					cga.travel.falan.toTeleRoom('伊尔村', (r)=>{
+						cga.walkList([
+							[12, 17, '村长的家'],
+							[6, 13, '伊尔村'],
+							[20, 10,],
+						], go);
+					});
+				}else{
+					cga.travel.falan.checkAllTeleRoom(()=>{
+						cga.travel.falan.toStone('C', ()=>{
+							cga.walkList([
+								[65, 53, '法兰城'],
+								[281, 88,'芙蕾雅'],
+								[681, 343, '伊尔村'],
+								[47, 83, '村长的家'],
+								[14, 17, '伊尔村的传送点'],
+								[20, 10,],
+							], go)
+						})
 					})
-			
-				})
+				}
 			}
 		},
 		{

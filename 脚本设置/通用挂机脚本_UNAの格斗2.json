@@ -25,10 +25,10 @@
     "minHp": "25%",
     "minMp": "25%",
     "buyCrystal": "水火的水晶（5：5）",
-    "maxEndurance": 300,
-    "maxStrength": 246,
+    "maxEndurance": 226,
+    "maxStrength": 300,
     "maxDefense": 0,
     "maxAgility": 90,
-    "maxMagical": 30,
+    "maxMagical": 50,
     "petpoint": 2
 }

@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "回廊",
+    "mainPlugin": "全自动肯吉罗岛练级",
     "subPlugins": [
         "买桥头武器",
         "受伤宠物医院治疗",
@@ -24,6 +24,7 @@
     ],
     "sellStore":1,
     "battleArea": 0,
+    "layerLevel": 1,
     "buyWeapon": "平民斧",
     "minHp": "25%",
     "minMp": "25%",
