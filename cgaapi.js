@@ -540,6 +540,9 @@ module.exports = function(callback){
 		}else if(mapindex >= 3200 && mapindex<=3299){
 			result = '奇利村'
 			console.log('result:'+result)
+		}else if((mapindex >= 3000 && mapindex<=3099) || [5005,5006].indexOf(mapindex) >= 0){
+			result = '加纳村'
+			console.log('result:'+result)
 		}else if(mapindex >= 1000 && mapindex<=32830){
 			result = '法兰城'
 		}else{
@@ -2159,6 +2162,93 @@ module.exports = function(callback){
 				3299:[[7, 6, 3214],],
 			},
 		},
+		'加纳村':{// TODO 加纳村中间有口井，里面有2个地图，需要右键才能进入井口。
+			mainindex : 3000,
+			minindex : 3000,
+			maxindex : 3099,
+			mapTranslate:{
+				'村庄' : 3000,
+				'城镇' : 3000,
+				'装备品店' : 3001,
+				'杂货店' : 3002,
+				'酒吧' : 3008,
+				'医院' : 3010,
+				'村长的家' : {
+					3012:'村长主客厅',
+					3013:'村长左手边屋子',
+					3014:'村长右手边屋子',
+				},
+				'传承者之家' : 3021,
+				'传送石':3099,
+				'井的底部':5005,
+				'希尔薇亚的家':5006,
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				3000:[],
+				// 装备品店
+				3001:[[63, 61, 3001],],
+				// 杂货店
+				3002:[[63, 61, 3001],[24, 14, 3002],],
+				// 酒吧
+				3008:[[51, 34, 3008],],
+				// 医院
+				3010:[[52, 72, 3010],],
+				// 村长的家
+				3012:[[36, 40, 3012],],
+				// 村长的家
+				3013:[[36, 40, 3012],[10, 16, 3013],],
+				// 村长的家
+				3014:[[36, 40, 3012],[10, 3, 3014],],
+				// 传承者之家
+				3021:[[34, 53, 3021],],
+				// 传送石
+				3099:[[36, 40, 3012],[17, 6, 3099],],
+				// 井的底部
+				5005:(r)=>{
+					cga.walkList(
+						[[53, 56]], ()=>{
+							cga.turnTo(53, 55);
+							cga.AsyncWaitMovement({map:'井的底部', delay:1000, timeout:5000}, r);
+						});
+				},
+				// 希尔薇亚的家
+				5006:(r)=>{
+					cga.walkList(
+						[[53, 56]], ()=>{
+							cga.turnTo(53, 55);
+							cga.AsyncWaitMovement({map:'井的底部', delay:1000, timeout:5000}, ()=>{
+								cga.walkList(
+									[[18, 14, 5006]], r);
+							});
+						});
+				},
+			},
+			walkReverse:{
+				// 装备品店
+				3001:[[13, 14, 3000],],
+				// 杂货店
+				3002:[[13, 11, 3001],],
+				// 酒吧
+				3008:[[3, 3, 3000],],
+				// 医院
+				3010:[[3, 9, 3000],],
+				// 村长的家
+				3012:[[1, 9, 3000]],
+				// 村长的家
+				3013:[[7, 1, 3012]],
+				// 村长的家
+				3014:[[7, 13, 3012]],
+				// 传承者之家
+				3021:[[9, 15, 3000],],
+				// 传送石
+				3099:[[5, 12, 3099],],
+				// 井的底部
+				5005:[[5, 4, 3000],],
+				// 希尔薇亚的家
+				5006:[[7, 10, 5005],],
+			},
+		},
 	}
 
 	cga.travel.freyja.autopilot = (mainMap,targetMap, cb)=>{
@@ -2216,11 +2306,18 @@ module.exports = function(callback){
 				return
 			}else if(mapindex == info.mainindex){
 				tmplist = targetPath
+				// 如果无法仅通过步行达到目的地，在这里使用一次性function来寻路。
+				if(typeof tmplist == 'function'){
+					tmplist(cb)
+					return
+				}
 			}else{// 自动导航逻辑
-				for (let i = 0; i < targetPath.length; i++) {
-					if(targetPath[i][2] == mapindex){
-						tmplist = targetPath.slice(i+1)
-						break
+				if(typeof targetPath != 'function'){
+					for (let i = 0; i < targetPath.length; i++) {
+						if(targetPath && targetPath[i][2] == mapindex){
+							tmplist = targetPath.slice(i+1)
+							break
+						}
 					}
 				}
 				if(tmplist == null){
