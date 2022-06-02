@@ -534,6 +534,9 @@ module.exports = function(callback){
 		if(mapindex >= 2300 && mapindex<=2399){
 			result = '圣拉鲁卡村'
 			console.log('result:'+result)
+		}else if(mapindex >= 2000 && mapindex <= 2099 || [33219,33214,40001].indexOf(mapindex) >= 0){
+			result = '伊尔村'
+			console.log('result:'+result)
 		}else if(mapindex >= 2100 && mapindex <= 2199){
 			result = '维诺亚村'
 			console.log('result:'+result)
@@ -557,6 +560,8 @@ module.exports = function(callback){
 			console.log('result:'+result)
 		}else if(mapindex >= 1000 && mapindex <= 32830){
 			result = '法兰城'
+		}else if(mapindex >= 50000){
+			result = '艾尔莎岛'
 		}else{
 			throw new Error('[UNA脚本警告]:未知地图index，请联系作者更新。')
 		}
@@ -1883,11 +1888,11 @@ module.exports = function(callback){
 						cb2(err);
 						return;
 					}
-					if(typeof dlg.message == 'string' && (dlg.message.indexOf('你') >= 0)){
+					if(typeof dlg.message == 'string' && (dlg.message.indexOf('你') >= 0 || dlg.message.indexOf('很抱歉') >= 0)){
 						alldone = false
 						config[villageName] = false
 						console.log('【' + villageName + '】没开传送，请开启')
-					}else if(typeof dlg.message == 'string' && (dlg.message.indexOf('金币') >= 0 || dlg.message.indexOf('白天') >= 0)){
+					}else if(typeof dlg.message == 'string' && (dlg.message.indexOf('金币') >= 0)){
 						config[villageName] = true
 					}else{
 						new Error('未知错误，请手动检查传送石状态')
@@ -1944,8 +1949,7 @@ module.exports = function(callback){
 			minindex : 1000,
 			maxindex : 9999,
 			mapTranslate:{
-				'村庄' : 1000,
-				'城镇' : 1000,
+				'法兰城' : 1000,
 				'酒吧':{
 					1101:'科特利亚酒吧',
 					1170:'安其摩酒吧',
@@ -2008,8 +2012,7 @@ module.exports = function(callback){
 			minindex : 2300,
 			maxindex : 2399,
 			mapTranslate:{
-				'村庄' : 2300,
-				'城镇' : 2300,
+				'圣拉鲁卡村' : 2300,
 				'装备品店':2301,
 				'1楼小房间':2302,
 				'地下工房':2303,
@@ -2047,13 +2050,165 @@ module.exports = function(callback){
 				2308:[[2, 9, 2300]],
 			},
 		},
+		'伊尔村':{
+			mainindex : 2000,
+			minindex : 2000,
+			maxindex : 2099,
+			mapTranslate:{
+				'伊尔村' : 2000,
+				'装备店' : 2001,
+				'酒吧' : 2002,
+				'医院' : 2010,
+				'村长的家' : 2012,
+				'泰勒的家' : 2013,
+				'巴侬的家' : 2014,
+				'传送石':2099,
+				'伊尔':33219,
+				'港湾管理处':33214,
+				'往阿凯鲁法栈桥':40001,
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				2000:[],
+				// 装备店
+				2001:[[35, 25, 2001],],
+				// 酒吧
+				2002:[[32, 65, 2008],],
+				// 医院
+				2010:[[52, 39, 2010],],
+				// 村长的家
+				2012:[[47, 83, 2012],],
+				// 泰勒的家
+				2013:[[35, 42, 2013],],
+				// 巴侬的家
+				2014:[[42, 72, 2014],],
+				// 传送石
+				2099:[[47, 83, 2012],[14, 17, 2099],],
+				// 伊尔
+				33219:(r)=>{
+					var nowindex = cga.GetMapIndex().index3
+					if (nowindex == 2000){
+						cga.walkList([
+							[58, 71],
+						], ()=>{
+							cga.turnTo(60, 71);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitMovement({map:'伊尔'}, r);
+							}, 1000);	
+						});
+					}else{
+						cga.travel.freyja.autopilot('伊尔村',()=>{
+							cga.travel.freyja.autopilot(33219,r)
+						})
+					}
+				},
+				// 港湾管理处
+				33214:(r)=>{
+					var nowindex = cga.GetMapIndex().index3
+					if (nowindex == 2000){
+						cga.walkList([
+							[58, 71],
+						], ()=>{
+							cga.turnTo(60, 71);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitMovement({map:'伊尔'}, ()=>{
+									cga.walkList([
+										[30, 21, 33214],
+									], r);
+								});
+							}, 1000);	
+						});
+					}else{
+						cga.travel.freyja.autopilot('伊尔村',()=>{
+							cga.travel.freyja.autopilot(33214,r)
+						})
+					}
+				},
+				// 往阿凯鲁法栈桥
+				40001:(r)=>{
+					var nowindex = cga.GetMapIndex().index3
+					if (nowindex == 2000){
+						cga.walkList([
+							[58, 71],
+						], ()=>{
+							cga.turnTo(60, 71);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitMovement({map:'伊尔'}, ()=>{
+									cga.walkList([
+										[30, 21, 33214],
+										[23, 25],
+									], ()=>{
+										cga.TurnTo(23, 23);
+										cga.AsyncWaitNPCDialog(()=>{
+											cga.ClickNPCDialog(32, -1);
+											cga.AsyncWaitNPCDialog(()=>{
+												cga.ClickNPCDialog(4, -1);
+												cga.AsyncWaitMovement({map:'往阿凯鲁法栈桥'}, r);
+											});
+										});
+									});
+								});
+							}, 1000);	
+						});
+					}else{
+						cga.travel.freyja.autopilot('伊尔村',()=>{
+							cga.travel.freyja.autopilot(40001,r)
+						})
+					}
+				},
+			},
+			walkReverse:{
+				// 装备店
+				2001:[[5, 13, 2000],],
+				// 酒吧
+				2002:[[7, 19, 2000],],
+				// 医院
+				2010:[[14, 20, 2000],],
+				// 村长的家
+				2012:[[6, 13, 2000]],
+				// 泰勒的家
+				2013:[[9, 16, 2000],],
+				// 巴侬的家
+				2014:[[2, 9, 2000],],
+				// 传送石
+				2099:[[12, 17, 2012],],
+				// 伊尔
+				33219:(r)=>{
+					cga.walkList([
+						[24, 19],
+					], ()=>{
+						cga.turnTo(24, 17);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(4, -1);
+							cga.AsyncWaitMovement({map:'伊尔村'}, r);
+						}, 1000);	
+					});
+				},
+				// 港湾管理处
+				33214:[[9, 22, 33219],],
+				// 往阿凯鲁法栈桥
+				40001:(r)=>{
+					cga.walkList([
+						[19, 55],
+					], ()=>{
+						cga.TurnTo(19, 53);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(4, -1);
+							cga.AsyncWaitMovement({map:'港湾管理处'}, r);
+						});
+					});
+				}
+			},
+		},
 		'维诺亚村':{
 			mainindex : 2100,
 			minindex : 2100,
 			maxindex : 2199,
 			mapTranslate:{
-				'村庄' : 2100,
-				'城镇' : 2100,
+				'维诺亚村' : 2100,
 				'装备品店' : 2101,
 				'医院' : 2110,
 				'医院2楼' : 2111,
@@ -2110,8 +2265,7 @@ module.exports = function(callback){
 			minindex : 3200,
 			maxindex : 3299,
 			mapTranslate:{
-				'村庄' : 3200,
-				'城镇' : 3200,
+				'奇利村' : 3200,
 				'装备品店' : 3201,
 				'杂货店' : 3202,
 				'酒吧' : 3208,
@@ -2179,8 +2333,7 @@ module.exports = function(callback){
 			minindex : 3000,
 			maxindex : 3099,
 			mapTranslate:{
-				'村庄' : 3000,
-				'城镇' : 3000,
+				'加纳村' : 3000,
 				'装备品店' : 3001,
 				'杂货店' : 3002,
 				'酒吧' : 3008,
@@ -2266,8 +2419,7 @@ module.exports = function(callback){
 			minindex : 4000,
 			maxindex : 4099,
 			mapTranslate:{
-				'村庄' : 4000,
-				'城镇' : 4000,
+				'杰诺瓦镇' : 4000,
 				'杂货店' : 4001,
 				'装备品店' : 4002,
 				'酒吧' : 4008,
@@ -2345,8 +2497,7 @@ module.exports = function(callback){
 			minindex : 4200,
 			maxindex : 4299,
 			mapTranslate:{
-				'村庄' : 4200,
-				'城镇' : 4200,
+				'蒂娜村' : 4200,
 				'酒吧' : 4208,
 				'医院' : 4210,
 				'村长的家' : {
@@ -2415,8 +2566,7 @@ module.exports = function(callback){
 			minindex : 4300,
 			maxindex : 4399,
 			mapTranslate:{
-				'村庄' : 4300,
-				'城镇' : 4300,
+				'阿巴尼斯村' : 4300,
 				'酒吧' : 4308,
 				'酒吧的地下室' : 4309,
 				'客房' : {
@@ -2478,18 +2628,12 @@ module.exports = function(callback){
 		},
 	}
 
-	cga.travel.freyja.autopilot = (mainMap,targetMap, cb)=>{
+	cga.travel.freyja.autopilot = (targetMap, cb)=>{
 
 		// 当前地图信息
 		var mapindex = cga.GetMapIndex().index3
 		// 获取当前主地图名称
 		var villageName = cga.travel.switchMainMap(mapindex)
-		// 修正输入的名字，递归的时候就不再提示了
-		if (mainMap && villageName != mainMap){
-			console.log('【UNA脚本提示】玩家手动输入领域为:【' + mainMap + '】')
-			console.log('【UNA脚本提示】实际领域为:【' + villageName + '】')
-			mainMap = villageName
-		}
 
 		var targetindex = null
 		// 所有静态信息
@@ -2504,7 +2648,7 @@ module.exports = function(callback){
 				cga.sayLongWords(sayString, 0, 3, 1);
 				cga.waitForChatInput((msg, val)=>{
 					if(val !== null && val > 0 && val <= 99999){
-						cga.travel.freyja.autopilot(mainMap,val,cb)
+						cga.travel.freyja.autopilot(val,cb)
 						return false;
 					}
 					return true;
@@ -2526,7 +2670,6 @@ module.exports = function(callback){
 			var targetPath = info.walkForward[targetindex]
 			// 自动导航路径
 			var tmplist = null
-
 			// 主逻辑分歧点
 			if(mapindex == targetindex){
 				if (cb) cb(null)
@@ -2546,16 +2689,26 @@ module.exports = function(callback){
 							break
 						}
 					}
+				}else{// 如果输入是function，则直接按照输入的function走
+					tmplist = targetPath
+					tmplist(cb)
+					return
 				}
+				// 如果上面for循环没找到前进路径，则递归回到主地图。
 				if(tmplist == null){
-					tmplist = info.walkReverse[mapindex].slice(0,1)
+					var backLogic = info.walkReverse[mapindex]
+					if(typeof backLogic == 'function'){
+						backLogic(cb)
+						return
+					}
+					tmplist = backLogic.slice(0,1)
 				}
 			}
 			console.log(tmplist)
 			// 递归逻辑
 			cga.walkList(
 				tmplist, ()=>{
-					cga.travel.freyja.autopilot(mainMap,targetMap,cb)
+					cga.travel.freyja.autopilot(targetMap,cb)
 				});
 		} catch (error) {
 			console.log('[UNA脚本警告]:错误，请联系作者完善自动导航逻辑，error:')
@@ -2567,7 +2720,7 @@ module.exports = function(callback){
 	cga.travel.shenglaluka = {}
 	// 去圣拉鲁卡村医院
 	cga.travel.shenglaluka.toHospital = (cb, isPro)=>{
-		cga.travel.freyja.autopilot('圣拉鲁卡村','医院',()=>{
+		cga.travel.freyja.autopilot('医院',()=>{
 			cga.walkList(
 				[
 					isPro == true ? [10, 3] : [15, 8]
