@@ -534,6 +534,9 @@ module.exports = function(callback){
 		if(mapindex >= 2300 && mapindex<=2399){
 			result = '圣拉鲁卡村'
 			console.log('result:'+result)
+		}if(mapindex >= 2100 && mapindex<=2199){
+			result = '维诺亚村'
+			console.log('result:'+result)
 		}else if(mapindex >= 1000 && mapindex<=32830){
 			result = '法兰城'
 		}else{
@@ -1862,11 +1865,11 @@ module.exports = function(callback){
 						cb2(err);
 						return;
 					}
-					if(typeof dlg.message == 'string' && (dlg.message.indexOf('对不起') >= 0 || dlg.message.indexOf('很抱歉') >= 0)){
+					if(typeof dlg.message == 'string' && (dlg.message.indexOf('你') >= 0)){
 						alldone = false
 						config[villageName] = false
 						console.log('【' + villageName + '】没开传送，请开启')
-					}else if(typeof dlg.message == 'string' && (dlg.message.indexOf('金币') >= 0)){
+					}else if(typeof dlg.message == 'string' && (dlg.message.indexOf('金币') >= 0 || dlg.message.indexOf('白天') >= 0)){
 						config[villageName] = true
 					}else{
 						new Error('未知错误，请手动检查传送石状态')
@@ -1923,6 +1926,8 @@ module.exports = function(callback){
 			minindex : 1000,
 			maxindex : 9999,
 			mapTranslate:{
+				'村庄' : 1000,
+				'城镇' : 1000,
 				'酒吧':{
 					1101:'科特利亚酒吧',
 					1170:'安其摩酒吧',
@@ -1985,6 +1990,8 @@ module.exports = function(callback){
 			minindex : 2300,
 			maxindex : 2399,
 			mapTranslate:{
+				'村庄' : 2300,
+				'城镇' : 2300,
 				'装备品店':2301,
 				'1楼小房间':2302,
 				'地下工房':2303,
@@ -2021,7 +2028,64 @@ module.exports = function(callback){
 				// 赛杰利亚酒吧
 				2308:[[2, 9, 2300]],
 			},
-
+		},
+		'维诺亚村':{
+			mainindex : 2100,
+			minindex : 2100,
+			maxindex : 2199,
+			mapTranslate:{
+				'村庄' : 2100,
+				'城镇' : 2100,
+				'装备品店' : 2101,
+				'医院' : 2110,
+				'医院2楼' : 2111,
+				'村长的家' : 2112,
+				'糖店' : 2113,//卖糖NPCpos[12,6]，人物购买点[11,6]
+				'荷特尔咖哩店' : 2120,
+				'民家' : 2121,
+				'村长家的小房间' : 2198,
+				'传送石':2199
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 装备品店
+				2101:[[62, 42, 2101],],
+				// 医院
+				2110:[[61, 53, 2110],],
+				// 医院2楼
+				2111:[[61, 53, 2110],[6, 14, 2111],],
+				// 村长的家
+				2112:[[40, 36, 2112],],
+				// 糖店
+				2113:[[40, 36, 2112],[18, 10, 2198],[9, 5, 2113],],
+				// 荷特尔咖哩店
+				2120:[[49, 58, 2120],],
+				// 民家
+				2121:[[37, 52, 2121],],
+				// 村长家的小房间
+				2198:[[40, 36, 2112],[18, 10, 2198],],
+				// 传送石
+				2199:[[40, 36, 2112],[18, 10, 2198],[8, 2, 2199],],
+			},
+			walkReverse:{
+				// 装备品店
+				2101:[[19, 17, 2100],],
+				// 医院
+				2110:[[2, 9, 2100],],
+				// 医院2楼
+				2111:[[9, 12, 2110],],
+				// 村长的家
+				2112:[[9, 16, 2100],],
+				// 糖店
+				2113:[[3, 11, 2198]],
+				// 荷特尔咖哩店
+				2120:[[3, 9, 2100]],
+				// 民家
+				2121:[[3, 9, 2100]],
+				// 村长家的小房间
+				2198:[[0, 5, 2112]],
+				// 传送石
+				2199:[[5, 1, 2198],],
+			},
 		},
 	}
 
