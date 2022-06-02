@@ -534,16 +534,19 @@ module.exports = function(callback){
 		if(mapindex >= 2300 && mapindex<=2399){
 			result = '圣拉鲁卡村'
 			console.log('result:'+result)
-		}else if(mapindex >= 2100 && mapindex<=2199){
+		}else if(mapindex >= 2100 && mapindex <= 2199){
 			result = '维诺亚村'
 			console.log('result:'+result)
-		}else if(mapindex >= 3200 && mapindex<=3299){
+		}else if(mapindex >= 3200 && mapindex <= 3299){
 			result = '奇利村'
 			console.log('result:'+result)
-		}else if((mapindex >= 3000 && mapindex<=3099) || [5005,5006].indexOf(mapindex) >= 0){
+		}else if((mapindex >= 3000 && mapindex <= 3099) || [5005,5006].indexOf(mapindex) >= 0){
 			result = '加纳村'
 			console.log('result:'+result)
-		}else if(mapindex >= 1000 && mapindex<=32830){
+		}else if(mapindex >= 4000 && mapindex <= 4099){
+			result = '杰诺瓦镇'
+			console.log('result:'+result)
+		}else if(mapindex >= 1000 && mapindex <= 32830){
 			result = '法兰城'
 		}else{
 			throw new Error('[UNA脚本警告]:未知地图index，请联系作者更新。')
@@ -2162,7 +2165,7 @@ module.exports = function(callback){
 				3299:[[7, 6, 3214],],
 			},
 		},
-		'加纳村':{// TODO 加纳村中间有口井，里面有2个地图，需要右键才能进入井口。
+		'加纳村':{
 			mainindex : 3000,
 			minindex : 3000,
 			maxindex : 3099,
@@ -2249,6 +2252,85 @@ module.exports = function(callback){
 				5006:[[7, 10, 5005],],
 			},
 		},
+		'杰诺瓦镇':{
+			mainindex : 4000,
+			minindex : 4000,
+			maxindex : 4099,
+			mapTranslate:{
+				'村庄' : 4000,
+				'城镇' : 4000,
+				'杂货店' : 4001,
+				'装备品店' : 4002,
+				'酒吧' : 4008,
+				'酒吧的地下室' : 4009,
+				'客房' : {
+					4021:'咒术师德托拉',
+					4022:'空房间',
+				},
+				'医院' : 4010,
+				'医院2楼' : 4011,
+				'村长的家' : {
+					4012:'村长主客厅',
+					4013:'村长右手边屋子，空房间',
+				},
+				'民家' : 4020,
+				'传送石':4099,
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				4000:[],
+				// 杂货店
+				4001:[[43, 23, 4001],],
+				// 装备品店
+				4002:[[43, 23, 4001],[9, 6, 4002],],
+				// 酒吧
+				4008:[[48, 53, 4008],],
+				// 酒吧的地下室
+				4009:[[48, 53, 4008],[19, 6, 4009],],
+				// 医院
+				4010:[[44, 33, 4010],],
+				// 医院2楼
+				4011:[[44, 33, 4010],[15, 13, 4011],],
+				// 民家
+				4020:[[38, 59, 4020]],
+				// 客房
+				4021:[[48, 53, 4008],[19, 6, 4009],[3, 13, 4021],],
+				// 客房
+				4022:[[48, 53, 4008],[19, 6, 4009],[3, 5, 4022],],
+				// 村长的家
+				4012:[[58, 43, 4012],],
+				// 村长的家
+				4013:[[58, 43, 4012],[15, 16, 4013],],
+				// 传送石
+				4099:[[58, 43, 4012],[13, 7, 4099],],
+			},
+			walkReverse:{
+				// 杂货店
+				4001:[[9, 16, 4000],],
+				// 装备品店
+				4002:[[7, 4, 4001],],
+				// 酒吧
+				4008:[[4, 9, 4000],],
+				// 酒吧的地下室
+				4009:[[8, 4, 4008],],
+				// 医院
+				4010:[[1, 9, 4000],],
+				// 医院2楼
+				4011:[[15, 11, 4010],],
+				// 村长的家
+				4012:[[1, 9, 4000]],
+				// 村长的家
+				4013:[[7, 1, 4012]],
+				// 民家
+				4020:[[1, 10, 4000]],
+				// 客房
+				4021:[[12, 6, 4009],],
+				// 客房
+				4022:[[12, 6, 4009],],
+				// 传送石
+				4099:[[14, 6, 4012],],
+			},
+		},
 	}
 
 	cga.travel.freyja.autopilot = (mainMap,targetMap, cb)=>{
@@ -2324,6 +2406,7 @@ module.exports = function(callback){
 					tmplist = info.walkReverse[mapindex].slice(0,1)
 				}
 			}
+			console.log(tmplist)
 			// 递归逻辑
 			cga.walkList(
 				tmplist, ()=>{
