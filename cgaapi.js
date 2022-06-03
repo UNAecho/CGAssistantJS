@@ -530,7 +530,6 @@ module.exports = function(callback){
 
 	cga.travel.switchMainMap = (mapindex)=>{
 		var result = null
-		console.log('mapindex:'+mapindex)
 		if(mapindex >= 2300 && mapindex<=2399){
 			result = '圣拉鲁卡村'
 		}else if(mapindex >= 2000 && mapindex <= 2099 || [33219,33214,40001].indexOf(mapindex) >= 0){
@@ -2598,6 +2597,65 @@ module.exports = function(callback){
 				4299:[[14, 6, 4212],],
 			},
 		},
+		'夜晚蒂娜村':{//主地图4201的33，25处有1级绿鬼捕捉点
+			mainindex : 4201,
+			minindex : 4201,
+			maxindex : 4299,
+			mapTranslate:{
+				'蒂娜村' : 4201,
+				'夜晚蒂娜村' : 4201,
+				'酒吧' : 4230,
+				'村长的家' : {
+					4212:'村长主客厅',
+					4213:'村长右手边屋子，空房间',
+				},
+				'传送石':4299,
+				'海贼指挥部' : 14018,
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				4201:[],
+				// 酒吧
+				4230:[[46, 56, 4230],],
+				// 村长的家
+				4212:[[58, 43, 4212],],
+				// 村长的家
+				4213:[[58, 43, 4212],[15, 16, 4213],],
+				// 传送石
+				4299:[[29, 60, 4212],[9, 6, 4213],[7, 12, 4214],[12, 6, 4299],],
+				// 海贼指挥部
+				14018:(r)=>{
+					var nowindex = cga.GetMapIndex().index3
+					if (nowindex == 4230){
+						cga.walkList([
+							[22, 11],
+						], ()=>{
+							cga.turnTo(22, 13);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(1, -1);
+								cga.AsyncWaitMovement({map:14018}, r);
+							}, 1000);	
+						});
+					}else{
+						cga.travel.freyja.autopilot('夜晚蒂娜村',()=>{
+							cga.travel.freyja.autopilot(4230,()=>{
+								cga.travel.freyja.autopilot(14018,r)
+							})
+						})
+					}
+				},
+			},
+			walkReverse:{
+				// 酒吧
+				4230:[[6, 7, 4201],],
+				// 村长的家
+				4212:[[1, 9, 4200]],
+				// 村长的家
+				4213:[[7, 1, 4212]],
+				// 传送石
+				4299:[[14, 6, 4212],],
+			},
+		},
 		'阿巴尼斯村':{
 			mainindex : 4300,
 			minindex : 4300,
@@ -2741,7 +2799,6 @@ module.exports = function(callback){
 					tmplist = backLogic.slice(0,1)
 				}
 			}
-			console.log(tmplist)
 			// 递归逻辑
 			cga.walkList(
 				tmplist, ()=>{
