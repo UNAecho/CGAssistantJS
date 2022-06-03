@@ -533,31 +533,24 @@ module.exports = function(callback){
 		console.log('mapindex:'+mapindex)
 		if(mapindex >= 2300 && mapindex<=2399){
 			result = '圣拉鲁卡村'
-			console.log('result:'+result)
 		}else if(mapindex >= 2000 && mapindex <= 2099 || [33219,33214,40001].indexOf(mapindex) >= 0){
 			result = '伊尔村'
-			console.log('result:'+result)
+		}else if(mapindex >= 2400 && mapindex <= 2499){
+			result = '亚留特村'
 		}else if(mapindex >= 2100 && mapindex <= 2199){
 			result = '维诺亚村'
-			console.log('result:'+result)
 		}else if(mapindex >= 3200 && mapindex <= 3299){
 			result = '奇利村'
-			console.log('result:'+result)
 		}else if((mapindex >= 3000 && mapindex <= 3099) || [5005,5006].indexOf(mapindex) >= 0){
 			result = '加纳村'
-			console.log('result:'+result)
 		}else if(mapindex >= 4000 && mapindex <= 4099){
 			result = '杰诺瓦镇'
-			console.log('result:'+result)
 		}else if([4201,4230,14018].indexOf(mapindex) >= 0){
 			result = '夜晚蒂娜村'
-			console.log('result:'+result)
 		}else if(mapindex >= 4200 && mapindex <= 4299){
 			result = '蒂娜村'
-			console.log('result:'+result)
 		}else if(mapindex >= 4300 && mapindex <= 4399){
 			result = '阿巴尼斯村'
-			console.log('result:'+result)
 		}else if(mapindex >= 1000 && mapindex <= 32830){
 			result = '法兰城'
 		}else if(mapindex >= 50000){
@@ -2201,6 +2194,50 @@ module.exports = function(callback){
 						});
 					});
 				}
+			},
+		},
+		'亚留特村':{
+			mainindex : 2400,
+			minindex : 2400,
+			maxindex : 2499,
+			mapTranslate:{
+				'伊尔村' : 2400,
+				'杂货店' : 2401,
+				'医院' : 2410,
+				'村长的家' : 2412,
+				'民家' : 2420,
+				'南希的家' : 2421,
+				'传送石':2499,
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				2400:[],
+				// 杂货店
+				2401:[[37, 44, 2401],],
+				// 医院
+				2410:[[52, 63, 2410],],
+				// 村长的家
+				2412:[[56, 48, 2412],],
+				// 民家
+				2420:[[48, 37, 2420],],
+				// 南希的家
+				2421:[[31, 54, 2421],],
+				// 传送石
+				2499:[[56, 48, 2412],[22, 9, 2499],],
+			},
+			walkReverse:{
+				// 杂货店
+				2401:[[15, 22, 2400],],
+				// 医院
+				2410:[[2, 9, 2400],],
+				// 村长的家
+				2412:[[6, 13, 2400]],
+				// 民家
+				2420:[[9, 16, 2400],],
+				// 南希的家
+				2421:[[2, 9, 2400],],
+				// 传送石
+				2499:[[8, 3, 2412],],
 			},
 		},
 		'维诺亚村':{
