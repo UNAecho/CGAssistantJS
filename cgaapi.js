@@ -1934,13 +1934,13 @@ module.exports = function(callback){
 		}
 	}
 	
-	cga.travel.freyja = {}
-	cga.travel.freyja.info = {
+	cga.travel.falan.info = {
 		'法兰城':{
 			mainindex : 1000,
 			minindex : 1000,
 			maxindex : 9999,
 			mapTranslate:{
+				'主地图' : 1000,
 				'法兰城' : 1000,
 				'酒吧':{
 					1101:'科特利亚酒吧',
@@ -1959,6 +1959,8 @@ module.exports = function(callback){
 				},
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				1000:[],
 				// 科特利亚酒吧
 				1101:[[219, 136, 1101],],
 				// 酒吧里面
@@ -2004,6 +2006,7 @@ module.exports = function(callback){
 			minindex : 2300,
 			maxindex : 2399,
 			mapTranslate:{
+				'主地图' : 2300,
 				'圣拉鲁卡村' : 2300,
 				'装备品店':2301,
 				'1楼小房间':2302,
@@ -2018,6 +2021,8 @@ module.exports = function(callback){
 				'传送石':2399
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				2300:[],
 				// 医院
 				2310:[[37, 50, 2310]],
 				// 赛杰利亚酒吧
@@ -2047,6 +2052,7 @@ module.exports = function(callback){
 			minindex : 2000,
 			maxindex : 2099,
 			mapTranslate:{
+				'主地图' : 2000,
 				'伊尔村' : 2000,
 				'装备店' : 2001,
 				'酒吧' : 2002,
@@ -2090,8 +2096,8 @@ module.exports = function(callback){
 							}, 1000);	
 						});
 					}else{
-						cga.travel.freyja.autopilot('伊尔村',()=>{
-							cga.travel.freyja.autopilot(33219,r)
+						cga.travel.falan.autopilot('伊尔村',()=>{
+							cga.travel.falan.autopilot(33219,r)
 						})
 					}
 				},
@@ -2113,8 +2119,8 @@ module.exports = function(callback){
 							}, 1000);	
 						});
 					}else{
-						cga.travel.freyja.autopilot('伊尔村',()=>{
-							cga.travel.freyja.autopilot(33214,r)
+						cga.travel.falan.autopilot('伊尔村',()=>{
+							cga.travel.falan.autopilot(33214,r)
 						})
 					}
 				},
@@ -2146,8 +2152,8 @@ module.exports = function(callback){
 							}, 1000);	
 						});
 					}else{
-						cga.travel.freyja.autopilot('伊尔村',()=>{
-							cga.travel.freyja.autopilot(40001,r)
+						cga.travel.falan.autopilot('伊尔村',()=>{
+							cga.travel.falan.autopilot(40001,r)
 						})
 					}
 				},
@@ -2200,6 +2206,7 @@ module.exports = function(callback){
 			minindex : 2400,
 			maxindex : 2499,
 			mapTranslate:{
+				'主地图' : 2400,
 				'伊尔村' : 2400,
 				'杂货店' : 2401,
 				'医院' : 2410,
@@ -2244,6 +2251,7 @@ module.exports = function(callback){
 			minindex : 2100,
 			maxindex : 2199,
 			mapTranslate:{
+				'主地图' : 2100,
 				'维诺亚村' : 2100,
 				'装备品店' : 2101,
 				'医院' : 2110,
@@ -2256,6 +2264,8 @@ module.exports = function(callback){
 				'传送石':2199
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				2100:[],
 				// 装备品店
 				2101:[[62, 42, 2101],],
 				// 医院
@@ -2301,6 +2311,7 @@ module.exports = function(callback){
 			minindex : 3200,
 			maxindex : 3299,
 			mapTranslate:{
+				'主地图' : 3200,
 				'奇利村' : 3200,
 				'装备品店' : 3201,
 				'杂货店' : 3202,
@@ -2369,6 +2380,7 @@ module.exports = function(callback){
 			minindex : 3000,
 			maxindex : 3099,
 			mapTranslate:{
+				'主地图' : 3000,
 				'加纳村' : 3000,
 				'装备品店' : 3001,
 				'杂货店' : 3002,
@@ -2455,6 +2467,7 @@ module.exports = function(callback){
 			minindex : 4000,
 			maxindex : 4099,
 			mapTranslate:{
+				'主地图' : 4000,
 				'杰诺瓦镇' : 4000,
 				'杂货店' : 4001,
 				'装备品店' : 4002,
@@ -2533,6 +2546,7 @@ module.exports = function(callback){
 			minindex : 4200,
 			maxindex : 4299,
 			mapTranslate:{
+				'主地图' : 4200,
 				'蒂娜村' : 4200,
 				'酒吧' : 4208,
 				'医院' : 4210,
@@ -2602,6 +2616,7 @@ module.exports = function(callback){
 			minindex : 4201,
 			maxindex : 4299,
 			mapTranslate:{
+				'主地图' : 4201,
 				'蒂娜村' : 4201,
 				'夜晚蒂娜村' : 4201,
 				'酒吧' : 4230,
@@ -2637,9 +2652,9 @@ module.exports = function(callback){
 							}, 1000);	
 						});
 					}else{
-						cga.travel.freyja.autopilot('夜晚蒂娜村',()=>{
-							cga.travel.freyja.autopilot(4230,()=>{
-								cga.travel.freyja.autopilot(14018,r)
+						cga.travel.falan.autopilot('夜晚蒂娜村',()=>{
+							cga.travel.falan.autopilot(4230,()=>{
+								cga.travel.falan.autopilot(14018,r)
 							})
 						})
 					}
@@ -2661,6 +2676,7 @@ module.exports = function(callback){
 			minindex : 4300,
 			maxindex : 4399,
 			mapTranslate:{
+				'主地图' : 4300,
 				'阿巴尼斯村' : 4300,
 				'酒吧' : 4308,
 				'酒吧的地下室' : 4309,
@@ -2723,7 +2739,7 @@ module.exports = function(callback){
 		},
 	}
 
-	cga.travel.freyja.autopilot = (targetMap, cb)=>{
+	cga.travel.falan.autopilot = (targetMap, cb)=>{
 
 		// 当前地图信息
 		var mapindex = cga.GetMapIndex().index3
@@ -2732,7 +2748,7 @@ module.exports = function(callback){
 
 		var targetindex = null
 		// 所有静态信息
-		const info = cga.travel.freyja.info[villageName]
+		const info = cga.travel.falan.info[villageName]
 		if(typeof targetMap == 'string'){
 			targetindex = info.mapTranslate[targetMap]
 			if(typeof targetindex == 'object'){
@@ -2743,7 +2759,7 @@ module.exports = function(callback){
 				cga.sayLongWords(sayString, 0, 3, 1);
 				cga.waitForChatInput((msg, val)=>{
 					if(val !== null && val > 0 && val <= 99999){
-						cga.travel.freyja.autopilot(val,cb)
+						cga.travel.falan.autopilot(val,cb)
 						return false;
 					}
 					return true;
@@ -2802,7 +2818,7 @@ module.exports = function(callback){
 			// 递归逻辑
 			cga.walkList(
 				tmplist, ()=>{
-					cga.travel.freyja.autopilot(targetMap,cb)
+					cga.travel.falan.autopilot(targetMap,cb)
 				});
 		} catch (error) {
 			console.log('[UNA脚本警告]:错误，请联系作者完善自动导航逻辑，error:')
@@ -2810,11 +2826,68 @@ module.exports = function(callback){
 		}
 		return
 	}
+	cga.travel.toHospital = (isPro,cb)=>{
+		// 当前地图信息
+		var mapindex = cga.GetMapIndex().index3
+		// 获取当前主地图名称
+		var villageName = cga.travel.switchMainMap(mapindex)
 
+		if (cga.GetMapName().indexOf('医院') == -1){
+			cga.travel.falan.autopilot('医院',()=>{
+				cga.travel.toHospital(isPro,cb)
+			})
+			return
+		}
+		var tmplist = []
+		var tmpTurnDir = null
+
+		if(villageName == '圣拉鲁卡村'){
+
+		}else if(villageName == '伊尔村'){
+
+		}else if(villageName == '亚留特村'){
+
+		}else if(villageName == '维诺亚村'){
+			tmplist.push(isPro == true ? [15, 9] : [11, 5])
+			tmpTurnDir = isPro == true ? 6 : 0
+		}else if(villageName == '奇利村'){
+
+		}else if(villageName == '加纳村'){
+
+		}else if(villageName == '杰诺瓦镇'){
+
+		}else if(villageName == '夜晚蒂娜村'){
+
+		}else if(villageName == '蒂娜村'){
+
+		}else if(villageName == '阿巴尼斯村'){
+
+		}else if(villageName == '法兰城'){
+
+		}else if(villageName == '艾尔莎岛'){
+
+		}else{
+			throw new Error('[UNA脚本警告]:未知地图index，请联系作者更新。')
+		}
+
+		cga.walkList(
+			tmplist, ()=>{
+				cga.turnDir(tmpTurnDir)
+				setTimeout(() => {
+					cga.travel.falan.autopilot('主地图',()=>{
+						if (cb) cb(null)
+						return
+					})
+				}, 3000);
+				return
+			}
+		);
+		return
+	}
 	cga.travel.shenglaluka = {}
 	// 去圣拉鲁卡村医院
 	cga.travel.shenglaluka.toHospital = (cb, isPro)=>{
-		cga.travel.freyja.autopilot('医院',()=>{
+		cga.travel.falan.autopilot('医院',()=>{
 			cga.walkList(
 				[
 					isPro == true ? [10, 3] : [15, 8]
