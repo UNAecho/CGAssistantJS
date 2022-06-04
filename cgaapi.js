@@ -557,6 +557,7 @@ module.exports = function(callback){
 		}else{
 			throw new Error('[UNA脚本警告]:未知地图index，请联系作者更新。')
 		}
+		// console.log('cga.travel.switchMainMap输入mapindex:【'+mapindex+'】,识别结果为【'+result+'】')
 		return result
 	}
 		
@@ -1908,7 +1909,7 @@ module.exports = function(callback){
 											check('阿巴尼斯村', [37, 5], [38, 4], ()=>{
 												console.log('检查完毕')
 												if(alldone){
-													cga.SayWords('恭喜，人物已经开启全部芙蕾雅传送石。', 0, 3, 1);
+													cga.SayWords('恭喜，人物已经开启全部法兰王国传送石。', 0, 3, 1);
 													config.allstonedone = true
 												}
 												cga.savePlayerConfig(config, cb);
@@ -2016,25 +2017,33 @@ module.exports = function(callback){
 				'医院':2310,
 				'医院 2楼':2311,
 				'村长的家':2312,
-				'村长2楼':2313,
+				'村长的家 2楼':2313,
 				'民家':2320,//民家，学强力风刃魔法
 				'传送石':2399
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
 				2300:[],
-				// 医院
-				2310:[[37, 50, 2310]],
-				// 赛杰利亚酒吧
-				2308:[[39, 70, 2308]],
-				// 圣拉鲁卡村的传送点
-				2399:[[49, 81, 2312],[8, 10, 2399],],
 				// 装备品店
 				2301:[[32, 70, 2301],],
 				// 1楼小房间
 				2302:[[32, 70, 2301],[14, 4, 2302],],
 				// 地下工房
 				2303:[[32, 70, 2301],[14, 4, 2302],[9, 3, 2303],],
+				// 食品店
+				2306:[[50, 64, 2306],],
+				// 赛杰利亚酒吧
+				2308:[[39, 70, 2308],],
+				// 医院
+				2310:[[37, 50, 2310],],
+				// 医院 2楼
+				2311:[[37, 50, 2310],[14, 11, 2311],],
+				// 村长的家
+				2312:[[49, 81, 2312],],
+				// 村长的家 2楼
+				2313:[[49, 81, 2312],[6, 14, 2313],],
+				// 传送石
+				2399:[[49, 81, 2312],[8, 10, 2399],],
 			},
 			walkReverse:{
 				// 装备品店
@@ -2043,8 +2052,20 @@ module.exports = function(callback){
 				2302:[[11, 5, 2301],[19, 15, 2300],],
 				// 地下工房
 				2303:[[23, 4, 2302],[11, 5, 2301],[19, 15, 2300],],
+				// 食品店
+				2306:[[1, 8, 2300]],
 				// 赛杰利亚酒吧
 				2308:[[2, 9, 2300]],
+				// 医院
+				2310:[[1, 9, 2300]],
+				// 医院 2楼
+				2311:[[14, 12, 2310]],
+				// 村长的家
+				2312:[[2, 9, 2300],],
+				// 村长的家 2楼
+				2313:[[7, 8, 2312],],
+				// 传送石
+				2399:[[7, 3, 2312],],
 			},
 		},
 		'伊尔村':{
@@ -2455,7 +2476,7 @@ module.exports = function(callback){
 				// 传承者之家
 				3021:[[9, 15, 3000],],
 				// 传送石
-				3099:[[5, 12, 3099],],
+				3099:[[5, 12, 3012],],
 				// 井的底部
 				5005:[[5, 4, 3000],],
 				// 希尔薇亚的家
@@ -2829,27 +2850,34 @@ module.exports = function(callback){
 		var tmpTurnDir = null
 
 		if(villageName == '圣拉鲁卡村'){
-
+			tmplist.push(isPro == true ? [10, 3] : [15, 8])
+			tmpTurnDir = isPro == true ? 0 : 6
 		}else if(villageName == '伊尔村'){
-
+			tmplist.push(isPro == true ? [18, 14] : [10, 15])
+			tmpTurnDir = isPro == true ? 0 : 6
 		}else if(villageName == '亚留特村'){
-
+			tmplist.push(isPro == true ? [14, 9] : [10, 5])
+			tmpTurnDir = isPro == true ? 6 : 0
 		}else if(villageName == '维诺亚村'){
 			tmplist.push(isPro == true ? [15, 9] : [11, 5])
 			tmpTurnDir = isPro == true ? 6 : 0
 		}else if(villageName == '奇利村'){
-
+			tmplist.push(isPro == true ? [7, 2] : [11, 6])
+			tmpTurnDir = isPro == true ? 0 : 6
 		}else if(villageName == '加纳村'){
-
+			tmplist.push(isPro == true ? [12, 14] : [9, 9])
+			tmpTurnDir = 0
 		}else if(villageName == '杰诺瓦镇'){
-
+			tmplist.push(isPro == true ? [15, 9] : [10, 5])
+			tmpTurnDir = isPro == true ? 6 : 0
 		}else if(villageName == '夜晚蒂娜村'){
 
 		}else if(villageName == '蒂娜村'){
 			tmplist.push(isPro == true ? [8, 5] : [12, 9])
 			tmpTurnDir = isPro == true ? 0 : 6
 		}else if(villageName == '阿巴尼斯村'){
-
+			tmplist.push(isPro == true ? [14, 10] : [10, 6])
+			tmpTurnDir = isPro == true ? 6 : 0
 		}else if(villageName == '法兰城'){
 
 		}else if(villageName == '艾尔莎岛'){
