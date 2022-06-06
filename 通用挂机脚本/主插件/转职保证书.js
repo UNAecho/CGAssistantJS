@@ -20,11 +20,11 @@ var jump = ()=>{
 var playerinfo = cga.GetPlayerInfo();
 // 不使用动态组队，避免脚本运行时需要手动组队的麻烦
 var teammates = [
-	"UNAの格斗1",
-	"UNAの格斗2",
-	"UNAの封印5",
-	"UNAの战斧2",
-	"UNAの战斧3",
+	"UNAの传教士2",
+	"UNAの暗黑骑士",
+	"UNAの圣骑士",
+	"UNAの战斧4",
+	"UNAの格斗3",
 	// "UNAの剑士",
 	// "UNAの游侠",
 	// "UNAの饲养师",
@@ -89,6 +89,10 @@ var loadBattleConfig = ()=>{
 				job = '巫师'
 			}else if(sk.name.indexOf('气功弹') >= 0 && sk.lv >= 4){
 				job = '格斗士'
+			}else if(sk.name.indexOf('暗黑骑士之力') >= 0){
+				job = '暗黑骑士'
+			}else if(sk.name.indexOf('神圣光芒') >= 0){
+				job = '圣骑士'
 			}
 			return '';
 		});
@@ -106,6 +110,12 @@ var loadBattleConfig = ()=>{
 
 	}else if (role == '格斗士'){
 		settingpath = settingpath + 'BOSS格斗.json'
+
+	}else if (role == '暗黑骑士'){
+		settingpath = settingpath + 'BOSS暗黑骑士.json'
+
+	}else if (role == '圣骑士'){
+		settingpath = settingpath + 'BOSS圣骑士.json'
 
 	}else{
 		settingpath = settingpath + 'BOSS合击.json'
@@ -433,12 +443,12 @@ var task = cga.task.Task('琥珀之卵4', [
 		// 这里的stageIndex是从cgaapi中cga.task.Task传过来的任务index，可用于离线写入文件记录任务状态。
 		// 功能已实现，但本任务并不需要，故注掉
 		workFunc: function(cb2,stageIndex){
-			console.log('开始第'+stageIndex+'步骤')
+			// console.log('开始第'+stageIndex+'步骤')
 			cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false
-			console.log(cga.isTeamLeader)
-			console.log(playerinfo.name)
-			console.log('teammates[0]' + teammates[0])
-			console.log('teammates.length'+teammates.length)
+			// console.log(cga.isTeamLeader)
+			// console.log(playerinfo.name)
+			// console.log('teammates[0]' + teammates[0])
+			// console.log('teammates.length'+teammates.length)
 			var dropcount = 0
 			var dropUseless = () =>{
 				var item = cga.getInventoryItems().find((it)=>{
@@ -906,7 +916,7 @@ var task = cga.task.Task('琥珀之卵4', [
 		workFunc: function(cb2){
 			// 拾荒规则
 			var itemFilter = (unit) => {
-				console.log('name = ' + unit.item_name + ', flags = ' + unit.flags + ', counts = ' + unit.item_count)
+				// console.log('name = ' + unit.item_name + ', flags = ' + unit.flags + ', counts = ' + unit.item_count)
 				if (unit.flags == 1024 && unit.item_name == '觉醒的文言抄本') {
 					return true
 				}
