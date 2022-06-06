@@ -93,7 +93,7 @@ var waitcipher = ()=>{
 			stuffs.gold = drawmoney
 			cga.waitTrade(stuffs, checkParty, (result)=>{
 				if(result && result.success == true){
-					console.log('已支付【'+player.name+'】+【'+drawmoney+'】魔币')
+					console.log('已支付【'+player.name+'】【'+drawmoney+'】魔币')
 				}else if(result && result.success == false){// TODO 取钱，对方满了如何作出处理
 					if (result.reason == '交易被拒绝'){
 						console.log('交易被人为终止')
@@ -248,7 +248,7 @@ var loop = ()=>{
 					cga.turnDir(0);
 					cga.AsyncWaitNPCDialog(() => {
 						bankgold = cga.GetBankGold()
-						if(typeofact == 'draw' && bankgold < lowerlimit){
+						if(typeofact == 'draw' && (bankgold < lowerlimit || bankgold <= upperlimit-curgold)){
 							// bankdrawflag = false
 							// switchtype = -1
 							console.log('银行余额不足以维持移动银行的现金流了，全部取出')

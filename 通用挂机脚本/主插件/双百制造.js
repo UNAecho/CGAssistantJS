@@ -55,6 +55,9 @@ const allowMats = [
 	// '瞿麦',
 	// '茴香',
 	// '七叶树',
+	'小麦粉',
+	'牛奶',
+	'盐',
 ];
 
 const isFabricName = (name)=>{
@@ -410,7 +413,7 @@ var loop = ()=>{
 	// console.log('teachers = ' + teachers[2])
 
 	var craftSkillList = cga.GetSkillsInfo().filter((sk)=>{
-		return (sk.name.indexOf('制') == 0 || sk.name.indexOf('造') == 0 || sk.name.indexOf('铸') == 0 );
+		return (sk.name.indexOf('制') == 0 || sk.name.indexOf('造') == 0 || sk.name.indexOf('铸') == 0 || sk.name.indexOf('料理') == 0 || sk.name.indexOf('制药') == 0);
 	});
 
 	for(var i in craftSkillList){
