@@ -947,6 +947,10 @@ module.exports = function(callback){
 			{
 				return '沼泽洞穴出口域';
 			}
+			if(mapXY.x >= 535 && mapXY.y >= 309)
+			{
+				return '圣骑士营地门口域';
+			}
 			
 			return '圣骑士营地域';
 		}
@@ -1939,7 +1943,7 @@ module.exports = function(callback){
 		'法兰城':{
 			mainindex : 1000,
 			minindex : 1000,
-			maxindex : 9999,
+			maxindex : 32830,
 			mapTranslate:{
 				'主地图' : 1000,
 				'法兰城' : 1000,

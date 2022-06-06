@@ -20,7 +20,7 @@ var supplyModeArray = [
 					cga.turnDir(0);
 					setTimeout(cb, 5000);
 				});
-			} else if(map == '肯吉罗岛' || map == '圣骑士营地' || mapindex == 44692){
+			} else if((map == '肯吉罗岛' && cga.travel.camp.getRegion(map, mapXY) == '圣骑士营地门口域') || map == '圣骑士营地' || mapindex == 44692){
 				var path = [
 					[9, 11],
 					[9, 12],
@@ -104,6 +104,7 @@ var supplyModeArray = [
 			}
 		},
 		isLogBack : (map, mapindex)=>{
+			console.log('debug:'+(map.indexOf('黑龙沼泽') >= 0 || map.indexOf('蜥蜴洞穴') >= 0 || map.indexOf('隐秘之洞地下') >= 0) ? true : false)
 			// 随机迷宫距离营地都较远，且残血走回营地也有机率阵亡。故添加随即迷宫直接登出回补
 			return (map.indexOf('黑龙沼泽') >= 0 || map.indexOf('蜥蜴洞穴') >= 0 || map.indexOf('隐秘之洞地下') >= 0) ? true : false;
 		},
