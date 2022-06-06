@@ -1,5 +1,5 @@
 var Async = require('async');
-var supplyMode = require('./../公共模块/营地回补');
+var supplyMode = require('./../公共模块/肯吉罗岛回补');
 var supplyCastle = require('./../公共模块/里堡回补');
 var sellCamp = require('./../公共模块/营地卖石');
 var sellCastle = require('./../公共模块/里堡卖石');
@@ -190,14 +190,18 @@ var playerThink = ()=>{
 		{
 			if(interruptFromMoveThink)
 			{
-				walkMazeBack(loop);
+				// 注销掉出迷宫逻辑，原因是所有迷宫都距离营地补给处太远，直接登出回补
+				// walkMazeBack(loop);
+				supplyObject.func(loop)
 				return false;
 			}
 			else
 			{
 				moveThinkInterrupt.requestInterrupt(()=>{
 					if(cga.isInNormalState()){
-						walkMazeBack(loop);
+						// 注销掉出迷宫逻辑，原因是所有迷宫都距离营地补给处太远，直接登出回补
+						// walkMazeBack(loop);
+						supplyObject.func(loop)
 						return true;
 					}
 					return false;
