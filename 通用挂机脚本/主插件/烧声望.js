@@ -315,7 +315,9 @@ var loop = ()=>{
 			callSubPluginsAsync('prepare', ()=>{
 				//传咒单刷设置宠物不出战，驯兽需要保证宠物出战，否则虽然有声望，但是调教不加经验。最后5转需要10级调教的。
 				var petIndex = playerinfo.petid;
+				// console.log('petIndex:'+petIndex)
 				if(commonJob !='驯兽师' && petIndex!=-1){
+					console.log('当前职业不是驯兽师，取消掉出战宠物来烧技能。')
 					cga.ChangePetState(petIndex, 0);
 				}
 				

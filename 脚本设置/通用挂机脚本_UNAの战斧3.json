@@ -1,12 +1,14 @@
 {
-    "mainPlugin": "全自动肯吉罗岛练级",
+    "mainPlugin": "五转碎片",
     "subPlugins": [
+        "买桥头武器",
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
         "回补提醒",
         "换水晶",
         "掉魂自动招魂",
         "监听回补",
+        "监听宠物忠诚度",
         "自动加点",
         "自动存取魔币",
         "队员卖石"
@@ -20,15 +22,17 @@
         "UNAの战斧2",
         "UNAの战斧3"],
     "sellStore": 1,
-    "battleArea": 0,
+    "battleArea": 1,
     "layerLevel": 1,
+    "buyWeapon": "平民回力镖",
     "minHp": "25%",
     "minMp": "25%",
     "buyCrystal": "水火的水晶（5：5）",
-    "maxEndurance": 300,
-    "maxStrength": 246,
+    "minLoyality": 40,
+    "maxEndurance": 333,
+    "maxStrength": 203,
     "maxDefense": 0,
-    "maxAgility": 90,
-    "maxMagical": 30,
+    "maxAgility": 130,
+    "maxMagical": 0,
     "petpoint": 4
 }

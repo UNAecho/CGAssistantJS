@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "全自动肯吉罗岛练级",
+    "mainPlugin": "转职保证书",
     "subPlugins": [
         "买桥头武器",
         "受伤宠物医院治疗",
@@ -35,5 +35,5 @@
     "maxDefense": 0,
     "maxAgility": 100,
     "maxMagical": 0,
-    "petpoint": 5
+    "petpoint": 1
 }

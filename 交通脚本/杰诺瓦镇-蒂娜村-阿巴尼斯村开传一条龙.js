@@ -2,11 +2,11 @@ var cga = require('../cgaapi')(function(){
 	//队员信息
 	var playerinfo = cga.GetPlayerInfo();
 	var teammates = [
-        "UNAの格斗2",
-        "UNAの传教士",
-        "UNAの格斗1",
-        "UNAの厨师",
-        "UNAの药剂",
+        // "UNAの格斗2",
+        // "UNAの传教士",
+        // "UNAの格斗1",
+        // "UNAの厨师",
+        // "UNAの药剂",
 	];
 	var teamplayers = cga.getTeamPlayers();
 

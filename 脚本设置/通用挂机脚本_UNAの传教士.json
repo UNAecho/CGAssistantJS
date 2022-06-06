@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "全自动肯吉罗岛练级",
+    "mainPlugin": "五转碎片",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
@@ -7,6 +7,7 @@
         "换水晶",
         "掉魂自动招魂",
         "监听回补",
+        "监听宠物忠诚度",
         "自动加点",
         "自动存取魔币",
         "队员卖石"
@@ -25,10 +26,11 @@
     "minHp": "25%",
     "minMp": "25%",
     "buyCrystal": "水火的水晶（5：5）",
-    "maxEndurance": 300,
+    "minLoyality": 40,
+    "maxEndurance": 333,
     "maxStrength": 0,
     "maxDefense": 0,
-    "maxAgility": 80,
-    "maxMagical": 100,
+    "maxAgility": 100,
+    "maxMagical": 150,
     "petpoint": 1
 }

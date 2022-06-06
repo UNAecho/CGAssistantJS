@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "全自动肯吉罗岛练级",
+    "mainPlugin": "五转碎片",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
@@ -7,6 +7,7 @@
         "换水晶",
         "掉魂自动招魂",
         "监听回补",
+        "监听宠物忠诚度",
         "自动加点",
         "自动存取魔币",
         "队员卖石"
@@ -20,11 +21,12 @@
         "UNAの战斧2",
         "UNAの战斧3"],
     "sellStore": 1,
-    "battleArea": 0,
+    "battleArea": 1,
     "layerLevel": 1,
     "minHp": "25%",
     "minMp": "25%",
     "buyCrystal": "水火的水晶（5：5）",
+    "minLoyality": 40,
     "maxEndurance": 226,
     "maxStrength": 300,
     "maxDefense": 0,
