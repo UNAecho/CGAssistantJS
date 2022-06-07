@@ -17,10 +17,11 @@ var getaccount = (category,bias)=>{
 
 	var playerinfo = cga.GetPlayerInfo();
 	var accountInfos = infos(category)
-
+	// i代表每一个通行证对象的index，如user=***,pwd=***的所有账号obj信息。
+	// j代表每一个通行证对象下gid的index。
 	for (i = 0 ; i< accountInfos.length ; i++){
 		for (j = 0 ; j< accountInfos[i].gid.length ; j++){
-
+			// 由于人物的后缀ID一般是0102的写法，所以index匹配时候，结果只会是0或者2。
 			var index = getnums(accountInfos[i].gid[j]).indexOf(getnums(playerinfo.name))
 			// 首先找到当前游戏角色是哪个账号
 			// 在仓库数大于100之前，暂时先这么写。因为子账号id是2位数拼接起来的，0102对应账号人物01和02
@@ -28,8 +29,17 @@ var getaccount = (category,bias)=>{
 			if(index == 0){
 				if(bias == -1){
 					if(j == 0){
-						// 如果大类到【开头】的情况，无法再往上走，那么直接循环至大类末尾的账号（每个category为一【大类】）
-						i = i == 0 ? accountInfos.length - 1 : i-1
+						// 如果大类到【头部】的情况，无法再往下走，那么直接循环至大类开头的账号（每个category为一【大类】）
+						if(i == 0){
+							for(var k = accountInfos.length - 1; k > 0; k--){
+								if(accountInfos[k].gid.length >0){
+									i = k
+									break
+								}
+							}
+						}else{
+							i = i-1
+						}
 						// 因为大类上移，子账号就等于上一个大类的gid末尾的账号
 						j = accountInfos[i].gid.length - 1
 					}else{
@@ -46,7 +56,12 @@ var getaccount = (category,bias)=>{
 				if(bias == 1){
 					if(j == accountInfos[i].gid.length - 1){
 						// 如果大类到【尾部】的情况，无法再往下走，那么直接循环至大类开头的账号（每个category为一【大类】）
-						i = i == accountInfos.length - 1 ? 0 : i+1
+						for(var k = 0; k < accountInfos.length - 1; k++){
+							if(accountInfos[k].gid.length >0){
+								i = k
+								break
+							}
+						}
 						// 因为大类下移，子账号就等于下一个大类的gid第一个账号
 						j = 0
 					}else{
@@ -77,6 +92,10 @@ module.exports = {
 			Object.assign(accountobj, assignobj)
 		}
 		console.log('开始顺序切换同为【' + category+'】类的账号');
+
+		if(!accountobj.gid || accountobj.gid.length == 0){
+			throw Error('读取账号信息有误，请检查')
+		}
 		
 		cga.gui.LoadAccount(accountobj, (err, result)=>{
 			console.log('登出!');
