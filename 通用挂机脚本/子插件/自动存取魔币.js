@@ -237,7 +237,14 @@ var thisobj = {
 					gold : cipher == save ? batchlimit : 0 };
 	
 				setTimeout(()=>{
-					cga.positiveTrade(targetname, stuffs, null, (result)=>{
+					cga.positiveTrade(targetname, stuffs, (playerName, receivedStuffs)=>{
+						if(receivedStuffs.gold >= lowerlimit){
+							console.log('对方提供:【'+receivedStuffs.gold+'】金币');
+							return true;
+						}
+						console.log('对方没有给自己最低限度:【'+lowerlimit+'】金币，拒绝交易');
+						return false;
+					}, (result)=>{
 						if (result.success == true){
 							cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, false);
 							setTimeout(trade, 1000,targetname,cb2);

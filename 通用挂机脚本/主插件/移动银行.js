@@ -97,6 +97,12 @@ var waitcipher = ()=>{
 				}else if(result && result.success == false){// TODO 取钱，对方满了如何作出处理
 					if (result.reason == '交易被拒绝'){
 						console.log('交易被人为终止')
+						if (cga.GetPlayerInfo().gold < stuffs.gold){
+							console.log('交易被人为终止，可能是没钱了')
+							setTimeout(() => {
+								switchlogic(-1,loop)
+							}, 1000);
+						}
 					}else if(result.reason == '物品栏已满'){
 						console.log('物品栏满了，可能是魔币、物品以及宠物，需要存银行或换号了。')
 						setTimeout(() => {
