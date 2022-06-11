@@ -1,3 +1,4 @@
+var fs = require('fs');
 var Async = require('async');
 var supplyMode = require('./../公共模块/肯吉罗岛回补');
 var supplyCastle = require('./../公共模块/里堡回补');
@@ -8,6 +9,11 @@ var logbackEx = require('./../公共模块/登出防卡住');
 
 var cga = global.cga;
 var configTable = global.configTable;
+
+// 提取本地职业数据
+const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
+var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
+
 var sellStoreArray = ['不卖石', '卖石'];
 
 var interrupt = require('./../公共模块/interrupt');
@@ -41,6 +47,47 @@ var getSellObject = (map, mapindex)=>{
 	return sellArray.find((s)=>{
 		return s.isAvailable(map, mapindex);
 	})
+}
+
+var loadBattleConfig = ()=>{
+
+	var settingpath = cga.getrootdir() + '\\战斗配置\\'
+	// 因为传教士可能还有正在刷声望的小号，这样可以区分是保姆还是小号
+	if (professionalInfo.jobmainname == '传教士'){
+		if(cga.GetPlayerInfo().job.indexOf('见习') != -1){
+			settingpath = settingpath + '营地组队普攻刷声望.json'
+		}else{
+			settingpath = settingpath + '传教打隐秘徽记.json'
+		}
+	}else if(professionalInfo.jobmainname == '格斗士'){
+		settingpath = settingpath + '格斗打隐秘徽记.json'
+	}else if(professionalInfo.jobmainname == '弓箭手'){
+		settingpath = settingpath + '弓箭练级.json'
+	}else if(professionalInfo.jobmainname == '剑士'){
+		settingpath = settingpath + '剑士练级.json'
+	}else if(professionalInfo.jobmainname == '战斧斗士'){
+		settingpath = settingpath + '战斧练级.json'
+	}else if(professionalInfo.jobmainname == '魔术师'){
+		settingpath = settingpath + '法师练级.json'
+	}else if(professionalInfo.jobmainname == '巫师'){
+		settingpath = settingpath + '巫师练级.json'
+	}else if(professionalInfo.jobmainname == '封印师'){
+		settingpath = settingpath + '封印师练级.json'
+	}else{
+		settingpath = settingpath + '营地组队普攻刷声望.json'
+	}
+
+	var setting = JSON.parse(fs.readFileSync(settingpath))
+
+	cga.gui.LoadSettings(setting, (err, result)=>{
+		if(err){
+			console.log(err);
+			return;
+		}else{
+			console.log('读取战斗配置【'+settingpath+'】成功')
+		}
+	})
+	return
 }
 
 var randomMazeArgs = {
@@ -496,6 +543,7 @@ var thisobj = {
 		}], cb);
 	},
 	execute : ()=>{
+		loadBattleConfig()
 		playerThinkTimer();
 		cga.registerMoveThink(moveThink);
 		callSubPlugins('init');
