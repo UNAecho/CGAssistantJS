@@ -8,6 +8,7 @@ var supplyModeArray = [
 			var mapindex = cga.GetMapIndex().index3;
 
 			if(cga.travel.camp.getRegion(map, mapXY) == '矮人城镇域' || map == '矮人城镇'){
+				console.log('在矮人城镇域回补..')
 				var path = [
 					[163, 95],
 				];
@@ -62,8 +63,8 @@ var supplyModeArray = [
 			var map = cga.GetMapName();
 			var mapXY = cga.GetMapXY();
 			var mapindex = cga.GetMapIndex().index3;
-
 			if(cga.travel.camp.getRegion(map, mapXY) == '矮人城镇域' || map == '矮人城镇'){
+				console.log('在矮人城镇域回补..')
 				var path = [
 					[163, 94],
 				];
@@ -76,7 +77,7 @@ var supplyModeArray = [
 					cga.turnDir(0);
 					setTimeout(cb, 5000);
 				});
-			} else if(map == '肯吉罗岛' || map == '圣骑士营地' || mapindex == 44692){
+			} else if((map == '肯吉罗岛' && cga.travel.camp.getRegion(map, mapXY) == '圣骑士营地门口域') || map == '圣骑士营地' || mapindex == 44692){
 				var path = [
 					[18, 15],
 					[17, 15],
