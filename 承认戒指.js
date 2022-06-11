@@ -258,6 +258,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		intro: '7.战斗胜利后随机获得【神之金】。与神秘人（14.14）对话，获得【怪物碎片】并传送回法兰城。',
 		workFunc: function(cb2){
 			// 留空位给任务物品
+			// 战斗成功后，房间index为44708
 			var inventory = cga.getInventoryItems();
 			if(inventory.length >= 18){
 				var stone = cga.findItem('魔石');
