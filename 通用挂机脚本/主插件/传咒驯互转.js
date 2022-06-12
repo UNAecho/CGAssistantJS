@@ -785,13 +785,11 @@ var loop = ()=>{
 		if(title == '敬畏的寂静' || title == '无尽星空'){
 			console.log('称号满但没有完美调教术，那么进行传咒驯互转的最后一站:转职驯兽')
 			var task = cga.task.Task(taskTamer[0],taskTamer[1],taskTamer[2])
-			task.anyStepDone = false;
 			//TODO 完成账号毕业后续流程
 			task.doTask(jump)
 		}else if(job == '传教士'){
 			console.log('称号没满，准备转职为:咒术师')
 			var task = cga.task.Task(taskWarlock[0],taskWarlock[1],taskWarlock[2])
-			task.anyStepDone = false;
 			task.doTask(jump)
 		}else{
 			console.log('称号没满，准备转职为:传教士')
