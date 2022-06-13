@@ -1,1 +1,1 @@
-{"mainPlugin":"双百制造","subPlugins":["掉魂自动招魂"],"craftType":"制长袍","forgetSkillAt":11,"listenPort":2222}
+{"mainPlugin":"采集","subPlugins":[],"gatherObject":"双百采集","serverPort":23333,"target":"牛奶","logoutTimes":0}

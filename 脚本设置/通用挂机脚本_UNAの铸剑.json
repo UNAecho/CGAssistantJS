@@ -1,1 +1,1 @@
-{"mainPlugin":"双百制造","subPlugins":[],"craftType":"铸剑","forgetSkillAt":11,"listenPort":2222}
+{"mainPlugin":"采集","subPlugins":[],"gatherObject":"双百采集","serverPort":23333,"target":"小麦粉","logoutTimes":0}

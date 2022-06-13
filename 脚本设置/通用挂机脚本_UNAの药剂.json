@@ -1,1 +1,1 @@
-{"mainPlugin":"双百制造","subPlugins":[],"craftType":"制药","forgetSkillAt":11,"listenPort":11111}
+{"mainPlugin":"双百制造","subPlugins":["自动存取魔币"],"craftType":"制药","forgetSkillAt":11,"listenPort":23333}

@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "五转碎片",
+    "mainPlugin": "自动1-50",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
@@ -12,16 +12,16 @@
         "自动存取魔币",
         "队员卖石"
     ],
-    "supplyMode": 1,
+    "supplyMode": 2,
     "teamMode": 0,
-    "teammates": [        
-        "UNAの传教士",
-        "UNAの格斗1",
+    "teammates": [
         "UNAの格斗2",
-        "UNAの战斧2",
-        "UNAの战斧3"],
-    "sellStore": 1,
+        "UNAの猎人02",
+        "UNAの伐木01",
+        "UNAの伐木02",
+        "UNAの鉴定"],
     "battleArea": 1,
+    "sellStore": 1,
     "layerLevel": 1,
     "minHp": "25%",
     "minMp": "25%",
