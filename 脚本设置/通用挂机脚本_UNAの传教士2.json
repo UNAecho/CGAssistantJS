@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "烧声望",
+    "mainPlugin": "转职保证书",
     "subPlugins": [
         "自动存取魔币",
         "受伤宠物医院治疗",
@@ -12,8 +12,14 @@
         "自动加点",
         "队员卖石"
     ],
-    "teamMode": "0",
-    "teammates": [],
+    "teamMode": 0,
+    "teammates": [
+        "UNAの传教士2",
+        "UNAの格斗3",
+        "UNAの暗黑骑士",
+        "UNAの饲养师",
+        "UNAの猎人01"
+    ],
     "minHp": "25%",
     "minMp": 5,
     "buyCrystal": "水火的水晶（5：5）",

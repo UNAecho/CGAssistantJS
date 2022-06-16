@@ -611,7 +611,7 @@ var chooseArea = (cb)=>{
 					if(maxlv <= nannylv)
 					thisobj.battleArea = battleAreaArray[5];
 				}//回廊
-				else if(minlv >=50 && minlv < 65){
+				else if(minlv >=60 && minlv < 65){
 					thisobj.battleArea = battleAreaArray[7];
 				}
 				else{
