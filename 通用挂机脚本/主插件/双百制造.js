@@ -55,9 +55,13 @@ const allowMats = [
 	// '瞿麦',
 	// '茴香',
 	// '七叶树',
-	'小麦粉',
-	'牛奶',
+	// '小麦粉',
+	// '牛奶',
+	'葱',
 	'盐',
+	'酱油',
+	'牛肉',
+	'砂糖',
 ];
 
 const isFabricName = (name)=>{
@@ -156,7 +160,7 @@ var waitStuffs = (name, materials, cb)=>{
 				break;
 			}
 		}
-		
+
 		if(find_player){
 			
 			find_player.cga_data.state = 'trade';
@@ -196,6 +200,23 @@ var waitStuffs = (name, materials, cb)=>{
 				if(find_player.cga_data.job_name == '铜条'){
 					stuffs.gold += find_player.cga_data.count * 20;
 				}
+				if(find_player.cga_data.job_name == '葱'){
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.3 + 0)
+				}
+				if(find_player.cga_data.job_name == '盐'){
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.3 + 0)
+				}
+				if(find_player.cga_data.job_name == '酱油'){
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.5 + 0)
+				}
+				if(find_player.cga_data.job_name == '牛肉'){
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.7 + 0)
+				}
+				if(find_player.cga_data.job_name == '砂糖'){
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 4.5 + 0)
+				}
+				console.log('准备交易给采集员:')
+				console.log(stuffs)
 				cga.positiveTrade(find_player.cga_data.player_name, stuffs, null, (result)=>{
 					if (result.success == true){
 						cb(true);

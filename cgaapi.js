@@ -2006,6 +2006,44 @@ module.exports = function(callback){
 				32830:[[2, 7, 1102]],
 			},
 		},
+		'曙光骑士团营地':{
+			mainindex : 27001,
+			minindex : 27001,
+			maxindex : 27999,
+			mapTranslate:{
+				'主地图' : 27001,
+				'曙光骑士团营地' : 27001,
+				'曙光储备室':27011,
+				'曙光营地医院':27012,
+				'曙光营地医院 2楼':27012,
+				'酒吧':27013,
+				'曙光营地酒吧':27013,
+				'辛希亚探索指挥部':{
+					27014:'一楼',
+					27101:'传送石',
+				},
+				'曙光营地指挥部':27015,
+				'传送石':2399
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				27001:[],
+				// 曙光储备室
+				27011:[[44, 49, 27011],],
+				// 曙光营地医院
+				27012:[[42, 56, 27012],],
+				// 曙光营地医院 2楼
+				27012:[[42, 56, 27012],[15, 12, 27012],],
+			},
+			walkReverse:{
+				// 曙光储备室
+				27011:[[12, 22, 27001],],
+				// 曙光营地医院
+				27012:[[1, 8, 27001],],
+				// 曙光营地医院 2楼
+				27012:[[97, 12, 27012],],
+			},
+		},
 		'圣拉鲁卡村':{
 			mainindex : 2300,
 			minindex : 2300,
@@ -5046,8 +5084,13 @@ module.exports = function(callback){
 	}
 
 	//从NPC对话框内容解析兑换列表
+	/**
+	 * UNA注释：作者可能没有发现兑换商店(type=28)的json体，结构和商店购物(type=6)不同
+	 * 购买商店是RegExp(/([^|\n]+)/g)解析后，前5行是商店信息，然后每6行是每个商品的信息。
+	 * 而兑换商店是RegExp(/([^|\n]+)/g)解析后，前7行是商店信息，包含2条兑换材料信息（如用曙光医院2楼，用蕃窃换小麦粉）然后每5行是每个商品的信息。
+	 * */
 	cga.parseExchangeStoreMsg = (dlg)=>{
-		
+
 		if(!dlg){
 			throw new Error('解析兑换列表失败，可能对话超时!');
 			return null;
@@ -5065,18 +5108,19 @@ module.exports = function(callback){
 		
 		var reg = new RegExp(/([^|\n]+)/g)
 		var match = dlg.message.match(reg);
-		
-		if(match.length < 5){
+		var storeInfoLen = 7
+		var goodsInfoLen = 5
+		if(match.length < storeInfoLen){
 			throw new Error('解析兑换列表失败，格式错误!');
 			return null;
 		}
 
-		if((match.length - 5) % 7 != 0){
+		if((match.length - storeInfoLen) % goodsInfoLen != 0){
 			throw new Error('解析兑换列表失败，格式错误!');
 			return null;
 		}
 		
-		var storeItemCount = (match.length - 5) / 7;
+		var storeItemCount = (match.length - storeInfoLen) / goodsInfoLen;
 		
 		var obj = {
 			storeid : match[0],
@@ -5084,23 +5128,66 @@ module.exports = function(callback){
 			welcome : match[2],
 			insuff_funds : match[3],
 			insuff_inventory : match[4],
+			// UNA注释：和type=6不同，type=28的时候，有兑换材料信息。其实可以理解为6的原材料是魔币，而28的原材料是物品。
+			required_image_id : match[5],
+			required : match[6],
 			items : []
 		}
 		for(var i = 0; i < storeItemCount; ++i){
 			obj.items.push({
 				index : i,
-				item_id : parseInt(match[5 + 6 * i + 0]),
-				required : match[5 + 6 * i + 1],
-				name : match[5 + 6 * i + 2],
-				image_id : parseInt(match[5 + 6 * i + 3]),
-				count : parseInt(match[5 + 6 * i + 4]),//count个required才能换取一个
-				batch : parseInt(match[5 + 6 * i + 5]),//最少换多少
-				attr : match[5 + 6 * i + 6],
+				// UNA注释：由于物品拼字后面会带一个(堆叠数)，故用正则去掉
+				name : (match[storeInfoLen + goodsInfoLen * i + 0]).match(new RegExp(/([^\d\(\)]+)/g))[0],
+				// UNA注释：保留原名称，方便后续debug
+				raw_name : match[storeInfoLen + goodsInfoLen * i + 0],
+				image_id : parseInt(match[storeInfoLen + goodsInfoLen * i + 1]),
+				count : parseInt(match[storeInfoLen + goodsInfoLen * i + 2]),//count个required才能换取一个
+				batch : parseInt(match[storeInfoLen + goodsInfoLen * i + 3]),//UNA注释：该商品每组的堆叠数量
+				attr : match[storeInfoLen + goodsInfoLen * i + 4],
 			});
 		}
 		return obj;
 	}
 
+	/**
+	 * UNA:和NPC交换物品API
+	 * goods:目标物品名称
+	 * count:交易数量，注意并不是物品堆叠数，而是游戏商店中"+"和"-"号点出的交换数量。如果不输入，则默认将材料全部兑换。
+	 *  */ 
+	cga.exchangeItemFromStore = (cb,goods,count)=>{
+		setTimeout(() => {
+			cga.AsyncWaitNPCDialog(()=>{
+				cga.ClickNPCDialog(0, 0);
+				cga.AsyncWaitNPCDialog((err, dlg)=>{
+					var store = cga.parseExchangeStoreMsg(dlg);
+					if(!store)
+					{
+						cb(new Error('兑换商品时，商店内容解析失败'));
+						return;
+					}
+					if(!store.required || store.required.length == 0){
+						cb(new Error('兑换商品时，商店需求材料解析失败'));
+						return;
+					}
+		
+					var buyitem = [];
+					// 后续用-1判断是全兑换，还是指定数量
+					var buyCount = ((count === undefined || count === null) ? -1 : count)
+					store.items.forEach((it)=>{
+						if(it.name == goods){
+							buyitem.push({index: it.index, count: (buyCount == -1 ? parseInt(cga.getItemCount(store.required) / it.count):buyCount)});
+						}
+					});
+		
+					cga.BuyNPCStore(buyitem);
+					cga.AsyncWaitNPCDialog((err, dlg)=>{
+						if (cb) cb(null)
+						return;
+					});
+				});
+			});
+		}, 1500);
+	}
 	//从NPC对话框内容解析宠物技能学习列表
 	cga.parsePetSkillStoreMsg = (dlg)=>{
 		

@@ -1,6 +1,20 @@
 ﻿var mineArray = [
 {
 	level : 1,
+	name : '小麦粉',
+	display_name : '小麦粉',
+	func : (cb)=>{
+		//小麦粉和蕃茄一样，因为要打蕃茄后，去曙光营地兑换小麦粉。
+		cga.travel.falan.toStone('E2', ()=>{
+			cga.walkList([
+				[281, 88, '芙蕾雅'],
+				[475, 161],
+			], cb);
+		});
+	}
+},
+{
+	level : 1,
 	name : '神圣米',
 	display_name : '神圣米',
 	func : (cb)=>{
@@ -75,16 +89,27 @@
 	name : '牛奶',
 	display_name : '牛奶',
 	func : (cb)=>{
-		cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
+		cga.travel.newisland.toStone('X', ()=>{
 			cga.walkList([
-				[5, 4, '村长的家'],
-				[6, 13, 4312],
-				[6, 13, '阿巴尼斯村'],
-				[37, 71, '莎莲娜'],
-				[118, 100, '魔法大学'],
-				[55, 154, 4424],
-				[10, 10],
-			], cb);
+			[130, 50, '盖雷布伦森林'],
+			[216, 44],
+			], ()=>{
+				cga.TurnTo(216, 43)		
+				cga.AsyncWaitNPCDialog(()=>{
+					cga.ClickNPCDialog(8, 0);
+					cga.AsyncWaitNPCDialog(()=>{
+						cga.ClickNPCDialog(32, 0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(1, 0); 
+							cga.AsyncWaitMovement({map:'方堡盆地', delay:1000, timeout:5000}, ()=>{
+								cga.walkList([
+									[182, 62],
+									], cb);
+							});
+						});
+					});
+				});
+			});
 		});
 	}
 },
@@ -242,16 +267,25 @@
 	name : '砂糖',
 	display_name : '砂糖',
 	func : (cb)=>{
-		cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
-			cga.walkList([
-				[5, 4, '村长的家'],
-				[6, 13, 4312],
-				[6, 13, '阿巴尼斯村'],
-				[37, 71, '莎莲娜'],
-				[118, 100, '魔法大学'],
-				[85, 46],
-			], cb);
-		});
+		if(configTable.mineType == 1){
+			cga.travel.falan.toTeleRoom('维诺亚村', ()=>{
+				cga.travel.falan.autopilot('糖店',()=>{
+					cga.walkList(
+						[[11, 6]], cb);
+				})
+			});
+		}else{
+			cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
+				cga.walkList([
+					[5, 4, '村长的家'],
+					[6, 13, 4312],
+					[6, 13, '阿巴尼斯村'],
+					[37, 71, '莎莲娜'],
+					[118, 100, '魔法大学'],
+					[85, 46],
+				], cb);
+			});
+		}
 	}
 },
 {
@@ -566,9 +600,11 @@
 	}
 },
 ];
+var Async = require('async');
 
 var cga = global.cga;
 var configTable = global.configTable;
+var mineTypeInfo = ['使用狩猎、伐木、挖掘技能采集', '采集其他材料兑换或直接商店购买'];
 
 var thisobj = {
 	func : (cb) =>{
@@ -580,6 +616,12 @@ var thisobj = {
 	translate : (pair)=>{
 		if(pair.field == 'mineObject'){
 			pair.field = '采集材料种类';
+			pair.value = pair.value;
+			pair.translated = true;
+			return true;
+		}
+		if(pair.field == 'mineType'){
+			pair.field = '获取材料方式';
 			pair.value = pair.value;
 			pair.translated = true;
 			return true;
@@ -599,32 +641,60 @@ var thisobj = {
 			console.error('读取配置：采集材料种类失败！');
 			return false;
 		}
-				
+
+		configTable.mineType = obj.mineType;
+		thisobj.mineType = obj.mineType
+		
+		if(!thisobj.mineType){
+			console.log('【UNA脚本警告】读取配置：采集方式失败！，默认使用技能进行采集');
+			thisobj.mineType = 0
+			return false;
+		}
 		return true;
 	},
 	inputcb : (cb)=>{
-		var sayString = '【采集插件】请选择要采集的材料种类';
-		for(var i in mineArray){
-			if(i != 0)
-				sayString += ', ';
-			sayString += '('+ (parseInt(i)+1) + ')' + mineArray[i].display_name;
-		}
-		cga.sayLongWords(sayString, 0, 3, 1);
-		cga.waitForChatInput((msg, index)=>{
-			if(index !== null && index >= 1 && mineArray[index - 1]){
-				configTable.mineObject = mineArray[index - 1].display_name;
-				thisobj.object = mineArray[index - 1];
-				
-				var sayString2 = '当前已选择:[' + thisobj.object.display_name + ']。';
-				cga.sayLongWords(sayString2, 0, 3, 1);
-				
-				cb(null);
-				
-				return false;
+		Async.series([(cb2)=>{
+			var sayString = '【采集插件】请选择要采集的材料种类';
+			for(var i in mineArray){
+				if(i != 0)
+					sayString += ', ';
+				sayString += '('+ (parseInt(i)+1) + ')' + mineArray[i].display_name;
 			}
-			
-			return true;
-		});
+			cga.sayLongWords(sayString, 0, 3, 1);
+			cga.waitForChatInput((msg, index)=>{
+				if(index !== null && index >= 1 && mineArray[index - 1]){
+					configTable.mineObject = mineArray[index - 1].display_name;
+					thisobj.object = mineArray[index - 1];
+					
+					var sayString2 = '当前已选择:[' + thisobj.object.display_name + ']。';
+					cga.sayLongWords(sayString2, 0, 3, 1);
+					
+					cb2(null);
+					
+					return false;
+				}
+				
+				return true;
+			});
+		}, (cb2)=>{
+			var sayString = '【采集插件】请选择材料采集方式: 0采集技能 1采集其他材料兑换或直接商店购买';
+			cga.sayLongWords(sayString, 0, 3, 1);
+			cga.waitForChatInput((msg, val)=>{
+				if(val !== null && val >= 0 && val <= 1){
+					configTable.mineType = val;
+					thisobj.mineType = val;
+					
+					var sayString2 = '当前已选择:'+mineTypeInfo[thisobj.mineType]+'。';
+					cga.sayLongWords(sayString2, 0, 3, 1);
+					
+					cb2(null);
+					
+					return false;
+				}
+				
+				return true;
+			});
+		}], cb);
 	},
 	init : ()=>{
 		

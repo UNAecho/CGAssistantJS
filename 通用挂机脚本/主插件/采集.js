@@ -202,6 +202,10 @@ var gatherArray = [
 	name : '寿喜锅流水线牛肉',
 	skill : '狩猎',
 	path : './../公共模块/寿喜锅流水线牛肉',
+},{
+	name : '双百采集',
+	skill : null,
+	path : './../公共模块/双百采集',
 },
 ]
 
@@ -244,7 +248,7 @@ var loop = ()=>{
 	}
 	
 	var playerInfo = cga.GetPlayerInfo();
-	if(playerInfo.mp < playerInfo.maxmp * 0.8 || playerInfo.hp < playerInfo.maxhp * 0.8)
+	if(playerInfo.mp < playerInfo.maxmp || playerInfo.hp < playerInfo.maxhp)
 	{
 		if(mineObject.supplyManager)
 			mineObject.supplyManager(loop);
@@ -252,9 +256,12 @@ var loop = ()=>{
 			supplyObject.func(loop);
 		return;
 	}
-
+	// 如果模块有自己的采集完毕的处理逻辑，就执行。
+	// 否则，使用通用模块来处理。
 	if(mineObject.check_done())
 	{
+		console.log('完成任务，当前时间:' + Date(Date.now()))
+		console.log('一次采集流程完成，耗时' + ((Date.now() - mineObject.startTime)/1000).toString() + '秒,消耗金币:' + (cga.GetPlayerInfo().gold - mineObject.startGold))
 		if(mineObject.doneManager)
 			mineObject.doneManager(loop);
 		else if(doneObject.func)
@@ -290,8 +297,9 @@ var loop = ()=>{
 		
 		if(skill != null && !mineObject.workManager){
 			cga.StartWork(skill.index, 0);
+			// cga.AsyncWaitWorkingResult使用方式见开发文档
 			cga.AsyncWaitWorkingResult((err, result)=>{
-				
+
 				if(thisobj.logoutTimes > 0 && result !== undefined){
 					if(thisobj.gatherTimes == undefined)
 						thisobj.gatherTimes = 0;
@@ -307,17 +315,19 @@ var loop = ()=>{
 				
 				workwork(err, result);
 			}, 10000);
-		} else {
+		} else {// 如果模块有自己的采集方式，就使用自己的采集方式
 			if(mineObject.workManager){
-				mineObject.workManager((err)=>{
-					workwork(err);
+				mineObject.workManager((err,result)=>{
+					workwork(err,result);
 				});
 			} else {
 				setTimeout(workwork, 1500, null);
 			}
 		}
 	}
-	
+	mineObject.startTime = Date.now()
+	mineObject.startGold = playerInfo.gold
+	console.log('开始任务,当前时间:' + Date(mineObject.startTime) + ',当前金币:' + mineObject.startGold)
 	mineObject.func(workwork);
 }
 
