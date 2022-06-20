@@ -819,16 +819,8 @@ var thisobj = {
 	},
 	loadconfig : (obj)=>{
 
-		// if(!teamMode.loadconfig(obj))
-		// 	return false;
-		
-		// configTable.listenPort = obj.listenPort;
-		// thisobj.listenPort = obj.listenPort
-		
-		// if(!thisobj.listenPort){
-		// 	console.error('读取配置：监听端口失败！');
-		// 	return false;
-		// }
+		if(!teamMode.loadconfig(obj))
+			return false;
 		
 		return true;
 	},

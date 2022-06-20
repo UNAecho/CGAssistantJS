@@ -396,7 +396,7 @@ var zudangzhe = (cb)=>{
 				}, 1500);
 			}
 			// cgaapi.js中，队友的cga.addTeammate方法，有很长的超时等待时间，所以等待人满统计时，要多等待一段时间。
-			setTimeout(CheckItemForWYW, 3000);
+			setTimeout(CheckItemForWYW, 5000);
 			return;
 		}else{
 			setTimeout(zudangzhe, 1000, cb);
@@ -837,7 +837,8 @@ var task = cga.task.Task('琥珀之卵4', [
 					// 由上面的【自己有文言抄本即登出，不管队友】修改为，视队友持有情况而选择登出还是留战。
 					// 这里的callWYW数值，取决于之前zudangzhe()统计保证书的持有情况。
 					if(callWYW){
-						setTimeout(cb2, 1000, true);
+						setTimeout(cb2, 2000, true);
+						return
 					}
 					setTimeout(waitBOSS, 1000);
 					return;

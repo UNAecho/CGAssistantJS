@@ -11,7 +11,11 @@ var updateConfig = require('./../公共模块/修改配置文件');
 
 var cga = global.cga;
 var configTable = global.configTable;
-// var sellStoreArray = ['不卖石', '卖石'];
+
+// 提取本地职业数据
+const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
+var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
+var commonJob = professionalInfo.jobmainname
 
 var interrupt = require('./../公共模块/interrupt');
 
@@ -35,21 +39,101 @@ var getSupplyObject = (map, mapindex)=>{
 	})
 }
 
-// var sellArray = [sellCamp, sellCastle];
+// 通用学习动作
+var learn = (xpos,ypos,cb) => {
+	cga.TurnTo(xpos, ypos);
+	cga.AsyncWaitNPCDialog(() => {
+		cga.ClickNPCDialog(0, 0);
+		cga.AsyncWaitNPCDialog(() => {
+			setTimeout(() => {
+				cga.ClickNPCDialog(0, -1);
+				setTimeout(() => {
+					cga.AsyncWaitNPCDialog((err, dlg) => {
+						if (dlg && dlg.message.indexOf('技能栏位') > 0) {
+							throw new Error(professionalInfo.skill + '学习失败,你没有技能栏位了')
+						} else if (dlg && dlg.message.indexOf('你的钱') > 0) {
+							throw new Error(professionalInfo.skill + '学习失败,你的钱不够了')
+						} else {
+							console.log('技能学习完毕')
+							if (cb) {
+								cb(true)
+							}
+						}
+					});
+				}, 1500);
+			}, 1000);
+		});
+	});
+}
 
-// var getSellObject = (map, mapindex)=>{
-// 	if(typeof map != 'string')
-// 		map = cga.GetMapName();
-// 	if(typeof mapindex != 'number')
-// 		mapindex = cga.GetMapIndex().index3;
-// 	return sellArray.find((s)=>{
-// 		return s.isAvailable(map, mapindex);
-// 	})
-// }
-// 提取本地职业数据
-const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
-var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
-var commonJob = professionalInfo.jobmainname
+// 检查技能
+var checkSkill = (cb)=>{
+	if(commonJob == '传教士' && !cga.findPlayerSkill('气绝回复')){
+		console.log('没找到气绝回复，去亚留特学习')
+		var settingpath = cga.getrootdir() + '\\战斗配置\\生产赶路.json'
+		var setting = JSON.parse(fs.readFileSync(settingpath))
+
+		cga.gui.LoadSettings(setting, (err, result)=>{
+			if(err){
+				console.log(err);
+				return;
+			}else{
+				console.log('读取战斗配置【'+settingpath+'】成功')
+			}
+		})
+		cga.travel.falan.toCastleHospital(()=>{
+			cga.walkList([
+				[65, 53, '法兰城'],
+				[281, 88, '芙蕾雅'],
+				[672,223,'哈巴鲁东边洞穴 地下1楼'],
+				[41,8,'哈巴鲁东边洞穴 地下2楼'],
+				[17,18]
+				], ()=>{
+					cga.ForceMove(6, true);
+					cga.ForceMove(6, true);
+					cga.walkList([
+						[16,11,'哈巴鲁东边洞穴 地下1楼'],
+						[30,4,'芙蕾雅'],
+						[596,84,'亚留特村'],
+						[49,65],[49,47],
+						[56,48,2412],
+						[22,9,2499],
+						[5,13]
+						], ()=>{
+							// 顺便开传送
+							cga.turnTo(5, 14);
+							setTimeout(() => {
+								cga.walkList([
+									[8, 3, '村长的家'],
+									[6,14,'亚留特村'],
+									[47,72]
+									], ()=>{
+										learn(48,72,()=>{
+											loadBattleConfig()
+											cb(null)
+										})
+									});
+							}, 1500);
+						});
+				});
+		});
+	}else if(commonJob == '咒术师' && !cga.findPlayerSkill('石化魔法')){
+		console.log('没找到石化魔法')
+		cga.travel.falan.toStone('C', (r)=>{
+			cga.walkList([
+				[17, 53, '法兰城'],
+				[120,65],
+			], (r)=>{
+				cga.TurnTo(120, 64);
+				learn(120,64,cb)
+			});
+		});
+	}else{
+		loadBattleConfig()
+		if (cb) cb(null)
+	}
+	return
+}
 
 // 声望数据
 const reputationInfos = require('../../常用数据/reputation.js');
@@ -139,7 +223,18 @@ var getPercentage = (cb) =>{
 									console.log('声望【无】进展，该去做保证书任务了')
 									jump()
 								}else{
+									console.log('originInfo.title:'+originInfo.title)
+									console.log('title:'+title)
+									console.log('originInfo.percentage:'+originInfo.percentage)
+									console.log('per:'+per)
+									console.log('originInfo.title == title && originInfo.percentage == per:' + (originInfo.title == title && originInfo.percentage == per))
+									console.log(originInfo.title == title)
+									console.log(originInfo.percentage == per)
 									console.log('声望【有】进展，继续烧声望')
+									originInfo.title = title
+									originInfo.percentage = per
+									console.log('originInfo.title改为:'+originInfo.title)
+									console.log('originInfo.percentage改为:'+originInfo.percentage)
 								}
 							}
 							setTimeout(cb, 2000, null);
@@ -223,7 +318,7 @@ var playerThink = ()=>{
 				moveThinkInterrupt.requestInterrupt(()=>{
 					if(cga.isInNormalState()){
 						// TODO 实现驯兽师的声望刷新机制，目前暂无，一直遇敌，请定时手动查看声望情况。
-						if(jobmainname == '驯兽师'){
+						if(commonJob == '驯兽师'){
 							console.log('实现驯兽师的声望刷新机制，目前暂无，一直遇敌，请定时手动查看声望情况。')
 						}else{
 							supplycount -= 1
@@ -350,17 +445,7 @@ var loop = ()=>{
 			});
 			return
 		}
-
-		// if(map == '医院' && mapindex == 44692){
-		// 	if(thisobj.sellStore == 1){
-		// 		var sellObject = getSellObject(map, mapindex);
-		// 		if(sellObject)
-		// 		{
-		// 			sellObject.func(loop);
-		// 			return;
-		// 		}
-		// 	}
-		// } 
+		
 		if(map == '工房' && mapindex == 44693){
 			cga.walkList([
 			[30, 37, '圣骑士营地']
@@ -496,12 +581,11 @@ var thisobj = {
 	], cb);
 	},
 	execute : ()=>{
-		loadBattleConfig()
 		playerThinkTimer();
 		cga.registerMoveThink(moveThink);
 		callSubPlugins('init');
 		logbackEx.init();
-		loop();
+		checkSkill(loop);
 	},
 };
 
