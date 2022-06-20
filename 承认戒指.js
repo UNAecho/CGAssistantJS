@@ -1,5 +1,10 @@
+var fs = require('fs');
 var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	
+	// 提取本地职业数据
+	const getprofessionalInfos = require('./常用数据/ProfessionalInfo.js');
+	var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
+
 	var playerinfo = cga.GetPlayerInfo();
 	
 	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦
@@ -18,6 +23,30 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
 
+	var loadBattleConfig = ()=>{
+
+		var settingpath = cga.getrootdir() + '\\战斗配置\\'
+		// 因为传教士可能还有正在刷声望的小号，这样可以区分是保姆还是小号
+		if (professionalInfo.jobmainname == '传教士'){
+			settingpath = settingpath + 'BOSS传教.json'
+		}else if(professionalInfo.jobmainname == '格斗士'){
+			settingpath = settingpath + 'BOSS格斗.json'
+		}else{
+			settingpath = settingpath + '营地组队普攻刷声望.json'
+		}
+	
+		var setting = JSON.parse(fs.readFileSync(settingpath))
+	
+		cga.gui.LoadSettings(setting, (err, result)=>{
+			if(err){
+				console.log(err);
+				return;
+			}else{
+				console.log('读取战斗配置【'+settingpath+'】成功')
+			}
+		})
+		return
+	}
 
 	var dialogHandler = (err, dlg)=>{
 
@@ -58,7 +87,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	{//0
 		intro: '1.前往法兰城里谢里雅堡2楼谒见之间与大祭司布鲁梅尔（5.3）对话，选“是”获得【信笺】。',
 		workFunc: function(cb2){
-						
+			
 			cga.travel.falan.toStone('C', (r)=>{
 				cga.walkList([
 				[41, 50, '里谢里雅堡 1楼'],
@@ -380,7 +409,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		},
 	]
 	);
-	
+	loadBattleConfig()
 	task.anyStepDone = false;
 
 	task.doTask(()=>{
