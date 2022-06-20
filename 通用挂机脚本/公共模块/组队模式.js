@@ -203,9 +203,9 @@ var thisobj = {
 		
 		if(thisobj.object.name == '固定组队'){
 			if(configTable.mainPlugin == '烧声望' && global.is_array_contain(skipTeamModeJob,commonJob)){
-				configTable.teammates = [];
+				configTable.teammates = obj.teammates;
 				thisobj.teammates = [];
-				console.log('烧技能主插件中，传教士与咒术师需要单人刷，将组队置空')
+				console.log('烧技能主插件中，传教士与咒术师需要单人刷，将组队置空,但不改变configTable中的teammates数值，以防写入出现问题')
 			}else{
 				configTable.teammates = obj.teammates;
 				thisobj.teammates = obj.teammates;

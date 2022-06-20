@@ -63,9 +63,9 @@ var cga = global.cga;
 var configTable = global.configTable;
 
 var thisobj = {
-	update_config : (key,value)=>{
+	update_config : (key,value,noExit)=>{
 		thisobj.object = configModeArray[0];
-		thisobj.object.update_config(key,value);
+		thisobj.object.update_config(key,value,noExit);
 	},
 	think : (ctx)=>{
 		thisobj.object.think(ctx);

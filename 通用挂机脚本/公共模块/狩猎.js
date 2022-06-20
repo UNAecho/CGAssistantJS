@@ -226,6 +226,8 @@
 				[7, 1, 3212],
 				[1, 9, '奇利村'],
 				[79, 76, '索奇亚'],
+				// UNA:索奇亚有石头，人容易卡住，加一个临时地点圆滑一下
+				[321, 365],
 				[359, 375],
 			], cb);
 		});
@@ -648,7 +650,6 @@ var thisobj = {
 		if(!thisobj.mineType){
 			console.log('【UNA脚本警告】读取配置：采集方式失败！，默认使用技能进行采集');
 			thisobj.mineType = 0
-			return false;
 		}
 		return true;
 	},
