@@ -415,10 +415,18 @@ var zudangzhe = (cb)=>{
 							setTimeout(() => {
 								cga.SayWords('1', 0, 3, 1);
 							}, randomtime);
+							// 规避统计异常，如冲突，和队长没捕捉到信息，再说一次防止无限等待。
+							setTimeout(() => {
+								cga.SayWords('1', 0, 3, 1);
+							}, Math.ceil(Math.random()*10000));
 						} else if(msg.indexOf('统计一下') >= 0){
 							setTimeout(() => {
 								cga.SayWords('2', 0, 3, 1);
 							}, randomtime);
+							// 规避统计异常，如冲突，和队长没捕捉到信息，再说一次防止无限等待。
+							setTimeout(() => {
+								cga.SayWords('2', 0, 3, 1);
+							}, Math.ceil(Math.random()*10000));
 						}
 						return true
 					}else if(msg == '2'){// 如果听到队友没有文言抄本，那就需要陪着打BOSS。

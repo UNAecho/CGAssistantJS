@@ -112,7 +112,11 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 			
 			if(cga.isTeamLeader){
-				cga.travel.falan.toTeleRoom('维诺亚村', wait);
+				cga.travel.falan.toCastleHospital(()=>{
+					setTimeout(()=>{
+						cga.travel.falan.toTeleRoom('维诺亚村', wait);
+					}, 2000);
+				});
 			} else {
 				var retry = ()=>{
 					cga.TurnTo(8, 22);
@@ -125,8 +129,15 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 						setTimeout(wait3, 3000);
 					});
 				}
-				
-				cga.waitForLocation({mapname : '启程之间', pos : [8, 22], leaveteam : true}, retry);
+				cga.travel.falan.toCastleHospital(()=>{
+					cga.walkList([
+						[41, 50, '里谢里雅堡 1楼'],
+						[45, 20, '启程之间'],
+						[8, 22],
+						], ()=>{
+							cga.waitForLocation({mapname : '启程之间', pos : [8, 22]}, retry);
+						});
+				});
 			}
 		}
 	},
