@@ -1,6 +1,7 @@
 {
     "battle": {
         "autobattle": true,
+        "beep": false,
         "bossprot": false,
         "delayfrom": 4000,
         "delayto": 4500,
@@ -59,18 +60,10 @@
         "lockcd": false,
         "lv1prot": false,
         "pet2action": false,
-        "playerforceaction": false,
         "r1nodelay": true,
-        "showhpmp": false
+        "waitafterbattle": false
     },
     "chat": {
-        "displayname": false,
-        "displaytime": false,
-        "mychat": false,
-        "npcmsg": false,
-        "playerchat": false,
-        "sysmsg": false,
-        "todayonly": true
     },
     "itemdroplist": [
         "巨石",
@@ -106,9 +99,11 @@
         "封印卡（龙系）|20"
     ],
     "player": {
+        "antiafkkick": false,
         "autosupply": true,
+        "gametextui": false,
         "movespd": 130,
-        "noswitchanim": true,
+        "noswitchanim": false,
         "petfood": false,
         "petfoodat": "",
         "petmed": false,

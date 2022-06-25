@@ -1,1 +1,1 @@
-info = ["battle","manufactory","collect","store",]
+info = ["battle","manufactory","collect","store","train"]

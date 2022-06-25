@@ -7269,8 +7269,6 @@ module.exports = function(callback){
 		for(var i in titles){
 			if(titles[i] == "无尽星空"){
 				return true
-			}else if(titles[i] == "敬畏的寂静"){
-				return true
 			}
 		}
 		return false

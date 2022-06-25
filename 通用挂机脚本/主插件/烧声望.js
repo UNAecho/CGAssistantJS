@@ -209,7 +209,7 @@ var getPercentage = (cb) =>{
 
 							console.log('职业：【'+commonJob+'】，称号：【'+title+'】，进度：【'+reputationState+'】，需要使用【'+skillcount+'】次得意技，或回补【'+supplycount+'】次才能升级至下一称号')
 
-							if (title == '无尽星空' || title == '敬畏的寂静'){
+							if (title == '无尽星空'){
 								console.log('称号已满，烧声望脚本结束')
 								jump()
 							}
