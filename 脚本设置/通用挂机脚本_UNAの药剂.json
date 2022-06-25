@@ -1,1 +1,1 @@
-{"mainPlugin":"双百制造","subPlugins":["自动存取魔币"],"craftType":"制药","forgetSkillAt":11,"listenPort":23333}
+{"mainPlugin":"采集","subPlugins":[],"gatherObject":"双百采集","serverPort":23333,"target":"砂糖","mineType":1,"logoutTimes":0}
