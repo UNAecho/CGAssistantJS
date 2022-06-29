@@ -84,8 +84,8 @@
                 "pettarget": -1,
                 "pettargetsel": -1,
                 "playeraction": 1,
-                "playertarget": -1,
-                "playertargetsel": -1
+                "playertarget": 0,
+                "playertargetsel": 0
             },
             {
                 "condition": 1,
