@@ -102,7 +102,7 @@
         "antiafkkick": false,
         "autosupply": true,
         "gametextui": false,
-        "movespd": 130,
+        "movespd": 100,
         "noswitchanim": false,
         "petfood": false,
         "petfoodat": "",

@@ -802,12 +802,9 @@ const Professions = [
 		teacherwalk:[
 			CE,
 			[281, 88, '芙蕾雅'],
-			//以下坐标是拉修出现过的坐标，目前收集中。白天及黄昏均有目击
-			[479, 201],
-			[486, 199],
-			[482, 216],
 			],
-		teacherpos : [10 ,7],
+		// 坐标随机，在外层直接写搜索逻辑
+		teacherpos : null,
 	}, {
 		category: '采集系',
 		jobmainname: '樵夫',
@@ -879,3 +876,31 @@ module.exports = function(inputmsg) {
 };
 
 module.exports.Professions = Professions
+/**
+ * 输入职位名称，返回职业几转
+ * 0：0转，见习
+ * 1：1转，正阶
+ * 2：2转，王宫
+ * 3：3转，师范
+ * 4：4转，大师
+ * 5：5转，最终阶段
+ * @param {string} inputmsg 输入职位信息，如：见习传教士
+ * @returns int
+ */
+module.exports.getJobLevel = function(inputmsg) {
+	// console.log('inputmsg' + inputmsg)
+	var result = null
+	if(inputmsg == null){
+		throw new Error('错误，请输入职位信息')
+	}else{
+		result = titlesMap(inputmsg)
+	}
+	
+	if(result == null || result ==undefined){
+		throw new Error('错误,请检查输入职业信息是否有误,例如[弓箭手]输入成了[弓箭]')
+	}else if(Object.keys(result).length === 0){
+		throw new Error('错误,未检测到职业信息,请检查输入职业信息是否有误,例如[弓箭手]输入成了[弓箭]')
+	}
+
+	return result.titles.indexOf(inputmsg);
+};

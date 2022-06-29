@@ -1941,6 +1941,7 @@ module.exports = function(callback){
 	
 	cga.travel.falan.info = {
 		'法兰城':{
+			mainName : '法兰城',
 			mainindex : 1000,
 			minindex : 1000,
 			maxindex : 32830,
@@ -2022,6 +2023,7 @@ module.exports = function(callback){
 			},
 		},
 		'曙光骑士团营地':{
+			mainName : '曙光骑士团营地',
 			mainindex : 27001,
 			minindex : 27001,
 			maxindex : 27999,
@@ -2060,6 +2062,7 @@ module.exports = function(callback){
 			},
 		},
 		'圣拉鲁卡村':{
+			mainName : '圣拉鲁卡村',
 			mainindex : 2300,
 			minindex : 2300,
 			maxindex : 2399,
@@ -2126,6 +2129,7 @@ module.exports = function(callback){
 			},
 		},
 		'伊尔村':{
+			mainName : '伊尔村',
 			mainindex : 2000,
 			minindex : 2000,
 			maxindex : 2099,
@@ -2280,6 +2284,7 @@ module.exports = function(callback){
 			},
 		},
 		'亚留特村':{
+			mainName : '亚留特村',
 			mainindex : 2400,
 			minindex : 2400,
 			maxindex : 2499,
@@ -2325,6 +2330,7 @@ module.exports = function(callback){
 			},
 		},
 		'维诺亚村':{
+			mainName : '维诺亚村',
 			mainindex : 2100,
 			minindex : 2100,
 			maxindex : 2199,
@@ -2385,6 +2391,7 @@ module.exports = function(callback){
 			},
 		},
 		'奇利村':{
+			mainName : '奇利村',
 			mainindex : 3200,
 			minindex : 3200,
 			maxindex : 3299,
@@ -2454,6 +2461,7 @@ module.exports = function(callback){
 			},
 		},
 		'加纳村':{
+			mainName : '加纳村',
 			mainindex : 3000,
 			minindex : 3000,
 			maxindex : 3099,
@@ -2541,6 +2549,7 @@ module.exports = function(callback){
 			},
 		},
 		'杰诺瓦镇':{
+			mainName : '杰诺瓦镇',
 			mainindex : 4000,
 			minindex : 4000,
 			maxindex : 4099,
@@ -2620,6 +2629,7 @@ module.exports = function(callback){
 			},
 		},
 		'蒂娜村':{
+			mainName : '蒂娜村',
 			mainindex : 4200,
 			minindex : 4200,
 			maxindex : 4299,
@@ -2677,6 +2687,7 @@ module.exports = function(callback){
 			},
 		},
 		'夜晚蒂娜村':{//主地图4201的33，25处有1级绿鬼捕捉点
+			mainName : '蒂娜村',
 			mainindex : 4201,
 			minindex : 4201,
 			maxindex : 4299,
@@ -2737,6 +2748,7 @@ module.exports = function(callback){
 			},
 		},
 		'阿巴尼斯村':{
+			mainName : '阿巴尼斯村',
 			mainindex : 4300,
 			minindex : 4300,
 			maxindex : 4399,

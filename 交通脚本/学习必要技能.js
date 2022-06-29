@@ -173,9 +173,20 @@ var cga = require('../cgaapi')(function(){
 		}
 	},
 	{//4
-		intro: '5.学狩猎（狩猎是随机NPC，不好找，暂不支持）',
+		intro: '5.学狩猎',
 		workFunc: function(cb2){
-			cb2(true)
+			var lumbering = '狩猎'
+			if(category == '制造系' || category == '采集系'){
+				if(cga.findPlayerSkill(lumbering)){
+					console.log('已经学会' + lumbering + ',跳过')
+					cb2(true)
+				}else{
+					professionalbehavior(cga, '猎人','learning',cb2)
+				}
+			}else{
+				console.log('除了制造和采集，其它系别不需要采集狩伐挖技能')
+				cb2(true)
+			}
 		}
 	},
 	{//5

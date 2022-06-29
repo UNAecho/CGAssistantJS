@@ -89,12 +89,39 @@ module.exports = function(cga,job,behavior,cb) {
     if(behavior == 'learning'){
         console.log('professionalInfo.teacherwalk = ' + professionalInfo.teacherwalk)
         if(professionalInfo.teacherlocation == '法兰城'){
-            cga.travel.falan.toStone('C', ()=>{
-                cga.walkList(professionalInfo.teacherwalk, ()=>{
-                    cga.TurnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
-                    learn()
+            if(professionalInfo.jobmainname == '猎人'){
+                var search = ()=>{
+                    var obj = cga.GetMapUnits()
+                    var npc = obj.find(u => u.unit_name == '猎人拉修' && u.type == 1 && u.model_id != 0)
+                    if (npc){
+                        var target = cga.getRandomSpace(npc.xpos,npc.ypos);
+                        cga.walkList([
+                            target
+                            ], ()=>{
+                                cga.turnTo(npc.xpos, npc.ypos);
+                                learn()
+                            });
+                        return
+                    }else{
+                        var ranX = Math.trunc(Math.random()*(500-472)+472)
+                        var ranY = Math.trunc(Math.random()*(220-198)+198)
+                        var target = cga.getRandomSpace(ranX,ranY);
+                        cga.walkList([
+                            target,
+                        ], search);
+                    }
+                }
+                cga.travel.falan.toStone('C', ()=>{
+                    cga.walkList(professionalInfo.teacherwalk, search);
                 });
-            });
+            }else{
+                cga.travel.falan.toStone('C', ()=>{
+                    cga.walkList(professionalInfo.teacherwalk, ()=>{
+                        cga.TurnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
+                        learn()
+                    });
+                });
+            }
         }else{//非法兰城学技能
             cga.SayWords("即将使用传送石，请注意是否开启【" + professionalInfo.teacherlocation+ "】传送权限" , 0, 3, 1);
             var go = ()=>{
