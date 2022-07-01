@@ -1,7 +1,6 @@
 {
     "mainPlugin": "全自动肯吉罗岛练级",
     "subPlugins": [
-        "自动存取魔币",
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
         "回补提醒",
@@ -10,9 +9,11 @@
         "监听回补",
         "监听宠物忠诚度",
         "自动加点",
+        "自动存取魔币",
         "队员卖石"
     ],
-    "teamMode": "0",
+    "supplyMode": 1,
+    "teamMode": 0,
     "teammates": [
         "UNAの猎人01",
         "UNAの传教士2",
@@ -20,7 +21,7 @@
         "UNAの暗黑骑士",
         "UNAの格斗3"
     ],
-    "battleArea": 1,
+    "battleArea": 0,
     "sellStore": 1,
     "layerLevel": 1,
     "minHp": "25%",
