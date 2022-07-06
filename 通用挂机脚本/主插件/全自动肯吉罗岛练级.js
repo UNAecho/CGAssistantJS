@@ -163,13 +163,29 @@ var loadBattleConfig = ()=>{
 	var settingpath = cga.getrootdir() + '\\战斗配置\\'
 	// 因为传教士可能还有正在刷声望的小号，这样可以区分是保姆还是小号
 	if (professionalInfo.jobmainname == '传教士'){
-		if(cga.GetPlayerInfo().job.indexOf('见习') != -1){
+		if(!cga.ismaxbattletitle){
 			settingpath = settingpath + '营地组队普攻刷声望.json'
 		}else{
-			settingpath = settingpath + '传教练级.json'
+			var healSingle = cga.findPlayerSkill('补血魔法')
+			var healStrong = cga.findPlayerSkill('强力补血魔法')
+			var healUltra = cga.findPlayerSkill('超强补血魔法')
+			if(healSingle && healSingle.lv != healSingle.maxlv){
+				settingpath = settingpath + '传教练级烧单补.json'
+			}else if(healStrong && healStrong.lv != healStrong.maxlv){
+				settingpath = settingpath + '传教练级烧强补.json'
+			}else if(healUltra && healUltra.lv != healUltra.maxlv){
+				settingpath = settingpath + '传教练级烧超补.json'
+			}else{
+				settingpath = settingpath + '传教练级.json'
+			}
 		}
 	}else if(professionalInfo.jobmainname == '格斗士'){
-		settingpath = settingpath + '格斗练级.json'
+		var chaos = cga.findPlayerSkill('混乱攻击')
+		if (chaos && chaos.lv != chaos.maxlv){
+			settingpath = settingpath + '格斗练级烧混乱攻击.json'
+		}else{
+			settingpath = settingpath + '格斗练级.json'
+		}
 	}else if(professionalInfo.jobmainname == '弓箭手'){
 		settingpath = settingpath + '弓箭练级.json'
 	}else if(professionalInfo.jobmainname == '剑士'){
@@ -327,8 +343,6 @@ var playerThink = ()=>{
 	teamMode.think(ctx);
 
 	global.callSubPlugins('think', ctx);
-	// console.log("ctx.result = " + ctx.result)
-	// console.log("ctx.reason = " + ctx.reason)
 	if(cga.isTeamLeaderEx())
 	{
 		var interruptFromMoveThink = false;
@@ -485,7 +499,6 @@ var getMazeEntrance = (cb)=>{
 	});
 }
 
-// TODO
 var loop = ()=>{
 
 	var map = cga.GetMapName();
@@ -493,7 +506,6 @@ var loop = ()=>{
 	var mapXY = cga.GetMapXY();
 
 	var isleader = cga.isTeamLeaderEx();
-	console.log('loop...............')
 	if(isleader && teamMode.is_enough_teammates()){
 
 		// 判断练级地点
