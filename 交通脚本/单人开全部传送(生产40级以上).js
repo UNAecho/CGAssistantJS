@@ -427,6 +427,14 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
+	{//10
+		intro: '10.检查完成状态',
+		workFunc: function(cb2){
+			cga.travel.falan.checkAllTeleRoom(()=>{
+				cb2(true)
+			})
+		}
+	},
 	],
 	[//任务阶段是否完成
 		function(){// 传送石检查
@@ -458,6 +466,9 @@ var cga = require('../cgaapi')(function(){
 		},
 		function(){// 阿巴尼斯
 			return (config && config['阿巴尼斯村']) == true? true :false;
+		},
+		function(){// 重新保存状态
+			return false
 		},
 	]
 	);

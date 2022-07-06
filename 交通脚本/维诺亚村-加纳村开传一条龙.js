@@ -4,11 +4,7 @@ var cga = require('../cgaapi')(function(){
 	
 	var teammates = [
         "UNAの格斗2",
-        // "UNAの传教士",
-        // "UNAの格斗1",
-        "UNAの战斧2",
-        "UNAの战斧3",
-	];
+    ];
 	
 	var teamplayers = cga.getTeamPlayers();
 
@@ -383,20 +379,20 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//6
-		intro: '6.加纳村开完传送，切换至杰诺瓦-蒂娜-阿巴尼斯一条龙',
-		workFunc: function(cb2){
-			// global.cga是给【公共模块\\跳转其它脚本】使用的
-			global.cga = cga
-			var rootdir = cga.getrootdir()
-			var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
-			var body = {
-				path : rootdir + "\\交通脚本\\杰诺瓦镇-蒂娜村-阿巴尼斯村开传一条龙.js",
-			}
-			scriptMode.call_ohter_script(body)
-			cb2(true);
-		}
-	},
+	// {//6
+	// 	intro: '6.加纳村开完传送，切换至杰诺瓦-蒂娜-阿巴尼斯一条龙',
+	// 	workFunc: function(cb2){
+	// 		// global.cga是给【公共模块\\跳转其它脚本】使用的
+	// 		global.cga = cga
+	// 		var rootdir = cga.getrootdir()
+	// 		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+	// 		var body = {
+	// 			path : rootdir + "\\交通脚本\\杰诺瓦镇-蒂娜村-阿巴尼斯村开传一条龙.js",
+	// 		}
+	// 		scriptMode.call_ohter_script(body)
+	// 		cb2(true);
+	// 	}
+	// },
 	],
 	[//任务阶段是否完成
 		// function(){
