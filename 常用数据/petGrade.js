@@ -103,16 +103,22 @@ var thisobj = {
 
 					// 计算掉档概率
 					for(var i in gradeProbability){
-						gradeProbability[i] = (gradeProbability[i] / grade.length).toFixed(2)
+						gradeProbability[i] = parseFloat((gradeProbability[i] / grade.length).toFixed(2))
 					}
-
 					// 计算概率矩阵
 					for(var i = 0 ; i < 5 ; i++){
 						for (var j = 0 ; j < 5 ; j++){
-							gradeMatrix[i][j] = (gradeMatrix[i][j] / grade.length).toFixed(2)
-						}	
+							gradeMatrix[i][j] = parseFloat((gradeMatrix[i][j] / grade.length).toFixed(2))
+						}
 					}
+					// 计算最优档位和最大可能档位
+					optimum = Object.keys(gradeProbability).sort(function (a,b) {return parseInt(a) - parseInt(a)})
+					mostPossible = Object.keys(gradeProbability).sort(function(a,b){return gradeProbability[b] - gradeProbability[a]})
+
 					thisobj.petGrade['宠物数据'] = formData
+					thisobj.petGrade['最优掉档'] = {grade : parseInt(optimum[0]),probability : gradeProbability[optimum[0]]}
+					thisobj.petGrade['最差掉档'] = {grade : parseInt(optimum[optimum.length - 1]),probability : gradeProbability[optimum[optimum.length - 1]]}
+					thisobj.petGrade['最可能情况'] = parseInt(mostPossible[0])
 					thisobj.petGrade['掉档概率'] = gradeProbability
 					thisobj.petGrade['掉档概率矩阵'] = gradeMatrix
 					

@@ -4,6 +4,7 @@ const petInfoDict = {
         realname: '水龙蜥',
         sealCard: '封印卡（龙系）',
         sealCardLevel: 1,
+		maxGrade : [36,38,34,11,6]
     },
 }
 
