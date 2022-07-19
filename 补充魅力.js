@@ -35,10 +35,9 @@ var cga = require('./cgaapi')(function () {
 		});
 	}
 
-    // 当前地图信息
-    var mapindex = cga.GetMapIndex().index3
+
     // 获取当前主地图名称
-    var villageName = cga.travel.switchMainMap(mapindex)
+    var villageName = cga.travel.switchMainMap()
     if(villageName == '法兰城'){
         cga.travel.falan.autopilot('美容院',()=>{
 			cga.walkList(

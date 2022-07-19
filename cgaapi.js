@@ -528,8 +528,9 @@ module.exports = function(callback){
 
 	cga.travel = {};
 
-	cga.travel.switchMainMap = (mapindex)=>{
+	cga.travel.switchMainMap = ()=>{
 		var result = null
+		var mapindex = cga.GetMapIndex().index3;
 		if(mapindex >= 2300 && mapindex<=2399){
 			result = '圣拉鲁卡村'
 		}else if(mapindex >= 2000 && mapindex <= 2099 || [33219,33214,40001].indexOf(mapindex) >= 0){
@@ -2821,7 +2822,7 @@ module.exports = function(callback){
 		// 当前地图信息
 		var mapindex = cga.GetMapIndex().index3
 		// 获取当前主地图名称
-		var villageName = cga.travel.switchMainMap(mapindex)
+		var villageName = cga.travel.switchMainMap()
 
 		var targetindex = null
 		// 所有静态信息
@@ -2907,7 +2908,7 @@ module.exports = function(callback){
 		// 当前地图信息
 		var mapindex = cga.GetMapIndex().index3
 		// 获取当前主地图名称
-		var villageName = cga.travel.switchMainMap(mapindex)
+		var villageName = cga.travel.switchMainMap()
 
 		if (cga.GetMapName().indexOf('医院') == -1){
 			cga.travel.falan.autopilot('医院',()=>{

@@ -79,7 +79,7 @@ var thisobj = {
 		return true
 	},
 	inputcb : (cb)=>{
-		var sayString = '【监听宠物忠诚度】请输入宠物最低忠诚度(不包含，例如输入60，则59才触发保护。):';
+		var sayString = '【监听宠物忠诚度插件】请输入宠物最低忠诚度(不包含，例如输入60，则59才触发保护。):';
 
 		cga.SayWords(sayString, 0, 3, 1);
 		cga.waitForChatInput((msg, val)=>{
