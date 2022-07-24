@@ -556,7 +556,7 @@ module.exports = function(callback){
 		}else if(mapindex >= 50000){
 			result = '艾尔莎岛'
 		}else{
-			throw new Error('[UNA脚本警告]:未知地图index，请联系作者更新。')
+			console.warn('[UNA脚本警告]:未知地图index，请联系作者更新。')
 		}
 		// console.log('cga.travel.switchMainMap输入mapindex:【'+mapindex+'】,识别结果为【'+result+'】')
 		return result
@@ -4530,6 +4530,29 @@ module.exports = function(callback){
 			
 		return found != undefined ? found.pos : -1;
 	}
+	/**
+	 * UNA添加查询宠物API，仅返回第一个匹配的宠物。
+	 * filter:查询函数，如果return true，则返回对应宠物index
+	 * customerName:，Boolean类型，是否使用宠物自定义名称来查询。默认为false。
+	 *  */ 
+	cga.findPet = (filter, customerName = false) =>{
+		var pets = cga.GetPetsInfo();
+		var found = pets.find((pet)=>{
+			if(typeof filter == 'string'){
+				if (!customerName && pet.realname == filter){
+					return true
+				}else if(customerName && pet.name == filter){
+					return true
+				}
+				return false
+			}
+			else if (typeof filter == 'number')
+				return pet.index == filter;
+			else if (typeof filter == 'function')
+				return filter(pet);
+		})
+		return found != undefined ? found.index : -1;
+	}
 	
 	//寻找背包里符合条件的物品，并整合成符合cga.SellStore和cga.AddTradeStuffs的数组格式
 	cga.findItemArray = (filter) =>{
@@ -4854,6 +4877,26 @@ module.exports = function(callback){
 		
 		return -1;
 	}
+
+	//寻找银行中的空闲宠物格子, 参数：物品filter、最大堆叠数量、最大银行格
+	cga.findBankPetEmptySlot = (maxslots = 5) => {
+		
+		var pets = cga.GetBankPetsInfo()
+
+		var arr = [];
+
+		for(var i = 0; i < pets.length; i++){
+			arr[pets[i].index-100] = pets[i];
+		}
+		
+		for(var i = 0; i < maxslots; i++){
+			if(typeof arr[i] == 'undefined'){
+				return 100+i;
+			}
+		}
+		
+		return -1;
+	}
 	
 	//寻找背包中的空闲格子
 	cga.findInventoryEmptySlot = (itemname, maxcount) =>{
@@ -4940,6 +4983,40 @@ module.exports = function(callback){
 		});
 	}
 	
+	//将符合条件的宠物存至银行
+	cga.savePetToBankOnce = (filter, customerName, cb)=>{
+		var petindex = cga.findPet(filter, customerName);
+
+		if(petindex == -1){
+			cb(new Error('包里没有该宠物, 无法存放到银行'));
+			return;
+		}
+
+		var emptyslot = cga.findBankPetEmptySlot();
+		if(emptyslot == -1){
+			cb(new Error('银行没有空位, 无法存放到银行'));
+			return;
+		}
+		
+		cga.MovePet(petindex, emptyslot);
+
+		setTimeout(()=>{
+			var bankpet = cga.GetBankPetsInfo().find((pet)=>{
+				return pet.index == emptyslot;
+			});
+			if(bankpet != undefined)
+			{
+				//保存成功
+				console.log(bankpet.name+' 成功存到银行第 ' + (bankpet.index - 100 + 1) + ' 格!');
+				cb(null);
+			}
+			else
+			{
+				cb(new Error('保存到银行失败，可能银行格子已满、未与柜员对话或网络问题'));
+			}
+		}, 1000);
+	}
+
 	//循环将符合条件的物品存至银行，maxcount为最大堆叠数量
 	cga.saveToBankAll = (filter, maxcount, cb)=>{
 		console.log('开始批量保存物品到银行...');
@@ -4961,7 +5038,29 @@ module.exports = function(callback){
 		
 		repeat();		
 	}
-	
+
+	//循环将符合条件的宠物存至银行。
+	cga.savePetToBankAll = (filter, customerName, cb)=>{
+		console.log('开始批量保存宠物到银行...');
+		var repeat = ()=>{
+			cga.savePetToBankOnce(filter, customerName, (err)=>{
+				if(err){
+					console.log(err);
+					cb(err);
+					return;
+				}
+				if(cga.findPet(filter, customerName) == -1){
+					console.log('包里已经没有指定宠物，批量保存到银行执行完毕！');
+					cb(null);
+					return;
+				}
+				setTimeout(repeat, 1000);
+			});
+		}
+		
+		repeat();		
+	}
+
 	//原地高速移动，dir为方向
 	cga.freqMove = function(dir){
 		var freqMoveDirTable = [ 4, 5, 6, 7, 0, 1, 2, 3 ];

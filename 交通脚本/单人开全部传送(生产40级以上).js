@@ -167,8 +167,7 @@ var cga = require('../cgaapi')(function(){
 	{//5
 		intro: '5.奇利村',
 		workFunc: function(cb2){
-			var mapindex = cga.GetMapIndex().index3
-			var villageName = cga.travel.switchMainMap(mapindex)
+			var villageName = cga.travel.switchMainMap()
 			if(villageName == '维诺亚村'){
 				if(cga.needSupplyInitial({  })){
 					cga.travel.toHospital(false,()=>{
@@ -225,8 +224,7 @@ var cga = require('../cgaapi')(function(){
 	{//6
 		intro: '6.加纳村',
 		workFunc: function(cb2){
-			var mapindex = cga.GetMapIndex().index3
-			var villageName = cga.travel.switchMainMap(mapindex)
+			var villageName = cga.travel.switchMainMap()
 			if(villageName == '奇利村'){
 				if(cga.needSupplyInitial({  })){
 					cga.travel.toHospital(false,()=>{
@@ -353,8 +351,7 @@ var cga = require('../cgaapi')(function(){
 				});
 			}
 			var setout = ()=>{
-				var mapindex = cga.GetMapIndex().index3
-				var villageName = cga.travel.switchMainMap(mapindex)
+				var villageName = cga.travel.switchMainMap()
 				if(villageName == '杰诺瓦镇'){
 					if(cga.needSupplyInitial({  })){
 						cga.travel.toHospital(false,()=>{
@@ -389,8 +386,7 @@ var cga = require('../cgaapi')(function(){
 	{//9
 		intro: '9.阿巴尼斯村',
 		workFunc: function(cb2){
-			var mapindex = cga.GetMapIndex().index3
-			var villageName = cga.travel.switchMainMap(mapindex)
+			var villageName = cga.travel.switchMainMap()
 			if(villageName == '杰诺瓦镇'){
 				if(cga.needSupplyInitial({  })){
 					cga.travel.toHospital(false,()=>{

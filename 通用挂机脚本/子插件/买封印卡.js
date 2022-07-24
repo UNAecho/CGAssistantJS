@@ -188,7 +188,7 @@ var thisobj = {
 		if(counts<20)
 		{
 			cga.SayWords('封印卡不够，需要回补!', 0, 3, 1);
-			ctx.result = 'supply';
+			ctx.result = 'logback';
 			ctx.reason = '封印卡不够';
 			return;
 			

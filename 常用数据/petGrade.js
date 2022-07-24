@@ -118,7 +118,7 @@ var thisobj = {
 					thisobj.petGrade['宠物数据'] = formData
 					thisobj.petGrade['最优掉档'] = {grade : parseInt(optimum[0]),probability : gradeProbability[optimum[0]]}
 					thisobj.petGrade['最差掉档'] = {grade : parseInt(optimum[optimum.length - 1]),probability : gradeProbability[optimum[optimum.length - 1]]}
-					thisobj.petGrade['最可能情况'] = parseInt(mostPossible[0])
+					thisobj.petGrade['最可能情况'] = {grade : parseInt(mostPossible[0]),probability : gradeProbability[mostPossible[0]]}
 					thisobj.petGrade['掉档概率'] = gradeProbability
 					thisobj.petGrade['掉档概率矩阵'] = gradeMatrix
 					
@@ -133,14 +133,19 @@ var thisobj = {
 			}
 		})
 	},
-	Analysis : (info)=>{
-		if (!info || info.length ==0){
-			throw new Error('无宠物档位信息输入，请检查。')
+	generatePetId : (pet)=>{
+		if(!pet || !pet.detail){
+			throw new Error('无宠物信息输入，请检查。')
 		}
-		var gradeDict = {}
-
-		return gradeDict
-	}
+		if(!pet.realname || !pet.level || !pet.maxhp || !pet.maxmp){
+			throw new Error('宠物基本信息有误，请检查。')
+		}
+		return pet.realname + String(pet.level) + String(pet.detail.points_remain) + 
+		String(pet.detail.points_endurance) + String(pet.detail.points_strength) + String(pet.detail.points_defense) + 
+		String(pet.detail.points_agility) + String(pet.detail.points_magical) + String(pet.maxhp) + String(pet.maxmp) + 
+		String(pet.detail.value_attack) + String(pet.detail.value_defensive) + 
+		String(pet.detail.value_agility) + String(pet.detail.value_spirit) + String(pet.detail.value_recovery)
+	},
 }
 
 module.exports = thisobj;
