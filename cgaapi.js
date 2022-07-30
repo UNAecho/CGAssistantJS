@@ -5896,7 +5896,10 @@ module.exports = function(callback){
 		}
 		
 		if(obj.pos instanceof Array)
-		{
+		{	
+			/**
+			 * UNA注:这里的算法是计算队员是否走到指定坐标obj.pos的周围处。仅限周围1格以内passCheck为true，超出1格，则passCheck依然为false
+			 * */ 
 			if (!(Math.abs(fpos.x - obj.pos[0] * 64.0) < 1.001 * 64.0 && Math.abs(fpos.y - obj.pos[1] * 64.0) < 1.001 * 64.0))
 			{
 				passCheck = false;
@@ -5906,12 +5909,22 @@ module.exports = function(callback){
 		if(obj.leaveteam === true)
 		{
 			var teamplayersnow = cga.getTeamPlayers();
-
-			if(teamplayersnow.length)
-				passCheck = false;
 			
-			if(!passCheck && obj.walkto && !teamplayersnow.length && (index == obj.mapindex || name == obj.mapname))
-			{
+			if(teamplayersnow.length){
+				passCheck = false;
+			}
+			/**
+			 * UNA注:这里if的第一个参数!passCheck写法疑似bug，因为走到obj.pos附近处，passCheck会判定为true。
+			 * 而当队长解散队伍时，teamplayersnow.length为0，passCheck还是为true，所以造成队员不进行cga.WalkTo的动作
+			 * 将!passCheck暂时改为passCheck继续使用，如有问题在日后改回来
+			 * */ 
+
+			// if(!passCheck && obj.walkto && !teamplayersnow.length && (index == obj.mapindex || name == obj.mapname))
+			// {
+			// 	cga.WalkTo(obj.walkto[0], obj.walkto[1]);
+			// }
+			if(passCheck && obj.walkto && !teamplayersnow.length && (index == obj.mapindex || name == obj.mapname))
+			{	
 				cga.WalkTo(obj.walkto[0], obj.walkto[1]);
 			}
 		}
@@ -6548,6 +6561,60 @@ module.exports = function(callback){
 			return [x-1,y-1];
 		
 		return null;
+	}
+	
+	//获取一格(x,y)周围1x1区域内的空闲地形的2个格子，多用于组队和NPC对话
+	cga.get2RandomSpace = (x, y)=>{
+		var walls = cga.buildMapCollisionMatrix(true);
+		var result = []
+		var pos = []
+		
+		if(walls.matrix[y][x-1] == 0)
+			pos.push([x-1, y]);
+		if(walls.matrix[y][x+1] == 0)
+			pos.push([x+1, y]);
+		if(walls.matrix[y-1][x] == 0)
+			pos.push([x, y-1]);
+		if(walls.matrix[y+1][x] == 0)
+			pos.push([x, y+1]);
+		if(walls.matrix[y+1][x+1] == 0)
+			pos.push([x+1,y+1]);
+		if(walls.matrix[y+1][x-1] == 0)
+			pos.push([x-1,y+1]);
+		if(walls.matrix[y-1][x+1] == 0)
+			pos.push([x+1,y-1]);
+		if(walls.matrix[y-1][x-1] == 0)
+			pos.push([x-1,y-1]);
+		if(pos.length <= 1){
+			throw new Error('NPC周围最多可能只有一格空闲地形，无法返回多个坐标。')
+		}
+		// 第一次优先找x或y轴相邻的坐标
+		for (var i in pos){
+			for(var j in pos){
+				if (pos[i][0] == pos[j][0] && pos[i][1] == pos[j][1])
+					continue
+				if (result.length < 2
+					&& (Math.abs(pos[i][0] - pos[j][0]) < 2 && Math.abs(pos[i][1] - pos[j][1]) < 2)
+				 	&& (Math.abs(pos[i][0] - pos[j][0]) == 0 || Math.abs(pos[i][1] - pos[j][1]) == 0)
+					){
+					result.push(pos[i],pos[j])
+					return result
+				}
+			}
+		}
+		// 如果没找到相邻的空闲格子，就找x与y都不相等的斜方向格子
+		for (var i in pos){
+			for(var j in pos){
+				if (pos[i][0] == pos[j][0] && pos[i][1] == pos[j][1])
+					continue
+				if (result.length < 2 && (Math.abs(pos[i][0] - pos[j][0]) < 2 && Math.abs(pos[i][1] - pos[j][1]) < 2)){
+					result.push(pos[i],pos[j])
+					return result
+				}
+			}
+		}
+
+		return null
 	}
 	
 	//获取一格(x,y)周围1x1区域内的空闲地形格子，并判断其方向

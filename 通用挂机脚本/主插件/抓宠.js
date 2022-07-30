@@ -91,6 +91,13 @@ var commonPilot = (cb)=>{
 	return
 }
 
+// 欢迎信息，可写入插件介绍等信息。
+var welcome = ()=>{
+	var welcomeWord = '欢迎使用【UNA自动抓宠+精确算档】脚本，当前抓【'+thisobj.petGrade+'】档及以上宠物。本脚本包含精确算档功能，请认真检查您输入的理想档位，以免丢弃理想宠物。'
+	cga.sayLongWords(welcomeWord, 1, 3, 1);
+	return
+}
+
 // 检查卡片信息、封印技能等
 var check = ()=>{
 	if(professionalInfo.jobmainname == '封印师'){
@@ -342,7 +349,7 @@ var playerThink = ()=>{
 						if(petGrade.petGrade['最差掉档'].grade > thisobj.petGrade){
 							// console.log('计算结果:最差为' + petGrade.petGrade['最差掉档'].grade +'档，目标档位:' + thisobj.petGrade + '档，丢弃')
 							petGrade.petGrade.dropFlag = true
-							var logString = '宠物:['+pets[i].realname+'],可能为:'+petGrade.petGrade['最可能情况'].grade+'档:'+ JSON.stringify(petGrade.petGrade)
+							var logString = (new Date()).toLocaleString() + '宠物:['+pets[i].realname+'],可能为:'+petGrade.petGrade['最可能情况'].grade+'档:'+ JSON.stringify(petGrade.petGrade)
 							log.writeLine(logString)
 						}else{// 如果最差掉档依然可以接受，那么判定每项能力的掉档是否满足，如果不符，继续丢弃。
 							if(thisobj.minimumSingleGrade){
@@ -747,6 +754,7 @@ var thisobj = {
 		cga.registerMoveThink(moveThink);
 		callSubPlugins('init');
 		logbackEx.init();
+		welcome()
 		check()
 		loop()
 	},
