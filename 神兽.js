@@ -2,12 +2,18 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 
 	var playerinfo = cga.GetPlayerInfo();
 	
-	var teammates = [];
+	var teammates = [
+        "UNAの格斗2",
+        "UNAの格斗3"
+        // "UNAの传教士2",
+		// "UNAの猎人01",
+        // "UNAの暗黑骑士",
+	];
 	
-	var teamplayers = cga.getTeamPlayers();
+	// var teamplayers = cga.getTeamPlayers();
 
-	for(var i in teamplayers)
-		teammates[i] = teamplayers[i].name;
+	// for(var i in teamplayers)
+	// 	teammates[i] = teamplayers[i].name;
 	
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
 
@@ -204,7 +210,11 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 				}
 				cga.travel.falan.toTeleRoom('杰诺瓦镇', wait);
 			} else {
-				wait2();
+				cga.travel.falan.toCastleHospital(()=>{
+					setTimeout(()=>{
+						cga.travel.falan.toTeleRoom('杰诺瓦镇', wait3);
+					}, 3000);
+				});
 			}
 		}
 	},
@@ -287,6 +297,13 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	{//2
 		intro: '3.通过随机迷宫抵达静谧之间，持有【地龙的鳞片】与神官葛雷森（26.67）对话，选“是”交出【地龙的鳞片】并通过栅栏。',
 		workFunc: function(cb2){
+			var dropStone = ()=>{
+				var stone = cga.findItem('魔石');
+
+				if(stone != -1){
+					cga.DropItem(stone);
+				}
+			}
 			//搜索迷宫入口
 			var findObj = (cb3)=>{
 				var objs = cga.getMapObjects();
@@ -424,7 +441,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 						goFuckBOSS();
 						return;
 					}
-
+					// 加一个丢魔石步骤，防止打不到鳞片
+					dropStone()
+					
 					goFuckDragon();
 				});
 
@@ -466,6 +485,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 						
 						return true;
 					}
+					// 加一个丢魔石步骤，防止打不到鳞片
+					dropStone()
 					return true;
 				});
 				

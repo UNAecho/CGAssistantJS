@@ -2,12 +2,18 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 
 	var playerinfo = cga.GetPlayerInfo();
 	
-	var teammates = [];
+	var teammates = [
+        "UNAの猎人01",
+        "UNAの传教士2",
+        "UNAの格斗2",
+        "UNAの暗黑骑士",
+        "UNAの格斗3"
+	];
 	
-	var teamplayers = cga.getTeamPlayers();
+	// var teamplayers = cga.getTeamPlayers();
 
-	for(var i in teamplayers)
-		teammates[i] = teamplayers[i].name;
+	// for(var i in teamplayers)
+	// 	teammates[i] = teamplayers[i].name;
 	
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
 	

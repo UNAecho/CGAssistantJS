@@ -1,15 +1,78 @@
+var fs = require('fs');
 var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 
 	var playerinfo = cga.GetPlayerInfo();
 	
-	var teammates = [];
+	var teammates = [
+        "UNAの格斗2",
+        "UNAの传教士2",
+        "UNAの护士",
+        "UNAの圣骑士",
+        "UNAの格斗3"
+	];
 	
-	var teamplayers = cga.getTeamPlayers();
+	// var teamplayers = cga.getTeamPlayers();
 
-	for(var i in teamplayers)
-		teammates[i] = teamplayers[i].name;
+	// for(var i in teamplayers)
+	// 	teammates[i] = teamplayers[i].name;
 	
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
+
+	var loadBattleConfig = ()=>{
+		var checkSkill = ()=>{
+			var skills = cga.GetSkillsInfo();
+			var job = '其他';
+			skills.filter((sk)=>{
+				if(sk.name.indexOf('补血魔法') >= 0 && sk.lv >= 4){
+					job = '传教士'
+				}else if(sk.name.indexOf('恢复魔法') >= 0 && sk.lv >= 4){
+					job = '巫师'
+				}else if(sk.name.indexOf('气功弹') >= 0 && sk.lv >= 4){
+					job = '格斗士'
+				}else if(sk.name.indexOf('暗黑骑士之力') >= 0){
+					job = '暗黑骑士'
+				}else if(sk.name.indexOf('神圣光芒') >= 0){
+					job = '圣骑士'
+				}
+				return '';
+			});
+			return job;
+		}
+		
+	
+		var settingpath = cga.getrootdir() + '\\战斗配置\\'
+		var role = checkSkill()
+		if (role == '传教士'){
+			settingpath = settingpath + '传教练级.json'
+	
+		}else if (role == '巫师'){
+			settingpath = settingpath + 'BOSS巫师.json'
+	
+		}else if (role == '格斗士'){
+			settingpath = settingpath + '格斗练级.json'
+	
+		}else if (role == '暗黑骑士'){
+			settingpath = settingpath + 'BOSS暗黑骑士.json'
+	
+		}else if (role == '圣骑士'){
+			settingpath = settingpath + 'BOSS圣骑士.json'
+	
+		}else{
+			settingpath = settingpath + 'BOSS合击.json'
+		}
+	
+		var setting = JSON.parse(fs.readFileSync(settingpath))
+	
+		cga.gui.LoadSettings(setting, (err, result)=>{
+			if(err){
+				console.log(err);
+				return;
+			}else{
+				console.log('读取战斗配置【'+settingpath+'】成功')
+			}
+		})
+		return
+	}
 
 	var task = cga.task.Task('诅咒的迷宫 (战斗系三转)', [
 	{//0
@@ -138,7 +201,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 					wait();
 				});
 			} else {
-				wait2();
+				cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
+					wait3();
+				});
 			}
 		}
 	},
@@ -1035,7 +1100,16 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 					list.unshift([24, 4, '诅咒的迷宫 地下51楼']);
 
 				cga.walkList(list, ()=>{
-					fuckBOSS();
+					// fuckBOSS();
+					var settingpath = cga.getrootdir() + '\\战斗配置\\手动BOSS.json'
+					cga.gui.LoadSettings(settingpath, (err, result)=>{
+						if(err){
+							console.log(err);
+							return;
+						}else{
+							console.log('读取战斗配置【'+settingpath+'】成功')
+						}
+					})
 				});
 			}
 			
@@ -1134,6 +1208,6 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		},
 	]
 	);
-	
+	loadBattleConfig()
 	task.doTask();
 });
