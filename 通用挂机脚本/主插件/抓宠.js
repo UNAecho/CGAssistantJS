@@ -11,7 +11,7 @@ var configTable = global.configTable;
 
 // 提取本地宠物数据
 const petInfoObj = require('./../../常用数据/petInfo.js');
-var petGrade = require('./../../常用数据/petGrade.js');
+var petGrade = new require('./../../常用数据/petGrade.js');
 // 提取本地职业数据
 const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
 var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
@@ -93,7 +93,7 @@ var commonPilot = (cb)=>{
 
 // 欢迎信息，可写入插件介绍等信息。
 var welcome = ()=>{
-	var welcomeWord = '欢迎使用【UNA自动抓宠+精确算档】脚本，当前抓【'+thisobj.petGrade+'】档及以上宠物。本脚本包含精确算档功能，请认真检查您输入的理想档位，以免丢弃理想宠物。'
+	var welcomeWord = '欢迎使用【UNA脚本】【自动抓宠+精确算档】，当前抓【'+thisobj.petGrade+'】档及以上宠物。本脚本包含精确算档功能，请认真检查您输入的理想档位，以免丢弃理想宠物。'
 	cga.sayLongWords(welcomeWord, 1, 3, 1);
 	return
 }
@@ -315,9 +315,14 @@ var playerThink = ()=>{
 			var petId = petGrade.generatePetId(pets[i])
 			// 如果有记录就直接看记录，没有就需要算
 			if(gradeDict[petId]){
-				if(gradeDict[petId].dropFlag === true){
+				if(cga.isInNormalState() && gradeDict[petId].dropFlag === true){
 					cga.DropPet(pets[i].index)
-				}else if(i == (pets.length - 1) && !calculateRunning && cga.GetPetsInfo().length == 5){
+				}// 给符合条件的宠物命名
+				else if(cga.isInNormalState() && gradeDict[petId].dropFlag === false && (pets[i].name == pets[i].realname || pets[i].name == '')){
+					var rename = gradeDict[petId]['最可能情况'].grade + '档'
+					cga.ChangePetName(pets[i].index,rename)
+				}// 如果目标宠物已满，则进行处理。
+				else if(i == (pets.length - 1) && !calculateRunning && cga.GetPetsInfo().length == 5){
 					// 如果计算器没有在运行，并且最后一个宠物也满足保留条件，则触发储存宠物flag去存储宠物。
 					cga.SayWords('【UNA脚本提示】符合档位的宠物已满，需要回补!', 0, 3, 1);
 					saveFlag = true
