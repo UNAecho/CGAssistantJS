@@ -6,16 +6,11 @@ var teamMode = require('../公共模块/组队模式');
 var cga = global.cga;
 var configTable = global.configTable;
 
-// 提取本地职业数据
-const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
-var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
-
 var jump = ()=>{
 	setTimeout(()=>{
 		updateConfig.update_config('mainPlugin','全自动肯吉罗岛练级')
 	},5000)
 }
-
 
 var playerinfo = cga.GetPlayerInfo();
 var teammates = null
@@ -128,10 +123,10 @@ var talkNpcSayYesToChangeMap = (cb,npcPosArr,type)=>{
 			posArr[1],
 			posArr[0],
 		], ()=>{
-			cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
 			setTimeout(() => {
+				cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
 				wait(cb)
-			}, 1000);
+			}, 2000);
 		});
     }else{
 		wait(cb)
@@ -860,7 +855,7 @@ var task = cga.task.Task('时空之门1', [
 				setTimeout(tips, 1000, counter-1);
 			}
 
-			cga.waitForLocation({mapindex : 99999}, ()=>{
+			cga.waitForLocation({mapindex : 24000}, ()=>{
 				cb2(true)
 			});
 	
@@ -868,6 +863,39 @@ var task = cga.task.Task('时空之门1', [
 				[10, 8],
 			], ()=>{
 				tips(9)
+			});
+		}
+	},
+	{//11
+		intro: '11.战斗胜利后传送至开启者之间，与布鲁梅尔（17.9）对话获得称号“开启者”并传送回圣餐之间，任务完结。',
+		workFunc: function(cb2){
+			var words1 = '【UNA脚本提示】UD任务一个人物一生完成一次即可，转职后再晋阶只需重新完成晋阶任务，无需完成包括本任务的其他任务'
+			var words2 = '【UNA脚本提示】圣餐之间与各位置阿斯提亚僧兵对话可习得全部超强状态魔法，每种技能学习耗费10000G'
+			var tips = (counter)=>{
+
+				if(counter == 0){
+					cb2(true)
+					return;
+				} else if(counter == 3){
+					cga.SayWords(words2, 1, 3, 1);
+				} else if(counter == 6){
+					cga.SayWords(words1, 0, 3, 1);
+				}
+				
+				setTimeout(tips, 1000, counter-1);
+			}
+
+			cga.waitForLocation({mapindex : 24007}, ()=>{
+				tips(9)
+			});
+
+			cga.walkList([
+				[16, 9],
+			], ()=>{
+				setTimeout(() => {
+					cga.AsyncWaitNPCDialog(dialogHandler);
+					cga.turnTo(17, 9);
+				}, 1000);
 			});
 		}
 	},
@@ -906,8 +934,8 @@ var task = cga.task.Task('时空之门1', [
 		function(){//10.选择真正需要完成UD人物的人物，进行自由组队，不限男女。与犹大（15.8）对话进入战斗。
 			return false;
 		},
-		function(){// 24000 16 9 17 9 24007
-			return false;
+		function(){//11.战斗胜利后传送至开启者之间，与布鲁梅尔（17.9）对话获得称号“开启者”并传送回圣餐之间，任务完结。
+			return cga.GetMapIndex().index3 == 24007 ? true :false
 		},
 	]
 	);

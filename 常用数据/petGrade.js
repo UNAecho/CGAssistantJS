@@ -14,6 +14,7 @@ var thisobj = {
 		if(!pet.realname || !pet.level || !pet.maxhp || !pet.maxmp){
 			throw new Error('宠物基本信息有误，请检查。')
 		}
+		obj.name = pet.name
 		obj.realname = pet.realname
 		obj.level = pet.level
 		obj.points_remain = pet.detail.points_remain
