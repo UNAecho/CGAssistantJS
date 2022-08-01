@@ -1034,6 +1034,7 @@ module.exports = function(callback){
 			], cb);
 			return;
 		}
+		// 传送石房间
 		if(mapname == '辛希亚探索指挥部' && cga.GetMapIndex().index3 == 27101){
 			cga.walkList([[8, 21]], warp);
 			return;
@@ -2037,9 +2038,12 @@ module.exports = function(callback){
 				'酒吧':27013,
 				'曙光营地酒吧':27013,
 				'辛希亚探索指挥部':{
+					// 一楼二楼是一个index
 					27014:'一楼',
+					27014:'二楼',
 					27101:'传送石',
 				},
+				// 三个房间都是27015
 				'曙光营地指挥部':27015,
 				'传送石':2399
 			},
@@ -5909,7 +5913,7 @@ module.exports = function(callback){
 		if(obj.leaveteam === true)
 		{
 			var teamplayersnow = cga.getTeamPlayers();
-			
+
 			if(teamplayersnow.length){
 				passCheck = false;
 			}
