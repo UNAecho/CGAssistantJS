@@ -30,8 +30,8 @@ var saveFlag = false
 var gradeDict = {}
 // 能力String，打印log使用
 var translateArray = ['体力','力量','防御','敏捷','魔法']
-// 需要去启程之间传送的地区
-var villageArray = [
+// 法兰地区，需要传送石
+var falanCountry = [
 	'圣拉鲁卡村',
 	'伊尔村',
 	'亚留特村',
@@ -41,9 +41,31 @@ var villageArray = [
 	'杰诺瓦镇',
 	'蒂娜村',
 	'阿巴尼斯村',]
-// TODO需要出国的地区
-var countryArray = [
-	'',
+// 艾尔巴尼亚王国
+var albaniaCountry = [
+	'哥拉尔镇',
+	'雷克塔尔镇',
+	'鲁米那斯村',
+	'米诺基亚村',
+]
+// 苏国
+var suCountry = [
+	'阿凯鲁法村',
+	'坎那贝拉村',
+]
+// 神圣大陆
+var sacredContinent = [
+	'艾尔莎岛',
+	'丘斯特村',
+]
+// 天界
+var Celestial = [
+	'辛梅尔',
+]
+// 神域
+var divineDomain = [
+	'圣骑士营地',
+	'矮人城镇',
 ]
 
 var supplyArray = [supplyWeinuoya, supplyCastle, supplyMode, ];
@@ -57,9 +79,9 @@ var getSupplyObject = (map, mapindex)=>{
 		return s.isAvailable(map, mapindex);
 	})
 }
-
+// 获取去集散地的函数，功能为决定是使用传送石还是坐船出国
 var getMap = (muster)=>{
-	if(villageArray.indexOf(muster)){
+	if(falanCountry.indexOf(muster)){
 		return function (cb) {
 			cga.travel.falan.toTeleRoom(muster, cb);
 			return
@@ -418,28 +440,6 @@ var loop = ()=>{
 	var mapindex = cga.GetMapIndex().index3;
 	var isleader = cga.isTeamLeaderEx();
 	// TODO 添加非playerthink阶段也能算档的逻辑，一种想法是添加和playerthink一样模式的calculateThink，在execute()阶段就执行。
-	// if (professionalInfo.jobmainname == '封印师'){
-	// 	// 先判断是否抓满
-	// 	if(pets.length == 5 && !playerThinkRunning){
-	// 		for(var i in pets){
-	// 			if(pets[i].realname == thisobj.targetPet.realname && pets[i].level <= thisobj.targetLv){
-	// 				var petId = petGrade.generatePetId(pets[i])
-	// 				if(!gradeDict[petId]){
-	// 					console.log('身上宠物已满，等待playerthink算档..')
-	// 					playerThinkInterrupt.hasInterrupt();//restore interrupt state
-	// 					console.log('playerThink on');
-	// 					playerThinkRunning = true;
-	// 					// 重新执行loop，等待playerthink算档。
-	// 					setTimeout(loop, 1000);
-	// 					return
-	// 				}
-	// 			}
-	// 		}
-	// 	}else if(pets.length == 5 && playerThinkRunning){
-	// 		setTimeout(loop, 1000);
-	// 		return
-	// 	}
-	// }
 
 	if(isleader && teamMode.is_enough_teammates()){
 
