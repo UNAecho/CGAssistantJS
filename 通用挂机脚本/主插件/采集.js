@@ -230,7 +230,7 @@ var check_drop = ()=>{
 }
 
 var loop = ()=>{
-	
+
 	var skill = null;
 	
 	if(gatherObject.skill !== null){
@@ -261,7 +261,9 @@ var loop = ()=>{
 	if(mineObject.check_done())
 	{
 		console.log('完成任务，当前时间:' + Date(Date.now()))
-		console.log('一次采集流程完成，耗时' + ((Date.now() - mineObject.startTime)/1000).toString() + '秒,消耗金币:' + (cga.GetPlayerInfo().gold - mineObject.startGold))
+		console.log('完成任务，当前金币:' + cga.GetPlayerInfo().gold)
+		console.log('一次采集流程完成，耗时【' + ((Date.now() - mineObject.object.startTime)/1000).toString() + '】秒')
+		console.log('一次采集流程完成，消耗金币:【' + (mineObject.object.startGold - cga.GetPlayerInfo().gold) + '】')
 		if(mineObject.doneManager)
 			mineObject.doneManager(loop);
 		else if(doneObject.func)
@@ -325,10 +327,13 @@ var loop = ()=>{
 			}
 		}
 	}
-	mineObject.startTime = Date.now()
-	mineObject.startGold = playerInfo.gold
-	console.log('开始任务,当前时间:' + Date(mineObject.startTime) + ',当前金币:' + mineObject.startGold)
-	mineObject.func(workwork);
+	callSubPluginsAsync('prepare', ()=>{
+		// 成本统计
+		mineObject.object.startTime = Date.now()
+		mineObject.object.startGold = playerInfo.gold
+		console.log('开始任务,当前时间:' + Date(mineObject.object.startTime) + ',当前金币:' + mineObject.object.startGold)
+		mineObject.func(workwork);
+	});
 }
 
 var thisobj = {
@@ -466,9 +471,10 @@ var thisobj = {
 	execute : ()=>{
 		callSubPlugins('init');
 		mineObject.init();
-		checkSettle.func((err, map)=>{
-			loop();
-		});
+		// checkSettle.func((err, map)=>{
+		// 	loop();
+		// });
+		loop()
 	},
 };
 

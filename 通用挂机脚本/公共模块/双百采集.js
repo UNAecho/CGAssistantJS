@@ -11,14 +11,21 @@ var food = require('./狩猎.js').mineArray;
 var wood = require('./伐木.js').mineArray;
 var mine = require('./挖矿.js').mineArray;
 
-var otherMaterials = ['小麦粉','砂糖']
+// 丢弃物品的类别
+var dropTypeArr = [
+	// 鹿皮
+	26,
+	// 蔬菜
+	34,
+	// 狩猎材料
+	35,
+]
 var mineTypeInfo = ['使用狩猎、伐木、挖掘技能采集', '采集其他材料兑换或直接商店购买'];
 // 合并信息
 var actionarr = flower.concat(food).concat(wood).concat(mine)
-// 采集物品名称
-var targetitem = null
 
 // 采集原材料需求的几倍（即造几件的量），然后和其他人汇合。
+// 注意：如果超出2倍，经常会出现制造者一直在桥头售卖的死循环，因为材料+成品可能会多于15个，特别是料理和血瓶的合成过程。
 const MATERIALS_MULTIPLE_TIMES = 2;
 
 var loadBattleConfig = ()=>{
@@ -49,8 +56,16 @@ var thisobj = {
 		thisobj.object.doneManager(cb);
 	},
 	object: {
-		// 这里thisobj.object.name改为动态写入
-		// name: targetitem,
+		// 任务目标物品名称
+		name : null,
+		// 每次采集开始的计时
+		startTime : null,
+		// 每次采集开始的金额
+		startGold : null,
+		// 技能信息，动态更新
+		skill : null,
+		// loadconfig中定义需要什么技能。TODO：动态更新
+		skillname : null,
 		func: (cb) => {
 
 			if (thisobj.object.gatherCount === null) {
@@ -63,10 +78,14 @@ var thisobj = {
 				return
 			}
 			thisobj.object.skill = cga.findPlayerSkill(thisobj.object.skillname)
+			if(thisobj.object.skill && thisobj.object.skill.lv < thisobj.object.level){
+				var errmsg = thisobj.object.skill.name+'技能等级不够，'+thisobj.object.name+'需要'+thisobj.object.level+'级技能，而你只有'+thisobj.object.skill.lv+'级技能';
+				throw Error(errmsg)
+			}
 			// 找采集信息里面的目标obj
 			var actobj = null
 			for(var i in actionarr){
-				if (actionarr[i].name == targetitem){
+				if (actionarr[i].name == thisobj.object.name){
 					actobj = actionarr[i]
 					break
 				}
@@ -156,6 +175,8 @@ var thisobj = {
 			}
 		},
 		gatherCount: null,
+		// 一件成品的原材料数量，例如寿喜锅的盐，skuCount为20
+		skuCount: null,
 		doneManager: (cb) => {
 
 			thisobj.object.state = 'done';
@@ -170,9 +191,10 @@ var thisobj = {
 				}
 
 				if (thisobj.object.state == 'done') {
-					// currentItemCount = cga.getItemCount(targetitem)
-					// socket.emit('done', { count: (currentItemCount >= thisobj.object.gatherCount ? thisobj.object.gatherCount : currentItemCount) });
-					socket.emit('done', {count: thisobj.object.gatherCount});
+					socket.emit('done', {
+						count: thisobj.object.gatherCount,
+						cost: !thisobj.object.startGold ? 0: (thisobj.object.startGold - cga.GetPlayerInfo().gold),
+					});
 				}
 
 				setTimeout(repeat, 1500);
@@ -187,13 +209,33 @@ var thisobj = {
 				});
 			});
 		},
+		extra_dropping : (item)=>{
+			if(dropTypeArr.indexOf(item.type) != -1 && item.name != thisobj.object.name){
+				console.log('【UNA脚本提示】清理背包，物品:【' + item.name + '】类别:【'+item.type+'】，非目标物品，丢弃')
+				return true;
+			}
+			
+			return false
+		},
 		state: 'gathering',
 	},
 	check_done: () => {
+		// console.log('thisobj.object.state:' + thisobj.object.state)
+		// console.log('cga.getItemCount(thisobj.object.name):' + cga.getItemCount(thisobj.object.name))
+		// console.log('thisobj.object.skuCount:' + thisobj.object.skuCount)
 		if (thisobj.object.gatherCount === null)
 			return false;
-
-		return cga.getItemCount(targetitem) >= thisobj.object.gatherCount;
+		if(thisobj.object.state == 'gathering'){
+			// 修改check_done方式，改为打满或者打空蓝(低于2级治疗的35魔)再回去交付
+			if (thisobj.object.state == 'gathering' && (cga.getItemCount(thisobj.object.name) >= thisobj.object.gatherCount) && (cga.getInventoryItems().length >= 15 || cga.GetPlayerInfo().mp < 35))
+				return true
+		}else{
+			// 如果处于非收集环节，那么直到把材料都交出去，再去进行新一轮收集。
+			if (cga.getItemCount(thisobj.object.name) >= thisobj.object.skuCount){
+				return true
+			}
+		}
+		return false;
 	},
 	translate: (pair) => {
 
@@ -232,7 +274,7 @@ var thisobj = {
 			if(actionarr[i].display_name == obj.target){
 				configTable.target = actionarr[i].display_name;
 				thisobj.object.name = actionarr[i].display_name;
-				targetitem = actionarr[i].display_name;
+				thisobj.object.level = actionarr[i].level;
 				break;
 			}
 		}
@@ -243,28 +285,28 @@ var thisobj = {
 		}
 
 		for(var i in flower){
-			if (flower[i].display_name == targetitem){
+			if (flower[i].display_name == thisobj.object.name){
 				thisobj.object.skillname = '伐木'
 				break
 			}
 		}
 		
 		for(var i in food){
-			if (food[i].display_name == targetitem){
+			if (food[i].display_name == thisobj.object.name){
 				thisobj.object.skillname = '狩猎'
 				break
 			}
 		}
 
 		for(var i in wood){
-			if (wood[i].display_name == targetitem){
+			if (wood[i].display_name == thisobj.object.name){
 				thisobj.object.skillname = '伐木'
 				break
 			}
 		}
 
 		for(var i in mine){
-			if (mine[i].display_name == targetitem){
+			if (mine[i].display_name == thisobj.object.name){
 				thisobj.object.skillname = '挖掘'
 				break
 			}
@@ -366,8 +408,9 @@ var thisobj = {
 			thisobj.craft_player = data.craft_player;
 			thisobj.craft_materials = data.craft_materials;
 			data.craft_materials.forEach((m) => {
-				if (m.name == targetitem)
+				if (m.name == thisobj.object.name)
 					thisobj.object.gatherCount = m.count * MATERIALS_MULTIPLE_TIMES;
+					thisobj.object.skuCount = m.count;
 			});
 		});
 
@@ -382,7 +425,7 @@ var thisobj = {
 					if (count >= thisobj.object.gatherCount)
 						return false;
 
-					if (item.name == targetitem) {
+					if (item.name == thisobj.object.name) {
 						count += item.count;
 						return true;
 					}

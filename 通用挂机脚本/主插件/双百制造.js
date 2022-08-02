@@ -104,9 +104,14 @@ io.on('connection', (socket) => {
 			// console.log('有新队员【' + socket.cga_data.player_name + '】加入节点，当前有【' + Object.keys(originmoneyinfos).length +'】人，队伍总资产为：【' + originassets + '】')
 		}
 	});
-
+	/**
+	 * TODO 通过采集者的socket.cga_data.cost来确定每一次交易给多少钱。
+	 * 注意，cost是每次采集的总消耗，而交易是分批次的交易。
+	 * 所以不能一次性将cost的钱都给采集，那样会使采集拿到几倍的cost，钱容易满
+	 */
 	socket.on('done', (data) => {
 		socket.cga_data.count = data.count;
+		socket.cga_data.cost = data.cost;
 		socket.cga_data.state = 'done'; 
 	});
 	
@@ -162,7 +167,8 @@ var waitStuffs = (name, materials, cb)=>{
 		}
 
 		if(find_player){
-			
+			// TODO 计算成本时，将注释打开，方便debug
+			// console.log(find_player.cga_data)
 			find_player.cga_data.state = 'trade';
 			find_player.emit('init', {
 				craft_player : cga.GetPlayerInfo().name,
@@ -201,16 +207,16 @@ var waitStuffs = (name, materials, cb)=>{
 					stuffs.gold += find_player.cga_data.count * 20;
 				}
 				if(find_player.cga_data.job_name == '葱'){
-					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.3 + 0)
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 1.0 + 0)
 				}
 				if(find_player.cga_data.job_name == '盐'){
 					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.3 + 0)
 				}
 				if(find_player.cga_data.job_name == '酱油'){
-					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.5 + 0)
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 1.5 + 0)
 				}
 				if(find_player.cga_data.job_name == '牛肉'){
-					stuffs.gold += Math.ceil(find_player.cga_data.count * 0.7 + 0)
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 4.0 + 0)
 				}
 				if(find_player.cga_data.job_name == '砂糖'){
 					stuffs.gold += Math.ceil(find_player.cga_data.count * 4.5 + 0)

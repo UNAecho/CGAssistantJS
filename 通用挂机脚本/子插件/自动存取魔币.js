@@ -238,7 +238,9 @@ var thisobj = {
 	
 				setTimeout(()=>{
 					cga.positiveTrade(targetname, stuffs, (playerName, receivedStuffs)=>{
-						if(receivedStuffs.gold >= lowerlimit){
+						// 如果对方没给钱，receivedStuffs.gold是undefined而不是0
+						// TODO：如果是存钱，对方没给钱也会拒绝，要修正一下
+						if(!receivedStuffs.gold || receivedStuffs.gold >= lowerlimit){
 							console.log('对方提供:【'+receivedStuffs.gold+'】金币');
 							return true;
 						}
