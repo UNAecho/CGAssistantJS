@@ -87,16 +87,14 @@ var thisobj = {
 			cga.AsyncWaitNPCDialog(dialogHandler);
 			if(thisobj.object.donecount % 10 ==0){
 				console.log('已鉴定 '+ thisobj.object.donecount +' 次 ...' )
+				if (thisobj.object.skill.lv == thisobj.object.maxskilllv ){
+					console.log('你需要晋级了，不然技能不涨经验')
+				} 
 			}
 
 			if (thisobj.object.donecount % 100 ==0){
 				console.log('当前鉴定等级： ' +  thisobj.object.skill.lv + ' ，已鉴定 '+ thisobj.object.donecount +' 次 ,' )
 			}
-			if (thisobj.object.skill.lv == thisobj.object.maxskilllv ){
-				console.log('你需要晋级了，不然技能不涨经验')
-			} 
-
-			
 		},
 		doneManager : (cb)=>{
 			//更新技能等级
