@@ -1,6 +1,4 @@
 var cga = require('./cgaapi')(function () {
-    var petGrade = new require('./常用数据/petGrade.js');
-    var petInfos = require('./常用数据/petInfo.js');
 
     var workingFlag = false
     
