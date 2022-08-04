@@ -1965,6 +1965,27 @@ module.exports = function(callback){
 				'公寓':1187,
 				'公寓2楼':1188,
 				'美容院':1189,
+				'竞技场的入口':1400,
+				'竞技场':{
+					1401 : '学习气功弹等PK竞技场',
+					1450 : '打吉拉竞技场的石像说话第1层',
+					1451 : '打吉拉竞技场的石像说话第2层',
+					1452 : '打吉拉竞技场的石像说话第3层',
+					1453 : '打吉拉竞技场的石像说话第4层',
+					1454 : '打吉拉竞技场的石像说话第5层',
+					1455 : '打吉拉竞技场的石像说话第6层',
+				},
+				'治愈的广场':1403,
+				'休息室':1404,
+				'升官图房间2':{
+					1420 : '第一个升官图房间2',
+					1421 : '第二个升官图房间2',
+				},
+				'升官图':1422,
+				'升官图导览间':1423,
+				'升官图走廊':1424,
+				'休息室':1456,
+				'竞技预赛会场':1457,
 				'客房':{
 					1104:'病倒的厨师',
 					1105:'学调教',
@@ -1996,6 +2017,266 @@ module.exports = function(callback){
 				1188:[[182, 132, 1187],[16, 7, 1188],],
 				// 美容院
 				1189:[[216, 124, 1189],],
+				// 竞技场的入口
+				1400:[[(cb)=>{
+					cga.walkList([[124, 161]], ()=>{
+							cga.turnDir(4);
+							cga.waitForLocation({mapindex : 1400}, cb);
+					});
+				}, null, 1400],],
+				// 竞技场
+				1401:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[15, 6, 1401],],
+				// 后台
+				1402:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[15, 6, 1401],[35, 8, 1402],],
+				// 治愈的广场
+				1403:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[27, 14, 1403],],
+				// 休息室
+				1404:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[2, 14, 1404],],
+				// 升官图房间2
+				1420:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[2, 14, 1404],[8, 9, 1424],[9, 7, 1420],],
+				// 升官图房间2
+				1421:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[2, 14, 1404],[8, 9, 1424],[9, 12, 1421],],
+				// 升官图
+				1422:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[2, 14, 1404],[8, 9, 1424],[9, 17, 1422],],
+				// 升官图导览间
+				1423:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[2, 14, 1404],[8, 9, 1424],[9, 2, 1423],],
+				// 升官图走廊
+				1424:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[2, 14, 1404],[8, 9, 1424],],
+				// 竞技场
+				1450:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[27, 14, 1403],
+				[(cb)=>{
+					cga.walkList([[25, 13]], ()=>{
+						cga.waitForLocation({mapindex : 1450}, cb);
+						cga.turnDir(0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(32, -1);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, -1);
+								});
+							});
+						});
+				});
+				}, null, 1450],],
+				// 竞技场
+				1451:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[27, 14, 1403],
+				[(cb)=>{
+					cga.walkList([[25, 13]], ()=>{
+						cga.waitForLocation({mapindex : 1450}, cb);
+						cga.turnDir(0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(32, -1);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, -1);
+								});
+							});
+						});
+				});
+				}, null, 1450],[22, 13, 1451],],
+				// 竞技场
+				1452:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[27, 14, 1403],
+				[(cb)=>{
+					cga.walkList([[25, 13]], ()=>{
+						cga.waitForLocation({mapindex : 1450}, cb);
+						cga.turnDir(0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(32, -1);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, -1);
+								});
+							});
+						});
+				});
+				}, null, 1450],[22, 13, 1451],[15, 8, 1452],],
+				// 竞技场
+				1453:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[27, 14, 1403],
+				[(cb)=>{
+					cga.walkList([[25, 13]], ()=>{
+						cga.waitForLocation({mapindex : 1450}, cb);
+						cga.turnDir(0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(32, -1);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, -1);
+								});
+							});
+						});
+				});
+				}, null, 1450],[22, 13, 1451],[15, 8, 1452],[22, 8, 1453],],
+				// 竞技场
+				1454:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[27, 14, 1403],
+				[(cb)=>{
+					cga.walkList([[25, 13]], ()=>{
+						cga.waitForLocation({mapindex : 1450}, cb);
+						cga.turnDir(0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(32, -1);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, -1);
+								});
+							});
+						});
+				});
+				}, null, 1450],[22, 13, 1451],[15, 8, 1452],[22, 8, 1453],[15, 8, 1454],],
+				// 竞技场
+				1455:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[27, 14, 1403],
+				[(cb)=>{
+					cga.walkList([[25, 13]], ()=>{
+						cga.waitForLocation({mapindex : 1450}, cb);
+						cga.turnDir(0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(32, -1);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, -1);
+								});
+							});
+						});
+				});
+				}, null, 1450],[22, 13, 1451],[15, 8, 1452],[22, 8, 1453],[15, 8, 1454],[22, 16, 1455],],
+				// 休息室
+				1456:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[27, 14, 1403],
+				[(cb)=>{
+					cga.walkList([[25, 13]], ()=>{
+						cga.waitForLocation({mapindex : 1450}, cb);
+						cga.turnDir(0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(32, -1);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, -1);
+								});
+							});
+						});
+				});
+				}, null, 1450],[22, 13, 1451],[15, 8, 1452],[22, 8, 1453],[15, 8, 1454],[22, 16, 1455],
+				[(cb)=>{
+					cga.walkList([[16, 12]], ()=>{
+						cga.turnDir(6);
+						cga.AsyncWaitNPCDialog((err, dlg)=>{
+							if((dlg && dlg.message.indexOf('斗士之证') >= 0)){
+								cga.ClickNPCDialog(1, -1)
+								cga.travel.falan.autopilot(1456,cb)
+								return
+							}else{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, -1);
+									cga.AsyncWaitNPCDialog(()=>{
+										cga.ClickNPCDialog(4, -1);
+										setTimeout(()=>{
+											cb2(true)
+										}, 1000);	
+									});
+								});
+							}
+
+
+						});
+				});
+				}, null, 1456],],
+				// 竞技预赛会场
+				1457:[[(cb)=>{
+					cga.travel.falan.autopilot(1400,cb)
+				}, null, 1400],[27, 14, 1403],
+				[(cb)=>{
+					cga.walkList([[25, 13]], ()=>{
+						cga.waitForLocation({mapindex : 1450}, cb);
+						cga.turnDir(0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(32, -1);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, -1);
+								});
+							});
+						});
+				});
+				}, null, 1450],[22, 13, 1451],[15, 8, 1452],[22, 8, 1453],[15, 8, 1454],[22, 16, 1455],
+				[(cb)=>{
+					cga.walkList([[16, 12]], ()=>{
+						cga.turnDir(6);
+						cga.AsyncWaitNPCDialog((err, dlg)=>{
+							if((dlg && dlg.message.indexOf('斗士之证') >= 0)){
+								cga.ClickNPCDialog(1, -1)
+								cga.travel.falan.autopilot(1456,cb)
+								return
+							}else{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, -1);
+									cga.AsyncWaitNPCDialog(()=>{
+										cga.ClickNPCDialog(4, -1);
+										setTimeout(cb, 1000);	
+									});
+								});
+							}
+
+
+						});
+				});
+				}, null, 1456],
+				[(cb)=>{
+					cga.waitForLocation({mapindex : 1457}, cb);
+					cga.walkList([[16, 6]], ()=>{
+						cga.turnDir(4);
+						cga.AsyncWaitNPCDialog((err, dlg)=>{
+							cga.ClickNPCDialog(8, -1);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.turnDir(7);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(4, -1);
+									cga.AsyncWaitNPCDialog(()=>{
+										cga.ClickNPCDialog(1, -1);
+									});
+								});
+							});});
+				});
+				}, null, 1457]],
 				// 客房
 				32830:[[219, 136, 1101],[27, 20, 1102],[10, 17, 32830],],
 			},
@@ -2022,6 +2303,76 @@ module.exports = function(callback){
 				1188:[[15, 9, 1187]],
 				// 美容院
 				1189:[[4, 14, 1000]],
+				// 竞技场的入口
+				1400:[[15, 23, 1000]],
+				// 竞技场
+				1401:[[(cb)=>{
+					cga.walkList([[34, 67]], ()=>{
+						cga.waitForLocation({mapindex : 1400}, cb);
+						cga.turnDir(0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(4, -1);
+						});
+				});
+				}, null, 1400],],
+				// 后台
+				1402:[[24, 34, 1401]],
+				// 治愈的广场
+				1403:[[5, 31, 1400]],
+				// 休息室
+				1404:[[19, 4, 1400]],
+				// 升官图房间2
+				1420:[[(cb)=>{
+					cga.walkList([[9, 1]], ()=>{
+						cga.waitForLocation({mapindex : 1404}, cb);
+						cga.turnDir(5);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(4, -1);
+						});
+				});
+				}, null, 1404],],
+				// 升官图房间2
+				1421:[[(cb)=>{
+					cga.walkList([[3, 1]], ()=>{
+						cga.waitForLocation({mapindex : 1404}, cb);
+						cga.turnDir(5);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(4, -1);
+						});
+				});
+				}, null, 1404],],
+				// 升官图
+				1422:[[(cb)=>{
+					cga.walkList([[9, 1]], ()=>{
+						cga.waitForLocation({mapindex : 1404}, cb);
+						cga.turnDir(7);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(4, -1);
+						});
+				});
+				}, null, 1404],],
+				// 升官图导览间
+				1423:[[0, 9, 1424]],
+				// 升官图走廊
+				1424:[[4, 0, 1404]],
+				// 竞技场
+				1450:[[15, 8, 1403]],
+				// 竞技场
+				1451:[[22, 13, 1450]],
+				// 竞技场
+				1452:[[15, 8, 1451]],
+				// 竞技场
+				1453:[[22, 8, 1452]],
+				// 竞技场
+				1454:[[15, 8, 1453]],
+				// 竞技场
+				1455:[[21, 17, 1454]],
+				// 休息室
+				1456:null,
+				// 竞技预赛会场
+				1457:null,
+				// 里谢里雅堡
+				1500:[[41, 98, 1000],],
 				// 客房
 				32830:[[2, 7, 1102]],
 			},
@@ -2980,32 +3331,37 @@ module.exports = function(callback){
 				return
 			}else if(mapindex == info.mainindex){
 				tmplist = targetPath
-				// 如果无法仅通过步行达到目的地，在这里使用一次性function来寻路。
-				if(typeof tmplist == 'function'){
-					tmplist(cb)
-					return
-				}
 			}else{// 自动导航逻辑
-				if(typeof targetPath != 'function'){
-					for (let i = 0; i < targetPath.length; i++) {
-						if(targetPath && targetPath[i][2] == mapindex){
-							tmplist = targetPath.slice(i+1)
-							break
-						}
+				// 遍历寻找是否可以从当前地图直接走到目标地图
+				for (let i = 0; i < targetPath.length; i++) {
+					if(targetPath && targetPath[i][2] == mapindex){
+						tmplist = targetPath.slice(i+1)
+						break
 					}
-				}else{// 如果输入是function，则直接按照输入的function走
-					tmplist = targetPath
-					tmplist(cb)
+				}
+			}
+			// 如果上面for循环没找到前进路径，则递归回到主地图。
+			if(tmplist == null){
+				var backLogic = info.walkReverse[mapindex]
+				if(!backLogic){
+					console.error('错误，当前地图或上一层地图的链路，存在无法通过走路返回的情况，请登出')
 					return
 				}
-				// 如果上面for循环没找到前进路径，则递归回到主地图。
-				if(tmplist == null){
-					var backLogic = info.walkReverse[mapindex]
-					if(typeof backLogic == 'function'){
-						backLogic(cb)
-						return
+				tmplist = backLogic.slice(0,1)
+			}
+			// 如果要执行function才能进入下一个地图，则执行方法并调用递归
+			if(typeof tmplist[0][0] == 'function'){
+				tmplist[0][0](()=>{
+					cga.travel.falan.autopilot(targetMap,cb)
+				})
+				return
+			}else{
+				// 遍历寻找找本次路径有没有自定义func
+				for (let i = 0; i < tmplist.length; i++) {
+					if(tmplist && tmplist[i] && typeof tmplist[i][0] == 'function'){
+						tmplist = tmplist.slice(0,i)
+						break
 					}
-					tmplist = backLogic.slice(0,1)
 				}
 			}
 			// 递归逻辑
@@ -3014,7 +3370,7 @@ module.exports = function(callback){
 					cga.travel.falan.autopilot(targetMap,cb)
 				});
 		} catch (error) {
-			console.log('[UNA脚本警告]:错误，请联系作者完善自动导航逻辑，error:')
+			console.log('[UNA脚本警告]:可能由于【输入不存在的地图index/名称】【地图未读取完毕】，导致错误，error:')
 			console.error(error)
 		}
 		return
