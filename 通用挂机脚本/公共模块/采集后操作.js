@@ -177,7 +177,8 @@ var doneArray = [
 					var sell = cga.findItemArray(mineObject.name);
 					var sellArray = sell.map((item)=>{
 						item.count /= 20;
-						return item;
+						item.count = Math.floor(item.count)
+						return item.count > 0 ? item : false;
 					});
 
 					var pattern = /(.+)的卡片/;
