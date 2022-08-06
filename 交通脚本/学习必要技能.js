@@ -50,12 +50,14 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
+	// 使用脚本，练宠效率不需要很高，非饲养师不学习宠物强化了
 	{//2
 		intro: '3.学宠物强化',
 		workFunc: function(cb2){
-			if(category == '制造系' || category == '采集系'){
-				console.log('通常情况下,生产采集不学习宠物强化')
+			if (professionalInfo.jobmainname != '饲养师'){
+				console.log('非饲养师不需要宠物强化，脚本练级效率是无限的，跳过')
 				cb2(true)
+				return
 			}else{
 				if(cga.findPlayerSkill('宠物强化')){
 					console.log('已经学会宠物强化,跳过')
@@ -67,7 +69,7 @@ var cga = require('../cgaapi')(function(){
 		}
 	},
 	{//3
-		intro: '4.如果是战斗系，检查是否有气绝回复技能（用于刷声望）',
+		intro: '4.如果是战斗系，检查是否有气绝回复技能（用于刷声望或打BOSS）',
 		workFunc: function(cb2){
 			if((category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系') && playerinfo.level > 50){
 				var hasResurgenceSkill = cga.findPlayerSkill('气绝回复') ? true : false;
@@ -135,6 +137,9 @@ var cga = require('../cgaapi')(function(){
 								}});
 							});
 					});
+				}else{
+					console.log('已经有气绝回复了，跳过')
+					cb2(true)
 				}
 				
 			}else{
@@ -143,10 +148,21 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//3
-		intro: '4.如果是战斗系，检查是否有单体石化技能（用于刷声望）',
+	{//4
+		intro: '5.如果是战斗系，检查是否有单体石化技能（用于刷声望）',
 		workFunc: function(cb2){
+			if(cga.ismaxbattletitle()){
+				console.log('已到达【无尽星空】称号，不需要刷声望')
+				cb2(true)
+				return
+			}
+			if (professionalInfo.jobmainname == '暗黑骑士' || professionalInfo.jobmainname == '教团骑士'){
+				console.log('暗黑骑士或教团骑士不能刷声望，跳过')
+				cb2(true)
+				return
+			}
 			if(category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系'){
+
 				var hasStoneSkill = cga.findPlayerSkill('石化魔法') ? true : false;
 				if(!hasStoneSkill){
 					cga.travel.falan.toStone('C', (r)=>{
@@ -172,8 +188,8 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//4
-		intro: '5.学狩猎',
+	{//5
+		intro: '6.学狩猎',
 		workFunc: function(cb2){
 			var lumbering = '狩猎'
 			if(category == '制造系' || category == '采集系'){
@@ -189,8 +205,8 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//5
-		intro: '6.学伐木',
+	{//6
+		intro: '7.学伐木',
 		workFunc: function(cb2){
 			var lumbering = '伐木'
 			if(category == '制造系' || category == '采集系'){
@@ -206,8 +222,8 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//6
-		intro: '7.学挖掘',
+	{//7
+		intro: '8.学挖掘',
 		workFunc: function(cb2){
 			var dig = '挖掘'
 			if(category == '制造系' || category == '采集系'){
@@ -222,8 +238,8 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//7
-		intro: '8.抗石化',
+	{//8
+		intro: '9.抗石化',
 		workFunc: function(cb2){
 			if((category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系') && playerinfo.level > 50){
 				var hasStoneSkill = cga.findPlayerSkill('抗石化') ? true : false;
@@ -239,8 +255,8 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//8
-		intro: '8.抗混乱',
+	{//9
+		intro: '10.抗混乱',
 		workFunc: function(cb2){
 			if((category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系') && playerinfo.level > 50){
 				var hasStoneSkill = cga.findPlayerSkill('抗混乱') ? true : false;
@@ -256,14 +272,31 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
-	{//8
-		intro: '9.抗毒',
+	{//10
+		intro: '11.抗毒',
 		workFunc: function(cb2){
 			if((category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系') && playerinfo.level > 50){
 				var hasStoneSkill = cga.findPlayerSkill('抗毒') ? true : false;
 				if(!hasStoneSkill){
 					loadplayerconfig()
 					professionalbehavior(cga, '抗毒','learning',cb2)
+				}else{
+					cb2(true)
+				}
+			}else{
+				console.log('非战斗系或者等级小于50级，无法单人学习技能')
+				cb2(true)
+			}
+		}
+	},
+	{//11
+		intro: '12.抗昏睡',
+		workFunc: function(cb2){
+			if((category == '物理系' || category == '魔法系' || category == '魔物系' || category == '服务系') && playerinfo.level > 50){
+				var hasStoneSkill = cga.findPlayerSkill('抗昏睡') ? true : false;
+				if(!hasStoneSkill){
+					loadplayerconfig()
+					professionalbehavior(cga, '抗昏睡','learning',cb2)
 				}else{
 					cb2(true)
 				}
@@ -281,11 +314,10 @@ var cga = require('../cgaapi')(function(){
 		function(){
 			return (cga.findPlayerSkill('治疗') && cga.findPlayerSkill('调教')) ? true : false;
 		},
-		function(){
-			return (cga.findPlayerSkill('治疗') && cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化')) ? true : false;
+		function(){// 只有饲养师才需要学习宠物强化，因为脚本的效率是无限的
+			return false;
 		},
 		function(){
-
 				if(category == '物理系' || category == '魔法系' || category == '魔物系'){
 					if(cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化') && cga.findPlayerSkill('气绝回复')){
 						return true
@@ -297,7 +329,6 @@ var cga = require('../cgaapi')(function(){
 				}
 		},
 		function(){
-
 				if(category == '物理系' || category == '魔法系' || category == '魔物系'){
 					if(cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化') && cga.findPlayerSkill('气绝回复') && cga.findPlayerSkill('石化魔法')){
 						return true
@@ -307,6 +338,9 @@ var cga = require('../cgaapi')(function(){
 				}else{
 					return true
 				}
+		},
+		function(){
+			return (cga.findPlayerSkill('治疗') && cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化')&& cga.findPlayerSkill('狩猎')) ? true : false;
 		},
 		function(){
 			return (cga.findPlayerSkill('治疗') && cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化')&& cga.findPlayerSkill('狩猎') && cga.findPlayerSkill('伐木')) ? true : false;
@@ -319,6 +353,12 @@ var cga = require('../cgaapi')(function(){
 		},
 		function(){
 			return (cga.findPlayerSkill('治疗') && cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化')&& cga.findPlayerSkill('狩猎') && cga.findPlayerSkill('伐木') && cga.findPlayerSkill('挖掘') && cga.findPlayerSkill('抗石化') && cga.findPlayerSkill('抗混乱')) ? true : false;
+		},
+		function(){
+			return (cga.findPlayerSkill('治疗') && cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化')&& cga.findPlayerSkill('狩猎') && cga.findPlayerSkill('伐木') && cga.findPlayerSkill('挖掘') && cga.findPlayerSkill('抗石化') && cga.findPlayerSkill('抗混乱') && cga.findPlayerSkill('抗毒')) ? true : false;
+		},
+		function(){
+			return (cga.findPlayerSkill('治疗') && cga.findPlayerSkill('调教') && cga.findPlayerSkill('宠物强化')&& cga.findPlayerSkill('狩猎') && cga.findPlayerSkill('伐木') && cga.findPlayerSkill('挖掘') && cga.findPlayerSkill('抗石化') && cga.findPlayerSkill('抗混乱') && cga.findPlayerSkill('抗毒') && cga.findPlayerSkill('抗昏睡')) ? true : false;
 		},
 	]
 	);
