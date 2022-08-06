@@ -944,7 +944,7 @@ var loop = ()=>{
 	callSubPluginsAsync('prepare', ()=>{
 		cga.SayWords('欢迎使用【UNAの脚本】，当前正在进行：【'+configTable.mainPlugin+'】阶段。', 0, 3, 1);
 		task.doTask(()=>{
-			console.log('UD任务完成')
+			console.log('【' + configTable.mainPlugin + '】任务完成')
 			return
 		});
 		return false;
