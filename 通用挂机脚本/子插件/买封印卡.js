@@ -62,7 +62,8 @@ const buyLoop = (cb)=>{
 			
 			var buyitem = [];
 			var buyCount = 0;
-			var emptySlotCount = cga.getInventoryEmptySlotCount();
+			// 留一个空位，给换水晶备用
+			var emptySlotCount = cga.getInventoryEmptySlotCount() - 1;
 			
 			store.items.forEach((it)=>{
 				if(it.name == thisobj.buyCard.name && buyCount < emptySlotCount){

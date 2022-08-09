@@ -267,6 +267,15 @@ module.exports = function(cga,job,behavior,cb) {
                                     choose(cb,'药剂师')
                             });
                         },true)
+                    }else if(professionalInfo.jobmainname == '矿工'){
+                        cga.travel.falan.autopilot('村长的家 2楼',()=>{
+                            cga.walkList([
+                                [8, 5]
+                            ], ()=>{
+                                cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                                choose(cb,'矿工')
+                            });
+                        })
                     }
                 });
             }else if(professionalInfo.tutorlocation == "伊尔村"){
