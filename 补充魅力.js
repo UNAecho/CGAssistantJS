@@ -45,7 +45,12 @@ var cga = require('./cgaapi')(function () {
 		})
         // cga.travel.toHospital(false,success)
     }else{
-        cga.travel.falan.toTeleRoom(target, (r)=>{});
+		cga.travel.falan.toStone('E1', ()=>{
+			cga.travel.falan.autopilot('美容院',()=>{
+				cga.walkList(
+					[[15, 10]], retry);
+			})
+		});
     }
 
 
