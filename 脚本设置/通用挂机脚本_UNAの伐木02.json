@@ -1,1 +1,1 @@
-{"mainPlugin":"采集","subPlugins":[],"gatherObject":"双百采集","serverPort":23333,"target":"葱","logoutTimes":0}
+{"mainPlugin":"采集","subPlugins":["掉魂自动招魂"],"gatherObject":"采花","mineObject":"番红花","logoutTimes":0,"doneObject":2}

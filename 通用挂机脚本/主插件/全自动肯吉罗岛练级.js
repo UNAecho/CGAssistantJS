@@ -264,7 +264,7 @@ var loadBattleConfig = ()=>{
 	var settingpath = cga.getrootdir() + '\\战斗配置\\'
 	// 因为传教士可能还有正在刷声望的小号，这样可以区分是保姆还是小号
 	if (professionalInfo.jobmainname == '传教士'){
-		if(!cga.ismaxbattletitle){
+		if(!cga.ismaxbattletitle()){
 			settingpath = settingpath + '营地组队普攻刷声望.json'
 		}else{
 			var healSingle = cga.findPlayerSkill('补血魔法')

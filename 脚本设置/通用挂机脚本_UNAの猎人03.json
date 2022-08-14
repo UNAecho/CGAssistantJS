@@ -1,0 +1,16 @@
+{
+    "mainPlugin": "抓宠",
+    "subPlugins": [],
+    "supplyMode": 2,
+    "teamMode": 0,
+    "teammates": [],
+    "targetPet": "水龙蜥",
+    "petGrade": 2,
+    "minimumSingleGrade": {
+        "endurance": 0,
+        "strength": 0,
+        "defense": 1,
+        "agility": 1,
+        "magical": 0
+    }
+}

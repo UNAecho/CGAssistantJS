@@ -12,22 +12,26 @@
         "自动存取魔币",
         "队员卖石"
     ],
-    "supplyMode": 1,
+    "supplyMode": 2,
     "teamMode": 0,
-    "teammates": [         
-        "UNAの格斗1",
-        "UNAの剑士"],
+    "teammates": [
+        "UNAの格斗2",
+        "UNAの格斗01",
+        "UNAの格斗02",
+        "UNAの格斗03",
+        "UNAの格斗04"
+    ],
+    "battleArea": 0,
     "sellStore": 1,
-    "battleArea": 1,
     "layerLevel": 1,
     "minHp": "25%",
     "minMp": "25%",
-    "buyCrystal": "水火的水晶（5：5）",
+    "buyCrystal": "火风的水晶（5：5）",
     "minLoyality": 40,
     "maxEndurance": 226,
     "maxStrength": 300,
     "maxDefense": 0,
     "maxAgility": 90,
     "maxMagical": 50,
-    "petpoint": 1
+    "petpoint": 4
 }

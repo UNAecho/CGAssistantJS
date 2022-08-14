@@ -14,20 +14,24 @@
     ],
     "supplyMode": 1,
     "teamMode": 0,
-    "teammates": [         
-        "UNAの格斗1",
-        "UNAの剑士"],
+    "teammates": [
+        "UNAの格斗3",
+        "UNAの咒术师",
+        "UNAの巫师",
+        "UNAの伐木04",
+        "UNAの伐木03"
+    ],
+    "battleArea": 0,
     "sellStore": 1,
-    "battleArea": 1,
     "layerLevel": 1,
     "minHp": "25%",
     "minMp": "25%",
     "buyCrystal": "水火的水晶（5：5）",
     "minLoyality": 40,
-    "maxEndurance": 226,
-    "maxStrength": 300,
+    "maxEndurance": 233,
+    "maxStrength": 0,
     "maxDefense": 0,
-    "maxAgility": 90,
-    "maxMagical": 50,
+    "maxAgility": 100,
+    "maxMagical": 333,
     "petpoint": 1
 }

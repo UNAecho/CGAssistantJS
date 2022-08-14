@@ -737,42 +737,14 @@ var loop = ()=>{
 				});
 			};
 			cga.travel.falan.toCity('艾尔莎岛', stay);
-		}else{//如果不是刚出生小号，走正常练级逻辑
-			// console.log('正常练级模式')
-			// 回廊
-			if(cga.GetMapIndex().index3 == 1500 && cga.GetMapXY().x > 43 && cga.GetMapXY().y <80){
+		}else{
+			cga.travel.newisland.toStone('X', ()=>{
 				cga.walkList([
-					[52, 72]
-					], ()=>{
-						cga.TurnTo(54, 72);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(32, 0);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(4, 0);
-								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(4, 0);
-									cga.AsyncWaitMovement({map:'过去与现在的回廊', delay:1000, timeout:5000}, ()=>{
-										cga.walkList([
-											cga.isTeamLeader ? [11, 20] : [10, 20],
-											], ()=>{
-												teamMode.wait_for_teammates(loop);
-											});
-									});
-									return true
-								});
-							});
-						});
-					});	
-			}
-			else{// 1-50 高地+诅咒
-				cga.travel.newisland.toStone('X', ()=>{
-					cga.walkList([
-					cga.isTeamLeader ? [144, 106] : [143, 106],
-					], ()=>{
-						teamMode.wait_for_teammates(loop);
-					});
+				cga.isTeamLeader ? [144, 106] : [143, 106],
+				], ()=>{
+					teamMode.wait_for_teammates(loop);
 				});
-			}
+			});
 		}
 	});
 }
