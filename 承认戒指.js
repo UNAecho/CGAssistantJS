@@ -9,8 +9,11 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	
 	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦
 	var teammates = [
-		"UNAの传教士",
+		"UNAの传教士2",
 		"UNAの格斗2",
+		"UNAの制头盔",
+		"UNAの矿工4",
+		"UNAの矿工5",
 	];
 	
 	// 本次任务自由组队人数
@@ -30,7 +33,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		if (professionalInfo.jobmainname == '传教士'){
 			settingpath = settingpath + 'BOSS传教.json'
 		}else if(professionalInfo.jobmainname == '格斗士'){
-			settingpath = settingpath + 'BOSS格斗.json'
+			settingpath = settingpath + '格斗练级.json'
 		}else{
 			settingpath = settingpath + '营地组队普攻刷声望.json'
 		}
@@ -135,7 +138,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		}
 	},
 	{//2
-		intro: '4.前往辛希亚探索指挥部（55.47），通过楼梯下楼抵达辛希亚探索指挥部。5.与教团骑士克罗米（40.22）对话，交出【团长的证明】并通过栅栏，通过黄色传送石（44.22）抵达废墟。',
+		intro: '3.前往辛希亚探索指挥部（55.47），通过楼梯下楼抵达辛希亚探索指挥部。5.与教团骑士克罗米（40.22）对话，交出【团长的证明】并通过栅栏，通过黄色传送石（44.22）抵达废墟。',
 		workFunc: function(cb2){
 
 			if(cga.needSupplyInitial({  })){
@@ -249,7 +252,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		}
 	},
 	{//3
-		intro: '6.通过随机迷宫抵达遗迹，调查奇异的装置（14.14）进入战斗。',
+		intro: '4.通过随机迷宫抵达遗迹，调查奇异的装置（14.14）进入战斗。',
 		workFunc: function(cb2){
 
 			// 留空位给任务物品
@@ -284,7 +287,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		}
 	},
 	{//4
-		intro: '7.战斗胜利后随机获得【神之金】。与神秘人（14.14）对话，获得【怪物碎片】并传送回法兰城。',
+		intro: '5.战斗胜利后随机获得【神之金】。与神秘人（14.14）对话，获得【怪物碎片】并传送回法兰城。',
 		workFunc: function(cb2){
 			// 留空位给任务物品
 			// 战斗成功后，房间index为44708
@@ -312,10 +315,11 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		}
 	},
 	{//5
-		intro: '8.前往曙光骑士团营地，进入曙光营地指挥部（52.68）房间（69.69）与圣骑士法尔缇娅（95.7）对话，交出【怪物碎片】获得【信】。',
+		intro: '6.前往曙光骑士团营地，进入曙光营地指挥部（52.68）房间（69.69）与圣骑士法尔缇娅（95.7）对话，交出【怪物碎片】获得【信】。',
 		workFunc: function(cb2){
 
 			if(cga.needSupplyInitial({  })){
+				console.log('打完boss回补..')
 				cga.travel.falan.toCastleHospital(()=>{
 					setTimeout(()=>{
 						cb2('restart stage');
@@ -342,7 +346,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		}
 	},
 	{//6
-		intro: '9.返回法兰城里谢里雅堡2楼谒见之间与大祭司布鲁梅尔（5.3）对话，交出【信】获得【承认之戒】，任务完结。',
+		intro: '7.返回法兰城里谢里雅堡2楼谒见之间与大祭司布鲁梅尔（5.3）对话，交出【信】获得【承认之戒】，任务完结。',
 		workFunc: function(cb2){
 						
 			cga.travel.falan.toStone('C', (r)=>{
@@ -393,10 +397,14 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		},
 		function(){
-			return (cga.GetMapIndex().index3 == 44707 || cga.getItemCount('怪物碎片') >= 1) ? true : false;
+			// 存在带打账号在BOSS期间登出的bug，注销掉查明原因中
+			// return (cga.GetMapIndex().index3 == 44707 || cga.getItemCount('怪物碎片') >= 1) ? true : false;
+			return false
 		},
 		function(){
-			return (cga.GetMapIndex().index3 == 44708 || cga.getItemCount('怪物碎片') >= 1) ? true : false;
+			// 存在带打账号在BOSS期间登出的bug，注销掉查明原因中
+			// return (cga.GetMapIndex().index3 == 44708 || cga.getItemCount('怪物碎片') >= 1) ? true : false;
+			return false
 		},
 		function(){
 			return (cga.getItemCount('怪物碎片') >= 1) ? true : false;
