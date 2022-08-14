@@ -215,7 +215,12 @@ var check_drop = ()=>{
 	cga.getInventoryItems().forEach((item)=>{
 		if(dropItemPos != -1)
 			return;
-		if(item.name == '魔石' || item.name == '卡片？' || pattern.exec(item.name) ) {
+		if(item.name == '魔石' || item.name == '卡片？' || pattern.exec(item.name)) {
+			dropItemPos = item.pos;
+			return;
+		}
+		// 丢弃物品栏中不属于当前采集目标的物品，只涉及可采集的物品。
+		if([29, 30, 31, 34, 35, 36, 40].indexOf(item.type) != -1 && item.name != mineObject.object.name) {
 			dropItemPos = item.pos;
 			return;
 		}
@@ -227,6 +232,41 @@ var check_drop = ()=>{
 	
 	if(dropItemPos != -1)
 		cga.DropItem(dropItemPos);
+}
+// TODO不卖采集目标物品
+var cleanOtherItems = (cb) =>{
+	var sell = cga.findItemArray((item) => {
+		return (item.name == '魔石') || ([29, 30, 31, 34, 35, 36, 40].indexOf(item.type) != -1 || item.itemid == 18211);
+	});
+	if (sell && sell.length > 0){
+		var sellArray = sell.map((item) => {
+			// 23料理、43血瓶
+			if ([23, 43].indexOf(item.type) != -1) {
+				item.count /= 3;
+			}// 29矿条、30木、31秘文之皮、34蕃茄、35其他食材、36花、40封印卡
+			// id：18211是鹿皮，type也是26，特殊处理，因为很多其他物品type也是26
+			else if (([29, 30, 31, 34, 35, 36, 40].indexOf(item.type) != -1 || item.itemid == 18211) && item.name != '魔石') {
+				item.count /= 20;
+			} else if (item.name == '魔石') {
+				item.count = 1;
+			}
+			item.count = Math.floor(item.count)
+			return item.count > 0 ? item : false;
+		});
+		cga.travel.falan.toStone('C', () => {
+			cga.walkList([
+				[30, 79],
+			], () => {
+				cga.TurnTo(30, 77);
+				cga.sellArray(sellArray, cb);
+			});
+		});
+		return
+	}else{
+		if (cb) cb()
+		return
+	}
+
 }
 
 var loop = ()=>{
@@ -332,7 +372,9 @@ var loop = ()=>{
 		mineObject.object.startTime = Date.now()
 		mineObject.object.startGold = playerInfo.gold
 		console.log('开始任务,当前时间:' + Date(mineObject.object.startTime) + ',当前金币:' + mineObject.object.startGold)
-		mineObject.func(workwork);
+		cleanOtherItems(()=>{
+			mineObject.func(workwork);
+		})
 	});
 }
 
