@@ -16,7 +16,7 @@
     "supplyMode": 1,
     "teamMode": 0,
     "teammates": [
-        "UNAの格斗3",
+        "UNAの格斗2",
         "UNAの咒术师",
         "UNAの巫师",
         "UNAの伐木04",
@@ -29,10 +29,10 @@
     "minMp": "25%",
     "buyCrystal": "水火的水晶（5：5）",
     "minLoyality": 40,
-    "maxEndurance": 200,
+    "maxEndurance": 333,
     "maxStrength": 0,
     "maxDefense": 0,
     "maxAgility": 150,
-    "maxMagical": 150,
+    "maxMagical": 183,
     "petpoint": 4
 }
