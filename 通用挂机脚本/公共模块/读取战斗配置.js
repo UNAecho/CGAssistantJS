@@ -27,7 +27,7 @@ var configModeArray = [
 			return false;
 		});
 		// 如果技能还没烧满，则返回，防止无限读取config造成性能浪费。
-		if(thisobj.training == skill.name){
+		if(skill && thisobj.training == skill.name){
 			return
 		}
 

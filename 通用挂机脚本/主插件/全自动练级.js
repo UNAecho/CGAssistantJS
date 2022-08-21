@@ -849,6 +849,11 @@ var loop = ()=>{
 				switchArea(()=>{
 					callSubPluginsAsync('prepare', ()=>{
 						thisobj.battleAreaObj.muster(()=>{
+
+							playerThinkInterrupt.hasInterrupt();//restore interrupt state
+							console.log('playerThink on');
+							playerThinkRunning = true;
+							
 							thisobj.battleAreaObj.walkTo(()=>{
 								var xy = cga.GetMapXY();
 								var dir = cga.getRandomSpaceDir(xy.x, xy.y);
