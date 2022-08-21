@@ -16,6 +16,8 @@ var configModeArray = [
 	},
 	think : (ctx)=>{
 		if(!ctx.skills){
+			console.log('未指定角色修炼技能,读取默认战斗配置')
+			thisobj.manualLoad('练级')
 			return
 		}
 		var skill = ctx.skills.find((sk)=>{
