@@ -16,22 +16,34 @@ var configModeArray = [
 	},
 	think : (ctx)=>{
 		if(!ctx.skills){
-			console.log('未指定角色修炼技能,读取默认战斗配置')
-			thisobj.manualLoad('练级')
 			return
 		}
-		var skill = ctx.skills.find((sk)=>{
-			if((thisobj.finalJob.skill.indexOf(sk.name) != -1 || thisobj.finalJob.trainskills.indexOf(sk.name) != -1) && sk.lv != sk.maxlv){
-				return true
-			}
-			return false;
-		});
-		// 如果技能还没烧满，则返回，防止无限读取config造成性能浪费。
-		if(skill && thisobj.training == skill.name){
-			return
-		}
-
 		var filename = null
+
+		if(!thisobj.finalJob.skill && !thisobj.finalJob.trainskills){
+			console.log('未指定角色修炼技能,读取默认战斗配置')
+			filename = '练级'
+		}
+		if(thisobj.needLoad()){
+			var skill = ctx.skills.find((sk)=>{
+				if((thisobj.finalJob.skill && thisobj.finalJob.skill.indexOf(sk.name) != -1) || (thisobj.finalJob.trainskills && thisobj.finalJob.trainskills.indexOf(sk.name) != -1) && sk.lv != sk.maxlv){
+					filename = sk.name
+					return true
+				}
+				return false;
+			});
+		}else{
+			filename = '练级'
+			// 如果是生产系，避免循环读取文件
+			if(!thisobj.training){
+				thisobj.training = filename
+				thisobj.manualLoad(filename)
+			}
+		}
+		// 如果技能还没烧满，则返回，防止无限读取config造成性能浪费。
+		if(thisobj.training == filename){
+			return
+		}
 
 		if(!skill){
 			// 此处注意文件的名字，是统称+练级二字，如：格斗士练级
@@ -179,6 +191,12 @@ var thisobj = {
 			}
 		})
 		return
+	},
+	needLoad : ()=>{
+		if(['物理系','魔法系','魔物系'].indexOf(thisobj.finalJob.category) != -1){
+			return true
+		}
+		return false
 	},
 	think : (ctx)=>{// 暂时仅支持烧技能模式，其他模式多数都会手动调用
 		configModeArray[0].think(ctx);
