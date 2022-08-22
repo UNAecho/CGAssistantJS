@@ -34,11 +34,6 @@ var configModeArray = [
 			});
 		}else{
 			filename = '练级'
-			// 如果是生产系，避免循环读取文件
-			if(!thisobj.training){
-				thisobj.training = filename
-				thisobj.manualLoad(filename)
-			}
 		}
 		// 如果技能还没烧满，则返回，防止无限读取config造成性能浪费。
 		if(thisobj.training == filename){
@@ -58,7 +53,7 @@ var configModeArray = [
 		// 读取对应需要烧的技能的战斗配置
 		filename = skill.name
 		// thisobj.training:将正在训练的技能名称缓存起来，以防一直重复读取同一个config造成资源浪费
-		thisobj.training = skill.name
+		thisobj.training = filename
 
 		thisobj.manualLoad(filename)
 
@@ -178,6 +173,10 @@ var thisobj = {
 
 	},
 	manualLoad : (filename)=>{
+		if (thisobj.training == filename) {
+			return
+		}
+
 		var settingpath = cga.getrootdir() + '\\战斗配置\\' + filename + '.json'
 		var setting = JSON.parse(fs.readFileSync(settingpath))
 	
@@ -186,6 +185,7 @@ var thisobj = {
 				console.log(err);
 				return;
 			}else{
+				thisobj.training = filename
 				console.log('【战斗配置插件】读取战斗配置【'+settingpath+'】成功')
 				return
 			}
