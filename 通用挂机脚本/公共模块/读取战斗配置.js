@@ -26,8 +26,12 @@ var configModeArray = [
 		}
 		if(thisobj.needLoad()){
 			var skill = ctx.skills.find((sk)=>{
-				if((thisobj.finalJob.skill && thisobj.finalJob.skill.indexOf(sk.name) != -1) || (thisobj.finalJob.trainskills && thisobj.finalJob.trainskills.indexOf(sk.name) != -1) && sk.lv != sk.maxlv){
-					filename = sk.name
+				if(((thisobj.finalJob.skill && thisobj.finalJob.skill.indexOf(sk.name) != -1) || (thisobj.finalJob.trainskills && thisobj.finalJob.trainskills.indexOf(sk.name) != -1)) && sk.lv != sk.maxlv){
+					// console.log(thisobj.finalJob.skill.indexOf(sk.name) != -1)
+					// console.log(thisobj.finalJob.trainskills.indexOf(sk.name) != -1)
+					// console.log('lv : '+ sk.lv)
+					// console.log('maxlv : '+ sk.maxlv)
+					// console.log(sk.lv != sk.maxlv)
 					return true
 				}
 				return false;
@@ -36,10 +40,9 @@ var configModeArray = [
 			filename = '练级'
 		}
 		// 如果技能还没烧满，则返回，防止无限读取config造成性能浪费。
-		if(thisobj.training == filename){
+		if(thisobj.training && filename && thisobj.training == filename){
 			return
 		}
-
 		if(!skill){
 			// 此处注意文件的名字，是统称+练级二字，如：格斗士练级
 			if(cga.ismaxbattletitle()){
@@ -52,8 +55,6 @@ var configModeArray = [
 
 		// 读取对应需要烧的技能的战斗配置
 		filename = skill.name
-		// thisobj.training:将正在训练的技能名称缓存起来，以防一直重复读取同一个config造成资源浪费
-		thisobj.training = filename
 
 		thisobj.manualLoad(filename)
 
@@ -173,7 +174,7 @@ var thisobj = {
 
 	},
 	manualLoad : (filename)=>{
-		if (thisobj.training == filename) {
+		if (thisobj.training && thisobj.training == filename) {
 			return
 		}
 
