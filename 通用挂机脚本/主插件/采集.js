@@ -236,29 +236,44 @@ var check_drop = ()=>{
 // TODO不卖采集目标物品
 var cleanOtherItems = (cb) =>{
 	var sell = cga.findItemArray((item) => {
-		return (item.name == '魔石') || ([29, 30, 31, 34, 35, 36, 40].indexOf(item.type) != -1 || item.itemid == 18211);
+		// 23料理、43血瓶
+		if ([23, 43].indexOf(item.type) != -1) {
+			item.count /= 3
+			item.count = Math.floor(item.count)
+			return true
+		}// 29矿条、30木、31秘文之皮、34蕃茄、35其他食材、36花、40封印卡
+		// id：18211是鹿皮，type也是26，特殊处理，因为很多其他物品type也是26
+		else if (([29, 30, 31, 34, 35, 36, 40].indexOf(item.type) != -1 || item.itemid == 18211)&& item.count %20 == 0 && item.name != '魔石') {
+			item.count /= 20
+			item.count = Math.floor(item.count)
+			return true
+		} else if (item.name == '魔石') {
+			item.count = 1
+			return true
+		}
+		return false
 	});
 	if (sell && sell.length > 0){
-		var sellArray = sell.map((item) => {
-			// 23料理、43血瓶
-			if ([23, 43].indexOf(item.type) != -1) {
-				item.count /= 3;
-			}// 29矿条、30木、31秘文之皮、34蕃茄、35其他食材、36花、40封印卡
-			// id：18211是鹿皮，type也是26，特殊处理，因为很多其他物品type也是26
-			else if (([29, 30, 31, 34, 35, 36, 40].indexOf(item.type) != -1 || item.itemid == 18211) && item.name != '魔石') {
-				item.count /= 20;
-			} else if (item.name == '魔石') {
-				item.count = 1;
-			}
-			item.count = Math.floor(item.count)
-			return item.count > 0 ? item : false;
-		});
+		// var sellArray = sell.map((item) => {
+		// 	// 23料理、43血瓶
+		// 	if ([23, 43].indexOf(item.type) != -1) {
+		// 		item.count /= 3;
+		// 	}// 29矿条、30木、31秘文之皮、34蕃茄、35其他食材、36花、40封印卡
+		// 	// id：18211是鹿皮，type也是26，特殊处理，因为很多其他物品type也是26
+		// 	else if (([29, 30, 31, 34, 35, 36, 40].indexOf(item.type) != -1 || item.itemid == 18211) && item.name != '魔石') {
+		// 		item.count /= 20;
+		// 	} else if (item.name == '魔石') {
+		// 		item.count = 1;
+		// 	}
+		// 	item.count = Math.floor(item.count)
+		// 	return item;
+		// });
 		cga.travel.falan.toStone('C', () => {
 			cga.walkList([
 				[30, 79],
 			], () => {
 				cga.TurnTo(30, 77);
-				cga.sellArray(sellArray, cb);
+				cga.sellArray(sell, cb);
 			});
 		});
 		return
