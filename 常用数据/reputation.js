@@ -68,6 +68,75 @@ const reputationList = [
 		max: 999999,
 	},
 ];
+/**
+ * 注意，【采集】、【制造】、【医生护士鉴定武修防修仙人侦探】虽然共用称号，但是需要的声望数量不同，采集声望需要最少，医生护士鉴定等声望需要最多，故使用医生护士的声望参考，以免过低。
+ */
+const productReputationList = [
+	{
+		reputation: '恶人',
+		min: -1,
+		max: -3000,
+	}, 
+	{
+		reputation: '忌讳的人',
+		min: -2999,
+		max: -2000,
+	}, 
+	{
+		reputation: '受挫折的人',
+		min: -1999,
+		max: -1000,
+	}, 
+	{
+		reputation: '无名的旅人',
+		min: -999,
+		max: 1999,
+	}, {
+		reputation: '迈步前进者',
+		min: 2000,
+		max: 3999,
+	}, {
+		reputation: '追求技巧的人',
+		min: 4000,
+		max: 5999,
+	},{
+		reputation: '刻于新月之铭',
+		min: 6000,
+		max: 8999,
+	},{
+		reputation: '掌上的明珠',
+		min: 9000,
+		max: 12999,
+	},{
+		reputation: '敬虔的技巧',
+		min: 13000,
+		max: 18999,
+	},{
+		reputation: '踏入神的领域',
+		min: 19000,
+		max: 26999,
+	},{
+		reputation: '贤者',
+		min: 27000,
+		max: 36999,
+	},{
+		reputation: '神匠',
+		min: 37000,
+		max: 46999,
+	},{
+		reputation: '摘星的技巧',
+		min: 47000,
+		max: 56999,
+	},{
+		reputation: '万物创造者',
+		min: 57000,
+		max: 69999,
+	},{
+		reputation: '持石之贤者',
+		min: 70000,
+		max: 999999,
+	},
+];
 var calculate =(inputreputation,percentage) => {
 	let count = 0;
 	reputationList.forEach(p => {
@@ -118,4 +187,23 @@ module.exports.getReputation = function(titles) {
 		}
 	});
 	return defaultReputation
+}
+
+module.exports.getProductReputationLv = function(titles) {
+	var index = null
+	for (let i = 0; i < productReputationList.length; i++) {
+		for(var t in titles){
+			if(titles[t].length == 0){
+				continue
+			}
+			if(titles[t] == productReputationList[i].reputation){
+				index = i
+				break
+			}
+		}
+	}
+	if(index == null){
+		throw new Error('称号输入错误,无法查询生产称号等级，请检查')
+	}
+	return index
 }

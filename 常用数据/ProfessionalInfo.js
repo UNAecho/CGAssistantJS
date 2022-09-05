@@ -995,7 +995,7 @@ const Professions = [
 	}, {
 		category: '采集系',
 		jobmainname: '矿工',
-		skill:'',
+		skill:'挖掘',
 		titles: ['见习矿工', '矿工', '资深矿工', '御用矿工', '超级矿工'],
 		tutorlocation: '圣拉鲁卡村',
 		tutorwalk:[

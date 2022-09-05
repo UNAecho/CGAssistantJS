@@ -241,9 +241,9 @@ var cleanOtherItems = (cb) =>{
 			item.count /= 3
 			item.count = Math.floor(item.count)
 			return true
-		}// 29矿条、30木、31秘文之皮、34蕃茄、35其他食材、36花、40封印卡
+		}// 29矿条、30木、31秘文之皮、32牛肉、34蕃茄、35其他食材、36花、40封印卡
 		// id：18211是鹿皮，type也是26，特殊处理，因为很多其他物品type也是26
-		else if (([29, 30, 31, 34, 35, 36, 40].indexOf(item.type) != -1 || item.itemid == 18211)&& item.count %20 == 0 && item.name != '魔石') {
+		else if (([29, 30, 31, 32, 34, 35, 36, 40].indexOf(item.type) != -1 || item.itemid == 18211)&& item.count %20 == 0 && item.name != '魔石') {
 			item.count /= 20
 			item.count = Math.floor(item.count)
 			return true
