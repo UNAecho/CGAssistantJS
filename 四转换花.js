@@ -555,7 +555,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 				var rootdir = cga.getrootdir()
 				var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
 				var body = {
-					path : rootdir + "\\交通脚本\\去辛梅尔.js",
+					path : rootdir + "\\交通脚本\\去白色方舟.js",
 				}
 				
 				scriptMode.call_ohter_script(body)

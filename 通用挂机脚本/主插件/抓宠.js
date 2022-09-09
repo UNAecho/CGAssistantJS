@@ -91,7 +91,6 @@ var getMap = (muster)=>{
 }
 
 var commonPilot = (cb)=>{
-	console.log('commonPilot...')
 	var mapindex = cga.GetMapIndex().index3;
 	var muster = thisobj.targetPet.muster
 	var goFunc = getMap(muster.map)
@@ -100,7 +99,6 @@ var commonPilot = (cb)=>{
 		setTimeout(cb, 1000);
 	}
 	else if(cga.travel.switchMainMap() == cga.travel.falan.info[muster.map].mainName && mapindex != cga.travel.falan.info[muster.map].mainindex){
-		console.log('去主地图..')
 		cga.travel.falan.autopilot('主地图',()=>{
 			commonPilot(cb)
 		})
