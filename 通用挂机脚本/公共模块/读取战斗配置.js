@@ -27,11 +27,6 @@ var configModeArray = [
 		if(thisobj.needLoad()){
 			var skill = ctx.skills.find((sk)=>{
 				if(((thisobj.finalJob.skill && thisobj.finalJob.skill.indexOf(sk.name) != -1) || (thisobj.finalJob.trainskills && thisobj.finalJob.trainskills.indexOf(sk.name) != -1)) && sk.lv != sk.maxlv){
-					// console.log(thisobj.finalJob.skill.indexOf(sk.name) != -1)
-					// console.log(thisobj.finalJob.trainskills.indexOf(sk.name) != -1)
-					// console.log('lv : '+ sk.lv)
-					// console.log('maxlv : '+ sk.maxlv)
-					// console.log(sk.lv != sk.maxlv)
 					return true
 				}
 				return false;
