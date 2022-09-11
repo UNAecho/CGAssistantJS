@@ -676,10 +676,10 @@ const Professions = [
 		titles: ['造盾学徒', '造盾工', '资深造盾师傅', '御用造盾师傅', '造盾名师'],
         tutorlocation: '圣拉鲁卡村'
 	}, {
+		category: '制造系',
 		jobmainname: '裁缝工',
 		skill:'制衣服',
 		titles: ['裁缝学徒', '裁缝工', '资深裁缝师傅', '御用裁缝师傅', '裁缝名师'],
-		category: '制造系',
         tutorlocation: '圣拉鲁卡村',
 		tutorwalk:[
 			[7, 3, '村长的家'],

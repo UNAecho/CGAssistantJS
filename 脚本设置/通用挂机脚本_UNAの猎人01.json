@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "全自动肯吉罗岛练级",
+    "mainPlugin": "采集冲技能",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",

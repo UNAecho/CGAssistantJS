@@ -14,9 +14,15 @@ var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
 var job = professionalInfo.jobmainname
 var skillname = professionalInfo.skill
 
-// 原料采集信息，樵夫使用采花冲级，因为前6级都可以去花田。
+/**
+ * 原料采集信息，樵夫使用采花冲级，因为前6级都可以去花田。
+ * 需要设置不能采集的物品，像砂糖不可以卖店，则需要跳过，改为打其他材料。
+ * 注意使用display_name而不是name来判定材料，这样可以区分不同国家采集的物品，如辣椒和辣椒哥拉尔
+ *  */ 
 var mineDict = {
-	'狩猎' : require('./../公共模块/狩猎.js').mineArray,
+	'狩猎' : require('./../公共模块/狩猎.js').mineArray.filter(i=>{
+		return i.display_name != '砂糖'
+	}),
 	'伐木' : require('./../公共模块/采花.js').mineArray,
 	'挖掘' : require('./../公共模块/挖矿.js').mineArray,
 }
@@ -93,7 +99,7 @@ var cleanItems = (cb) =>{
 			return true
 		}// 29矿条、30木、31秘文之皮、32牛肉、34蕃茄、35其他食材、36花、40封印卡
 		// id：18211是鹿皮，type也是26，特殊处理，因为很多其他物品type也是26
-		else if (([29, 30, 31, 32, 34, 35, 36, 40].indexOf(item.type) != -1 || item.itemid == 18211)&& item.count %20 == 0 && item.name != '魔石') {
+		else if (([29, 30, 31, 32, 34, 35, 36, 40].indexOf(item.type) != -1 || item.itemid == 18211)&& item.count %20 == 0 && item.name != '魔石' && item.name != '砂糖') {
 			item.count /= 20
 			item.count = Math.floor(item.count)
 			return true
@@ -109,7 +115,13 @@ var cleanItems = (cb) =>{
 				[30, 79],
 			], () => {
 				cga.TurnTo(30, 77);
-				cga.sellArray(sell, cb);
+				cga.sellArray(sell, ()=>{
+					// 如果读取完采集的目标，就计算赚钱效率
+					if (mineObject){
+						console.log('【'+ mineObject.name +'】效率为【'+Math.round((cga.GetPlayerInfo().gold - thisobj.startgold) / ((Date.now() - thisobj.starttime) / 1000 / 60)).toString()+'】魔币每【分钟】')
+					}
+					if (cb) cb()
+				});
 			});
 		});
 		return
@@ -221,6 +233,11 @@ var thisobj = {
 	execute : ()=>{
 		callSubPlugins('init');
 		configMode.manualLoad('生产赶路')
+		// 用于计算收入效率
+		thisobj.starttime = Date.now()
+		thisobj.startgold = cga.GetPlayerInfo().gold
+		var word = '【UNA脚本】欢迎使用UNAの脚本【采集冲技能】模块，脚本会自动识别未满级的【狩猎】【伐木】【挖掘】，并调整路线自动烧技能。'
+		cga.sayLongWords(word, 0, 3, 1);
 		loop()
 	},
 };

@@ -115,8 +115,8 @@ var configModeArray = [
 	 * 一般多用于战斗系的任务赶路。
 	 */
 	name : '节能模式',
-	func : (finalJob)=>{// TODO任务所有职业的读取
-		var job = thisobj.finalJob ? thisobj.finalJob : finalJob
+	func : ()=>{// TODO任务所有职业的读取
+		var job = thisobj.finalJob ? thisobj.finalJob : getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname
 		// 如果既没有外部指定finalJob，也没有loadconfig读取到finalJob，那么中止逻辑
 		if(!job || job == ''){
 			throw new Error('请输入角色正确的最终职业名称，或者通过【通用挂机脚本系列】自动调用')
@@ -124,9 +124,9 @@ var configModeArray = [
 		var filename = null
 
 		if(job == '格斗士'){
-
+			filename = '格斗士练级'
 		}else if(job == '传教士'){
-
+			filename = '补血魔法'
 		}else if(job == '魔法师'){
 
 		}else if(job == '弓箭手'){
@@ -137,8 +137,10 @@ var configModeArray = [
 
 		}else if(job == '教团骑士'){
 
-		}else{
-			filename = '营地组队普攻刷声望'
+		}
+		
+		if(!filename){
+			filename = '练级'
 		}
 
 		// 读取对应需要烧的技能的战斗配置
@@ -171,6 +173,8 @@ var thisobj = {
 		if(!thisobj.object){
 			throw new Error('错误，请正确输入模式名称')
 		}
+
+		thisobj.object.func()
 
 	},
 	manualLoad : (filename)=>{

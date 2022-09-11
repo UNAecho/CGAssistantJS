@@ -1,1 +1,1 @@
-{"mainPlugin":"采集","subPlugins":["掉魂自动招魂"],"gatherObject":"双百采集","serverPort":23333,"target":"盐","logoutTimes":0}
+{"mainPlugin":"采集冲技能","subPlugins":["掉魂自动招魂", "自动存取魔币"],"gatherObject":"双百采集","serverPort":23333,"target":"盐","logoutTimes":0}
