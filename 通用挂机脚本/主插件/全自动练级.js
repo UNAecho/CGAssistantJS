@@ -1113,7 +1113,7 @@ var thisobj = {
 	},
 	inputcb : (cb)=>{
 		Async.series([configMode.inputcb, supplyKengiro.inputcb, teamMode.inputcb, (cb2)=>{
-			var sayString = '【全自动肯吉罗岛练级插件】请选择是否卖石: 0不卖石 1卖石';
+			var sayString = '【全自动练级插件】请选择是否卖石: 0不卖石 1卖石';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val)=>{
 				if(val !== null && val >= 0 && val <= 1){

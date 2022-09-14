@@ -195,7 +195,7 @@ var thisobj = {
 		return true;
 	},
 	inputcb : (cb)=>{
-		var sayString = '【全自动肯吉罗岛练级插件】请选择回补方式:';
+		var sayString = '【全自动练级插件】请选择回补方式:';
 		for(var i in supplyModeArray){
 			if(i != 0)
 				sayString += ', ';

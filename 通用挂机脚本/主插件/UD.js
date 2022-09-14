@@ -8,7 +8,7 @@ var configTable = global.configTable;
 
 var jump = ()=>{
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','全自动肯吉罗岛练级')
+		updateConfig.update_config('mainPlugin','全自动练级')
 	},5000)
 }
 

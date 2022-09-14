@@ -16,11 +16,11 @@
     "supplyMode": 1,
     "teamMode": 0,
     "teammates": [
-        "UNAの格斗2",
-        "UNAの咒术师",
         "UNAの巫师",
-        "UNAの伐木04",
-        "UNAの伐木03"
+        "UNAの格斗1",
+        "UNAの战斧2",
+        "UNAの战斧3",
+        "UNAの格斗2"
     ],
     "battleArea": 0,
     "sellStore": 1,
@@ -33,6 +33,6 @@
     "maxStrength": 0,
     "maxDefense": 0,
     "maxAgility": 150,
-    "maxMagical": 183,
+    "maxMagical": 150,
     "petpoint": 4
 }

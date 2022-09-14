@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "全自动肯吉罗岛练级",
+    "mainPlugin": "全自动练级",
     "subPlugins": [
         "买桥头武器",
         "受伤宠物医院治疗",
@@ -15,12 +15,12 @@
     ],
     "supplyMode": 1,
     "teamMode": 0,
-    "teammates": [        
-        "UNAの传教士",
+    "teammates": [
+        "UNAの巫师",
         "UNAの格斗1",
-        "UNAの格斗2",
         "UNAの战斧2",
-        "UNAの战斧3"],
+        "UNAの战斧3",
+        "UNAの格斗2"],
     "sellStore": 1,
     "battleArea": 1,
     "layerLevel": 1,
@@ -30,9 +30,9 @@
     "buyCrystal": "水火的水晶（5：5）",
     "minLoyality": 40,
     "maxEndurance": 333,
-    "maxStrength": 203,
+    "maxStrength": 183,
     "maxDefense": 0,
-    "maxAgility": 130,
+    "maxAgility": 150,
     "maxMagical": 0,
     "petpoint": 4
 }

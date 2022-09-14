@@ -14,9 +14,12 @@
     ],
     "supplyMode": 1,
     "teamMode": 0,
-    "teammates": [        
+    "teammates": [
+        "UNAの巫师",
         "UNAの格斗1",
-        "UNAの剑士"],
+        "UNAの战斧2",
+        "UNAの战斧3",
+        "UNAの格斗2"],
     "sellStore": 1,
     "battleArea": 1,
     "layerLevel": 1,
