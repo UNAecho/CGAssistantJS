@@ -3,13 +3,14 @@ var cga = global.cga;
 var configTable = global.configTable;
 
 var mineObject = null;
-var healObject = require('./../公共模块/治疗自己');
-var healPetObject = require('./../公共模块/治疗宠物');
-var supplyObject = require('./../公共模块/通用登出回补');
-var configMode = require('../公共模块/读取战斗配置');
+var rootdir = cga.getrootdir()
+var healObject = require(rootdir + '/通用挂机脚本/公共模块/治疗自己');
+var healPetObject = require(rootdir + '/通用挂机脚本/公共模块/治疗宠物');
+var supplyObject = require(rootdir + '/通用挂机脚本/公共模块/通用登出回补');
+var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
 
 // 提取本地职业数据
-const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
+const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
 var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
 var job = professionalInfo.jobmainname
 var skillname = professionalInfo.skill
@@ -21,16 +22,17 @@ var limitLv = 80
  * 原料采集信息，樵夫使用采花冲级，因为前6级都可以去花田。
  * 需要设置不能采集的物品，像砂糖不可以卖店，则需要跳过，改为打其他材料。
  * 注意使用display_name而不是name来判定材料，这样可以区分不同国家采集的物品，如辣椒和辣椒哥拉尔
+ * 暂时去掉一些不适合冲技能的材料，如7级狩猎用咖喱块取代辣椒或高级奶油、砂糖不可以卖店等。
  *  */ 
 var mineDict = {
-	'狩猎' : require('./../公共模块/狩猎.js').mineArray.filter(i=>{
-		if (i.display_name != '砂糖'){
-			return true
+	'狩猎' : require(rootdir + '/通用挂机脚本/公共模块/狩猎.js').mineArray.filter(i=>{
+		if (['砂糖', '辣椒', '高级奶油', ].indexOf(i.name) != -1){
+			return false
 		}
-		return false
+		return true
 	}),
-	'伐木' : require('./../公共模块/采花.js').mineArray,
-	'挖掘' : require('./../公共模块/挖矿.js').mineArray,
+	'伐木' : require(rootdir + '/通用挂机脚本/公共模块/采花.js').mineArray,
+	'挖掘' : require(rootdir + '/通用挂机脚本/公共模块/挖矿.js').mineArray,
 }
 
 var chooseSkill = (cb)=>{
