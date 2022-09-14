@@ -14,12 +14,12 @@
     ],
     "supplyMode": 1,
     "teamMode": 0,
-    "teammates": [        
-        "UNAの传教士",
+    "teammates": [
+        "UNAの巫师",
         "UNAの格斗1",
-        "UNAの格斗2",
         "UNAの战斧2",
-        "UNAの战斧3"],
+        "UNAの战斧3",
+        "UNAの传教士"],
     "sellStore": 1,
     "battleArea": 1,
     "layerLevel": 1,
