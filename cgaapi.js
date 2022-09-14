@@ -7910,7 +7910,7 @@ module.exports = function(callback){
 		var count = 0
 		while(count<10){
 			if(fs.readdirSync(temppath).indexOf("cgaapi.js")!=-1){
-				console.log("根目录已找到："+ temppath)
+				// console.log("根目录已找到："+ temppath)
 				break
 			}else{
 				temppath = path.join(temppath,'../')

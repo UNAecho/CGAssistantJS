@@ -349,10 +349,10 @@
 		], cb);
 	}
 },
-{
+{	// UNA:官方居然有错别字。。。官方写的是【咖哩】而不是【咖喱】
 	level : 7,
-	name : '咖喱块',
-	display_name : '咖喱块',
+	name : '咖哩块',
+	display_name : '咖哩块',
 	func : (cb)=>{
 		cga.travel.falan.toTeleRoom('杰诺瓦镇', ()=>{
 			cga.walkList([
