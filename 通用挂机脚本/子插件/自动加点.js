@@ -93,7 +93,7 @@ var thisobj = {
 				case 0:
 					var loss = thisobj.maxEndurance - ctx.playerinfo.detail.points_endurance
 					// console.log('当前[体力]('+ctx.playerinfo.detail.points_endurance+')与目标值('+thisobj.maxEndurance+')残差为:['+loss+']')
-					if(loss!=0 && loss <= minLoss && ctx.playerinfo.detail.points_endurance < maxPoint){
+					if(loss > 0 && loss <= minLoss && ctx.playerinfo.detail.points_endurance < maxPoint){
 						targetIndex = i
 						minLoss = loss
 						// console.log('准备加['+targetIndex+']点数')
@@ -102,7 +102,7 @@ var thisobj = {
 				case 1:
 					var loss = thisobj.maxStrength - ctx.playerinfo.detail.points_strength
 					// console.log('当前[力量]('+ctx.playerinfo.detail.points_strength+')与目标值('+thisobj.maxStrength+')残差为:['+loss+']')
-					if(loss!=0 && loss <= minLoss && ctx.playerinfo.detail.points_strength < maxPoint){
+					if(loss > 0 && loss <= minLoss && ctx.playerinfo.detail.points_strength < maxPoint){
 						targetIndex = i
 						minLoss = loss
 						// console.log('准备加['+targetIndex+']点数')
@@ -111,7 +111,7 @@ var thisobj = {
 				case 2:
 					var loss = thisobj.maxDefense - ctx.playerinfo.detail.points_defense
 					// console.log('当前[防御]('+ctx.playerinfo.detail.points_defense+')与目标值('+thisobj.maxDefense+')残差为:['+loss+']')
-					if(loss!=0 && loss<= minLoss && ctx.playerinfo.detail.points_defense < maxPoint){
+					if(loss > 0 && loss<= minLoss && ctx.playerinfo.detail.points_defense < maxPoint){
 						targetIndex = i
 						minLoss = loss
 						// console.log('准备加['+targetIndex+']点数')
@@ -120,7 +120,7 @@ var thisobj = {
 				case 3:
 					var loss = thisobj.maxAgility - ctx.playerinfo.detail.points_agility
 					// console.log('当前[敏捷]('+ctx.playerinfo.detail.points_agility+')与目标值('+thisobj.maxAgility+')残差为:['+loss+']')
-					if(loss!=0 && loss <= minLoss && ctx.playerinfo.detail.points_agility < maxPoint){
+					if(loss > 0 && loss <= minLoss && ctx.playerinfo.detail.points_agility < maxPoint){
 						targetIndex = i
 						minLoss = loss
 						// console.log('准备加['+targetIndex+']点数')
@@ -129,7 +129,7 @@ var thisobj = {
 				case 4:
 					var loss = thisobj.maxMagical - ctx.playerinfo.detail.points_magical
 					// console.log('当前[魔法]('+ctx.playerinfo.detail.points_magical+')与目标值('+thisobj.maxMagical+')残差为:['+loss+']')
-					if(loss!=0 && loss <= minLoss && ctx.playerinfo.detail.points_magical < maxPoint){
+					if(loss > 0 && loss <= minLoss && ctx.playerinfo.detail.points_magical < maxPoint){
 						targetIndex = i
 						minLoss = loss
 						// console.log('准备加['+targetIndex+']点数')
