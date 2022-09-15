@@ -8,6 +8,21 @@
         "highspeed": true,
         "list": [
             {
+                "condition": 13,
+                "condition2": 0,
+                "condition2rel": 0,
+                "condition2val": "",
+                "conditionrel": 3,
+                "conditionval": "10",
+                "index": 0,
+                "petaction": -1,
+                "pettarget": -1,
+                "pettargetsel": -1,
+                "playeraction": 1,
+                "playertarget": 0,
+                "playertargetsel": 0
+            },
+            {
                 "condition": 1,
                 "condition2": 2,
                 "condition2rel": 0,

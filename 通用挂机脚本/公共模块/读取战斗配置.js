@@ -40,7 +40,7 @@ var configModeArray = [
 		}
 		if(!skill){
 			// 此处注意文件的名字，是统称+练级二字，如：格斗士练级
-			if(cga.ismaxbattletitle()){
+			if(cga.ismaxbattletitle() && accompany.indexOf(thisobj.finalJob.jobmainname) != -1){
 				thisobj.manualLoad(thisobj.finalJob.jobmainname + '练级')
 			}else{
 				thisobj.manualLoad('练级')
@@ -155,6 +155,8 @@ var configTable = global.configTable;
 const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
 const professionalArray = getprofessionalInfos.Professions
 
+// 在烧技能模式中，可能需要陪同练级的职业，需要读取【职业+练级.json】的战斗配置文件。其余职业都读取默认的【练级.json】
+const accompany = ['格斗士', '传教士', '弓箭手',]
 
 var thisobj = {
 	func : (type)=>{
