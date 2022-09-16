@@ -47,10 +47,10 @@ const allowMats = [
 	// 以下为自定义材料，注意更改，以避免生产者使用高级制造配方
 	'苹果薄荷',
 	'柠檬草',
-	// '蝴蝶花',
-	// '果梨',
-	// '桃木',
-	// '番红花',
+	'蝴蝶花',
+	'果梨',
+	'桃木',
+	'番红花',
 	// '百里香',
 	// '瞿麦',
 	// '茴香',
@@ -71,6 +71,7 @@ const isFabricName = (name)=>{
 const teachers = [
 {
 	skillname : professionalInfo.skill,
+	location : professionalInfo.teacherlocation,
 	path : professionalInfo.teacherwalk,
 	pos : professionalInfo.teacherpos,	
 },
@@ -294,10 +295,10 @@ var getBestCraftableItem = ()=>{
 }
 
 var forgetAndLearn = (teacher, cb)=>{
-	cga.travel.falan.toTeleRoom('圣拉鲁卡村', ()=>{
+
+	var goAndLearn = (cb2)=>{
 		cga.walkList(teacher.path, ()=>{
 			cga.turnTo(teacher.pos[0], teacher.pos[1]);
-			
 			var dialogHandler = (err, dialog)=>{
 				if(dialog){
 					var hasSkill = cga.findPlayerSkill(teacher.skillname) ? true : false;
@@ -329,7 +330,7 @@ var forgetAndLearn = (teacher, cb)=>{
 								cga.ClickNPCDialog(0, 0);
 								cga.AsyncWaitNPCDialog((dlg2)=>{
 									cga.ClickNPCDialog(0, 0);
-									setTimeout(cb, 1000);
+									setTimeout(cb2, 1000);
 								});
 							});
 						}, 1000);
@@ -339,7 +340,18 @@ var forgetAndLearn = (teacher, cb)=>{
 			}
 			cga.AsyncWaitNPCDialog(dialogHandler);
 		});
-	});
+	}
+
+	if(teacher.location == '法兰城'){
+		cga.travel.falan.toStone('C', () => {
+			goAndLearn(cb)
+		});
+	}else{
+		cga.travel.falan.toTeleRoom('圣拉鲁卡村', ()=>{
+			goAndLearn(cb)
+		});
+	}
+	return
 }
 
 var dropUseless = (cb)=>{
@@ -435,9 +447,10 @@ var checkaim = (playerInfo)=>{
 }
 var loop = ()=>{
 
-	// console.log('teachers = ' + teachers[0])
-	// console.log('teachers = ' + teachers[1])
-	// console.log('teachers = ' + teachers[2])
+	// console.log('skillname = ' + teachers[0].skillname)
+	// console.log('location = ' + teachers[0].location)
+	// console.log('path = ' + teachers[0].path)
+	// console.log('pos = ' + teachers[0].pos)
 
 	var craftSkillList = cga.GetSkillsInfo().filter((sk)=>{
 		return (sk.name.indexOf('制') == 0 || sk.name.indexOf('造') == 0 || sk.name.indexOf('铸') == 0 || sk.name.indexOf('料理') == 0 || sk.name.indexOf('制药') == 0);

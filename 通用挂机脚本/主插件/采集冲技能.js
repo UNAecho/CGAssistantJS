@@ -39,7 +39,8 @@ var chooseSkill = (cb)=>{
 
 	var playerinfo = cga.GetPlayerInfo();
 	var skill = cga.findPlayerSkill(skillname)
-	if (skill && skill.lv != skill.maxlv){
+	// 如果是采集系，才会进入if逻辑，否则进入else逻辑直接冲所有采集技能。
+	if (mineDict[skillname] && skill && skill.lv != skill.maxlv){
 		thisobj.skill = skill
 		mineObject = mineDict[thisobj.skill.name].find((m)=>{
 			// 低级保护，采集7级或以上材料的时候可能会出现赶路受伤掉混的情况，这时封顶使用6级物品冲技能。
@@ -72,7 +73,7 @@ var chooseSkill = (cb)=>{
 					}
 					return false
 				});
-				console.log('检测到你是【' + job +'】，但本职技能【'+ skillname +'】已经烧满，现检测到【'+thisobj.skill.name+'】没有烧满，出发去采集【' + mineObject.name + '】来把其他采集技能冲满')
+				console.log('检测到你是【' + job +'】，但本职技能【'+ skillname +'】在此脚本中已不再需要升级，现检测到【'+thisobj.skill.name+'】没有烧满，出发去采集【' + mineObject.name + '】来把其他采集技能冲满')
 				if (cb) cb(null)
 				return
 			}

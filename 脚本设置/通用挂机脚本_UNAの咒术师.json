@@ -16,11 +16,11 @@
     "supplyMode": 1,
     "teamMode": 0,
     "teammates": [
-        "UNAの格斗2",
         "UNAの咒术师",
-        "UNAの巫师",
-        "UNAの伐木04",
-        "UNAの伐木03"
+        "UNAの格斗01",
+        "UNAの格斗02",
+        "UNAの格斗03",
+        "UNAの格斗04"
     ],
     "battleArea": 0,
     "sellStore": 1,

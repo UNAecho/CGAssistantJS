@@ -674,7 +674,26 @@ const Professions = [
 		jobmainname: '造盾工',
 		skill:'',
 		titles: ['造盾学徒', '造盾工', '资深造盾师傅', '御用造盾师傅', '造盾名师'],
-        tutorlocation: '圣拉鲁卡村'
+        tutorlocation: '圣拉鲁卡村',
+		tutorwalk:[
+			[7, 3, '村长的家'],
+			[2, 9, '圣拉鲁卡村'],
+			[32, 70, '装备品店'],
+			[14, 4, '1楼小房间'],
+			[9, 3, '地下工房'],
+			[11, 42]
+			],
+		tutorpos : [11, 41],
+		teacherlocation: '圣拉鲁卡村',
+		teacherwalk:[
+			[7, 3, '村长的家'],
+			[2, 9, '圣拉鲁卡村'],
+			[32, 70, '装备品店'],
+			[14, 4, '1楼小房间'],
+			[9, 3, '地下工房'],
+			[29, 31]
+			],
+		teacherpos : [30 ,31],
 	}, {
 		category: '制造系',
 		jobmainname: '裁缝工',
@@ -690,6 +709,7 @@ const Professions = [
 			[17, 19]
 			],
 		tutorpos : [17, 18],
+		teacherlocation: '圣拉鲁卡村',
 		teacherwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -714,6 +734,7 @@ const Professions = [
 			[16, 17]
 			],
 		tutorpos : [17, 17],
+		teacherlocation: '圣拉鲁卡村',
 		teacherwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -736,24 +757,86 @@ const Professions = [
 			[15, 5],
 			],
 		tutorpos : [15, 4],
+		teacherlocation: '法兰城',
+		teacherwalk:[
+			[41, 50, '里谢里雅堡 1楼'],
+			[103, 21,'厨房'],
+			[12, 7],
+			],
+		teacherpos : [12, 6],
 	}, {
 		category: '制造系',
 		jobmainname: '铠甲工',
-		skill:'',
+		skill:'造铠',
 		titles: ['铠甲学徒', '铠甲工', '资深铠甲师傅', '御用铠甲师傅', '铠甲名师'],
-        tutorlocation: '圣拉鲁卡村'
+        tutorlocation: '圣拉鲁卡村',
+		tutorwalk:[
+			[7, 3, '村长的家'],
+			[2, 9, '圣拉鲁卡村'],
+			[32, 70, '装备品店'],
+			[14, 4, '1楼小房间'],
+			[9, 3, '地下工房'],
+			[27, 32]
+			],
+		tutorpos : [27, 31],
+		teacherlocation: '法兰城',
+		teacherwalk:[
+			CW,
+			[22, 88,'芙蕾雅'],
+			[421, 308,'小备前之洞窟'],
+			[8, 7],
+			],
+		teacherpos : [7 ,7],
 	}, {
 		category: '制造系',
 		jobmainname: '帽子工',
 		skill:'',
 		titles: ['帽子学徒', '帽子工', '资深帽子师傅', '御用帽子师傅', '帽子名师'],
-        tutorlocation: '圣拉鲁卡村'
+        tutorlocation: '圣拉鲁卡村',
+		tutorwalk:[
+			[7, 3, '村长的家'],
+			[2, 9, '圣拉鲁卡村'],
+			[32, 70, '装备品店'],
+			[14, 4, '1楼小房间'],
+			[9, 3, '地下工房'],
+			[12, 25]
+			],
+		tutorpos : [13, 25],
+		teacherlocation: '圣拉鲁卡村',
+		teacherwalk:[
+			[7, 3, '村长的家'],
+			[2, 9, '圣拉鲁卡村'],
+			[32, 70, '装备品店'],
+			[14, 4, '1楼小房间'],
+			[9, 3, '地下工房'],
+			[12, 25]
+			],
+		teacherpos : [11 ,25],
 	}, {
 		category: '制造系',
 		jobmainname: '头盔工',
 		skill:'',
 		titles: ['头盔学徒', '头盔工', '资深头盔师傅', '御用头盔师傅', '头盔名师'],
-        tutorlocation: '圣拉鲁卡村'
+        tutorlocation: '圣拉鲁卡村',
+		tutorwalk:[
+			[7, 3, '村长的家'],
+			[2, 9, '圣拉鲁卡村'],
+			[32, 70, '装备品店'],
+			[14, 4, '1楼小房间'],
+			[9, 3, '地下工房'],
+			[15, 32]
+			],
+		tutorpos : [15, 31],
+		teacherlocation: '圣拉鲁卡村',
+		teacherwalk:[
+			[7, 3, '村长的家'],
+			[2, 9, '圣拉鲁卡村'],
+			[32, 70, '装备品店'],
+			[14, 4, '1楼小房间'],
+			[9, 3, '地下工房'],
+			[14, 27]
+			],
+		teacherpos : [15 ,27],
 	}, {
 		category: '制造系',
 		jobmainname: '投掷武器工',
@@ -794,6 +877,7 @@ const Professions = [
 			[32, 34]
 			],
 		tutorpos : [33, 33],
+		teacherlocation: '圣拉鲁卡村',
 		teacherwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -806,7 +890,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		jobmainname: '药剂师',
-		skill:'',
+		skill:'制药',
 		titles: ['实习药剂师', '药剂师', '资深药剂大师', '御用药剂师', '炼金术士'],
         tutorlocation: '圣拉鲁卡村',
 		tutorwalk:[
@@ -839,6 +923,7 @@ const Professions = [
 			[39, 32]
 			],
 		tutorpos : [39, 31],
+		teacherlocation: '圣拉鲁卡村',
 		teacherwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -863,6 +948,7 @@ const Professions = [
 			[37, 19]
 			],
 		tutorpos : [38, 18],
+		teacherlocation: '圣拉鲁卡村',
 		teacherwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -877,7 +963,26 @@ const Professions = [
 		jobmainname: '制靴工',
 		skill:'',
 		titles: ['制靴学徒', '制靴工', '资深制靴师傅', '御用制靴师傅', '制靴名师'],
-        tutorlocation: '圣拉鲁卡村'
+        tutorlocation: '圣拉鲁卡村',
+		tutorwalk:[
+			[7, 3, '村长的家'],
+			[2, 9, '圣拉鲁卡村'],
+			[32, 70, '装备品店'],
+			[14, 4, '1楼小房间'],
+			[9, 3, '地下工房'],
+			[17, 32]
+			],
+		tutorpos : [17, 31],
+		teacherlocation: '圣拉鲁卡村',
+		teacherwalk:[
+			[7, 3, '村长的家'],
+			[2, 9, '圣拉鲁卡村'],
+			[32, 70, '装备品店'],
+			[14, 4, '1楼小房间'],
+			[9, 3, '地下工房'],
+			[19, 31]
+			],
+		teacherpos : [19 ,30],
 	}, {
 		category: '制造系',
 		jobmainname: '铸剑工',
@@ -906,7 +1011,15 @@ const Professions = [
 		category: '服务系',
 		skill:'',
 		titles: ['防具修理学徒', '防具修理工', '资深防具修理师', '御用防具修理师', '修理防具专家'],
-        tutorlocation: '法兰城'
+        tutorlocation: '法兰城',
+		teacherlocation: '法兰城',
+		teacherwalk:[
+			CW,
+			[22, 88,'芙蕾雅'],
+			[421, 308,'小备前之洞窟'],
+			[25, 4],
+			],
+		teacherpos : [26 ,4],
 	}, {
 		jobmainname: '护士',
 		category: '服务系',

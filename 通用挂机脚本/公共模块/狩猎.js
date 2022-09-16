@@ -56,6 +56,19 @@
 	}
 },
 {
+	level : 1,
+	name : '鹿皮',
+	display_name : '鹿皮',
+	func : (cb)=>{
+		cga.travel.newisland.toStone('X', ()=>{
+			cga.walkList([
+				[130, 50, '盖雷布伦森林'],
+				[175, 182],
+			], cb);
+		});
+	}
+},
+{
 	level : 2,
 	name : '大豆',
 	display_name : '大豆',

@@ -5,6 +5,9 @@ var cga = global.cga;
 var configTable = global.configTable;
 var socket = null;
 
+var rootdir = cga.getrootdir()
+var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
+
 // 原料采集信息
 var flower = require('./采花.js').mineArray;
 var food = require('./狩猎.js').mineArray;
@@ -27,23 +30,6 @@ var actionarr = flower.concat(food).concat(wood).concat(mine)
 // 采集原材料需求的几倍（即造几件的量），然后和其他人汇合。
 // 注意：如果超出2倍，经常会出现制造者一直在桥头售卖的死循环，因为材料+成品可能会多于15个，特别是料理和血瓶的合成过程。
 const MATERIALS_MULTIPLE_TIMES = 2;
-
-var loadBattleConfig = ()=>{
-
-	var settingpath = cga.getrootdir() + '\\战斗配置\\生产赶路.json'
-
-	var setting = JSON.parse(fs.readFileSync(settingpath))
-
-	cga.gui.LoadSettings(setting, (err, result)=>{
-		if(err){
-			console.log(err);
-			return;
-		}else{
-			console.log('读取战斗配置【'+settingpath+'】成功')
-		}
-	})
-	return
-}
 
 var thisobj = {
 	func: (cb) => {
@@ -320,9 +306,7 @@ var thisobj = {
 			thisobj.mineType = 0
 		}
 
-		// 暂时把读取战斗配置放在这里
-		loadBattleConfig()
-
+		configMode.manualLoad('生产赶路')
 		return true;
 	},
 	inputcb: (cb) => {
