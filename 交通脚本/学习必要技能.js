@@ -16,7 +16,7 @@ var cga = require('../cgaapi')(function(){
 
 	// 游民学习不了
 	if(category == '初始系'){
-		throw new error('游民不能学习治疗、调教、宠物强化等职业技能，不适合使用当前脚本,')
+		throw new Error('游民不能学习治疗、调教、宠物强化等职业技能，不适合使用当前脚本,')
 	}
 	// 读取玩家配置：战斗逃跑+原始移速
 	var loadplayerconfig = () =>{
@@ -229,6 +229,7 @@ var cga = require('../cgaapi')(function(){
 			if(category == '制造系' || category == '采集系'){
 				if(cga.findPlayerSkill(dig)){
 					console.log('已经学会' + dig + ',跳过')
+					cb2(true)
 				}else{
 					professionalbehavior(cga, '矿工','learning',cb2)
 				}

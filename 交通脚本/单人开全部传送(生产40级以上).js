@@ -1,24 +1,12 @@
 var fs = require('fs');
 var cga = require('../cgaapi')(function(){
-
+	global.cga = cga
+	
+	var rootdir = cga.getrootdir()
+	var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
+	var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
+	
 	var config = cga.loadPlayerConfig()
-
-	var loadBattleConfig = ()=>{
-
-		var settingpath = cga.getrootdir() + '\\战斗配置\\生产赶路.json'
-	
-		var setting = JSON.parse(fs.readFileSync(settingpath))
-	
-		cga.gui.LoadSettings(setting, (err, result)=>{
-			if(err){
-				console.log(err);
-				return;
-			}else{
-				console.log('读取战斗配置【'+settingpath+'】成功')
-			}
-		})
-		return
-	}
 
 	var waitResponse = (cb3)=>{
 		// 等待NPC响应
@@ -43,13 +31,15 @@ var cga = require('../cgaapi')(function(){
 	//任务核心流程
 	var task = cga.task.Task('单人开全部传送(生产40级以上)', [
 	{//0
-		intro: '0.检查开传状态',
+		intro: '0.招魂、治疗自己和宠物，并检查开传状态',
 		workFunc: function(cb2){
-			cga.travel.falan.checkAllTeleRoom(()=>{
-				setTimeout(() => {
-					config = cga.loadPlayerConfig()
-					cb2(true)
-				}, 3000);
+			healMode.func(()=>{
+				cga.travel.falan.checkAllTeleRoom(()=>{
+					setTimeout(() => {
+						config = cga.loadPlayerConfig()
+						cb2(true)
+					}, 3000);
+				})
 			})
 		}
 	},
@@ -316,7 +306,8 @@ var cga = require('../cgaapi')(function(){
 					return
 				}else{
 					if(!waitflag){
-						console.log('等待天明..每【'+cycletime/1000+'】秒检查一次时间')
+						var waitWord = '等待天明..每【'+cycletime/1000+'】秒检查一次时间'
+						cga.SayWords(waitWord, 0, 3, 1)
 					}
 					waitflag = true
 					setTimeout(waitopportunity, cycletime, cb3);
@@ -344,7 +335,7 @@ var cga = require('../cgaapi')(function(){
 						cga.walkList([
 							[29, 21, 400],
 						], ()=>{
-							setTimeout(retry, cycletime);
+							setTimeout(retry, cycletime, cb4);
 							return
 						});
 					}
@@ -468,7 +459,7 @@ var cga = require('../cgaapi')(function(){
 		},
 	]
 	);
-	loadBattleConfig()
+	configMode.manualLoad('生产赶路')
 	task.anyStepDone = false;
 	task.doTask();
 });
