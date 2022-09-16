@@ -1,4 +1,9 @@
 var cga = require('./cgaapi')(function(){
+	global.cga = cga
+	
+	var rootdir = cga.getrootdir()
+	var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
+	var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
 
 	var targetname = null
 	// 职业目录
@@ -8,7 +13,7 @@ var cga = require('./cgaapi')(function(){
 	// 是否为转职
 	var transferflag = false
 	// 提取本地职业信息
-	const getprofessionalInfos = require('./常用数据/ProfessionalInfo.js');
+	const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
 	var professionalInfos = getprofessionalInfos('制造系')
 	var professionalInfo = null
 	for(p in professionalInfos){
@@ -97,7 +102,9 @@ var cga = require('./cgaapi')(function(){
 				targetname = ['投掷','刀','斧','弓','枪','杖','剑'].find((n)=>{
 					return job.indexOf(n) >= 0;
 				}) == undefined ? '试炼衣' : '试炼剑';
-				cb2(true)
+				healMode.func(()=>{
+					cb2(true)
+				})
 			}
 			stage1()
 		}
@@ -575,6 +582,6 @@ var cga = require('./cgaapi')(function(){
 		}
 	]
 	);
-	
+	configMode.manualLoad('生产赶路')
 	task.doTask();
 });
