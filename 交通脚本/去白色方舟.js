@@ -1,13 +1,16 @@
 var fs = require('fs');
 var cga = require('../cgaapi')(function(){
 	// 重要信息：59934为【战斗系和准战斗系，通过黑色方舟最终到达白色方舟与露比对话，传送的学第11格技能】的mapindex3
-	// 59930为白色方舟四色分歧口
+	// 59930为白色方舟入口（四色分歧口）
+	global.cga = cga
+	var rootdir = cga.getrootdir()
+	var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
+	var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
+	// 提取本地职业数据
+	const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
 
 	//队员信息
 	var playerinfo = cga.GetPlayerInfo();
-
-	// 提取本地职业数据
-	const getprofessionalInfos = require('../常用数据/ProfessionalInfo.js');
 
 	if(getprofessionalInfos.getJobLevel(playerinfo.job) < 3){
 		var sayString = '【UNA脚本提示】你没有达到达到师范/御用(3转)阶段哦..在光之路会被石碑拦住的。';
@@ -19,33 +22,11 @@ var cga = require('../cgaapi')(function(){
 	var namefilter = "UNA"
 
 	// // 2人小队集合点，队长等待坐标，如无需要，无需更改
-	// var wait_xpos = 139
-	// var wait_ypos = 108
-	// // 队员等待坐标
-	// var go_xpos = 139
-	// var go_ypos = 107
 	var wait_xpos = 93
 	var wait_ypos = 63
 	// 队员等待坐标
 	var go_xpos = 93
 	var go_ypos = 62
-
-	var loadBattleConfig = ()=>{
-
-		var settingpath = cga.getrootdir() + '\\战斗配置\\生产赶路.json'
-	
-		var setting = JSON.parse(fs.readFileSync(settingpath))
-	
-		cga.gui.LoadSettings(setting, (err, result)=>{
-			if(err){
-				console.log(err);
-				return;
-			}else{
-				console.log('读取战斗配置【'+settingpath+'】成功')
-			}
-		})
-		return
-	}
 
 	var dialogHandler = (err, dlg)=>{
 		if(dlg && (dlg.options & 4) == 4)
@@ -85,13 +66,6 @@ var cga = require('../cgaapi')(function(){
 	}
 
 	var pass = (cb,npcPos,index,wannaPos)=>{
-		// var tmpindex = cga.GetMapIndex().index3
-		// var tmpxy = cga.GetMapXY();
-		
-		// if (cb && index == tmpindex && xpos == tmpxy.x && ypos == tmpxy.y){
-		// 	console.log('到达index:【' +tmpindex+ '】，x:【' +tmpxy.x + '】，y:' + tmpxy.y + '】')
-		// 	cb(true)
-		// }
 		setTimeout(() => {
 			cga.TurnTo(npcPos[0], npcPos[1]);
 		}, 1000);
@@ -107,37 +81,24 @@ var cga = require('../cgaapi')(function(){
 	// 任务核心流程
 	var task = cga.task.Task('去白色方舟', [
 	{//0
-		intro: '0.清理誓约之花',
+		intro: '0.任务前期准备，包括治疗、招魂等。',
 		workFunc: function(cb2){
-			item = cga.getInventoryItems().find((it)=>{
-				return (it.name == '誓约之花')
-			});
-			if(item){
-				console.log('丢弃旧的誓约之花..');
-				cga.DropItem(item.pos);
-				setTimeout(()=>{
-					cb2('restart stage');
-				}, 3000);
-			}else{
+			healMode.func(()=>{
 				cb2(true)
-			}
+			})
 		}
 	},
 	{//1
 		intro: '1.组2人队，坐小飞象去丘斯特村',
 		workFunc: function(cb2){
 			var retry = ()=>{
-				cga.AsyncWaitNPCDialog(dialogHandler);
-				cga.TurnTo(118, 101);
-				cga.AsyncWaitNPCDialog((err, dlg)=>{
-					if(dlg && dlg.message.indexOf('很少的花费') >= 0 && dlg.options == 12){
-						cga.waitForLocation({mapname:'丘斯特村'}, ()=>{
-							cb2(true)
-						});
-						return;
-					}
+				var XY = cga.GetMapXY()
+				if (XY.x == 118 && XY.y == 100){
+					cga.AsyncWaitNPCDialog(dialogHandler);
+					cga.TurnTo(118, 101);
 					setTimeout(retry, 5000);
-				});
+				}
+				return
 			}
 
 			var go = ()=>{
@@ -152,7 +113,12 @@ var cga = require('../cgaapi')(function(){
 				if(cga.isTeamLeader){
 					cga.walkList([
 						[118, 100],
-					], retry);
+					], ()=>{
+						cga.waitForLocation({mapname:'丘斯特村'}, ()=>{
+							cb2(true)
+						});
+						retry()
+					});
 				} else {//队员行动
 					cga.waitForLocation({mapname:'丘斯特村'}, ()=>{
 						cb2(true)
@@ -335,8 +301,8 @@ var cga = require('../cgaapi')(function(){
 	},
 	],
 	[//任务阶段是否完成
-		function(){// 清理誓约之花
-			return (cga.getItemCount('誓约之花') == 0) ? true : false;
+		function(){// 前期准备
+			return false;
 		},
 		function(){// 去丘斯特村
 			return (cga.GetMapIndex().index3 == 59524) ? true :false;
@@ -361,6 +327,14 @@ var cga = require('../cgaapi')(function(){
 		},
 	]
 	);
-	loadBattleConfig()
-	task.doTask();
+	configMode.manualLoad('生产赶路')
+	task.doTask(()=>{
+		global.cga = cga
+		var rootdir = cga.getrootdir()
+		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+		var body = {
+			path : rootdir + "\\四转换花.js",
+		}
+		scriptMode.call_ohter_script(body)
+	});
 });
