@@ -3291,7 +3291,13 @@ module.exports = function(callback){
 			},
 		},
 	}
-
+/**
+ * UNA: 写了一个全自动导航的API，可以在城镇地图中任意一个地方去另一个任意的地方，无需登出。
+ * 由于比较复杂，如果使用起来有问题，请联系yadhr582855555@hotmail.com来优化
+ * @param {*} targetMap 目的地名称或者index3
+ * @param {*} cb 回调
+ * @returns 
+ */
 	cga.travel.falan.autopilot = (targetMap, cb)=>{
 
 		// 当前地图信息
@@ -5237,6 +5243,74 @@ module.exports = function(callback){
 		}
 		
 		return null;
+	}
+/**
+ * UNA :写了一个持久化人物任务完成情况的方法，用于离线记录人物的一些数据，便于查询。
+ * 请注意，关于任务的称号，我自己也没有做过全部的任务，所以请自行添加需要的任务名称，我只写了一个开启者
+ * 
+ * @param {*} mission 任务名称，请注意输入的任务名称要全项目统一，不然会出现检测出错的情况。如【树精长老】和【树精】【一转】等会被认为是不同的任务。
+ * @param {*} status 任务状态，可以输入布尔类型代表完成状态，也可以输入int、string来标记进度，你自己认识就好。
+ * @param {*} cb 回调
+ * @returns 
+ * 
+ */
+	cga.refreshMissonStatus = (mission, status, cb) => {
+		var rootdir = cga.getrootdir()
+		var playerInfo = cga.GetPlayerInfo();
+		// 提取本地职业数据，查询人物是战斗系还是生产系，目前是几转，用于刷新各种晋级任务的状态。
+		const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
+		var professionalInfo = getprofessionalInfos(playerInfo.job)
+		var category = professionalInfo.category
+		var jobLevel = getprofessionalInfos.getJobLevel(playerInfo.job)
+
+		// 晋级任务
+		const battleMission = ['树精长老的末日', '挑战神兽', '诅咒的迷宫', '誓言之花', '洛伊夫的净化', ]
+		const productMission = ['咖哩任务', '起司的任务', '魔法大学', '誓言之花', ]
+
+		var config = cga.loadPlayerConfig();
+		if(!config)
+			config = {};
+		if(!config.hasOwnProperty("mission")){
+			config["mission"] = {}
+		}
+		if(!category){
+			throw new Error('category数值有误，请手动检查ProfessionalInfo.js中【' + professionalInfo.jobmainname+'】的category')
+		}
+		// 护士和医生属于生产系，但晋级需要做战斗系的任务
+		if(['护士', '医生',].indexOf(professionalInfo.jobmainname) != -1){
+			category = '战斗系'
+		}
+		else if(['物理系', '魔法系', '魔物系',].indexOf(category) != -1){
+			category = '战斗系'
+		}else{
+			category = '生产系'
+		}
+		// 开始执行逻辑，首先刷新一下职业晋级任务的状态。
+		if(category == '战斗系'){
+			for (var i = 0 ; i < jobLevel ; i++){
+				config["mission"][battleMission[i]] = true
+			}
+		}else{
+			for (var i = 0 ; i < jobLevel ; i++){
+				config["mission"][productMission[i]] = true
+			}
+		}
+		// 然后检查称号
+		for (var i = 0 ; i < playerInfo.titles.length ; i++){
+			if(playerInfo.titles[i] == '开启者'){
+				config["mission"]['开启者'] = true
+			}
+		}
+		// 刷新完称号，开始写入调用方传来的任务进度。如果没有传入，则跳过。
+		if(mission){
+			if(config["mission"].hasOwnProperty(mission) && config["mission"][mission] != status){
+				console.log('任务【' + mission + '】由原状态【' + (config["mission"][mission]) + '】改为【' + status + '】')
+			}
+			config["mission"][mission] = status
+		}
+		// 写入状态并调用callback，函数结束。
+		cga.savePlayerConfig(config, cb);
+		return
 	}
 
 	//异步获取最大银行格，必须跟柜员对话一次

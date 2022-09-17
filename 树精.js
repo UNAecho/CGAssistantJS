@@ -1,13 +1,17 @@
 var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
+	global.cga = cga
+	var rootdir = cga.getrootdir()
+	var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
+	var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
 
 	var playerinfo = cga.GetPlayerInfo();
 	
 	var teammates = [
-        "UNAの猎人01",
-        "UNAの传教士2",
         "UNAの格斗2",
-        "UNAの暗黑骑士",
-        "UNAの格斗3"
+        "UNAの巫师",
+        "UNAの制靴",
+        "UNAの造小刀",
+        "UNAの造帽"
 	];
 	
 	// var teamplayers = cga.getTeamPlayers();
@@ -19,7 +23,15 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	
 	var task = cga.task.Task('树精长老的末日', [
 	{//0
-		intro: '1.前往维诺亚村医院（61.53）与佣兵艾里克（7.5）对话，选“是”获得【火把】。',
+		intro: '1.任务准备',
+		workFunc: function(cb2){
+			healMode.func(()=>{
+				cb2(true)
+			})
+		}
+	},
+	{//1
+		intro: '2.前往维诺亚村医院（61.53）与佣兵艾里克（7.5）对话，选“是”获得【火把】。',
 		workFunc: function(cb2){
 						
 			var go_1 = ()=>{
@@ -147,8 +159,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//1
-		intro: '2.出维诺亚村向北行走至芙蕾雅岛（380.353）处，进入布满青苔的洞窟。3.通过随机迷宫抵达叹息之森林，与树精长老（29.13）对话，交出【火把】进入战斗。',
+	{//2
+		intro: '3.出维诺亚村向北行走至芙蕾雅岛（380.353）处，进入布满青苔的洞窟。3.通过随机迷宫抵达叹息之森林，与树精长老（29.13）对话，交出【火把】进入战斗。',
 		workFunc: function(cb2){
 			
 			var fuckBOSS = ()=>{
@@ -204,7 +216,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//2
+	{//3
 		intro: '4.战斗胜利后传送至叹息森林，队伍中随机1人获得【艾里克的大剑】。5.与年轻树精（26.12）对话，获得【树苗？】。',
 		workFunc: function(cb2){
 			var go = ()=>{
@@ -268,8 +280,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//3
-		intro: '6.前往法兰城凯蒂夫人的店（196.78）与凯蒂夫人（15.12）对话，交出30G将【树苗？】鉴定为【生命之花】。',
+	{//4
+		intro: '5.前往法兰城凯蒂夫人的店（196.78）与凯蒂夫人（15.12）对话，交出30G将【树苗？】鉴定为【生命之花】。',
 		workFunc: function(cb2){
 			cga.travel.falan.toKatieStore(()=>{
 				cga.walkList([
@@ -287,8 +299,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			});
 		}
 	},
-	{//4
-		intro: '7.前往维诺亚村村长的家（40.36）与村长卡丹（16.7）对话，选“是”交出【生命之花】获得晋阶资格，任务完结。',
+	{//5
+		intro: '6.前往维诺亚村村长的家（40.36）与村长卡丹（16.7）对话，选“是”交出【生命之花】获得晋阶资格，任务完结。',
 		workFunc: function(cb2){
 			cga.travel.falan.toTeleRoom('维诺亚村', ()=>{
 				cga.walkList([
@@ -310,6 +322,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	],
 	[//任务阶段是否完成
 		function(){
+			return false;
+		},
+		function(){
 			return (cga.getItemCount('火把') >= 1) ? true : false;
 		},
 		function(){
@@ -327,5 +342,10 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	]
 	);
 	
-	task.doTask();
+	task.doTask(()=>{
+		var missionName = '树精长老的末日'
+		cga.refreshMissonStatus(missionName,true,()=>{
+			console.log('任务【' + missionName + '】已记录成功')
+		})
+	});
 });

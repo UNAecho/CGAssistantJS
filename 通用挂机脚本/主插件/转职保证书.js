@@ -18,30 +18,29 @@ var jump = ()=>{
 
 
 var playerinfo = cga.GetPlayerInfo();
-// 不使用动态组队，避免脚本运行时需要手动组队的麻烦
-var teammates = [
-	"UNAの传教士2",
-	"UNAの暗黑骑士",
-	"UNAの圣骑士",
-	"UNAの战斧4",
-	"UNAの格斗3",
-	// "UNAの剑士",
-	// "UNAの游侠",
-	// "UNAの饲养师",
-	// "UNAの圣骑士",
-	// "UNAの巫师",
-	// "UNAの暗黑骑士"
-];
+
+// 不使用动态组队，避免脚本运行时需要手动组队的麻烦。
+var teammates = null
+// 需要在静态teams中定义好角色所属的队伍。
+var teams = [
+	[
+		"UNAの格斗2",
+		"UNAの格斗01",
+		"UNAの格斗02",
+		"UNAの咒术师",
+		"UNAの传教士2",
+	],
+	[
+		"UNAの格斗3",
+		"UNAの格斗03",
+		"UNAの格斗04",
+		"UNAの暗黑骑士",
+		"UNAの圣骑士",
+	]
+]
 
 // 本次刷保证书的人数
 var maxteammate = 5
-
-// 注销掉动态组队
-// var teamplayers = cga.getTeamPlayers();
-// for(var i in teamplayers)
-// 	teammates[i] = teamplayers[i].name;
-
-cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false
 
 var callZLZZ = false;
 var callWYW = false;
@@ -447,16 +446,24 @@ var zudangzhe = (cb)=>{
 
 var task = cga.task.Task('琥珀之卵4', [
 	{//0
-		intro: '0.进行一些前期处理工作，如丢弃灵堂烧技能产生的小石像怪的卡片',
+		intro: '0.进行一些前期处理工作，识别组队、丢弃烧技能可能获得的小石像怪卡片。',
 		// 这里的stageIndex是从cgaapi中cga.task.Task传过来的任务index，可用于离线写入文件记录任务状态。
 		// 功能已实现，但本任务并不需要，故注掉
 		workFunc: function(cb2,stageIndex){
 			// console.log('开始第'+stageIndex+'步骤')
-			cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false
 			// console.log(cga.isTeamLeader)
 			// console.log(playerinfo.name)
 			// console.log('teammates[0]' + teammates[0])
 			// console.log('teammates.length'+teammates.length)
+			
+			// 采用静态多队伍模式，角色会自己寻找自己在哪个队伍中。
+			for (var t in teams){
+				if (teams[t].indexOf(playerinfo.name) != -1){
+					teammates = teams[t]
+				}
+			}
+			cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false
+
 			var dropcount = 0
 			var dropUseless = () =>{
 				var item = cga.getInventoryItems().find((it)=>{
