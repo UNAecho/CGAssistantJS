@@ -29,7 +29,7 @@ var cga = require('../cgaapi')(function(){
 		});
 	}
 	//任务核心流程
-	var task = cga.task.Task('单人开全部传送(生产40级以上)', [
+	var task = cga.task.Task('单人开全部传送(非战斗系40级以上)', [
 	{//0
 		intro: '0.招魂、治疗自己和宠物，并检查开传状态',
 		workFunc: function(cb2){

@@ -1,5 +1,9 @@
 var cga = require('../cgaapi')(function(){
 
+	global.cga = cga;
+	var rootdir = cga.getrootdir()
+	var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
+
 	var playerinfo = cga.GetPlayerInfo();
 	
 	var teammates = [
@@ -412,6 +416,12 @@ var cga = require('../cgaapi')(function(){
 		// },
 	]
 	);
-	
-	task.doTask();
+	configMode.func('节能模式')
+	task.doTask(()=>{
+		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+		var body = {
+			path : rootdir + "\\交通脚本\\单人开全部传送(非战斗系40级以上).js",
+		}
+		scriptMode.call_ohter_script(body)
+	});
 });
