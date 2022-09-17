@@ -17,6 +17,8 @@ var skillname = professionalInfo.skill
 
 // 大于这个等级的采集者才能去任何地方收集，否则最多去6级材料的地点，防止跑路的时候受伤、掉魂。
 var limitLv = 80
+// 如果是制造系冲技能，当全满时，使用何种技能1级来挂机等待下一步人工决策。
+var tmpskill = '挖掘'
 
 /**
  * 原料采集信息，樵夫使用采花冲级，因为前6级都可以去花田。
@@ -40,7 +42,8 @@ var chooseSkill = (cb)=>{
 	var playerinfo = cga.GetPlayerInfo();
 	var skill = cga.findPlayerSkill(skillname)
 	// 如果是采集系，才会进入if逻辑，否则进入else逻辑直接冲所有采集技能。
-	if (mineDict[skillname] && skill && skill.lv != skill.maxlv){
+	// UNA：cga.GetSkillsInfo()返回的信息中，当前的技能会有大于等级上限的BUG，比如当前3级而max是2级。所以使用skill.lv < skill.maxlv来判断是否挖满
+	if (mineDict[skillname] && skill && skill.lv < skill.maxlv){
 		thisobj.skill = skill
 		mineObject = mineDict[thisobj.skill.name].find((m)=>{
 			// 低级保护，采集7级或以上材料的时候可能会出现赶路受伤掉混的情况，这时封顶使用6级物品冲技能。
@@ -60,7 +63,7 @@ var chooseSkill = (cb)=>{
 	}else{
 		for (var key in mineDict) {
 			skill = cga.findPlayerSkill(key)
-			if (skill && skill.lv != skill.maxlv) {
+			if (skill && skill.lv < skill.maxlv) {
 				thisobj.skill = skill
 				mineObject = mineDict[thisobj.skill.name].find((m)=>{
 					// 同上，低级保护。
@@ -80,6 +83,15 @@ var chooseSkill = (cb)=>{
 		}
 	}
 	if(!mineObject){
+		// 如果是非采集系的制造系，已经无需再冲技能的话，默认挖矿赚钱，等待人工下一步决策。
+		if(!thisobj.skill){
+			mineObject = mineDict['挖掘'][0]
+			thisobj.skill = cga.findPlayerSkill(tmpskill)
+
+			var jobLevel = getprofessionalInfos.getJobLevel(playerinfo.job)
+			console.log('你当前职级的采集技能已全部冲满' + (jobLevel < 4 ? '如需继续提升，请晋级，【注意】4转开始，制造系的采集技能上限为5级，而采集技能升到5级后，会降智力，提升耐力。已经双百的账号请注意。' : ''))
+			return
+		}
 		mineObject = mineDict[thisobj.skill.name].find((m)=>{
 			if(m.level == 1){
 				return true

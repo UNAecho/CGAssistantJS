@@ -649,7 +649,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '造弓工',
 		titles: ['造弓学徒', '造弓工', '资深造弓师傅', '御用造弓师', '造弓名师'],
-		skill : '造弓',
+		skill:'造弓',
         tutorlocation: '圣拉鲁卡村',
 		tutorwalk:[
 			[7, 3, '村长的家'],
@@ -672,7 +672,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		jobmainname: '造盾工',
-		skill:'',
+		skill:'造盾',
 		titles: ['造盾学徒', '造盾工', '资深造盾师傅', '御用造盾师傅', '造盾名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorwalk:[
@@ -790,7 +790,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		jobmainname: '帽子工',
-		skill:'',
+		skill:'制帽子',
 		titles: ['帽子学徒', '帽子工', '资深帽子师傅', '御用帽子师傅', '帽子名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorwalk:[
@@ -815,7 +815,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		jobmainname: '头盔工',
-		skill:'',
+		skill:'造头盔',
 		titles: ['头盔学徒', '头盔工', '资深头盔师傅', '御用头盔师傅', '头盔名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorwalk:[
@@ -865,7 +865,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		jobmainname: '小刀工',
-		skill:'',
+		skill:'造小刀',
 		titles: ['小刀学徒', '小刀工', '资深小刀师傅', '御用小刀师傅', '小刀名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorwalk:[
@@ -961,7 +961,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		jobmainname: '制靴工',
-		skill:'',
+		skill:'制长靴',
 		titles: ['制靴学徒', '制靴工', '资深制靴师傅', '御用制靴师傅', '制靴名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorwalk:[
@@ -1009,7 +1009,7 @@ const Professions = [
 	}, {
 		jobmainname: '防具修理工',
 		category: '服务系',
-		skill:'',
+		skill:'防具修理',
 		titles: ['防具修理学徒', '防具修理工', '资深防具修理师', '御用防具修理师', '修理防具专家'],
         tutorlocation: '法兰城',
 		teacherlocation: '法兰城',
@@ -1063,7 +1063,7 @@ const Professions = [
 	}, {
 		jobmainname: '武器修理工',
 		category: '服务系',
-		skill:'',
+		skill:'武器修理',
 		titles: ['武器修理学徒', '武器修理工', '资深武器修理师', '御用武器修理师', '修理武器专家'],
         tutorlocation: '法兰城',
 		teacherlocation:'法兰城',
@@ -1077,13 +1077,13 @@ const Professions = [
 	}, {
 		jobmainname: '仙人',
 		category: '服务系',
-		skill:'',
+		skill:'变身',
 		titles: ['道童', '道士', '半仙', '仙人', '歌仙'],
         tutorlocation: '哥拉尔镇'
 	}, {
 		category: '服务系',
 		jobmainname: '侦探',
-		skill:'',
+		skill:'变装',
 		titles: ['见习侦探', '侦探', '名侦探', '大侦探', '超级侦探'],
         tutorlocation: '法兰城'
 	}, {

@@ -26,6 +26,10 @@ var playerThinkRunning = false;
 var cachedEntrance = null;
 var blacklistEntrance = [];
 
+// 新城集合地坐标，用于组队计算去哪里练级
+var leaderWait = [140, 109]
+var teammateWait = [140, 108]
+
 // 注意回补模块顺序，先从泛用性低的开始放入数组
 // 比如在矮人城镇练级，判断当前地图是肯吉罗岛之后，回补模块会直接根据（肯吉罗岛）返回去营地回补了，这是不对的。所以要先放矮人回补在前将后面回补方式短路
 // supplyArray中，如果前面的回补方式isAvailable()返回false的话，就找下一个回补模块
@@ -1005,7 +1009,7 @@ var loop = ()=>{
 
 	cga.travel.newisland.toStone('X', ()=>{
 		cga.walkList([
-			cga.isTeamLeader ? [140, 107] : [140, 106],
+			cga.isTeamLeader ? leaderWait : teammateWait,
 		], ()=>{
 			teamMode.wait_for_teammates(()=>{
 				levelRegion(()=>{
