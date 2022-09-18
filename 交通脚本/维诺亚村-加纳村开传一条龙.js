@@ -2,158 +2,144 @@ var cga = require('../cgaapi')(function(){
 
 	global.cga = cga;
 	var rootdir = cga.getrootdir()
+	var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
 	var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
 
 	var playerinfo = cga.GetPlayerInfo();
+	// 提取本地职业数据
+	const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
+	var professionalInfo = getprofessionalInfos(playerinfo.job)
+	var category = professionalInfo.category
 	
 	var teammates = [
-        "UNAの格斗2",
+		"UNAの格斗2",
     ];
 	
-	var teamplayers = cga.getTeamPlayers();
+	// var teamplayers = cga.getTeamPlayers();
 
 	// for(var i in teamplayers)
 	// 	teammates[i] = teamplayers[i].name;
 	
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
 	
+	var dialogHandler = (err, dlg)=>{
+		if(dlg && (dlg.options & 4) == 4)
+		{
+			cga.ClickNPCDialog(4, 0);
+			cga.AsyncWaitNPCDialog(dialogHandler);
+			return;
+		}
+		if(dlg && (dlg.options & 32) == 32)
+		{
+			cga.ClickNPCDialog(32, 0);
+			cga.AsyncWaitNPCDialog(dialogHandler);
+			return;
+		}
+		else if(dlg && dlg.options == 1)
+		{
+			cga.ClickNPCDialog(1, 0);
+			cga.AsyncWaitNPCDialog(dialogHandler);
+			return;
+		}
+		else if(dlg && dlg.options == 3)
+		{
+			cga.ClickNPCDialog(1, 0);
+			cga.AsyncWaitNPCDialog(dialogHandler);
+			return;
+		}
+		else if(dlg && dlg.options == 12)
+		{
+			cga.ClickNPCDialog(4, -1);
+			cga.AsyncWaitNPCDialog(dialogHandler);
+			return;
+		}
+		else
+		{
+			return;
+		}
+	}
+
+	var saveAndSupply = (isPro, cb)=>{
+		if(cga.getTeamPlayers().length > 0){
+			cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+			setTimeout(saveAndSupply, 1000, isPro, cb);
+			return
+		}
+		cga.travel.saveAndSupply(isPro, cb)
+		return
+	}
+
+	var gather = (gatherPos, cb)=>{
+		if(cga.isTeamLeader){
+			cga.walkList([
+				gatherPos,
+				], ()=>{
+					cga.waitTeammates(teammates, (r)=>{
+						if(r){
+							setTimeout(cb, 1000, true);
+							return
+						}
+						setTimeout(gather, 1000, gatherPos, cb);
+					});
+				})
+		}else {
+			cga.walkList([
+				cga.getRandomSpace(gatherPos[0], gatherPos[1])
+				], ()=>{
+					cga.addTeammate(teammates[0], (r)=>{
+						if(r){
+							cb(true)
+							return;
+						}
+						setTimeout(gather, 1000, gatherPos, cb);
+					});
+				})
+		}
+	}
+
+	var pass = (npcPos, originIndex, targetIndex, wannaPos, cb)=>{
+		cga.waitForLocation({mapindex : originIndex, pos : npcPos}, ()=>{
+			var retry = ()=>{
+				// 如果切换了地图，则进行下一步判断
+				if (cga.GetMapIndex().index3 == targetIndex){
+					// 如果还要求了切换之后的坐标，则判断
+					if(wannaPos && (cga.GetMapXY().x != wannaPos[0] || cga.GetMapXY().y != wannaPos[1])){
+						setTimeout(retry, 1000);
+						return
+					}
+					// index和坐标都符合预期，则通过
+					setTimeout(cb, 1000, true);
+					return
+				}
+				cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+				cga.AsyncWaitNPCDialog(dialogHandler);
+				cga.TurnTo(npcPos[0], npcPos[1]);
+				setTimeout(retry, 2500);
+				return
+			}
+			setTimeout(retry, 1500);
+		});
+		return
+	}
+
 	var task = cga.task.Task('维诺亚-加纳开传送一条龙', [
 	{//0
 		intro: '0.队员集合',
 		workFunc: function(cb2){
-			var gather = ()=>{
-					if(cga.isTeamLeader){
-						cga.WalkTo(140, 106);
-						cga.waitTeammates(teammates, (r)=>{
-							if(r){
-								cga.travel.falan.toStone('C', (r)=>{
-									cga.walkList([
-										[34, 89],
-										[34, 88],
-										[34, 89],
-										[34, 88],
-										[34, 89],
-									], (r)=>{
-										cga.TurnTo(36, 87);
-										setTimeout(()=>{
-											cb2(true)
-										}, 3500);
-									});
-								});	
-								return;
-							}
-							setTimeout(gather, 1000);
-						});
-			
-					} else {
-						cga.addTeammate(teammates[0], (r)=>{
-							if(r){
-								cb2(true)
-								return;
-							}
-							setTimeout(gather, 1000);
-						});
-					}
-			}
-			// 入口
-			cga.travel.newisland.toStone('X', ()=>{
-				gather()
+			healMode.func(()=>{
+				cga.travel.falan.toStone('C', (r)=>{
+					gather([37, 78], cb2)
+				});
 			})
 		}
+		
 	},
 	{//1
-		intro: '1.先去维诺亚村开传送',
+		intro: '1.出发去维诺亚村',
 		workFunc: function(cb2){
-			//队员进入维诺亚洞穴，找队长组队
-			var teammates_wait_1 = ()=>{
-				cga.addTeammate(teammates[0], (r)=>{
-					if(r){
-						teammates_go_1();
-						return;
-					}
-					setTimeout(teammates_wait_1, 1000);
-				});
-			}
-
-			var teammates_go_1 = ()=>{
-
-				var retry = ()=>{
-
-					cga.TurnTo(5, 4);
-					cga.AsyncWaitNPCDialog((err)=>{
-						if(err){
-							retry();
-							return;
-						}
-						setTimeout(()=>{
-							cga.SayWords('1', 0, 3, 1);						
-						}, 1500);
-						cb2(true);
-					});
-
-				}
-				retry()
-			}
-
-			var leader_wait_1 = ()=>{
-				cga.WalkTo(20, 15);
-				cga.waitTeammates(teammates, (r)=>{
-					if(r){
-						leader_go_2();
-						return;
-					}
-					setTimeout(leader_wait_1, 1000);
-				});
-			}
-
-			var leader_go_2 = ()=>{
-				cga.walkList([
-					[20,59,'维诺亚洞穴 地下2楼'],
-					[24,81,'维诺亚洞穴 地下3楼'],
-					[26,64,'芙蕾雅'],
-					[330,480,'维诺亚村'],
-					[40,36,'村长的家'],
-					[18,10,'村长家的小房间'],
-					[8,2,'维诺亚村的传送点'],
-					[4,3],
-					[4,4],
-					[4,3],
-					[4,4],
-					[4,3],
-					[4,4],
-					[4,3],
-					], ()=>{
-						cga.TurnTo(5, 4);
-						setTimeout(()=>{
-							cga.SayWords('1', 0, 3, 1);						
-						}, 1500);
-						//等待队员打1，然后进入下一步
-						cga.waitTeammateSayNextStage(teammates, cb2);
-						});
-					
-			}
-			// 本步骤入口
 			if(cga.isTeamLeader){
-				var settle = ()=>{
-					if(cga.GetMapName() != '法兰城'){
-						cga.travel.falan.toStone('C', ()=>{
-							cga.walkList([
-								[41, 98, '法兰城'],
-								//南门
-								[153, 241, '芙蕾雅'],
-							], leader_go_1)
-						})
-					}
-					else{
-						cga.walkList([
-							//南门
-							[153, 241, '芙蕾雅'],
-						], leader_go_1)
-					}
-				}
-
 				//去维诺亚洞窟前过20级限制门卫
-				var leader_go_1 = ()=>{		
+				var leader_go_1 = ()=>{
 					cga.walkList([
 					[473, 316],
 					[473, 317],
@@ -163,265 +149,206 @@ var cga = require('../cgaapi')(function(){
 					[473, 317],
 					[473, 316],
 				], ()=>{
-					cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
-					cga.TurnTo(472, 316);
-					cga.AsyncWaitNPCDialog(()=>{
-						cga.ClickNPCDialog(4, -1);
-						cga.AsyncWaitMovement({map:'维诺亚洞穴 地下1楼', delay:1000, timeout:5000}, (err)=>{
-							if(err){
-								console.error('出错，请检查..')
+					pass([472, 316], 100, 11000, [20,14], ()=>{
+						gather([20, 15], ()=>{
+							cga.walkList([
+								[20,59,'维诺亚洞穴 地下2楼'],
+								[24,81,'维诺亚洞穴 地下3楼'],
+								[26,64,'芙蕾雅'],
+								[330,480,'维诺亚村'],
+								], ()=>{
+									cga.waitForLocation({mapindex : cga.travel.falan.info['维诺亚村'].mainindex}, ()=>{
+										cb2(true)
+									});
+								});
+						})
+					},)
+					});
+				}
+				if(cga.GetMapName() != '法兰城'){
+					cga.travel.falan.toStone('C', ()=>{
+						cga.walkList([
+							[41, 98, '法兰城'],
+							//南门
+							[153, 241, '芙蕾雅'],
+						], leader_go_1)
+					})
+				}else{
+					cga.walkList([
+						//南门
+						[153, 241, '芙蕾雅'],
+					], leader_go_1)
+				}
+			} else {
+				pass([472, 316], 100, 11000, [20,14], ()=>{
+					var retry = ()=>{
+						cga.addTeammate(teammates[0], (r)=>{
+							if(r){
+								cga.waitForLocation({mapindex : cga.travel.falan.info['维诺亚村'].mainindex}, ()=>{
+									cb2(true)
+								});
 								return;
 							}
-							setTimeout(leader_wait_1, 1500);
-							});
+							setTimeout(retry, 1000);
 						});
-					});
-				}
-				settle()
-			} else {
-				var retry = ()=>{
-					cga.TurnTo(472, 316);
-					cga.AsyncWaitNPCDialog(function(err){
-						if(err){
-							cga.walkList([ [473, 317], [473, 316] ], retry);
-							return;
-						}
-						cga.ClickNPCDialog(4, -1);
-						setTimeout(teammates_wait_1, 3000);
-					});
-				}
-				
-				cga.waitForLocation({mapname : '芙蕾雅', pos : [473, 317], leaveteam : true}, retry);
+					}
+					retry()
+				},)
 			}
 		}
 	},
 	{//2
-		intro: '2.过海底',
+		intro: '2.维诺亚村开传送并补给',
 		workFunc: function(cb2){
-
-			var go = ()=>{
-				cga.walkList(
-				(cga.GetMapName() == '芙蕾雅') ? 
-				[
-					[343, 497, '索奇亚海底洞窟 地下1楼'],
-					[18, 34, '索奇亚海底洞窟 地下2楼'],
-					[27, 29, '索奇亚海底洞窟 地下1楼'],
-					[7,37]
-				]
-				:
-				[
-				[5, 1, '村长家的小房间'],
-				[0, 5, '村长的家'],
-				[10, 16, '维诺亚村'],
-				[67, 46, '芙蕾雅'],
-				[343, 497, '索奇亚海底洞窟 地下1楼'],
-				[18, 34, '索奇亚海底洞窟 地下2楼'],
-				[27, 29, '索奇亚海底洞窟 地下1楼'],
-				[7,37]
-				]
-				, ()=>{
-					cga.TurnTo(8, 37);
-					cga.AsyncWaitNPCDialog(()=>{
-						cga.ClickNPCDialog(1, 0);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(4, -1)
-							cga.AsyncWaitMovement({map:'索奇亚', delay:1000, timeout:5000}, (err)=>{
-								if(err){
-									console.error('出错，请检查..')
-									return;
-								}
-								cb2(true);
-								});
-							});
-						});
-				});
-			}
-			
-			if(cga.isTeamLeader){
-				go();
-			} else {
-				console.log('等待过海进入索奇亚..')
-				cga.waitForLocation({mapname : '索奇亚'}, cb2);
-			}
+			saveAndSupply(category == '魔法系' ? true : false, ()=>{
+				gather([59, 47], cb2)
+			})
 		}
 	},
 	{//3
-		intro: '3.去奇力村开传送',
+		intro: '3.过海底',
 		workFunc: function(cb2){
-			var leader_go_1 = ()=>{
-				cga.walkList([
-					[274, 294, '奇利村'],
-					// 村长的家map.index3是3212
-					[50, 63, 3212],
-					// 去传送房间的过道房间是3214
-					[10, 15, 3214],
-					[5, 3, '奇利村的传送点'],
-					[12, 8],
-					[12, 9],
-					[12, 8],
-					[12, 9],
-					[12, 8]
-				], ()=>{
-					setTimeout(()=>{
-						cga.SayWords('1', 0, 3, 1);						
-					}, 1500);
-					//等待队员打1，然后进入下一步
-					cga.waitTeammateSayNextStage(teammates, cb2);
-					});
-			}
-			var teammates_go_1 = ()=>{
-
-				var retry = ()=>{
-					console.log('等待登记传送点..')
-					cga.TurnTo(13, 8);
-					cga.AsyncWaitNPCDialog((err)=>{
-						if(err){
-							retry();
-							return;
-						}
-						setTimeout(()=>{
-							cga.SayWords('1', 0, 3, 1);						
-						}, 1500);
-						cb2(true);
-					});
-
-				}
-				retry()
-			}
 			if(cga.isTeamLeader){
-				leader_go_1();
+				cga.walkList(
+					[
+						[67, 46, '芙蕾雅'],
+						[343, 497, '索奇亚海底洞窟 地下1楼'],
+						[18, 34, '索奇亚海底洞窟 地下2楼'],
+						[27, 29, '索奇亚海底洞窟 地下1楼'],
+						[7,37]
+						], ()=>{
+							cga.AsyncWaitNPCDialog(dialogHandler);
+							cga.TurnTo(8, 37);
+							cga.waitForLocation({mapindex : 300, pos : [240, 265]}, ()=>{
+								cb2(true)
+							});
+					});
 			} else {
-				cga.waitForLocation({mapname : '奇利村的传送点', leaveteam : false}, teammates_go_1);
+				cga.waitForLocation({mapindex : 300, pos : [240, 265]}, ()=>{
+					cb2(true)
+				});
 			}
 		}
 	},
 	{//4
-		intro: '4.在奇力村补给，并过洪恩大风洞（角笛大风穴）',
+		intro: '4.出发去奇利村',
 		workFunc: function(cb2){
-			var leader_go_1 = ()=>{
-				cga.walkList([
-					// 去传送房间的过道房间是3214
-					[7, 6, 3214],
-					// 村长的家map.index3是3212
-					[7, 1, 3212],
-					[1, 8, '奇利村'],
-					[64, 56,'医院'],
-					// 考虑到带开传一般是攻人 + 非战斗系，那么就去非资深护士补给。
-					[11, 6],
-				], ()=>{
-					setTimeout(()=>{
-						cga.TurnTo(11, 5);				
-					}, 1500);
-					setTimeout(()=>{
-						leader_go_2();
-					}, 5000);
-					});
-			}
-
-			var leader_go_2 = ()=>{
-				cga.walkList([
-					[3, 9, '奇利村'],
-					[79, 76, '索奇亚'],
-					[356, 334, '角笛大风穴'],
-					[133, 26, '索奇亚'],
-				], ()=>{
-					cb2(true)});
-			}
-
 			if(cga.isTeamLeader){
-				leader_go_1();
+				cga.walkList([
+					[274, 294, '奇利村'],
+				], ()=>{
+					cga.waitForLocation({mapindex : cga.travel.falan.info['奇利村'].mainindex}, ()=>{
+						cb2(true)
+					});
+					});
 			} else {
-				cga.waitForLocation({mapname : '索奇亚', pos : [402, 304],leaveteam : false}, cb2);
+				cga.waitForLocation({mapindex : cga.travel.falan.info['奇利村'].mainindex}, ()=>{
+					cb2(true)
+				});
 			}
 		}
 	},
 	{//5
-		intro: '5.出了洪恩大风洞之后，去加纳村开传送。',
+		intro: '5.奇利村开传送并补给',
 		workFunc: function(cb2){
-			var leader_go_1 = ()=>{
-				cga.walkList([
-					[704, 147, '加纳村'],
-					[36, 40, '村长的家'],
-					[17, 6, '加纳村的传送点'],
-					[15, 8],
-					[14, 8],
-					[15, 8],
-					[14, 8],
-					[15, 8],
-				], ()=>{
-					setTimeout(()=>{
-						cga.SayWords('1', 0, 3, 1);						
-					}, 1500);
-					//等待队员打1，然后进入下一步
-					cga.waitTeammateSayNextStage(teammates, cb2);
-					});
-			}
-
-			var teammates_go_1 = ()=>{
-
-				var retry = ()=>{
-					console.log('等待登记传送点..')
-					cga.TurnTo(15, 7);
-					cga.AsyncWaitNPCDialog((err)=>{
-						if(err){
-							retry();
-							return;
-						}
-						setTimeout(()=>{
-							cga.SayWords('1', 0, 3, 1);						
-						}, 1500);
-						cb2(true);
-					});
-
-				}
-				retry()
-			}
+			saveAndSupply(category == '魔法系' ? true : false, ()=>{
+				gather([77, 76], cb2)
+			})
+		}
+	},
+	{//6
+		intro: '6.过洪恩大风洞（角笛大风穴）',
+		workFunc: function(cb2){
 			if(cga.isTeamLeader){
-				leader_go_1();
+				cga.walkList([
+					[79, 76, '索奇亚'],
+					[356, 334, '角笛大风穴'],
+					[133, 26, '索奇亚'],
+			], ()=>{
+				setTimeout(() => {
+					cb2(true)
+				}, 2000);
+				});
 			} else {
-				cga.waitForLocation({mapname : '加纳村的传送点',leaveteam : false}, teammates_go_1);
+				cga.waitForLocation({mapindex : 300, pos : [402,304]}, ()=>{
+					cb2(true)
+				});
 			}
 		}
 	},
-	// {//6
-	// 	intro: '6.加纳村开完传送，切换至杰诺瓦-蒂娜-阿巴尼斯一条龙',
-	// 	workFunc: function(cb2){
-	// 		// global.cga是给【公共模块\\跳转其它脚本】使用的
-	// 		global.cga = cga
-	// 		var rootdir = cga.getrootdir()
-	// 		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
-	// 		var body = {
-	// 			path : rootdir + "\\交通脚本\\杰诺瓦镇-蒂娜村-阿巴尼斯村开传一条龙.js",
-	// 		}
-	// 		scriptMode.call_ohter_script(body)
-	// 		cb2(true);
-	// 	}
-	// },
+	{//7
+		intro: '7.出发去加纳村',
+		workFunc: function(cb2){
+			if(cga.isTeamLeader){
+				cga.walkList([
+					[704, 147, '加纳村'],
+				], ()=>{
+					cga.waitForLocation({mapindex : cga.travel.falan.info['加纳村'].mainindex}, ()=>{
+						cb2(true)
+					});
+					});
+			} else {
+				cga.waitForLocation({mapindex : cga.travel.falan.info['加纳村'].mainindex}, ()=>{
+					cb2(true)
+				});
+			}
+		}
+	},
+	{//8
+		intro: '8.加纳村开传送并补给',
+		workFunc: function(cb2){
+			saveAndSupply(category == '魔法系' ? true : false, ()=>{
+				cb2(true)
+			})
+		}
+	},
 	],
 	[//任务阶段是否完成
-		// function(){
-		// 	return (cga.getItemCount('火把') >= 1) ? true : false;
-		// },
-		// function(){
-		// 	return (cga.GetMapName() == '叹息之森林') ? true : false;
-		// },
-		// function(){
-		// 	return (cga.getItemCount('树苗？') >= 1) ? true : false;
-		// },
-		// function(){
-		// 	return (cga.getItemCount('生命之花') >= 1) ? true : false;
-		// },
-		// function(){
-		// 	return false;
-		// },
+		function(){// 0.队员集合
+			return false;
+		},
+		function(){// 1.出发去维诺亚村
+			return (cga.travel.switchMainMap() == '维诺亚村') ? true : false;
+		},
+		function(){// 2.维诺亚村开传送并补给
+			var config = cga.loadPlayerConfig();
+			return (cga.GetMapIndex().index3 == cga.travel.falan.info['维诺亚村'].mainindex && config && config['维诺亚村'] && !cga.needSupplyInitial()) ? true :false
+		},
+		function(){// 3.过海底
+			return (cga.GetMapIndex().index3 == 300) ? true : false;
+		},
+		function(){// 4.出发去奇利村
+			return (cga.travel.switchMainMap() == '奇利村') ? true : false;
+		},
+		function(){// 5.奇利村开传送并补给
+			var config = cga.loadPlayerConfig();
+			return (cga.GetMapIndex().index3 == cga.travel.falan.info['奇利村'].mainindex && config && config['奇利村'] && !cga.needSupplyInitial()) ? true :false
+		},
+		function(){// 6.过洪恩大风洞（角笛大风穴）
+			return (cga.travel.switchMainMap() == '索奇亚加纳域') ? true : false;
+		},
+		function(){// 7.出发去加纳村
+			return (cga.travel.switchMainMap() == '加纳村') ? true : false;
+		},
+		function(){// 8.加纳村开传送并补给
+			var config = cga.loadPlayerConfig();
+			return (cga.GetMapIndex().index3 == cga.travel.falan.info['加纳村'].mainindex && config && config['加纳村'] && !cga.needSupplyInitial()) ? true :false
+		},
 	]
 	);
+
 	configMode.func('节能模式')
+	
 	task.doTask(()=>{
-		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
-		var body = {
-			path : rootdir + "\\交通脚本\\单人开全部传送(非战斗系40级以上).js",
+		var config = cga.loadPlayerConfig();
+		if(config && config['allstonedone']){
+			console.log('你已开启全部传送，脚本结束')
+		}else{
+			var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+			var body = {
+				path : rootdir + "\\交通脚本\\单人开全部传送(非战斗系40级以上).js",
+			}
+			scriptMode.call_ohter_script(body)
 		}
-		scriptMode.call_ohter_script(body)
 	});
 });

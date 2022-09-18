@@ -531,6 +531,8 @@ module.exports = function(callback){
 	cga.travel.switchMainMap = ()=>{
 		var result = null
 		var mapindex = cga.GetMapIndex().index3;
+		var XY = cga.GetMapXY();
+
 		if(mapindex >= 2300 && mapindex<=2399){
 			result = '圣拉鲁卡村'
 		}else if(mapindex >= 2000 && mapindex <= 2099 || [33219,33214,40001].indexOf(mapindex) >= 0){
@@ -555,6 +557,12 @@ module.exports = function(callback){
 			result = '魔法大学'
 		}else if(mapindex >= 1000 && mapindex <= 32830){
 			result = '法兰城'
+		}else if(mapindex >= 50000){
+			result = '艾尔莎岛'
+		}else if(mapindex == 300 && XY.x < 379){// 索奇亚地图比较规则，大于379都是洪恩大风洞的右侧
+			result = '索奇亚奇利域'
+		}else if(mapindex == 300 && XY.x >= 379){// 索奇亚地图比较规则，大于379都是洪恩大风洞的右侧
+			result = '索奇亚加纳域'
 		}else if(mapindex >= 50000){
 			result = '艾尔莎岛'
 		}else{
@@ -2424,6 +2432,7 @@ module.exports = function(callback){
 			mainindex : 2300,
 			minindex : 2300,
 			maxindex : 2399,
+			stoneNPCpos: [15, 3],
 			mapTranslate:{
 				'主地图' : 2300,
 				'圣拉鲁卡村' : 2300,
@@ -2491,6 +2500,7 @@ module.exports = function(callback){
 			mainindex : 2000,
 			minindex : 2000,
 			maxindex : 2099,
+			stoneNPCpos: [21, 10],
 			mapTranslate:{
 				'主地图' : 2000,
 				'伊尔村' : 2000,
@@ -2647,6 +2657,7 @@ module.exports = function(callback){
 			mainindex : 2400,
 			minindex : 2400,
 			maxindex : 2499,
+			stoneNPCpos: [5, 14],
 			mapTranslate:{
 				'主地图' : 2400,
 				'伊尔村' : 2400,
@@ -2693,6 +2704,7 @@ module.exports = function(callback){
 			mainindex : 2100,
 			minindex : 2100,
 			maxindex : 2199,
+			stoneNPCpos: [5, 4],
 			mapTranslate:{
 				'主地图' : 2100,
 				'维诺亚村' : 2100,
@@ -2754,6 +2766,7 @@ module.exports = function(callback){
 			mainindex : 3200,
 			minindex : 3200,
 			maxindex : 3299,
+			stoneNPCpos: [13, 8],
 			mapTranslate:{
 				'主地图' : 3200,
 				'奇利村' : 3200,
@@ -2824,6 +2837,7 @@ module.exports = function(callback){
 			mainindex : 3000,
 			minindex : 3000,
 			maxindex : 3099,
+			stoneNPCpos: [15, 7],
 			mapTranslate:{
 				'主地图' : 3000,
 				'加纳村' : 3000,
@@ -2912,6 +2926,7 @@ module.exports = function(callback){
 			mainindex : 4000,
 			minindex : 4000,
 			maxindex : 4099,
+			stoneNPCpos: [7, 7],
 			mapTranslate:{
 				'主地图' : 4000,
 				'杰诺瓦镇' : 4000,
@@ -2992,6 +3007,7 @@ module.exports = function(callback){
 			mainindex : 4200,
 			minindex : 4200,
 			maxindex : 4299,
+			stoneNPCpos: [6, 5],
 			mapTranslate:{
 				'主地图' : 4200,
 				'蒂娜村' : 4200,
@@ -3111,6 +3127,7 @@ module.exports = function(callback){
 			mainindex : 4300,
 			minindex : 4300,
 			maxindex : 4399,
+			stoneNPCpos: [5, 15],
 			mapTranslate:{
 				'主地图' : 4300,
 				'阿巴尼斯村' : 4300,
@@ -3390,6 +3407,7 @@ module.exports = function(callback){
 		}
 		return
 	}
+	// UNA:在村镇补给。isPro为true是去资深护士处补给，否则是普通护士补给
 	cga.travel.toHospital = (isPro,cb)=>{
 		// 当前地图信息
 		var mapindex = cga.GetMapIndex().index3
@@ -3450,12 +3468,58 @@ module.exports = function(callback){
 						if (cb) cb(null)
 						return
 					})
-				}, 3000);
+				}, 5000);
 				return
 			}
 		);
 		return
 	}
+	// UNA: 在村镇开启传送石之后补给。isPro为true是去资深护士处补给
+	cga.travel.saveAndSupply = (isPro, cb) => {
+		// 准备保存开传状态
+		var config = cga.loadPlayerConfig();
+		if(!config){
+			config = {};
+		}
+		
+		var villageName = cga.travel.switchMainMap()
+		// 如果已经开启过传送，则直接补给并结束函数
+		if(config[villageName]){
+			console.log('你已开启过【'+villageName+'】传送石，跳过开启传送阶段。')
+			cga.travel.toHospital(isPro,()=>{
+				if (cb) cb(null)
+				return
+			})
+			return
+		}
+		// 如果没开启过传送，则去开启并记录状态。
+		const info = cga.travel.falan.info[villageName]
+		cga.travel.falan.autopilot('传送石',()=>{
+			cga.walkList(
+				[cga.getRandomSpace(info.stoneNPCpos[0], info.stoneNPCpos[1])], ()=>{
+					cga.TurnTo(info.stoneNPCpos[0], info.stoneNPCpos[1]);
+					cga.AsyncWaitNPCDialog((err, dlg)=>{
+						if(dlg && (dlg.message.indexOf('金币') >= 0 || dlg.message.indexOf('欢迎') >= 0)){
+							setTimeout(() => {
+								// 如果开传成功，则记录状态
+								config[villageName] = true
+								cga.savePlayerConfig(config, ()=>{
+									console.log('【'+villageName+'】传送石已开启，离线信息已记录完毕')
+									// 记录之后去补给
+									cga.travel.toHospital(isPro,()=>{
+										if (cb) cb(null)
+										return
+									})
+								});
+							}, 1000);
+						}
+					});
+					return
+				}
+			);
+		})
+	}
+
 	cga.travel.shenglaluka = {}
 	// 去圣拉鲁卡村医院
 	cga.travel.shenglaluka.toHospital = (cb, isPro)=>{
