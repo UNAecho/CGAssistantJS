@@ -1069,6 +1069,11 @@ var loop = ()=>{
 						setTimeout(() => {
 							if(cga.ismaxbattletitle() || cga.getItemCount('转职保证书') == 0){
 								console.log('称号已满或包中没有保证书，重新做本任务。')
+								// 重置任务flag状态
+								callZLZZ = false;
+								callWYW = false;
+								doneBOSS = false;
+
 								setTimeout(loop, 3000);
 								return
 							}else{
