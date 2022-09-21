@@ -8,6 +8,7 @@ var supplyCastle = require('./../公共模块/里堡回补');
 var teamMode = require('./../公共模块/组队模式');
 var logbackEx = require('./../公共模块/登出防卡住');
 var updateConfig = require('./../公共模块/修改配置文件');
+var configMode = require('../公共模块/读取战斗配置');
 
 var cga = global.cga;
 var configTable = global.configTable;
@@ -537,6 +538,9 @@ var thisobj = {
 		if(teamMode.translate(pair))
 			return true;
 		
+		if(configMode.translate(pair))
+			return true;
+
 		return false;
 	},
 	loadconfig : (obj)=>{
@@ -547,13 +551,8 @@ var thisobj = {
 		if(!teamMode.loadconfig(obj))
 			return false;
 		
-		// configTable.sellStore = obj.sellStore;
-		// thisobj.sellStore = obj.sellStore
-		
-		// if(thisobj.sellStore == undefined){
-		// 	console.error('读取配置：是否卖石失败！');
-		// 	return false;
-		// }
+		if(!configMode.loadconfig(obj))
+			return false;
 		
 		return true;
 	},

@@ -2,6 +2,7 @@ var fs = require('fs');
 var Async = require('async');
 var updateConfig = require('./../公共模块/修改配置文件');
 var teamMode = require('./../公共模块/组队模式');
+var configMode = require('./../公共模块/读取战斗配置');
 
 var cga = global.cga;
 var configTable = global.configTable;
@@ -9,6 +10,8 @@ var configTable = global.configTable;
 // 提取本地职业数据
 const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
 var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
+// 声望数据
+const reputationInfos = require('../../常用数据/reputation.js');
 
 var jump = ()=>{
 	setTimeout(()=>{
@@ -1067,8 +1070,10 @@ var loop = ()=>{
 					], ()=>{
 						cga.turnTo(230, 83);
 						setTimeout(() => {
-							if(cga.ismaxbattletitle() || cga.getItemCount('转职保证书') == 0){
-								console.log('称号已满或包中没有保证书，重新做本任务。')
+							if(cga.ismaxbattletitle() || cga.getItemCount('转职保证书') == 0 || 
+							(reputationInfos.getReputation(cga.GetPlayerInfo().titles) == '敬畏的寂静' && configMode.finalJob == professionalInfo.jobmainname)
+							){
+								console.log('称号已满、包中没有保证书或已经不需要再烧声望，重新做本任务。')
 								// 重置任务flag状态
 								callZLZZ = false;
 								callWYW = false;
@@ -1098,27 +1103,18 @@ var thisobj = {
 		
 		if(teamMode.translate(pair))
 			return true;
-		
-		// if(pair.field == 'listenPort'){
-		// 	pair.field = '监听端口';
-		// 	pair.value = pair.value;
-		// 	pair.translated = true;
-		// 	return true;
-		// }
+		if(configMode.translate(pair))
+			return true;
+
 		return false;
 	},
 	loadconfig : (obj)=>{
 
 		if(!teamMode.loadconfig(obj))
 			return false;
-		
-		// configTable.listenPort = obj.listenPort;
-		// thisobj.listenPort = obj.listenPort
-		
-		// if(!thisobj.listenPort){
-		// 	console.error('读取配置：监听端口失败！');
-		// 	return false;
-		// }
+				
+		if(!configMode.loadconfig(obj))
+			return false;
 		
 		return true;
 	},
