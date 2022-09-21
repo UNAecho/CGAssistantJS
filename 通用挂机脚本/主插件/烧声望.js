@@ -540,9 +540,6 @@ var thisobj = {
 		
 		if(configMode.translate(pair))
 			return true;
-
-		configTable.sellStore = obj.sellStore;
-		thisobj.sellStore = obj.sellStore
 		
 		return false;
 	},
@@ -556,6 +553,9 @@ var thisobj = {
 		
 		if(!configMode.loadconfig(obj))
 			return false;
+		
+		configTable.sellStore = obj.sellStore;
+		thisobj.sellStore = obj.sellStore
 		
 		return true;
 	},
