@@ -3,6 +3,7 @@ var Async = require('async');
 var updateConfig = require('./../公共模块/修改配置文件');
 var teamMode = require('./../公共模块/组队模式');
 var supplyCastle = require('./../公共模块/里堡回补');
+var supplyMode = require('./../公共模块/里堡回补');
 
 var cga = global.cga;
 var configTable = global.configTable;
@@ -819,8 +820,8 @@ var thisobj = {
 	},
 	loadconfig : (obj)=>{
 
-		if(supplyMode.translate(pair))
-			return true;
+		if(!supplyMode.loadconfig(obj))
+			return false;
 		
 		if(!teamMode.loadconfig(obj))
 			return false;
