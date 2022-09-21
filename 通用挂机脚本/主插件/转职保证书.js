@@ -1110,11 +1110,22 @@ var thisobj = {
 	},
 	loadconfig : (obj)=>{
 
+		if(supplyMode.translate(pair))
+			return true;
+		
 		if(!teamMode.loadconfig(obj))
 			return false;
-				
+
 		if(!configMode.loadconfig(obj))
 			return false;
+		
+		configTable.sellStore = obj.sellStore;
+		thisobj.sellStore = obj.sellStore
+		
+		if(thisobj.sellStore == undefined){
+			console.error('读取配置：是否卖石失败！');
+			return false;
+		}
 		
 		return true;
 	},

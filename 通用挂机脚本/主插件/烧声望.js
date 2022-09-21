@@ -541,6 +541,9 @@ var thisobj = {
 		if(configMode.translate(pair))
 			return true;
 
+		configTable.sellStore = obj.sellStore;
+		thisobj.sellStore = obj.sellStore
+		
 		return false;
 	},
 	loadconfig : (obj)=>{
