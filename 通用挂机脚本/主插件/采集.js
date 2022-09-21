@@ -237,9 +237,7 @@ var check_drop = ()=>{
 var cleanOtherItems = (cb) =>{
 	var sell = cga.findItemArray((item) => {
 		// 23料理、43血瓶
-		if ([23, 43].indexOf(item.type) != -1) {
-			item.count /= 3
-			item.count = Math.floor(item.count)
+		if ([23, 43].indexOf(item.type) != -1 && item.count == 3) {
 			return true
 		}// 29矿条、30木、31秘文之皮、32牛肉、34蕃茄、35其他食材、36花、40封印卡
 		// id：18211是鹿皮，type也是26，特殊处理，因为很多其他物品type也是26
