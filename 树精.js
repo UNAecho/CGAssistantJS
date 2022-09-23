@@ -343,9 +343,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	);
 	
 	task.doTask(()=>{
-		var missionName = '树精长老的末日'
-		cga.refreshMissonStatus(missionName,true,()=>{
-			console.log('任务【' + missionName + '】已记录成功')
-		})
+		var minssionObj = {"树精长老的末日" : true}
+		cga.refreshMissonStatus(minssionObj)
 	});
 });

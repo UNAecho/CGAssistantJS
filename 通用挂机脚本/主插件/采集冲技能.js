@@ -80,6 +80,8 @@ var chooseSkill = (cb)=>{
 				}
 				return false
 			});
+			thisobj.skill = cga.findPlayerSkill(skillname)
+			console.log('【UNA脚本提示】你当前职级的采集技能已全部冲满，使用1级本职技能刷声望顺带赚点外快，等待人工后续决策。')
 		}else{
 			mineObject = mineDict['挖掘'][0]
 			thisobj.skill = cga.findPlayerSkill(tmpskill)
@@ -91,66 +93,6 @@ var chooseSkill = (cb)=>{
 	}else{
 		console.log('检测到你是【' + job +'】，并且【'+thisobj.skill.name+'】没有烧满，出发去采集【' + mineObject.name + '】来冲技能')
 	}
-
-	// // 如果是采集系，才会进入if逻辑，否则进入else逻辑直接冲所有采集技能。
-	// // UNA：cga.GetSkillsInfo()返回的信息中，当前的技能会有大于等级上限的BUG，比如当前3级而max是2级。所以使用skill.lv < skill.maxlv来判断是否要冲
-	// if (mineDict[skillname] && skill && skill.lv < skill.maxlv){
-	// 	thisobj.skill = skill
-	// 	mineObject = mineDict[thisobj.skill.name].find((m)=>{
-	// 		// 低级保护，采集7级或以上材料的时候可能会出现赶路受伤掉混的情况，这时封顶使用6级物品冲技能。
-	// 		// 可能会出现6级物品被删了的情况（例如技能是狩猎时，砂糖无法卖店，故删除砂糖），所以使用m.level > 5，6级没有就用7级产品。
-	// 		if(skill.lv > 5 && m.level > 5 && playerinfo.level < limitLv){
-	// 			console.log('等级低于【'+limitLv+'】级，为了避免受伤，尽量选择6级材料来冲技能。')
-	// 			return true
-	// 		}
-	// 		if(m.level == skill.lv){
-	// 			return true
-	// 		}
-	// 		return false
-	// 	});
-	// 	console.log('检测到你是【' + job +'】，并且【'+thisobj.skill.name+'】没有烧满，出发去采集【' + mineObject.name + '】来冲技能')
-	// 	if (cb) cb(null)
-	// 	return
-	// }else{
-	// 	for (var key in mineDict) {
-	// 		skill = cga.findPlayerSkill(key)
-	// 		if (skill && skill.lv < skill.maxlv) {
-	// 			thisobj.skill = skill
-	// 			mineObject = mineDict[thisobj.skill.name].find((m)=>{
-	// 				// 同上，低级保护。
-	// 				if(skill.lv > 5 && m.level > 5 && playerinfo.level < limitLv){
-	// 					console.log('等级低于【'+limitLv+'】级，为了避免受伤，尽量选择6级材料来冲技能。')
-	// 					return true
-	// 				}
-	// 				if(m.level == skill.lv){
-	// 					return true
-	// 				}
-	// 				return false
-	// 			});
-	// 			console.log('检测到你是【' + job +'】，但本职技能【'+ skillname +'】在此脚本中已不再需要升级，现检测到【'+thisobj.skill.name+'】没有烧满，出发去采集【' + mineObject.name + '】来把其他采集技能冲满')
-	// 			if (cb) cb(null)
-	// 			return
-	// 		}
-	// 	}
-	// }
-	// if(!mineObject){
-	// 	// 如果是非采集系的制造系，已经无需再冲技能的话，默认挖矿赚钱，等待人工下一步决策。
-	// 	if(!thisobj.skill){
-	// 		mineObject = mineDict['挖掘'][0]
-	// 		thisobj.skill = cga.findPlayerSkill(tmpskill)
-
-	// 		var jobLevel = getprofessionalInfos.getJobLevel(playerinfo.job)
-	// 		console.log('你当前职级的采集技能已全部冲满' + (jobLevel < 4 ? '如需继续提升，请晋级，【注意】4转开始，制造系的采集技能上限为5级，而采集技能升到5级后，会降智力，提升耐力。已经双百的账号请注意。' : ''))
-	// 		return
-	// 	}
-	// 	mineObject = mineDict[thisobj.skill.name].find((m)=>{
-	// 		if(m.level == 1){
-	// 			return true
-	// 		}
-	// 		return false
-	// 	});
-	// 	console.log('当前所有的采集技能已经冲满，开始使用1级本职技能来刷声望，等待玩家自行采取下一步行动。')
-	// }
 }
 
 var check_drop = ()=>{
