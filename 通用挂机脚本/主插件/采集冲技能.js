@@ -192,7 +192,6 @@ var cleanItems = (cb) =>{
 		return false
 	});
 	if (sell && sell.length > 0){
-		console.log(sell)
 		cga.travel.falan.toStone('C', () => {
 			cga.walkList([
 				[30, 79],

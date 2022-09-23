@@ -5312,13 +5312,15 @@ module.exports = function(callback){
  * UNA :写了一个持久化人物任务完成情况的方法，用于离线记录人物的一些数据，便于查询。
  * 请注意，关于任务的称号，我自己也没有做过全部的任务，所以请自行添加需要的任务名称，我只写了一个开启者
  * 
- * @param {*} mission 任务名称，请注意输入的任务名称要全项目统一，不然会出现检测出错的情况。如【树精长老】和【树精】【一转】等会被认为是不同的任务。
- * @param {*} status 任务状态，可以输入布尔类型代表完成状态，也可以输入int、string来标记进度，你自己认识就好。
+ * @param {object} missionObj 需要更新的任务对象，
+ * key 为 任务string名称，请注意输入的任务名称要全项目统一，不然会出现检测出错的情况。如【树精长老】和【树精】【一转】等会被认为是不同的任务。
+ * value 为任务状态，类型任意。true为已完成，false为未完成。int为任务完成的步骤标记，或者string自定义，你自己认识就好。
+ * example : missionObj = {"树精长老的末日" : true ,"挑战神兽" : true ,"神之召唤" : 2 ,"洛伊夫的净化" : "收集徽记" ,}
  * @param {*} cb 回调
  * @returns 
  * 
  */
-	cga.refreshMissonStatus = (mission, status, cb) => {
+	cga.refreshMissonStatus = (missionObj, cb) => {
 		var rootdir = cga.getrootdir()
 		var playerInfo = cga.GetPlayerInfo();
 		// 提取本地职业数据，查询人物是战斗系还是生产系，目前是几转，用于刷新各种晋级任务的状态。
@@ -5366,11 +5368,13 @@ module.exports = function(callback){
 			}
 		}
 		// 刷新完称号，开始写入调用方传来的任务进度。如果没有传入，则跳过。
-		if(mission){
-			if(config["mission"].hasOwnProperty(mission) && config["mission"][mission] != status){
-				console.log('任务【' + mission + '】由原状态【' + (config["mission"][mission]) + '】改为【' + status + '】')
+		if(missionObj){
+			for (var key in missionObj){
+				if(config["mission"][key] != missionObj[key]){
+					console.log('任务【' + key + '】由原状态【' + (config["mission"][key]) + '】改为【' + missionObj[key] + '】')
+					config["mission"][key] = missionObj[key]
+				}
 			}
-			config["mission"][mission] = status
 		}
 		// 写入状态并调用callback，函数结束。
 		cga.savePlayerConfig(config, cb);

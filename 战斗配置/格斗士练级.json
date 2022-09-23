@@ -24,7 +24,7 @@
             },
             {
                 "condition": 10,
-                "condition2": 2,
+                "condition2": 1,
                 "condition2rel": 0,
                 "condition2val": "25%",
                 "conditionrel": 2,
@@ -33,9 +33,7 @@
                 "petaction": -1,
                 "pettarget": -1,
                 "pettargetsel": -1,
-                "playeraction": 100,
-                "playerskilllevel": 0,
-                "playerskillname": "混乱攻击",
+                "playeraction": 1,
                 "playertarget": 0,
                 "playertargetsel": 0
             },
