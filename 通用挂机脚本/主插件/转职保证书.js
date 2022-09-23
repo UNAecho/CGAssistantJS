@@ -1072,7 +1072,7 @@ var loop = ()=>{
 						cga.turnTo(230, 83);
 						setTimeout(() => {
 							if(cga.ismaxbattletitle() || cga.getItemCount('转职保证书') == 0 || 
-							(reputationInfos.getReputation(cga.GetPlayerInfo().titles) == '敬畏的寂静' && configMode.finalJob == professionalInfo.jobmainname)
+							(reputationInfos.getReputation(cga.GetPlayerInfo().titles) == '敬畏的寂静' && configMode.finalJob.jobmainname == professionalInfo.jobmainname)
 							){
 								console.log('称号已满、包中没有保证书或已经不需要再烧声望，重新做本任务。')
 								// 重置任务flag状态
@@ -1131,30 +1131,9 @@ var thisobj = {
 		return true;
 	},
 	inputcb : (cb)=>{
-		Async.series([teamMode.inputcb, 
-		// 	(cb2)=>{
-		// 	var sayString = '【转职保证书插件】请选择服务监听端口: 1000~65535';
-		// 	cga.sayLongWords(sayString, 0, 3, 1);
-		// 	cga.waitForChatInput((msg, val)=>{
-		// 		if(val !== null && val >= 1000 && val <= 65535){
-		// 			configTable.listenPort = val;
-		// 			thisobj.listenPort = val;
-					
-		// 			var sayString2 = '当前已选择:监听端口='+thisobj.listenPort+'。';
-		// 			cga.sayLongWords(sayString2, 0, 3, 1);
-					
-		// 			cb2(null);
-					
-		// 			return false;
-		// 		}
-				
-		// 		return true;
-		// 	});
-		// }
-	], cb);
+		Async.series([teamMode.inputcb,], cb);
 	},
 	execute : ()=>{
-		// io.listen(thisobj.listenPort);
 		callSubPlugins('init');
 		loadBattleConfig()
 		loop();
