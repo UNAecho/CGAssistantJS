@@ -341,7 +341,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		},
 	]
 	);
-	
+	configMode.func('节能模式')
 	task.doTask(()=>{
 		var minssionObj = {"树精长老的末日" : true}
 		cga.refreshMissonStatus(minssionObj)

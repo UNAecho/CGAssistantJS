@@ -1,1 +1,1 @@
-{"mainPlugin":"采集冲技能","subPlugins":["掉魂自动招魂", "自动存取魔币"],"gatherObject":"双百采集","serverPort":23333,"target":"牛肉","logoutTimes":0}
+{"mainPlugin":"采集","subPlugins":["自动存取魔币"],"gatherObject":"双百采集","serverPort":2555,"target":"牛肉","mineType":0,"logoutTimes":0}

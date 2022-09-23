@@ -461,5 +461,12 @@ var cga = require('../cgaapi')(function(){
 	);
 	configMode.manualLoad('生产赶路')
 	task.anyStepDone = false;
-	task.doTask();
+	task.doTask(()=>{
+		// 防止无限重启
+		cga.gui.LoadScript({
+			autorestart : false,
+		}, (err, result)=>{
+			console.log('脚本结束，关闭自动重启脚本。')
+		})
+	});
 });
