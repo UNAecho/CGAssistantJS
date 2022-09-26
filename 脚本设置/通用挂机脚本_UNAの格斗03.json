@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "转职保证书",
+    "mainPlugin": "全自动练级",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
@@ -13,14 +13,14 @@
         "队员卖石"
     ],
     "finalJob":"格斗士",
-    "supplyMode": 2,
+    "supplyMode": 1,
     "teamMode": 0,
     "teammates": [
-        "UNAの咒术师",
+        "UNAの巫师",
         "UNAの格斗01",
         "UNAの格斗02",
-        "UNAの格斗03",
-        "UNAの格斗04"
+        "UNAの猎人02",
+        "UNAの传教士"
     ],
     "battleArea": 0,
     "sellStore": 1,
@@ -29,10 +29,10 @@
     "minMp": "25%",
     "buyCrystal": "火风的水晶（5：5）",
     "minLoyality": 40,
-    "maxEndurance": 226,
+    "maxEndurance": 186,
     "maxStrength": 300,
     "maxDefense": 0,
-    "maxAgility": 90,
+    "maxAgility": 130,
     "maxMagical": 50,
     "petpoint": 4
 }

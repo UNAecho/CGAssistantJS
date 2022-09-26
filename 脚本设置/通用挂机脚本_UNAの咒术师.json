@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "转职保证书",
+    "mainPlugin": "全自动练级",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
@@ -17,10 +17,10 @@
     "teamMode": 0,
     "teammates": [
         "UNAの咒术师",
-        "UNAの格斗01",
-        "UNAの格斗02",
         "UNAの格斗03",
-        "UNAの格斗04"
+        "UNAの圣骑士",
+        "UNAの格斗04",
+        "UNAの传教士2"
     ],
     "battleArea": 0,
     "sellStore": 1,
