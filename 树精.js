@@ -6,20 +6,32 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 
 	var playerinfo = cga.GetPlayerInfo();
 	
-	var teammates = [
-        "UNAの格斗2",
-        "UNAの巫师",
-        "UNAの制靴",
-        "UNAの造小刀",
-        "UNAの造帽"
-	];
-	
-	// var teamplayers = cga.getTeamPlayers();
-
-	// for(var i in teamplayers)
-	// 	teammates[i] = teamplayers[i].name;
-	
-	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
+	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦。
+	var teammates = null
+	// 需要在静态teams中定义好角色所属的队伍。
+	var teams = [
+		[
+			"UNAの巫师",
+			"UNAの格斗01",
+			"UNAの格斗02",
+			"UNAの猎人02",
+			"UNAの传教士"
+		],
+		[
+			"UNAの咒术师",
+			"UNAの格斗03",
+			"UNAの圣骑士",
+			"UNAの格斗04",
+			"UNAの传教士2"
+		]
+	]
+	// 采用静态多队伍模式，角色会自己寻找自己在哪个队伍中。
+	for (var t in teams){
+		if (teams[t].indexOf(playerinfo.name) != -1){
+			teammates = teams[t]
+		}
+	}
+	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false
 	
 	var task = cga.task.Task('树精长老的末日', [
 	{//0
@@ -33,130 +45,90 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	{//1
 		intro: '2.前往维诺亚村医院（61.53）与佣兵艾里克（7.5）对话，选“是”获得【火把】。',
 		workFunc: function(cb2){
-						
-			var go_1 = ()=>{
-				cga.cleanInventory(1, ()=>{
-					cga.TurnTo(7, 5);
-					cga.AsyncWaitNPCDialog(()=>{
-						cga.ClickNPCDialog(4, 0);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(1, 0);
-							cga.SayWords('拿火把，完成请加队然后说“1”！', 0, 3, 1);
-							setTimeout(()=>{
-								cga.SayWords('1', 0, 3, 1);						
-							}, 1500);
-						});
-					});
-				});
-			}
-						
-			var go = ()=>{
-				cga.walkList([
-				[5, 1, '村长家的小房间'],
-				[0, 5, '村长的家'],
-				[10, 16, '维诺亚村'],
-				[61, 53, '医院'],
-				[6, 5],
-				[5, 5],
-				[6, 5],
-				[5, 5],
-				[6, 5],
-				], ()=>{
-					
-					setTimeout(()=>{
-						cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
-						setTimeout(go_1, 1500);
-					}, 1500);
-					
-					cga.waitTeammateSayNextStage(teammates, cb2);
-				});
-			}
-			
-			var wait4 = ()=>{
-				cga.addTeammate(teammates[0], (r)=>{
-					if(r){
-						cga.SayWords('1', 0, 3, 1);
-						cb2(true);
-						return;
-					}
-					setTimeout(wait4, 1000);
-				});
-			}
-			
-			var go2 = ()=>{
 
-				var retry = ()=>{
-					cga.cleanInventory(1, ()=>{
-						cga.TurnTo(7, 5);
-						cga.AsyncWaitNPCDialog((err)=>{
-							if(err){
-								retry();
-								return;
-							}
-							cga.ClickNPCDialog(4, 0);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(1, 0);
-								setTimeout(()=>{
-									cga.WalkTo(5, 5);
-									setTimeout(wait4, 1000);
-								}, 1000);
+			var checkFire = (cb)=>{
+				if(cga.getItemCount('火把') > 0){
+					cga.SayWords('1', 0, 3, 1);	
+					if(!cga.isTeamLeader){
+						cb(true)
+					}
+				}else{
+					cb('restart stage');
+				}
+				return
+			}
+
+			var go = () => {
+				cga.travel.falan.autopilot('医院',()=>{
+					cga.walkList([
+						[6, 5],
+						], ()=>{
+							cga.cleanInventory(1, ()=>{
+								cga.TurnTo(7, 5);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(4, 0);
+									cga.AsyncWaitNPCDialog(()=>{
+										cga.ClickNPCDialog(1, 0);
+										setTimeout(()=>{
+											cga.travel.falan.autopilot('主地图',()=>{
+												if(cga.isTeamLeader){
+													leader_go()
+												} else {
+													teammate_go()
+												}
+											})
+										}, 1500);
+									});
+								});
 							});
 						});
-					});
-				}
+				})
+			}
 
-				cga.waitForLocation({mapname : '医院', walkto:[6, 5], pos: [7, 5], leaveteam : true}, retry);
+			var leader_go = ()=>{
+				cga.walkList([
+					[59, 47],
+					], ()=>{
+						setTimeout(() => {
+							cga.waitTeammateSayNextStage(teammates, cb2);
+						}, 500);
+						leader_wait()
+					});
+			}
+
+			var teammate_go = ()=>{
+				cga.walkList([
+					[59, 48],
+					], ()=>{
+						teammate_wait()
+					});
 			}
 			
-			var wait3 = ()=>{
-				cga.addTeammate(teammates[0], (r)=>{
-					if(r){
-						go2();
-						return;
-					}
-					setTimeout(wait3, 1000);
-				});
-			}
-					
-			var wait = ()=>{
-				cga.WalkTo(4, 5);
+			var leader_wait = ()=>{
 				cga.waitTeammates(teammates, (r)=>{
 					if(r){
-						go();
+						checkFire(cb2);
 						return;
 					}
-					setTimeout(wait, 1000);
+					setTimeout(leader_wait, 1000);
+				});
+			}
+
+			var teammate_wait = ()=>{
+				cga.addTeammate(teammates[0], (r)=>{
+					if(r){
+						checkFire(cb2)
+						return;
+					}
+					setTimeout(teammate_wait, 1000);
 				});
 			}
 			
-			if(cga.isTeamLeader){
-				cga.travel.falan.toCastleHospital(()=>{
-					setTimeout(()=>{
-						cga.travel.falan.toTeleRoom('维诺亚村', wait);
-					}, 2000);
-				});
-			} else {
-				var retry = ()=>{
-					cga.TurnTo(8, 22);
-					cga.AsyncWaitNPCDialog(function(err){
-						if(err){
-							cga.walkList([ [9, 23], [9, 22] ], retry);
-							return;
-						}
-						cga.ClickNPCDialog(4, -1);
-						setTimeout(wait3, 3000);
-					});
-				}
-				cga.travel.falan.toCastleHospital(()=>{
-					cga.walkList([
-						[41, 50, '里谢里雅堡 1楼'],
-						[45, 20, '启程之间'],
-						[8, 22],
-						], ()=>{
-							cga.waitForLocation({mapname : '启程之间', pos : [8, 22]}, retry);
-						});
-				});
-			}
+			cga.travel.falan.toCastleHospital(()=>{
+				setTimeout(()=>{
+					cga.travel.falan.toTeleRoom('维诺亚村', go);
+				}, 2000);
+			});
 		}
 	},
 	{//2
@@ -172,7 +144,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 					});
 				}
 				
-				cga.waitForLocation({mapname : '叹息森林'}, ()=>{
+				cga.waitForLocation({mapname : '叹息森林', mapindex : 15508}, ()=>{
 					cb2(true);
 				});
 			}
@@ -200,7 +172,6 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 				]
 				:
 				[
-				[2, 9, '维诺亚村'],
 				[67, 47, '芙蕾雅'],
 				[380, 353, '布满青苔的洞窟1楼'],
 				]
@@ -212,7 +183,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			if(cga.isTeamLeader){
 				go();
 			} else {
-				cga.waitForLocation({mapname : '叹息之森林'}, fuckBOSS);
+				cga.waitForLocation({mapname : '叹息之森林', mapindex : 15507}, fuckBOSS);
 			}
 		}
 	},
@@ -221,10 +192,6 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		workFunc: function(cb2){
 			var go = ()=>{
 				cga.walkList([
-				[27, 13],
-				[26, 13],
-				[27, 13],
-				[26, 13],
 				[27, 13],
 				], ()=>{
 					var sword = cga.findItem('艾里克的大剑');
@@ -244,40 +211,11 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 					}, 1000);					
 				});
 			}
-			
-			var go2 = ()=>{
-				var retry = ()=>{
-					var sword = cga.findItem('艾里克的大剑');
 
-					if(sword != -1){
-						cga.DropItem(sword);
-					}
-					
-					setTimeout(()=>{
-						cga.cleanInventory(1, ()=>{
-							cga.turnTo(26, 12);
-							cga.AsyncWaitNPCDialog((err)=>{
-								if(err){
-									cga.walkList([ [26, 13], [27, 13] ], retry);
-									return;
-								}
-								if(cga.findItem('树苗？') == -1){
-									setTimeout(retry, 1000);
-								}
-								setTimeout(cb2, 1000, true);
-							});
-						});
-					}, 1000);
-				}
-				
-				cga.waitForLocation({mapname : '叹息森林', pos:[26, 12], walkto : [26, 13], leaveteam : true}, retry);
-			}
-			
-			if(cga.isTeamLeader){
-				go();
-			} else {
-				go2();
-			}
+			setTimeout(()=>{
+				cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+				setTimeout(go, 1500);
+			}, 1500);
 		}
 	},
 	{//4
@@ -325,7 +263,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			return false;
 		},
 		function(){
-			return (cga.getItemCount('火把') >= 1) ? true : false;
+			return (cga.getItemCount('火把') >= 1 && cga.getTeamPlayers().length > 0) ? true : false;
 		},
 		function(){
 			return (cga.GetMapName() == '叹息之森林') ? true : false;

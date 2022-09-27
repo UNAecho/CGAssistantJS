@@ -1,5 +1,11 @@
 var cga = require('../cgaapi')(function(){
 
+	global.cga = cga
+	var rootdir = cga.getrootdir()
+	var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
+	var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
+	configMode.manualLoad('生产赶路')
+
 	var job =cga.GetPlayerInfo().job
 	// 提取本地职业信息
 	const getProfessionalbehavior = require('../常用数据/Professionalbehavior.js');
@@ -34,12 +40,16 @@ var cga = require('../cgaapi')(function(){
 						behavior = null
 						break
 				}
-				getProfessionalbehavior(cga,job,behavior)
+				healMode.func(()=>{
+					getProfessionalbehavior(cga,job,behavior)
+				})
 				return false;
 			}
 			else if(msg.length>0 && msg.charAt(msg.length - 1) == '$'){// 临时默认找导师就职 TODO将所有职业列出来并编号，让玩家输入数字选择
 				var inputjob = msg.substring(0, msg.length - 1);
-				getProfessionalbehavior(cga,inputjob,'induction')
+				healMode.func(()=>{
+					getProfessionalbehavior(cga,inputjob,'induction')
+				})
 			}
 			
 			return true;
