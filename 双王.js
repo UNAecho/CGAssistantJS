@@ -1,6 +1,9 @@
 var fs = require('fs');
 var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
-
+	global.cga = cga
+	var rootdir = cga.getrootdir()
+	var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
+	var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
 	var playerinfo = cga.GetPlayerInfo();
 	
 	var teammates = [
@@ -18,61 +21,61 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
 
-	var loadBattleConfig = ()=>{
-		var checkSkill = ()=>{
-			var skills = cga.GetSkillsInfo();
-			var job = '其他';
-			skills.filter((sk)=>{
-				if(sk.name.indexOf('补血魔法') >= 0 && sk.lv >= 4){
-					job = '传教士'
-				}else if(sk.name.indexOf('恢复魔法') >= 0 && sk.lv >= 4){
-					job = '巫师'
-				}else if(sk.name.indexOf('气功弹') >= 0 && sk.lv >= 4){
-					job = '格斗士'
-				}else if(sk.name.indexOf('暗黑骑士之力') >= 0){
-					job = '暗黑骑士'
-				}else if(sk.name.indexOf('神圣光芒') >= 0){
-					job = '圣骑士'
-				}
-				return '';
-			});
-			return job;
-		}
+	// var loadBattleConfig = ()=>{
+	// 	var checkSkill = ()=>{
+	// 		var skills = cga.GetSkillsInfo();
+	// 		var job = '其他';
+	// 		skills.filter((sk)=>{
+	// 			if(sk.name.indexOf('补血魔法') >= 0 && sk.lv >= 4){
+	// 				job = '传教士'
+	// 			}else if(sk.name.indexOf('恢复魔法') >= 0 && sk.lv >= 4){
+	// 				job = '巫师'
+	// 			}else if(sk.name.indexOf('气功弹') >= 0 && sk.lv >= 4){
+	// 				job = '格斗士'
+	// 			}else if(sk.name.indexOf('暗黑骑士之力') >= 0){
+	// 				job = '暗黑骑士'
+	// 			}else if(sk.name.indexOf('神圣光芒') >= 0){
+	// 				job = '圣骑士'
+	// 			}
+	// 			return '';
+	// 		});
+	// 		return job;
+	// 	}
 		
 	
-		var settingpath = cga.getrootdir() + '\\战斗配置\\'
-		var role = checkSkill()
-		if (role == '传教士'){
-			settingpath = settingpath + '传教练级.json'
+	// 	var settingpath = cga.getrootdir() + '\\战斗配置\\'
+	// 	var role = checkSkill()
+	// 	if (role == '传教士'){
+	// 		settingpath = settingpath + '传教练级.json'
 	
-		}else if (role == '巫师'){
-			settingpath = settingpath + 'BOSS巫师.json'
+	// 	}else if (role == '巫师'){
+	// 		settingpath = settingpath + 'BOSS巫师.json'
 	
-		}else if (role == '格斗士'){
-			settingpath = settingpath + '格斗练级.json'
+	// 	}else if (role == '格斗士'){
+	// 		settingpath = settingpath + '格斗练级.json'
 	
-		}else if (role == '暗黑骑士'){
-			settingpath = settingpath + 'BOSS暗黑骑士.json'
+	// 	}else if (role == '暗黑骑士'){
+	// 		settingpath = settingpath + 'BOSS暗黑骑士.json'
 	
-		}else if (role == '圣骑士'){
-			settingpath = settingpath + 'BOSS圣骑士.json'
+	// 	}else if (role == '圣骑士'){
+	// 		settingpath = settingpath + 'BOSS圣骑士.json'
 	
-		}else{
-			settingpath = settingpath + 'BOSS合击.json'
-		}
+	// 	}else{
+	// 		settingpath = settingpath + 'BOSS合击.json'
+	// 	}
 	
-		var setting = JSON.parse(fs.readFileSync(settingpath))
+	// 	var setting = JSON.parse(fs.readFileSync(settingpath))
 	
-		cga.gui.LoadSettings(setting, (err, result)=>{
-			if(err){
-				console.log(err);
-				return;
-			}else{
-				console.log('读取战斗配置【'+settingpath+'】成功')
-			}
-		})
-		return
-	}
+	// 	cga.gui.LoadSettings(setting, (err, result)=>{
+	// 		if(err){
+	// 			console.log(err);
+	// 			return;
+	// 		}else{
+	// 			console.log('读取战斗配置【'+settingpath+'】成功')
+	// 		}
+	// 	})
+	// 	return
+	// }
 
 	var task = cga.task.Task('诅咒的迷宫 (战斗系三转)', [
 	{//0
@@ -197,13 +200,17 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 			
 			if(cga.isTeamLeader){
-				cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
-					wait();
-				});
+				healMode.func(()=>{
+					cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
+						wait();
+					});
+				})
 			} else {
-				cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
-					wait3();
-				});
+				healMode.func(()=>{
+					cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
+						wait3();
+					});
+				})
 			}
 		}
 	},
@@ -1208,6 +1215,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		},
 	]
 	);
-	loadBattleConfig()
-	task.doTask();
+	configMode.func('节能模式')
+	task.doTask(()=>{
+		var minssionObj = {"诅咒的迷宫" : true}
+		cga.refreshMissonStatus(minssionObj)
+	});
 });

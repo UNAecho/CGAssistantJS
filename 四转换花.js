@@ -981,12 +981,15 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 			
 			if(mineObject != null){
-				cga.SayWords('当前职业：【'+jobmainname+'】，应走【'+mineObject.name+'】。', 0, 3, 1);
+				cga.SayWords('当前职业：【'+jobmainname+'】，应走【'+mineObject.name+'】。战斗配置改为单人逃跑赶路', 0, 3, 1);
+				configMode.func('逃跑模式')
 				task.doTask(()=>{
-					// 阻塞，防止不断重启脚本
-					while (true) {
-				
-					}
+					cga.gui.LoadScript({
+						autorestart : false,
+					}, (err, result)=>{
+						var minssionObj = {"誓言之花" : true}
+						cga.refreshMissonStatus(minssionObj)
+					})
 				});
 				return false;
 			}

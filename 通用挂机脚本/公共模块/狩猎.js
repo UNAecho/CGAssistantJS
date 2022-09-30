@@ -524,6 +524,35 @@
 	}
 },
 {
+	level : 2,
+	name : '鸡蛋',
+	display_name : '鸡蛋盆地',
+	func : (cb)=>{
+		cga.travel.newisland.toStone('X', ()=>{
+			cga.walkList([
+			[130, 50, '盖雷布伦森林'],
+			[216, 44],
+			], ()=>{
+				cga.TurnTo(216, 43)		
+				cga.AsyncWaitNPCDialog(()=>{
+					cga.ClickNPCDialog(8, 0);
+					cga.AsyncWaitNPCDialog(()=>{
+						cga.ClickNPCDialog(32, 0);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(1, 0); 
+							cga.AsyncWaitMovement({map:'方堡盆地', delay:1000, timeout:5000}, ()=>{
+								cga.walkList([
+									[182, 166],
+									], cb);
+							});
+						});
+					});
+				});
+			});
+		});
+	}
+},
+{
 	level : 4,
 	name : '鸡肉',
 	display_name : '鸡肉哥拉尔',

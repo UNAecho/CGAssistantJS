@@ -1,10 +1,13 @@
 var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
-
+	global.cga = cga
+	var rootdir = cga.getrootdir()
+	var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
+	var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
 	var playerinfo = cga.GetPlayerInfo();
 	
 	var teammates = [
         "UNAの格斗2",
-        "UNAの格斗3"
+        "UNAの巫师"
         // "UNAの传教士2",
 		// "UNAの猎人01",
         // "UNAの暗黑骑士",
@@ -201,20 +204,18 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			
 			if(cga.isTeamLeader){
 				if(cga.needSupplyInitial({  })){
-					cga.travel.falan.toCastleHospital(()=>{
-						setTimeout(()=>{
-							cb2('restart stage');
-						}, 3000);
-					});
+					healMode.func(()=>{
+						cb2('restart stage');
+					})
 					return;
 				}
 				cga.travel.falan.toTeleRoom('杰诺瓦镇', wait);
 			} else {
-				cga.travel.falan.toCastleHospital(()=>{
+				healMode.func(()=>{
 					setTimeout(()=>{
 						cga.travel.falan.toTeleRoom('杰诺瓦镇', wait3);
 					}, 3000);
-				});
+				})
 			}
 		}
 	},
@@ -575,8 +576,11 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		},
 	]
 	);
-
+	configMode.func('节能模式')
 	playerThinkTimer();
 	cga.registerMoveThink(moveThink);
-	task.doTask();
+	task.doTask(()=>{
+		var minssionObj = {"挑战神兽" : true}
+		cga.refreshMissonStatus(minssionObj)
+	});
 });
