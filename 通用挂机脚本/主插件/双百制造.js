@@ -417,6 +417,7 @@ var cleanUseless = (cb)=>{
 		});
 		return
 	}
+	console.log('银行已存满【' + craft_target.name + '】(堆叠数:'+maxcount+')，去桥头将背包的成品卖掉。')
 	cga.travel.falan.toStone('B1', ()=>{
 		cga.turnTo(150, 122);
 		var sellarray = cga.findItemArray((item)=>{
