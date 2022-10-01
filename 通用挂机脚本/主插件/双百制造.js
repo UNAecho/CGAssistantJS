@@ -401,16 +401,18 @@ var cleanUseless = (cb)=>{
 			], ()=>{
 				cga.turnDir(0);
 				cga.AsyncWaitNPCDialog(()=>{
-					cga.saveToBankAll(craft_target.name, maxcount, ()=>{
-						setTimeout(() => {
-							var emptySlot = cga.findBankEmptySlot(craft_target.name, maxcount)
-							if(emptySlot == -1){
-								console.log('银行已经无法再存放【' + craft_target.name + '】(堆叠数:'+maxcount+')了')
-								thisobj.fullOfBank = true
-							}
-							setTimeout(cb, 1000);
-							return;
-						}, 1500);
+					cga.saveToBankAll(craft_target.name, maxcount, (r)=>{
+						if(r){
+							setTimeout(() => {
+								var emptySlot = cga.findBankEmptySlot(craft_target.name, maxcount)
+								if(emptySlot == -1){
+									console.log('银行已经无法再存放【' + craft_target.name + '】(堆叠数:'+maxcount+')了')
+									thisobj.fullOfBank = true
+								}
+								setTimeout(cb, 1000);
+								return;
+							}, 1500);
+						}
 					});
 				}, 1000);
 			});
