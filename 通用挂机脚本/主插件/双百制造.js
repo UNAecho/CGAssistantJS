@@ -260,6 +260,7 @@ var getBestCraftableItem = ()=>{
 	
 	var item = null;
 	for(var i = thisobj.craftItemList.length - 1; i >= 0; i--){
+		// console.log('id:'+thisobj.craftItemList[i].itemid+',name:'+thisobj.craftItemList[i].name)
 		if(thisobj.craftItemList[i].level > thisobj.craftSkill.level)
 			continue;
 		if(!thisobj.craftItemList[i].available)
@@ -290,7 +291,6 @@ var getBestCraftableItem = ()=>{
 			item = thisobj.craftItemList[i];
 		}
 	}
-	
 	return item;
 }
 
@@ -385,6 +385,38 @@ var dropUseless = (cb)=>{
 }
 
 var cleanUseless = (cb)=>{
+	if (!thisobj.fullOfBank){
+		// 装备默认堆叠数是0
+		var maxcount = 0
+		// TODO查询所有药剂和料理能制作的itemid范围。用于调整存银行的最大堆叠数，装备是0，料理、药剂是3.
+		if (craft_target.itemid >= 15606 && craft_target.itemid <= 15615){// 药剂
+			maxcount = 3
+		}else if((craft_target.itemid >= 15201 && craft_target.itemid <= 15230) || craft_target.itemid == 12405){//料理，番茄酱特殊，为12405
+			maxcount = 3
+		}
+		console.log('尝试将制作好的【' + craft_target.name + '】(堆叠数:'+maxcount+')存入银行备用..')
+		cga.travel.falan.toBank(()=>{
+			cga.walkList([
+			[11, 8],
+			], ()=>{
+				cga.turnDir(0);
+				cga.AsyncWaitNPCDialog(()=>{
+					cga.saveToBankAll(craft_target.name, maxcount, ()=>{
+						setTimeout(() => {
+							var emptySlot = cga.findBankEmptySlot(craft_target.name, maxcount)
+							if(emptySlot == -1){
+								console.log('银行已经无法再存放【' + craft_target.name + '】(堆叠数:'+maxcount+')了')
+								thisobj.fullOfBank = true
+							}
+							setTimeout(cb, 1000);
+							return;
+						}, 1500);
+					});
+				}, 1000);
+			});
+		});
+		return
+	}
 	cga.travel.falan.toStone('B1', ()=>{
 		cga.turnTo(150, 122);
 		var sellarray = cga.findItemArray((item)=>{
@@ -512,7 +544,7 @@ var loop = ()=>{
 		
 		var inventory = cga.getInventoryItems();
 		// 新增法兰城判断：如果在法兰城，猜测刚卖完道具，临回去前做了一点东西，先卖掉再回里谢里雅堡等待材料，节约背包空间
-		if(inventory.length >= 15 || (cga.getItemCount(sellFilter) > 0 && cga.GetMapName() == '法兰城')){
+		if(inventory.length >= 3 || (cga.getItemCount(sellFilter) > 0 && cga.GetMapName() == '法兰城')){
 			cleanUseless(loop);
 			return;
 		}
