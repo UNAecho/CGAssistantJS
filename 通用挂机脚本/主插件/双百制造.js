@@ -402,17 +402,15 @@ var cleanUseless = (cb)=>{
 				cga.turnDir(0);
 				cga.AsyncWaitNPCDialog(()=>{
 					cga.saveToBankAll(craft_target.name, maxcount, (r)=>{
-						if(r){
-							setTimeout(() => {
-								var emptySlot = cga.findBankEmptySlot(craft_target.name, maxcount)
-								if(emptySlot == -1){
-									console.log('银行已经无法再存放【' + craft_target.name + '】(堆叠数:'+maxcount+')了')
-									thisobj.fullOfBank = true
-								}
-								setTimeout(cb, 1000);
-								return;
-							}, 1500);
-						}
+						setTimeout(() => {
+							var emptySlot = cga.findBankEmptySlot(craft_target.name, maxcount)
+							if(emptySlot == -1){
+								console.log('银行已经无法再存放【' + craft_target.name + '】(堆叠数:'+maxcount+')了')
+								thisobj.fullOfBank = true
+							}
+							setTimeout(cb, 1000);
+							return;
+						}, 1500);
 					});
 				}, 1000);
 			});
@@ -547,7 +545,7 @@ var loop = ()=>{
 		
 		var inventory = cga.getInventoryItems();
 		// 新增法兰城判断：如果在法兰城，猜测刚卖完道具，临回去前做了一点东西，先卖掉再回里谢里雅堡等待材料，节约背包空间
-		if(inventory.length >= 3 || (cga.getItemCount(sellFilter) > 0 && cga.GetMapName() == '法兰城')){
+		if(inventory.length >= 15 || (cga.getItemCount(sellFilter) > 0 && cga.GetMapName() == '法兰城')){
 			cleanUseless(loop);
 			return;
 		}
