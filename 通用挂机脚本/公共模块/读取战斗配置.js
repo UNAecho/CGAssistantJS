@@ -24,9 +24,16 @@ var configModeArray = [
 			console.log('未指定角色修炼技能,读取默认战斗配置')
 			filename = '练级'
 		}
+		// 只有战斗系的技能才需要在战斗过程中烧
 		if(thisobj.needLoad()){
+			// 由于转职保证书的存在（转职后保留当前技能等级），当前技能等级可能出现比上限还高的情况，所以需要用小于来判断是否需要继续烧。
 			var skill = ctx.skills.find((sk)=>{
-				if(((thisobj.finalJob.skill && thisobj.finalJob.skill.indexOf(sk.name) != -1) || (thisobj.finalJob.trainskills && thisobj.finalJob.trainskills.indexOf(sk.name) != -1)) && sk.lv != sk.maxlv){
+				// 优先本职技能
+				if((thisobj.finalJob.skill && thisobj.finalJob.skill.indexOf(sk.name) != -1) && sk.lv < sk.maxlv){
+					return true
+				}
+				// 其次是自定义技能
+				if((thisobj.finalJob.trainskills && thisobj.finalJob.trainskills.indexOf(sk.name) != -1) && sk.lv < sk.maxlv){
 					return true
 				}
 				return false;
