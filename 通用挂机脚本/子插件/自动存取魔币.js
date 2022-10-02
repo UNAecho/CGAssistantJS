@@ -240,12 +240,23 @@ var thisobj = {
 					cga.positiveTrade(targetname, stuffs, (playerName, receivedStuffs)=>{
 						// 如果对方没给钱，receivedStuffs.gold是undefined而不是0
 						// TODO：如果是存钱，对方没给钱也会拒绝，要修正一下
-						if(!receivedStuffs.gold || receivedStuffs.gold >= lowerlimit){
-							console.log('对方提供:【'+receivedStuffs.gold+'】金币');
-							return true;
+						if(cipher == save){
+							if(!receivedStuffs.gold || receivedStuffs.gold >= lowerlimit){
+								console.log('对方提供:');
+								console.log(receivedStuffs);
+								return true;
+							}
+							console.log('交易异常，拒绝');
+							return false;
+						}else{
+							if(receivedStuffs.gold && receivedStuffs.gold >= lowerlimit){
+								console.log('对方提供:');
+								console.log(receivedStuffs);
+								return true;
+							}
+							console.log('交易异常，银行方没有提供【'+ lowerlimit +'】');
+							return false;
 						}
-						console.log('对方没有给自己最低限度:【'+lowerlimit+'】金币，拒绝交易');
-						return false;
 					}, (result)=>{
 						if (result.success == true){
 							cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, false);
@@ -298,7 +309,7 @@ var thisobj = {
 			if(cipher == borncipher || item){
 				cga.travel.falan.toStone('C', ()=>{
 					cga.walkList([
-					[48, 38],
+						[48, 38],
 					], ()=>{
 						setTimeout(retry, 2000,cb);
 					});
