@@ -395,25 +395,21 @@ var cleanUseless = (cb)=>{
 			maxcount = 3
 		}
 		console.log('尝试将制作好的【' + craft_target.name + '】(堆叠数:'+maxcount+')存入银行备用..')
-		cga.travel.falan.toBank(()=>{
-			cga.walkList([
-			[11, 8],
-			], ()=>{
-				cga.turnDir(0);
-				cga.AsyncWaitNPCDialog(()=>{
-					cga.saveToBankAll(craft_target.name, maxcount, (r)=>{
-						setTimeout(() => {
-							var emptySlot = cga.findBankEmptySlot(craft_target.name, maxcount)
-							if(emptySlot == -1){
-								console.log('银行已经无法再存放【' + craft_target.name + '】(堆叠数:'+maxcount+')了')
-								thisobj.fullOfBank = true
-							}
-							setTimeout(cb, 1000);
-							return;
-						}, 1500);
-					});
-				}, 1000);
-			});
+		cga.travel.newisland.toBank(()=>{
+			cga.turnDir(0);
+			cga.AsyncWaitNPCDialog(()=>{
+				cga.saveToBankAll(craft_target.name, maxcount, (r)=>{
+					setTimeout(() => {
+						var emptySlot = cga.findBankEmptySlot(craft_target.name, maxcount)
+						if(emptySlot == -1){
+							console.log('银行已经无法再存放【' + craft_target.name + '】(堆叠数:'+maxcount+')了')
+							thisobj.fullOfBank = true
+						}
+						setTimeout(cb, 1000);
+						return;
+					}, 1500);
+				});
+			}, 1000);
 		});
 		return
 	}
