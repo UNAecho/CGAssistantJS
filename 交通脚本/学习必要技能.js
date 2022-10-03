@@ -31,7 +31,7 @@ var cga = require('../cgaapi')(function(){
 	{//0
 		intro: '1.学治疗',
 		workFunc: function(cb2){
-			if(category == '物理系' || category == '魔法系'){
+			if(category == '物理系' || category == '魔法系' || category == '魔物系'){
 				console.log('通常情况下,战斗系不学习治疗')
 				cb2(true)
 			}else{
