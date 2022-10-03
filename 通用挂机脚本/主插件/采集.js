@@ -233,9 +233,13 @@ var check_drop = ()=>{
 	if(dropItemPos != -1)
 		cga.DropItem(dropItemPos);
 }
-// TODO不卖采集目标物品
+
 var cleanOtherItems = (cb) =>{
 	var sell = cga.findItemArray((item) => {
+		// 不卖采集目标物品
+		if(item.name == mineObject.object.name){
+			return false
+		}
 		// 23料理、43血瓶
 		if ([23, 43].indexOf(item.type) != -1 && item.count == 3) {
 			return true
