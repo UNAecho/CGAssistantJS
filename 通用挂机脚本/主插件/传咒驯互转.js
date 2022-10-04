@@ -65,8 +65,14 @@ var transferJob = (behavior,cb) =>{
 					if(dlg && dlg.options == 0){
 						cga.ClickNPCDialog(0, 0);
 						cga.AsyncWaitNPCDialog(()=>{
-							console.log('转职完毕')
-							cb(true)
+							// 转职后重置一下晋级任务状态
+							setTimeout(() => {
+								cga.refreshMissonStatus(null,()=>{
+									console.log('转职完毕')
+									cb(true)
+									return
+								})
+							}, 2000);
 							return
 						});
 					}

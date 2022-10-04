@@ -29,6 +29,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	for (var t in teams){
 		if (teams[t].indexOf(playerinfo.name) != -1){
 			teammates = teams[t]
+			break
 		}
 	}
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false

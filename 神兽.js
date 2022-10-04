@@ -1,24 +1,38 @@
 var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
+	/**
+	 * UNAecho备注：
+	 * 随机迷宫index起始为234，但是第二层不是235而是236，index递增规则不规律，第12层index为252。
+	 * 1-12层的index为[234,236,237,238,239,240,241,245,246,250,251,252,]
+	 * 12层出口为静谧之间，index16511
+	 * 根据过往经验，在下午16：37分时候迷宫报告快消失了
+	 */
 	global.cga = cga
 	var rootdir = cga.getrootdir()
 	var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
 	var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
 	var playerinfo = cga.GetPlayerInfo();
 	
-	var teammates = [
-        "UNAの格斗2",
-        "UNAの巫师"
-        // "UNAの传教士2",
-		// "UNAの猎人01",
-        // "UNAの暗黑骑士",
-	];
-	
-	// var teamplayers = cga.getTeamPlayers();
-
-	// for(var i in teamplayers)
-	// 	teammates[i] = teamplayers[i].name;
-	
-	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
+	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦。
+	var teammates = null
+	// 需要在静态teams中定义好角色所属的队伍。
+	var teams = [
+		[
+			"UNAの格斗2",
+			"UNAの格斗03",
+		],
+		[
+			"UNAの格斗3",
+			"UNAの咒术师",
+		]
+	]
+	// 采用静态多队伍模式，角色会自己寻找自己在哪个队伍中。
+	for (var t in teams){
+		if (teams[t].indexOf(playerinfo.name) != -1){
+			teammates = teams[t]
+			break
+		}
+	}
+	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false
 
 	exitPos = null;
 	itemGot = false;
@@ -110,6 +124,30 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		}
 		
 		setTimeout(playerThinkTimer, 1500);
+	}
+	// 时刻丢弃魔石和卡片，防止打不到鳞片
+	var check_drop = ()=>{
+		if(cga.isInBattle()){
+			setTimeout(check_drop, 5000);
+			return;
+		}
+
+		var dropItemPos = -1;
+		var pattern = /(.+)的卡片/;
+		cga.getInventoryItems().forEach((item)=>{
+			if(dropItemPos != -1)
+				return;
+			if(item.name == '魔石' || item.name == '卡片？' || pattern.exec(item.name)) {
+				dropItemPos = item.pos;
+				return;
+			}
+		});
+		
+		if(dropItemPos != -1)
+			cga.DropItem(dropItemPos);
+
+		setTimeout(check_drop, 2000);
+		return
 	}
 
 	var task = cga.task.Task('挑战神兽 (战斗系二转)', [
@@ -203,13 +241,11 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 			
 			if(cga.isTeamLeader){
-				if(cga.needSupplyInitial({  })){
-					healMode.func(()=>{
-						cb2('restart stage');
-					})
-					return;
-				}
-				cga.travel.falan.toTeleRoom('杰诺瓦镇', wait);
+				healMode.func(()=>{
+					setTimeout(()=>{
+						cga.travel.falan.toTeleRoom('杰诺瓦镇', wait);
+					}, 3000);
+				})
 			} else {
 				healMode.func(()=>{
 					setTimeout(()=>{
@@ -298,13 +334,6 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	{//2
 		intro: '3.通过随机迷宫抵达静谧之间，持有【地龙的鳞片】与神官葛雷森（26.67）对话，选“是”交出【地龙的鳞片】并通过栅栏。',
 		workFunc: function(cb2){
-			var dropStone = ()=>{
-				var stone = cga.findItem('魔石');
-
-				if(stone != -1){
-					cga.DropItem(stone);
-				}
-			}
 			//搜索迷宫入口
 			var findObj = (cb3)=>{
 				var objs = cga.getMapObjects();
@@ -442,8 +471,6 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 						goFuckBOSS();
 						return;
 					}
-					// 加一个丢魔石步骤，防止打不到鳞片
-					dropStone()
 					
 					goFuckDragon();
 				});
@@ -486,8 +513,6 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 						
 						return true;
 					}
-					// 加一个丢魔石步骤，防止打不到鳞片
-					dropStone()
 					return true;
 				});
 				
@@ -515,7 +540,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		}
 	},
 	{
-		intro: '6.由静谧之间（26.12）处进入咒缚之帐与邪灵鸟人（14.14）对话2次，任务完结。',
+		intro: '5.由静谧之间（26.12）处进入咒缚之帐与邪灵鸟人（14.14）对话2次，任务完结。',
 		workFunc: function(cb2){
 			
 			if(cga.isTeamLeader){
@@ -558,26 +583,28 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	}
 	],
 	[//任务阶段是否完成
-		function(){
+		function(){// 1.前往杰诺瓦镇医院（44.33）2楼与神官比尔班（11.4）对话，获得【贝兹雷姆之钥】。
 			return (cga.GetMapName() == '医院2楼' && cga.getItemCount('贝兹雷姆之钥') >= 1) ? true : false;
 		},
-		function(){
+		function(){// 2.出杰诺瓦镇西门，前往莎莲娜岛（135.333）处与神官杰拉娜对话，交出【贝兹雷姆之钥】传送至入口，通过黄色传送石（25.7）进入贝兹雷姆的迷宫。
 			var mapname = cga.GetMapName();
 			return ((mapname == '入口' || mapname == '静谧之间'|| mapname.indexOf('贝兹雷姆的迷宫') == 0) && cga.GetMapXY().y > 66 ) ? true : false;
 		},
-		function(){
+		function(){// 3.通过随机迷宫抵达静谧之间，持有【地龙的鳞片】与神官葛雷森（26.67）对话，选“是”交出【地龙的鳞片】并通过栅栏。
 			return (cga.GetMapName() == '静谧之间' && cga.GetMapXY().y <= 65 ) ? true : false;
 		},
-		function(){
+		function(){// 4.与神兽史雷普尼尔（26.25）对话进入战斗。
 			return (cga.GetMapIndex().index3 == 16512) ? true : false;
 		},
-		function(){
+		function(){// 5.由静谧之间（26.12）处进入咒缚之帐与邪灵鸟人（14.14）对话2次，任务完结。
 			return false;
 		},
 	]
 	);
 	configMode.func('节能模式')
 	playerThinkTimer();
+	// 本任务持续丢弃魔石和卡片，防止打不到鳞片
+	check_drop();
 	cga.registerMoveThink(moveThink);
 	task.doTask(()=>{
 		var minssionObj = {"挑战神兽" : true}
