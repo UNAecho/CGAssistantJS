@@ -87,7 +87,7 @@ var chooseSkill = (cb)=>{
 			thisobj.skill = cga.findPlayerSkill(tmpskill)
 
 			var jobLevel = getprofessionalInfos.getJobLevel(playerinfo.job)
-			console.log('你当前职级的采集技能已全部冲满' + (jobLevel < 4 ? '如需继续提升，请晋级，【注意】4转开始，制造系的采集技能上限为5级，而采集技能升到5级后，会降智力，提升耐力。已经双百的账号请注意。' : ''))
+			console.log('你当前职级的采集技能已全部冲满' + (jobLevel < 4 ? '，如需继续提升，请晋级。【注意】4转开始，制造系的采集技能上限为5级，而采集技能升到5级后，会降智力，提升耐力。已经双百的账号请注意。' : ''))
 			return
 		}
 	}else{
