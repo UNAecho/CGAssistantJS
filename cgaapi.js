@@ -563,7 +563,7 @@ module.exports = function(callback){
 			result = '索奇亚奇利域'
 		}else if(mapindex == 300 && XY.x >= 379){// 索奇亚地图比较规则，大于379都是洪恩大风洞的右侧
 			result = '索奇亚加纳域'
-		}else if(mapindex >= 50000){
+		}else if(mapindex >= 59520){
 			result = '艾尔莎岛'
 		}else{
 			console.warn('[UNA脚本警告]:未知地图index，请联系作者更新。')
@@ -3407,7 +3407,7 @@ module.exports = function(callback){
 		}
 		return
 	}
-	// UNA:在村镇补给。isPro为true是去资深护士处补给，否则是普通护士补给
+	// UNA:添加全域自动导航至医院补给。isPro为true是去资深护士处补给，否则是普通护士补给
 	cga.travel.toHospital = (isPro,cb)=>{
 		// 当前地图信息
 		var mapindex = cga.GetMapIndex().index3
@@ -5353,12 +5353,24 @@ module.exports = function(callback){
 		}
 		// 开始执行逻辑，首先刷新一下职业晋级任务的状态。
 		if(category == '战斗系'){
-			for (var i = 0 ; i < jobLevel ; i++){
-				config["mission"][battleMission[i]] = true
+			for (var i = 0 ; i < battleMission.length ; i++){
+				if(i < jobLevel){
+					config["mission"][battleMission[i]] = true
+					continue
+				}
+				// 除了五转以外，重置更高级别的晋级任务状态。
+				// 五转任务一生只需要做一次，不会被重置。
+				if(i < 4){
+					config["mission"][battleMission[i]] = false
+				}
 			}
 		}else{
-			for (var i = 0 ; i < jobLevel ; i++){
-				config["mission"][productMission[i]] = true
+			for (var i = 0 ; i < productMission.length ; i++){
+				if(i < jobLevel){
+					config["mission"][productMission[i]] = true
+					continue
+				}
+				config["mission"][productMission[i]] = false
 			}
 		}
 		// 然后检查称号
