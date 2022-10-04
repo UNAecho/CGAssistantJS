@@ -22,6 +22,7 @@
         "UNAの格斗04",
         "UNAの传教士2"
     ],
+    "timeout" : 180000,
     "battleArea": 0,
     "sellStore": 1,
     "layerLevel": 1,
