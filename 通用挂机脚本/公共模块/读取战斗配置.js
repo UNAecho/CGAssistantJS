@@ -47,7 +47,7 @@ var configModeArray = [
 		}
 		if(!skill){
 			// 此处注意文件的名字，是统称+练级二字，如：格斗士练级
-			if(cga.ismaxbattletitle() && accompany.indexOf(thisobj.finalJob.jobmainname) != -1){
+			if(accompany.indexOf(thisobj.finalJob.jobmainname) != -1){
 				thisobj.manualLoad(thisobj.finalJob.jobmainname + '练级')
 			}else{
 				thisobj.manualLoad('练级')
