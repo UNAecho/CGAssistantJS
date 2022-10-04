@@ -1017,8 +1017,10 @@ var loop = ()=>{
 						var retry = ()=>{
 							if(cga.getTeamPlayers().length){
 								if(cga.isTeamLeaderEx()){
-									cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
-									setTimeout(retry, 1000);
+									setTimeout(()=>{
+										cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+									}, 2000);
+									setTimeout(retry, 2500);
 								}else{
 									setTimeout(retry, 1000);
 								}
@@ -1026,7 +1028,16 @@ var loop = ()=>{
 							}else{
 								callSubPluginsAsync('prepare', ()=>{
 									thisobj.battleAreaObj.muster(()=>{
-										teamMode.wait_for_teammates(loop);
+										teamMode.wait_for_teammates_timeout((r)=>{
+											if(!r){
+												console.log('超时，重新执行loop')
+												loop()
+												return
+											}
+											// 无论是否超时，都要执行loop，因为loop已经包含了逻辑判断。
+											loop()
+											return
+										});
 									})
 								});
 								return
@@ -1092,6 +1103,9 @@ var thisobj = {
 		if(teamMode.translate(pair))
 			return true;
 		
+		if(configMode.translate(pair))
+			return true;
+		
 		return false;
 	},
 	loadconfig : (obj)=>{
@@ -1142,7 +1156,6 @@ var thisobj = {
 		cga.registerMoveThink(moveThink);
 		callSubPlugins('init');
 		logbackEx.init();
-		// loadBattleConfig()
 		loop();
 	},
 };

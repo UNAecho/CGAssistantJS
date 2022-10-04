@@ -60,6 +60,68 @@ var teamModeArray = [
 			waitFor();
 		}
 	},
+	wait_for_teammates_timeout : (cb)=>{
+
+		if(!cga.isTeamLeader && !thisobj.teammates.length){
+			cb(true);
+			return;
+		}
+
+		var remainTime = thisobj.timeout > 0 ? thisobj.timeout : null
+
+		if(!cga.isTeamLeader){
+			
+			var waitAdd = ()=>{
+				//console.log('waitAdd...');
+				cga.addTeammate(thisobj.teammates[0], (r)=>{
+					if(r){
+						cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
+						cb(true);
+						return;
+					}
+					if(thisobj.timeout > 0 && remainTime > 0){
+						// console.log('等待队长，还剩' + remainTime / 1000 + '秒')
+						remainTime -=1000
+						setTimeout(waitAdd, 1000);
+						return
+					}else if(thisobj.timeout > 0){
+						console.log('固定组队等待超时，执行回调函数并返回false')
+						cb(false)
+						return;
+					}
+					setTimeout(waitAdd, 1000);
+				});
+			}
+			
+			waitAdd();
+		}
+		else 
+		{
+			var waitFor = ()=>{
+				//console.log('waitFor...');
+				cga.waitTeammates(thisobj.teammates, (r)=>{
+					if(r){
+						cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
+						cb(true);
+						return;
+					}
+					if(thisobj.timeout > 0 && remainTime > 0){
+						// console.log('等待队员，还剩' + remainTime / 1000 + '秒')
+						remainTime -=1000
+						setTimeout(waitFor, 1000);
+						return
+					}else if(thisobj.timeout > 0){
+						console.log('固定组队等待超时，执行回调函数并返回false')
+						cb(false)
+						return;
+					}
+					setTimeout(waitFor, 1000);
+				});
+			}
+			
+			waitFor();
+		}
+	},
 	think : (ctx)=>{
 		//单练模式
 		if(thisobj.teammates.length == 0)
@@ -143,7 +205,7 @@ var teamModeArray = [
 			return;
 		}
 	}
-}
+},
 ]
 
 var cga = global.cga;
@@ -164,6 +226,9 @@ var thisobj = {
 	wait_for_teammates : (cb)=>{
 		thisobj.object.wait_for_teammates(cb);
 	},
+	wait_for_teammates_timeout : (cb)=>{
+		thisobj.object.wait_for_teammates_timeout(cb);
+	},
 	think : (ctx)=>{
 		thisobj.object.think(ctx);
 	},
@@ -182,6 +247,11 @@ var thisobj = {
 		}
 		if(pair.field == 'minTeamMemberCount'){
 			pair.field = '队伍最小人数';
+			pair.translated = true;
+			return true;
+		}
+		if(pair.field == 'timeout'){
+			pair.field = '超时时间(毫秒)';
 			pair.translated = true;
 			return true;
 		}
@@ -213,6 +283,13 @@ var thisobj = {
 			if(!(thisobj.teammates instanceof Array)){
 				console.error('读取配置：队伍成员列表失败！');
 				return false;
+			}
+			// 如果没有设置超时时间或异常值，则置零。
+			configTable.timeout = obj.timeout;
+			thisobj.timeout = obj.timeout;
+			if(!(thisobj.timeout > 0)){
+				configTable.timeout = 0;
+				thisobj.timeout = 0;
 			}
 			
 			cga.isTeamLeader = (!thisobj.teammates.length || thisobj.teammates[0] == playerinfo.name) ? true : false;
@@ -251,6 +328,27 @@ var thisobj = {
 				return true;
 			});
 		}
+
+		var stage3 = (cb2)=>{
+			var sayString = '【公共插件】请输入等待超时时间(毫秒):';
+
+			cga.sayLongWords(sayString, 0, 3, 1);
+			cga.waitForChatInput((msg, val)=>{
+				if(val !== null && val > 0){
+					configTable.timeout = val;
+					thisobj.timeout = val;
+					
+					var sayString2 = '当前已选择等待队员:'+thisobj.timeout+'毫秒后超时触发回调。';
+					cga.sayLongWords(sayString2, 0, 3, 1);
+					
+					cb2(null);
+					
+					return false;
+				}
+				
+				return true;
+			});
+		}
 		
 		var sayString = '【公共插件】请选择组队模式:';
 		for(var i in teamModeArray){
@@ -281,7 +379,7 @@ var thisobj = {
 					var sayString3 = '队伍成员:[' + thisobj.teammates.join(', ') + ']。';
 					cga.sayLongWords(sayString3, 0, 3, 1);
 					
-					cb(null);
+					stage3(cb);
 				}
 				else if(thisobj.object.name == '自由组队'){
 					
