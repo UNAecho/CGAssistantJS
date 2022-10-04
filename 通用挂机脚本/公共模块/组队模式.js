@@ -80,7 +80,9 @@ var teamModeArray = [
 						return;
 					}
 					if(thisobj.timeout > 0 && remainTime > 0){
-						// console.log('等待队长，还剩' + remainTime / 1000 + '秒')
+						if(remainTime % 60000 == 0){
+							console.log('等待队长，还剩' + remainTime % 60000 + '分')
+						}
 						remainTime -=1000
 						setTimeout(waitAdd, 1000);
 						return
@@ -106,7 +108,9 @@ var teamModeArray = [
 						return;
 					}
 					if(thisobj.timeout > 0 && remainTime > 0){
-						// console.log('等待队员，还剩' + remainTime / 1000 + '秒')
+						if(remainTime % 60000 == 0){
+							console.log('等待队员，还剩' + remainTime % 60000 + '分')
+						}
 						remainTime -=1000
 						setTimeout(waitFor, 1000);
 						return
