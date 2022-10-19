@@ -106,6 +106,11 @@ require('../wrapper').then(cga => {
 	).then(
 		() => cga.emogua.talkNpc(6, cga.emogua.talkNpcSelectorYes)
 	).then(
-		() => console.log('任务完成')
+		() => {
+			var minssionObj = {"起司的任务" : true}
+			cga.refreshMissonStatus(minssionObj,()=>{
+				console.log('任务完成')
+			})
+		}
 	);
 });
