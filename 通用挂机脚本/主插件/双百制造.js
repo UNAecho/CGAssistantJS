@@ -527,7 +527,9 @@ var loop = ()=>{
 		}
 
 		var playerInfo = cga.GetPlayerInfo();
-		if(playerInfo.mp < craft_target.cost) {
+		// UNAecho:当制作物品消耗低于35耗魔，而角色蓝量低于35并且受伤的时候，脚本会陷入无限等待的状态。将最低耗魔由制作物品的耗魔改为固定2级治疗的35耗魔。
+		// if(playerInfo.mp < craft_target.cost) {
+		if(playerInfo.mp < 35) {
 			cga.travel.falan.toCastleHospital(()=>{
 				setTimeout(loop, 3000);
 			});
