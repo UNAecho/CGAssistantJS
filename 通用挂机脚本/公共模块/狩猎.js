@@ -278,6 +278,23 @@
 	}
 },
 {
+	level : 5,
+	name : '胡椒',
+	display_name : '胡椒',
+	func : (cb)=>{
+		if(configTable.mineType == 1){
+			cga.travel.falan.toTeleRoom('伊尔村', ()=>{
+				cga.travel.falan.autopilot('旧金山酒吧',()=>{
+					cga.walkList(
+						[[18, 11]], cb);
+				})
+			});
+		}else{
+			// TODO：寻找狩猎的胡椒纯点
+		}
+	}
+},
+{
 	level : 6,
 	name : '砂糖',
 	display_name : '砂糖',

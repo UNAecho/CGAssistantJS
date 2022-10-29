@@ -44,6 +44,8 @@ var thisobj = {
 	object: {
 		// 任务目标物品名称
 		name : null,
+		// 任务目标自定义名称，example:鱼翅哥拉尔
+		display_name : null,
 		// 每次采集开始的计时
 		startTime : null,
 		// 每次采集开始的金额
@@ -52,6 +54,7 @@ var thisobj = {
 		skill : null,
 		// loadconfig中定义需要什么技能。TODO：动态更新
 		skillname : null,
+
 		func: (cb) => {
 
 			if (thisobj.object.gatherCount === null) {
@@ -64,14 +67,15 @@ var thisobj = {
 				return
 			}
 			thisobj.object.skill = cga.findPlayerSkill(thisobj.object.skillname)
-			if(thisobj.object.skill && thisobj.object.skill.lv < thisobj.object.level){
+			// 如果thisobj.mineType == 1则为购买，无视技能等级的要求
+			if(thisobj.object.skill && thisobj.object.skill.lv < thisobj.object.level && thisobj.mineType == 0){
 				var errmsg = thisobj.object.skill.name+'技能等级不够，'+thisobj.object.name+'需要'+thisobj.object.level+'级技能，而你只有'+thisobj.object.skill.lv+'级技能';
 				throw Error(errmsg)
 			}
 			// 找采集信息里面的目标obj
 			var actobj = null
 			for(var i in actionarr){
-				if (actionarr[i].name == thisobj.object.name){
+				if (actionarr[i].display_name == thisobj.object.display_name){
 					actobj = actionarr[i]
 					break
 				}
@@ -139,6 +143,34 @@ var thisobj = {
 						});
 					});
 				});
+			}else if(thisobj.object.name == '胡椒' && thisobj.mineType == 1){
+				cga.turnTo(20, 11);
+				cga.AsyncWaitNPCDialog(()=>{
+					cga.ClickNPCDialog(0, 0);
+					cga.AsyncWaitNPCDialog((err, dlg)=>{
+						var store = cga.parseBuyStoreMsg(dlg);
+						if(!store)
+						{
+							cb(new Error('商店内容解析失败'));
+							return;
+						}
+		
+						var buyitem = [];
+						var emptySlotCount = cga.getInventoryEmptySlotCount();
+		
+						store.items.forEach((it)=>{
+							if(it.name == '胡椒' && emptySlotCount > 0){
+								buyitem.push({index: it.index, count: emptySlotCount * 20});
+							}
+						});
+		
+						cga.BuyNPCStore(buyitem);
+						cga.AsyncWaitNPCDialog((err, dlg)=>{
+							setTimeout(cb, 1500);
+							return;
+						});
+					});
+				});
 			}else{
 				cga.StartWork(thisobj.object.skill.index, 0);
 				// cga.AsyncWaitWorkingResult使用方式见开发文档
@@ -165,38 +197,57 @@ var thisobj = {
 		skuCount: null,
 		doneManager: (cb) => {
 
-			thisobj.object.state = 'done';
+			var doneFunc = (cb)=>{
+				thisobj.object.state = 'done';
 
-			var repeat = () => {
-
-				if (!thisobj.check_done()) {
-					thisobj.object.state = 'gathering';
-					socket.emit('gathering', { player_name: cga.GetPlayerInfo().name, gold: cga.GetPlayerInfo().gold });
-					cb(true);
-					return;
+				var repeat = () => {
+	
+					if (!thisobj.check_done()) {
+						thisobj.object.state = 'gathering';
+						socket.emit('gathering', { player_name: cga.GetPlayerInfo().name, gold: cga.GetPlayerInfo().gold });
+						cb(true);
+						return;
+					}
+	
+					if (thisobj.object.state == 'done') {
+						socket.emit('done', {
+							count: thisobj.object.gatherCount,
+							cost: !thisobj.object.startGold ? 0: (thisobj.object.startGold - cga.GetPlayerInfo().gold),
+						});
+					}
+	
+					setTimeout(repeat, 1500);
 				}
-
-				if (thisobj.object.state == 'done') {
-					socket.emit('done', {
-						count: thisobj.object.gatherCount,
-						cost: !thisobj.object.startGold ? 0: (thisobj.object.startGold - cga.GetPlayerInfo().gold),
+	
+				cga.travel.falan.toStone('C', () => {
+					cga.walkList([
+						[33, 88]
+					], () => {
+						cga.TurnTo(35, 88);
+						setTimeout(repeat, 1000);
 					});
-				}
-
-				setTimeout(repeat, 1500);
-			}
-
-			cga.travel.falan.toStone('C', () => {
-				cga.walkList([
-					[33, 88]
-				], () => {
-					cga.TurnTo(35, 88);
-					setTimeout(repeat, 1000);
 				});
-			});
+			}
+			// 如果需要压矿条
+			if(thisobj.object.skillname == '挖掘' && cga.getItemCount(thisobj.object.name) >= 20){
+				cga.travel.falan.toMineStore(thisobj.object.name, ()=>{
+					cga.AsyncWaitNPCDialog(()=>{
+						cga.ClickNPCDialog(0, 0);
+						cga.AsyncWaitNPCDialog(()=>{
+							var exchangeCount = parseInt(cga.getItemCount(thisobj.object.name) / 20);
+							cga.BuyNPCStore([{index:0, count:exchangeCount}]);
+							cga.AsyncWaitNPCDialog(()=>{
+								doneFunc(cb)
+							});
+						});
+					});
+				});
+			}else{// 普通采集情况，直接交付。
+				doneFunc(cb)
+			}
 		},
 		extra_dropping : (item)=>{
-			if(dropTypeArr.indexOf(item.type) != -1 && item.name != thisobj.object.name){
+			if(dropTypeArr.indexOf(item.type) != -1 && item.name != thisobj.object.name && item.name != (thisobj.object.name + '条')){
 				console.log('【UNA脚本提示】清理背包，物品:【' + item.name + '】类别:【'+item.type+'】，非目标物品，丢弃')
 				return true;
 			}
@@ -207,17 +258,32 @@ var thisobj = {
 	},
 	check_done: () => {
 		// console.log('thisobj.object.state:' + thisobj.object.state)
+		// console.log('thisobj.object.gatherCount:' + thisobj.object.gatherCount)
 		// console.log('cga.getItemCount(thisobj.object.name):' + cga.getItemCount(thisobj.object.name))
 		// console.log('thisobj.object.skuCount:' + thisobj.object.skuCount)
+		// console.log('thisobj.object.skillname:' + thisobj.object.skillname)
+		// console.log('cga.getItemCount(thisobj.object.name) / 20:' + cga.getItemCount(thisobj.object.name) / 20)
+		// console.log('cga.getItemCount(thisobj.object.name + 条):' + cga.getItemCount(thisobj.object.name + '条'))
+		// console.log('thisobj.object.skillname:' + thisobj.object.skillname)
 		if (thisobj.object.gatherCount === null)
 			return false;
+		
 		if(thisobj.object.state == 'gathering'){
 			// 修改check_done方式，改为打满或者打空蓝(低于2级治疗的35魔)再回去交付
-			if (thisobj.object.state == 'gathering' && (cga.getItemCount(thisobj.object.name) >= thisobj.object.gatherCount) && (cga.getInventoryItems().length >= 15 || cga.GetPlayerInfo().mp < 35))
+			if (thisobj.object.state == 'gathering' && (cga.getItemCount(thisobj.object.name) >= thisobj.object.gatherCount) && (cga.getInventoryItems().length >= 15 || cga.GetPlayerInfo().mp < 35)){
 				return true
+			}
+			// 如果需要矿物压条的情况
+			else if(thisobj.object.state == 'gathering' && thisobj.object.skillname == '挖掘' && (cga.getItemCount(thisobj.object.name) + cga.getItemCount(thisobj.object.name + '条') * 20 >= thisobj.object.gatherCount) && (cga.getInventoryItems().length >= 15 || cga.GetPlayerInfo().mp < 35)){
+				return true
+			}
 		}else{
 			// 如果处于非收集环节，那么直到把材料都交出去，再去进行新一轮收集。
 			if (cga.getItemCount(thisobj.object.name) >= thisobj.object.skuCount){
+				return true
+			}
+			// 如果需要矿物压条的情况
+			else if (cga.getItemCount(thisobj.object.name) + cga.getItemCount(thisobj.object.name + '条') * 20 >= thisobj.object.skuCount){
 				return true
 			}
 		}
@@ -259,7 +325,8 @@ var thisobj = {
 		for(var i in actionarr){
 			if(actionarr[i].display_name == obj.target){
 				configTable.target = actionarr[i].display_name;
-				thisobj.object.name = actionarr[i].display_name;
+				thisobj.object.name = actionarr[i].name;
+				thisobj.object.display_name = actionarr[i].display_name;
 				thisobj.object.level = actionarr[i].level;
 				break;
 			}
@@ -271,28 +338,28 @@ var thisobj = {
 		}
 
 		for(var i in flower){
-			if (flower[i].display_name == thisobj.object.name){
+			if (flower[i].display_name == thisobj.object.display_name){
 				thisobj.object.skillname = '伐木'
 				break
 			}
 		}
 		
 		for(var i in food){
-			if (food[i].display_name == thisobj.object.name){
+			if (food[i].display_name == thisobj.object.display_name){
 				thisobj.object.skillname = '狩猎'
 				break
 			}
 		}
 
 		for(var i in wood){
-			if (wood[i].display_name == thisobj.object.name){
+			if (wood[i].display_name == thisobj.object.display_name){
 				thisobj.object.skillname = '伐木'
 				break
 			}
 		}
 
 		for(var i in mine){
-			if (mine[i].display_name == thisobj.object.name){
+			if (mine[i].display_name == thisobj.object.display_name){
 				thisobj.object.skillname = '挖掘'
 				break
 			}
@@ -384,7 +451,7 @@ var thisobj = {
 				player_name: cga.GetPlayerInfo().name,
 				// 初始资金，用于计算整体一批socket下的所有账号的生产利润总和
 				initial_funding: cga.GetPlayerInfo().gold,
-				job_name: thisobj.object.name,
+				job_name: (thisobj.object.skillname == '挖掘' ? thisobj.object.name + '条' : thisobj.object.name),
 			});
 		});
 
@@ -392,9 +459,13 @@ var thisobj = {
 			thisobj.craft_player = data.craft_player;
 			thisobj.craft_materials = data.craft_materials;
 			data.craft_materials.forEach((m) => {
-				if (m.name == thisobj.object.name)
+				if (m.name == thisobj.object.name){
 					thisobj.object.gatherCount = m.count * MATERIALS_MULTIPLE_TIMES;
 					thisobj.object.skuCount = m.count;
+				}else if(m.name.replace("条", "") == thisobj.object.name){// 需要挖矿并压条的情况
+					thisobj.object.gatherCount = m.count * 20 * MATERIALS_MULTIPLE_TIMES;
+					thisobj.object.skuCount = m.count * 20;
+				}
 			});
 		});
 
@@ -408,10 +479,16 @@ var thisobj = {
 				itemFilter: (item) => {
 					if (count >= thisobj.object.gatherCount)
 						return false;
-
-					if (item.name == thisobj.object.name) {
-						count += item.count;
-						return true;
+					if(thisobj.object.skillname == '挖掘'){
+						if (item.name == thisobj.object.name + '条') {
+							count += item.count;
+							return true;
+						}
+					}else{
+						if (item.name == thisobj.object.name) {
+							count += item.count;
+							return true;
+						}
 					}
 
 					return false;

@@ -39,12 +39,18 @@ var healObject = require('../公共模块/治疗自己');
 
 const allowMats = [
 	'麻布', 
-	'印度轻木', 
+	// '印度轻木', 
 	'铜条', 
 	'鹿皮', 
 	'毛毡', 
 	'木棉布',
 	// 以下为自定义材料，注意更改，以避免生产者使用高级制造配方
+	'铁条',
+	'银条',
+	'纯银条',
+	'金条',
+	'白金条',
+	'琵琶木',
 	'苹果薄荷',
 	'柠檬草',
 	'蝴蝶花',
@@ -57,11 +63,14 @@ const allowMats = [
 	// '七叶树',
 	// '小麦粉',
 	// '牛奶',
+	'鸡蛋',
 	'葱',
 	'盐',
 	'酱油',
 	'牛肉',
-	'砂糖',
+	// '砂糖',
+	'胡椒',
+	'鱼翅',
 ];
 
 const isFabricName = (name)=>{
@@ -206,6 +215,9 @@ var waitStuffs = (name, materials, cb)=>{
 				}
 				if(find_player.cga_data.job_name == '铜条'){
 					stuffs.gold += find_player.cga_data.count * 20;
+				}
+				if(find_player.cga_data.job_name == '铁条'){
+					stuffs.gold += find_player.cga_data.count * 36;
 				}
 				if(find_player.cga_data.job_name == '葱'){
 					stuffs.gold += Math.ceil(find_player.cga_data.count * 1.0 + 0)
