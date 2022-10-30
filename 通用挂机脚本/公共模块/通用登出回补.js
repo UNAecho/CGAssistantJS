@@ -83,14 +83,17 @@ var thisobj = {
 					}, false);
 					break;
 				case '库鲁克斯岛':
-					cga.walkList([
-					[511, 842, '米诺基亚镇']
-					], ()=>{
-						cga.travel.minuojiya.toHospital(()=>{
-							setTimeout(cb, 5000, null);
-						}, false);
-					});			
-					break;
+					// 简易判断是否在远离哥拉尔的位置
+					if(cga.GetMapXY().y > 600){
+						cga.walkList([
+							[511, 842, '米诺基亚镇']
+							], ()=>{
+								cga.travel.minuojiya.toHospital(()=>{
+									setTimeout(cb, 5000, null);
+								}, false);
+							});			
+							break;
+					}
 				case '米诺基亚镇':
 					cga.travel.minuojiya.toHospital(()=>{
 						setTimeout(cb, 5000, null);
