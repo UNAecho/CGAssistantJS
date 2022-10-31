@@ -218,15 +218,45 @@ var thisobj = {
 	
 					setTimeout(repeat, 1500);
 				}
-	
-				cga.travel.falan.toStone('C', () => {
-					cga.walkList([
-						[33, 88]
-					], () => {
-						cga.TurnTo(35, 88);
-						setTimeout(repeat, 1000);
+
+				// 通用集合方式，去里堡交易。
+				var go = ()=>{
+					cga.travel.falan.toStone('C', () => {
+						cga.walkList([
+							[33, 88]
+						], () => {
+							cga.TurnTo(35, 88);
+							setTimeout(repeat, 1000);
+						});
 					});
-				});
+				}
+
+				var mapname = cga.GetMapName();
+				if(mapname == '哥拉尔镇' || mapname == '阿凯鲁法村'){
+					cga.travel.goAbroad('法兰城', go);
+				}else if(mapname == '库鲁克斯岛'){
+					cga.logBack(()=>{// 43100 哥拉尔镇
+						cga.AsyncWaitMovement({map:43100, delay:1000, timeout:5000}, (err, reason)=>{
+							if(err){
+								cb(err, reason);
+								return;
+							}
+							cga.travel.goAbroad('法兰城', go);
+						});
+					});
+				}else if(mapname == '米内葛尔岛'){
+					cga.logBack(()=>{// 33200 阿凯鲁法村
+						cga.AsyncWaitMovement({map:33200, delay:1000, timeout:5000}, (err, reason)=>{
+							if(err){
+								cb(err, reason);
+								return;
+							}
+							cga.travel.goAbroad('法兰城', go);
+						});
+					});
+				}else{// TODO 除了上面if else列举的4个地图，都会被判定为法兰区域，后续如有更多国外采集需求，就需要调整。
+					go()
+				}
 			}
 			// 如果需要压矿条
 			if(thisobj.object.skillname == '挖掘' && cga.getItemCount(thisobj.object.name) >= 20){

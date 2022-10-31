@@ -527,7 +527,12 @@ module.exports = function(callback){
 	}
 
 	cga.travel = {};
-
+/**
+ * UNAecho:一个定义自己在哪个领域内的API
+ * 目前仅靠index3来判断地区，还不够完善
+ * 日后考虑更细致的按闭合区间判断（遍历当前所有可以走的格子，来划定某一个区域。这样可以避免用XY强硬划分，带来错误。）
+ * @returns string
+ */
 	cga.travel.switchMainMap = ()=>{
 		var result = null
 		var mapindex = cga.GetMapIndex().index3;
@@ -557,8 +562,20 @@ module.exports = function(callback){
 			result = '魔法大学'
 		}else if(mapindex >= 1000 && mapindex <= 32830){
 			result = '法兰城'
+		}else if(mapindex == 33000){
+			result = '米内葛尔岛'
+		}else if(mapindex >= 33100 && mapindex < 33300){
+			result = '阿凯鲁法村'
+		}else if(mapindex >= 30000 && mapindex < 40000){
+			result = '苏国'
+		}else if(mapindex == 43000){
+			result = '库鲁克斯岛'
+		}else if(mapindex >= 43100 && mapindex < 43300){
+			result = '哥拉尔镇'
+		}else if(mapindex >= 40000 && mapindex < 50000){
+			result = '艾尔巴尼亚王国'
 		}else if(mapindex >= 50000){
-			result = '艾尔莎岛'
+			result = '神圣大陆'
 		}else if(mapindex == 300 && XY.x < 379){// 索奇亚地图比较规则，大于379都是洪恩大风洞的右侧
 			result = '索奇亚奇利域'
 		}else if(mapindex == 300 && XY.x >= 379){// 索奇亚地图比较规则，大于379都是洪恩大风洞的右侧
@@ -570,6 +587,39 @@ module.exports = function(callback){
 		}
 		// console.log('cga.travel.switchMainMap输入mapindex:【'+mapindex+'】,识别结果为【'+result+'】')
 		return result
+	}
+
+	// 【UNAecho】:整合切换国家的API，待完善
+	cga.travel.goAbroad = (country, cb) => {
+		var mainMap = cga.travel.switchMainMap()
+		// 去阿凯鲁法
+		if(country == '苏国'){
+			if(mainMap == '阿凯鲁法村'){
+				if (cb) cb(true)
+				return
+			}else if(mainMap == '哥拉尔镇'){// TODO 哥拉尔到阿凯鲁法
+
+			}
+			cga.travel.falan.toAKLF(cb);
+			return
+		}else if(country == '艾尔巴尼亚王国'){// 去哥拉尔
+			if(mainMap == '哥拉尔镇'){
+				if (cb) cb(true)
+				return
+			}else if(mainMap == '阿凯鲁法村'){// TODO 阿凯鲁法到哥拉尔
+
+			}
+			cga.travel.falan.toGelaer(cb);
+			return
+		}else{// 去法兰城/新城
+			if(mainMap == '阿凯鲁法村'){
+				cga.travel.AKLF.toFalan(cb)
+				return
+			}else if(mainMap == '哥拉尔镇'){
+				cga.travel.gelaer.toFalan(cb)
+				return
+			}
+		}
 	}
 		
 	cga.travel.falan = {};

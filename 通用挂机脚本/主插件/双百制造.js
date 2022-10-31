@@ -290,7 +290,7 @@ var getBestCraftableItem = ()=>{
 			if(!isFabricName(mat.name))
 				gather_type ++;
 			
-			if(mat.name == '铜条') {
+			if(mat.name.indexOf('条') != -1) {
                 gather_type++;
             }
 		})

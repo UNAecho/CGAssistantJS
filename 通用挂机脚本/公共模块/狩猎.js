@@ -492,13 +492,24 @@
 	level : 10,
 	name : '鱼翅',
 	display_name : '鱼翅哥拉尔',
-	func : (cb)=>{
-		if(cga.GetMapName() != '哥拉尔镇')
-			throw new Error('必须从哥拉尔镇启动');
-		cga.walkList([
-			[176, 105, '库鲁克斯岛'],
-			[389, 528],
-		], cb);
+	func : (cb)=>{// UNAecho:尝试一版在这里写【非法兰采集】，但在法兰集合交易的逻辑。
+		var go = ()=>{
+			cga.walkList([
+				[176, 105, '库鲁克斯岛'],
+				[389, 528],
+			], cb);
+		}
+
+		if(cga.GetMapName() != '哥拉尔镇'){
+			if(cga.travel.gelaer.isSettled()){
+				cga.logBack(go)
+				return
+			}else{
+				cga.travel.goAbroad('艾尔巴尼亚王国', go)
+				return
+			}
+		}
+		go()
 	}
 },
 {
