@@ -26,6 +26,8 @@ var originmoneyinfos = {}
 originmoneyinfos[playerInfoOrigin.name] = playerInfoOrigin.gold
 //【实时】整个生产team的socket资产信息
 var moneyinfos = {}
+// 【实时】整个生产team的socket分工信息
+var roominfos = {}
 
 //检查是刷双百还是单纯制造的flag
 var aim_flag = false
@@ -99,6 +101,19 @@ io.on('connection', (socket) => {
 		socket.cga_data = data;
 		socket.join('buddy_'+data.job_name);
 		console.log(socket.cga_data.player_name +' 已加入双百节点');
+
+		// 打印分工信息
+		if(roominfos.hasOwnProperty(data.job_name)){
+			roominfos[data.job_name]['人数'] += 1 
+			roominfos[data.job_name]['组员'].push(socket.cga_data.player_name)
+		}else{
+			roominfos[data.job_name] = {
+				'人数': 1,
+				'组员': [socket.cga_data.player_name],
+			}
+		}
+		console.log(roominfos)
+		// 统计资产信息
 		if(socket.cga_data.initial_funding){
 			// 重新计算初始化资产
 			originassets = 0
