@@ -162,9 +162,24 @@ io.on('connection', (socket) => {
 	});
 	
 	socket.on('disconnect', (err) => {
-		if(socket.cga_data)
+		if(socket.cga_data){
 			console.log(socket.cga_data.player_name +' 已退出双百节点');
 			delete moneyinfos[socket.cga_data.player_name]
+		}
+		// 打印分工信息
+		for (var job_name in roominfos){
+			for (var i in roominfos[job_name]['组员']){
+				if(roominfos[job_name]['组员'][i] == socket.cga_data.player_name){
+					roominfos[job_name]['组员'].splice(i,1)
+					roominfos[job_name]['人数'] -= 1
+				}
+				if(roominfos[job_name]['人数'] == 0){
+					delete roominfos[job_name]
+				}
+			}	
+
+		}
+		console.log(roominfos)
 	})
 });
 var waitStuffs = (name, materials, cb)=>{
