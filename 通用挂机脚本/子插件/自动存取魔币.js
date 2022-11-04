@@ -75,7 +75,7 @@ var thisobj = {
 				], () => {
 					cga.turnDir(0);
 					cga.AsyncWaitNPCDialog(() => {
-						bankgold = cga.GetBankGold()
+						var bankgold = cga.GetBankGold()
 						if(typeofact == 'save'){
 							remainingSpace = banklimit - bankgold
 							if(bankgold == 1000000){

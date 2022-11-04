@@ -118,9 +118,9 @@ var configModeArray = [
 	 */
 	name : '节能模式',
 	func : ()=>{// TODO任务所有职业的读取
-		var job = thisobj.finalJob ? thisobj.finalJob : getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname
+		var job = thisobj.finalJob ? thisobj.finalJob.jobmainname : getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname
 		// 如果既没有外部指定finalJob，也没有loadconfig读取到finalJob，那么中止逻辑
-		if(!job || job == ''){
+		if(!job){
 			throw new Error('请输入角色正确的最终职业名称，或者通过【通用挂机脚本系列】自动调用')
 		}
 		var filename = null
@@ -128,7 +128,7 @@ var configModeArray = [
 		if(job == '格斗士'){
 			filename = '格斗士练级'
 		}else if(job == '传教士'){
-			filename = '补血魔法'
+			filename = '传教士练级'
 		}else if(job == '魔法师'){
 
 		}else if(job == '弓箭手'){
