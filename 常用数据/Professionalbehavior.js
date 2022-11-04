@@ -272,7 +272,7 @@ module.exports = function(cga,job,behavior,cb) {
                     //         });
                     //     },true)
                     // }else if(professionalInfo.jobmainname == '矿工'){
-                    //     cga.travel.falan.autopilot('村长的家 2楼',()=>{
+                    //     cga.travel.autopilot('村长的家 2楼',()=>{
                     //         cga.walkList([
                     //             [8, 5]
                     //         ], ()=>{

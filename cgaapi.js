@@ -2084,43 +2084,43 @@ module.exports = function(callback){
 				}, null, 1400],],
 				// 竞技场
 				1401:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[15, 6, 1401],],
 				// 后台
 				1402:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[15, 6, 1401],[35, 8, 1402],],
 				// 治愈的广场
 				1403:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[27, 14, 1403],],
 				// 休息室
 				1404:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[2, 14, 1404],],
 				// 升官图房间2
 				1420:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[2, 14, 1404],[8, 9, 1424],[9, 7, 1420],],
 				// 升官图房间2
 				1421:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[2, 14, 1404],[8, 9, 1424],[9, 12, 1421],],
 				// 升官图
 				1422:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[2, 14, 1404],[8, 9, 1424],[9, 17, 1422],],
 				// 升官图导览间
 				1423:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[2, 14, 1404],[8, 9, 1424],[9, 2, 1423],],
 				// 升官图走廊
 				1424:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[2, 14, 1404],[8, 9, 1424],],
 				// 竞技场
 				1450:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[27, 14, 1403],
 				[(cb)=>{
 					cga.walkList([[25, 13]], ()=>{
@@ -2139,7 +2139,7 @@ module.exports = function(callback){
 				}, null, 1450],],
 				// 竞技场
 				1451:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[27, 14, 1403],
 				[(cb)=>{
 					cga.walkList([[25, 13]], ()=>{
@@ -2158,7 +2158,7 @@ module.exports = function(callback){
 				}, null, 1450],[22, 13, 1451],],
 				// 竞技场
 				1452:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[27, 14, 1403],
 				[(cb)=>{
 					cga.walkList([[25, 13]], ()=>{
@@ -2177,7 +2177,7 @@ module.exports = function(callback){
 				}, null, 1450],[22, 13, 1451],[15, 8, 1452],],
 				// 竞技场
 				1453:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[27, 14, 1403],
 				[(cb)=>{
 					cga.walkList([[25, 13]], ()=>{
@@ -2196,7 +2196,7 @@ module.exports = function(callback){
 				}, null, 1450],[22, 13, 1451],[15, 8, 1452],[22, 8, 1453],],
 				// 竞技场
 				1454:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[27, 14, 1403],
 				[(cb)=>{
 					cga.walkList([[25, 13]], ()=>{
@@ -2215,7 +2215,7 @@ module.exports = function(callback){
 				}, null, 1450],[22, 13, 1451],[15, 8, 1452],[22, 8, 1453],[15, 8, 1454],],
 				// 竞技场
 				1455:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[27, 14, 1403],
 				[(cb)=>{
 					cga.walkList([[25, 13]], ()=>{
@@ -2234,7 +2234,7 @@ module.exports = function(callback){
 				}, null, 1450],[22, 13, 1451],[15, 8, 1452],[22, 8, 1453],[15, 8, 1454],[22, 16, 1455],],
 				// 休息室
 				1456:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[27, 14, 1403],
 				[(cb)=>{
 					cga.walkList([[25, 13]], ()=>{
@@ -2257,7 +2257,7 @@ module.exports = function(callback){
 						cga.AsyncWaitNPCDialog((err, dlg)=>{
 							if((dlg && dlg.message.indexOf('斗士之证') >= 0)){
 								cga.ClickNPCDialog(1, -1)
-								cga.travel.falan.autopilot(1456,cb)
+								cga.travel.autopilot(1456,cb)
 								return
 							}else{
 								cga.ClickNPCDialog(4, -1);
@@ -2278,7 +2278,7 @@ module.exports = function(callback){
 				}, null, 1456],],
 				// 竞技预赛会场
 				1457:[[(cb)=>{
-					cga.travel.falan.autopilot(1400,cb)
+					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[27, 14, 1403],
 				[(cb)=>{
 					cga.walkList([[25, 13]], ()=>{
@@ -2301,7 +2301,7 @@ module.exports = function(callback){
 						cga.AsyncWaitNPCDialog((err, dlg)=>{
 							if((dlg && dlg.message.indexOf('斗士之证') >= 0)){
 								cga.ClickNPCDialog(1, -1)
-								cga.travel.falan.autopilot(1456,cb)
+								cga.travel.autopilot(1456,cb)
 								return
 							}else{
 								cga.ClickNPCDialog(4, -1);
@@ -2597,8 +2597,8 @@ module.exports = function(callback){
 							}, 1000);	
 						});
 					}else{
-						cga.travel.falan.autopilot('伊尔村',()=>{
-							cga.travel.falan.autopilot(33219,r)
+						cga.travel.autopilot('伊尔村',()=>{
+							cga.travel.autopilot(33219,r)
 						})
 					}
 				},
@@ -2620,8 +2620,8 @@ module.exports = function(callback){
 							}, 1000);	
 						});
 					}else{
-						cga.travel.falan.autopilot('伊尔村',()=>{
-							cga.travel.falan.autopilot(33214,r)
+						cga.travel.autopilot('伊尔村',()=>{
+							cga.travel.autopilot(33214,r)
 						})
 					}
 				},
@@ -2653,8 +2653,8 @@ module.exports = function(callback){
 							}, 1000);	
 						});
 					}else{
-						cga.travel.falan.autopilot('伊尔村',()=>{
-							cga.travel.falan.autopilot(40001,r)
+						cga.travel.autopilot('伊尔村',()=>{
+							cga.travel.autopilot(40001,r)
 						})
 					}
 				},
@@ -3153,9 +3153,9 @@ module.exports = function(callback){
 							}, 1000);	
 						});
 					}else{
-						cga.travel.falan.autopilot('夜晚蒂娜村',()=>{
-							cga.travel.falan.autopilot(4230,()=>{
-								cga.travel.falan.autopilot(14018,r)
+						cga.travel.autopilot('夜晚蒂娜村',()=>{
+							cga.travel.autopilot(4230,()=>{
+								cga.travel.autopilot(14018,r)
 							})
 						})
 					}
@@ -3357,6 +3357,36 @@ module.exports = function(callback){
 				4455:[[6, 14, 4400],],
 			},
 		},
+		'哥拉尔镇':{
+			mainName : '哥拉尔镇',
+			mainindex : 43100,
+			minindex : 43100,
+			maxindex : 43999,
+			mapTranslate:{
+				'主地图' : 43100,
+				'医院' : 43110,
+				'银行' : 43125,
+				'宠物商店' : 43145,
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				43100:[],
+				// 医院
+				43110:[[165, 90, 43110],],
+				// 银行
+				43125:[[167, 66, 43125],],
+				// 宠物商店
+				43145:[[109, 80, 43145],],
+			},
+			walkReverse:{
+				// 医院
+				43110:[[9, 22, 43100],],
+				// 银行
+				43125:[[11, 12, 43100],],
+				// 宠物商店
+				43145:[[18, 30, 43100],],
+			},
+		},
 	}
 /**
  * UNA: 写了一个全自动导航的API，可以在城镇地图中任意一个地方去另一个任意的地方，无需登出。
@@ -3365,7 +3395,7 @@ module.exports = function(callback){
  * @param {*} cb 回调
  * @returns 
  */
-	cga.travel.falan.autopilot = (targetMap, cb)=>{
+	cga.travel.autopilot = (targetMap, cb)=>{
 
 		// 当前地图信息
 		var mapindex = cga.GetMapIndex().index3
@@ -3385,7 +3415,7 @@ module.exports = function(callback){
 				cga.sayLongWords(sayString, 0, 3, 1);
 				cga.waitForChatInput((msg, val)=>{
 					if(val !== null && val > 0 && val <= 99999){
-						cga.travel.falan.autopilot(val,cb)
+						cga.travel.autopilot(val,cb)
 						return false;
 					}
 					return true;
@@ -3434,7 +3464,7 @@ module.exports = function(callback){
 			// 如果要执行function才能进入下一个地图，则执行方法并调用递归
 			if(typeof tmplist[0][0] == 'function'){
 				tmplist[0][0](()=>{
-					cga.travel.falan.autopilot(targetMap,cb)
+					cga.travel.autopilot(targetMap,cb)
 				})
 				return
 			}else{
@@ -3449,7 +3479,7 @@ module.exports = function(callback){
 			// 递归逻辑
 			cga.walkList(
 				tmplist, ()=>{
-					cga.travel.falan.autopilot(targetMap,cb)
+					cga.travel.autopilot(targetMap,cb)
 				});
 		} catch (error) {
 			console.log('[UNA脚本警告]:可能由于【输入不存在的地图index/名称】【地图未读取完毕】，导致错误，error:')
@@ -3465,7 +3495,7 @@ module.exports = function(callback){
 		var villageName = cga.travel.switchMainMap()
 
 		if (cga.GetMapName().indexOf('医院') == -1){
-			cga.travel.falan.autopilot('医院',()=>{
+			cga.travel.autopilot('医院',()=>{
 				cga.travel.toHospital(isPro,cb)
 			})
 			return
@@ -3514,7 +3544,7 @@ module.exports = function(callback){
 			tmplist, ()=>{
 				cga.turnDir(tmpTurnDir)
 				setTimeout(() => {
-					cga.travel.falan.autopilot('主地图',()=>{
+					cga.travel.autopilot('主地图',()=>{
 						if (cb) cb(null)
 						return
 					})
@@ -3544,7 +3574,7 @@ module.exports = function(callback){
 		}
 		// 如果没开启过传送，则去开启并记录状态。
 		const info = cga.travel.falan.info[villageName]
-		cga.travel.falan.autopilot('传送石',()=>{
+		cga.travel.autopilot('传送石',()=>{
 			cga.walkList(
 				[cga.getRandomSpace(info.stoneNPCpos[0], info.stoneNPCpos[1])], ()=>{
 					cga.TurnTo(info.stoneNPCpos[0], info.stoneNPCpos[1]);
@@ -3573,7 +3603,7 @@ module.exports = function(callback){
 	cga.travel.shenglaluka = {}
 	// 去圣拉鲁卡村医院
 	cga.travel.shenglaluka.toHospital = (cb, isPro)=>{
-		cga.travel.falan.autopilot('医院',()=>{
+		cga.travel.autopilot('医院',()=>{
 			cga.walkList(
 				[
 					isPro == true ? [10, 3] : [15, 8]

@@ -99,7 +99,7 @@ var commonPilot = (cb)=>{
 		setTimeout(cb, 1000);
 	}
 	else if(cga.travel.switchMainMap() == cga.travel.falan.info[muster.map].mainName && mapindex != cga.travel.falan.info[muster.map].mainindex){
-		cga.travel.falan.autopilot('主地图',()=>{
+		cga.travel.autopilot('主地图',()=>{
 			commonPilot(cb)
 		})
 	}else{

@@ -8,7 +8,7 @@ var cga = require('./cgaapi')(function () {
         if(!workingFlag && val !== null && val > 0){
             
             workingFlag = true
-            cga.travel.falan.autopilot(val,()=>{
+            cga.travel.autopilot(val,()=>{
                 workingFlag = false
                 console.log('到达目的地，若想继续使用请再次输入目的地')
             })

@@ -188,7 +188,7 @@ var loop = ()=>{
 		}
 		// 走回村镇主地图
 		if(mapindex != mainMapInfo.mainindex && cga.travel.switchMainMap() == mainMapInfo.mainName){
-			cga.travel.falan.autopilot('主地图',loop)
+			cga.travel.autopilot('主地图',loop)
 			return;
 		}
 		// 村镇主地图

@@ -39,14 +39,14 @@ var cga = require('./cgaapi')(function () {
     // 获取当前主地图名称
     var villageName = cga.travel.switchMainMap()
     if(villageName == '法兰城'){
-        cga.travel.falan.autopilot('美容院',()=>{
+        cga.travel.autopilot('美容院',()=>{
 			cga.walkList(
 				[[15, 10]], retry);
 		})
         // cga.travel.toHospital(false,success)
     }else{
 		cga.travel.falan.toStone('E1', ()=>{
-			cga.travel.falan.autopilot('美容院',()=>{
+			cga.travel.autopilot('美容院',()=>{
 				cga.walkList(
 					[[15, 10]], retry);
 			})

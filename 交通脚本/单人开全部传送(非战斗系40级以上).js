@@ -166,7 +166,7 @@ var cga = require('../cgaapi')(function(){
 						}, 3000);
 					})
 				}else{
-					cga.travel.falan.autopilot('主地图',()=>{
+					cga.travel.autopilot('主地图',()=>{
 						cga.walkList([
 							[67, 46, '芙蕾雅'],
 							[343, 497, '索奇亚海底洞窟 地下1楼'],
@@ -223,7 +223,7 @@ var cga = require('../cgaapi')(function(){
 						}, 3000);
 					})
 				}else{
-					cga.travel.falan.autopilot('主地图',()=>{
+					cga.travel.autopilot('主地图',()=>{
 						cga.walkList([
 							[79, 76, '索奇亚'],
 							[356, 334, '角笛大风穴'],
@@ -315,7 +315,7 @@ var cga = require('../cgaapi')(function(){
 				}
 			}
 			var checkin = ()=>{
-				cga.travel.falan.autopilot('传送石',()=>{
+				cga.travel.autopilot('传送石',()=>{
 					cga.walkList(
 						[[7, 5],], ()=>{
 						cga.TurnTo(6, 5);
@@ -351,7 +351,7 @@ var cga = require('../cgaapi')(function(){
 							}, 3000);
 						})
 					}else{
-						cga.travel.falan.autopilot('主地图',()=>{
+						cga.travel.autopilot('主地图',()=>{
 							cga.walkList([
 								[71, 18, 400],
 							], ()=>{
@@ -386,7 +386,7 @@ var cga = require('../cgaapi')(function(){
 						}, 3000);
 					})
 				}else{
-					cga.travel.falan.autopilot('主地图',()=>{
+					cga.travel.autopilot('主地图',()=>{
 						cga.walkList([
 							[24, 40, '莎莲娜'],
 							//杰诺瓦侧入口

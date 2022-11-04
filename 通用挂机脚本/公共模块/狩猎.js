@@ -284,7 +284,7 @@
 	func : (cb)=>{
 		if(configTable.mineType == 1){
 			cga.travel.falan.toTeleRoom('伊尔村', ()=>{
-				cga.travel.falan.autopilot('旧金山酒吧',()=>{
+				cga.travel.autopilot('旧金山酒吧',()=>{
 					cga.walkList(
 						[[18, 11]], cb);
 				})
@@ -301,7 +301,7 @@
 	func : (cb)=>{
 		if(configTable.mineType == 1){
 			cga.travel.falan.toTeleRoom('维诺亚村', ()=>{
-				cga.travel.falan.autopilot('糖店',()=>{
+				cga.travel.autopilot('糖店',()=>{
 					cga.walkList(
 						[[11, 6]], cb);
 				})

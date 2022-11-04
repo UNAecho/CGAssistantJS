@@ -231,7 +231,7 @@ var task = cga.task.Task('时空之门1', [
 
 			}
 			var leaderGo =()=>{
-				cga.travel.falan.autopilot('主地图',()=>{
+				cga.travel.autopilot('主地图',()=>{
 					cga.walkList([
 						[31, 27, 400],
 					], ()=>{

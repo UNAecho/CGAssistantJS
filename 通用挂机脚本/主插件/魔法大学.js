@@ -117,10 +117,10 @@ var go =(cb,target)=>{
 	}
 	var mainName = cga.travel.switchMainMap()
 	if(mainName == '魔法大学'){
-		cga.travel.falan.autopilot(target,cb)
+		cga.travel.autopilot(target,cb)
 	}else{
 		cga.travel.falan.toTeleRoom('魔法大学', ()=>{
-			cga.travel.falan.autopilot(target,cb)
+			cga.travel.autopilot(target,cb)
 			return;
 		});
 	}
@@ -170,10 +170,10 @@ var buyItem = (cb, mainMapName, mapname, playerPos, npcPos, item, count)=>{
 	}
 
 	if(cga.travel.switchMainMap() == mainMapName){
-		cga.travel.falan.autopilot(mapname,buy)
+		cga.travel.autopilot(mapname,buy)
 	}else{
 		cga.travel.falan.toTeleRoom(mainMapName, ()=>{
-			cga.travel.falan.autopilot(mapname,buy)
+			cga.travel.autopilot(mapname,buy)
 		});
 	}
 }
@@ -208,7 +208,7 @@ var loop = ()=>{
 				}
 				if (cga.getItemCount('牛奶') < 20){
 					if(cga.travel.switchMainMap() == '伊尔村'){
-						cga.travel.falan.autopilot('主地图',()=>{
+						cga.travel.autopilot('主地图',()=>{
 							cga.walkList([
 								[45, 31, '芙蕾雅'],
 								[685, 334]
@@ -218,7 +218,7 @@ var loop = ()=>{
 						})
 					}else{
 						cga.travel.falan.toTeleRoom('伊尔村', ()=>{
-							cga.travel.falan.autopilot('主地图',()=>{
+							cga.travel.autopilot('主地图',()=>{
 								cga.walkList([
 									[45, 31, '芙蕾雅'],
 									[685, 334]

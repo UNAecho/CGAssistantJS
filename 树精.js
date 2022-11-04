@@ -60,7 +60,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 
 			var go = () => {
-				cga.travel.falan.autopilot('医院',()=>{
+				cga.travel.autopilot('医院',()=>{
 					cga.walkList([
 						[6, 5],
 						], ()=>{
@@ -71,7 +71,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 									cga.AsyncWaitNPCDialog(()=>{
 										cga.ClickNPCDialog(1, 0);
 										setTimeout(()=>{
-											cga.travel.falan.autopilot('主地图',()=>{
+											cga.travel.autopilot('主地图',()=>{
 												if(cga.isTeamLeader){
 													leader_go()
 												} else {
