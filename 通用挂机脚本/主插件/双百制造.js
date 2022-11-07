@@ -267,6 +267,10 @@ var waitStuffs = (name, materials, cb)=>{
 				if(find_player.cga_data.job_name == '鸡蛋'){
 					stuffs.gold += Math.ceil(find_player.cga_data.count * 2.5 + 0)
 				}
+				// 如果是买的，金币需要使用移动银行平衡
+				if(find_player.cga_data.job_name == '胡椒'){
+					stuffs.gold += Math.ceil(find_player.cga_data.count * 4.0 + 0)
+				}
 				if(find_player.cga_data.job_name == '鱼翅'){
 					stuffs.gold += Math.ceil(find_player.cga_data.count * 31.0 + 0)
 				}
