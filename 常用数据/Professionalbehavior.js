@@ -43,7 +43,9 @@ module.exports = function(cga,job,behavior,cb) {
                             cga.ClickNPCDialog(0, 0);
                             cga.AsyncWaitNPCDialog(()=>{
                                 console.log('转职完毕')
-                                if(cb) cb(true)
+                                cga.refreshMissonStatus(null,()=>{
+                                    if(cb) cb(true)
+                                })
                                 return true
                             });
                         }
@@ -57,7 +59,9 @@ module.exports = function(cga,job,behavior,cb) {
                         cga.ClickNPCDialog(0, 0);
                         cga.AsyncWaitNPCDialog(()=>{
                             console.log('晋级完毕')
-                            if(cb) cb(true)
+                            cga.refreshMissonStatus(null,()=>{
+                                if(cb) cb(true)
+                            })
                             return true
                         });
                     }
@@ -77,7 +81,9 @@ module.exports = function(cga,job,behavior,cb) {
                         retry()
                     }else{
                         console.log('就职完毕')
-                        if(cb) cb(true)
+                        cga.refreshMissonStatus(null,()=>{
+                            if(cb) cb(true)
+                        })
                     }
                     return true
                 });
