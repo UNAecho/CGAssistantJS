@@ -574,14 +574,16 @@ module.exports = function(callback){
 			result = '哥拉尔镇'
 		}else if(mapindex >= 40000 && mapindex < 50000){
 			result = '艾尔巴尼亚王国'
-		}else if(mapindex >= 50000){
-			result = '神圣大陆'
 		}else if(mapindex == 300 && XY.x < 379){// 索奇亚地图比较规则，大于379都是洪恩大风洞的右侧
 			result = '索奇亚奇利域'
 		}else if(mapindex == 300 && XY.x >= 379){// 索奇亚地图比较规则，大于379都是洪恩大风洞的右侧
 			result = '索奇亚加纳域'
-		}else if(mapindex >= 59520){
+		}else if(mapindex == 59520){
 			result = '艾尔莎岛'
+		}else if(mapindex == 59521){
+			result = '艾夏岛'
+		}else if(mapindex >= 50000 && mapindex < 60000){
+			result = '神圣大陆'
 		}else{
 			console.warn('[UNA脚本警告]:未知地图index，请联系作者更新。')
 		}
@@ -2010,6 +2012,7 @@ module.exports = function(callback){
 			mapTranslate:{
 				'主地图' : 1000,
 				'法兰城' : 1000,
+				'拿潘食品店' : 1062,
 				'酒吧':{
 					1101:'科特利亚酒吧',
 					1170:'安其摩酒吧',
@@ -2053,6 +2056,8 @@ module.exports = function(callback){
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
 				1000:[],
+				// 拿潘食品店
+				1062:[[217, 53, 1062],],
 				// 科特利亚酒吧
 				1101:[[219, 136, 1101],],
 				// 酒吧里面
@@ -2339,6 +2344,8 @@ module.exports = function(callback){
 				32830:[[219, 136, 1101],[27, 20, 1102],[10, 17, 32830],],
 			},
 			walkReverse:{
+				// 拿潘食品店
+				1062:[[3, 13, 1000],],
 				// 科特利亚酒吧
 				1101:[[10, 16, 1000]],
 				// 酒吧里面
@@ -3367,6 +3374,7 @@ module.exports = function(callback){
 				'医院' : 43110,
 				'银行' : 43125,
 				'宠物商店' : 43145,
+				'杂货店' : 43165,
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -3377,6 +3385,8 @@ module.exports = function(callback){
 				43125:[[167, 66, 43125],],
 				// 宠物商店
 				43145:[[109, 80, 43145],],
+				// 杂货店
+				43165:[[147, 79, 43165],],
 			},
 			walkReverse:{
 				// 医院
@@ -3385,6 +3395,8 @@ module.exports = function(callback){
 				43125:[[11, 12, 43100],],
 				// 宠物商店
 				43145:[[18, 30, 43100],],
+				// 杂货店
+				43165:[[18, 30, 43100],],
 			},
 		},
 	}
@@ -3598,6 +3610,55 @@ module.exports = function(callback){
 				}
 			);
 		})
+	}
+
+	// 
+	/**
+	 * UNAecho:添加全域自动导航至银行，与柜员对话。
+	 * @param {*} cb 打开银行界面后的回调函数，需要自定义传入
+	 * @returns 
+	 */
+	cga.travel.toBank = (cb)=>{
+		// 当前地图信息
+		var mapindex = cga.GetMapIndex().index3
+		// 获取当前主地图名称
+		var villageName = cga.travel.switchMainMap()
+
+		if (cga.GetMapName().indexOf('银行') == -1){
+			cga.travel.autopilot('银行',()=>{
+				cga.travel.toBank(cb)
+			})
+			return
+		}
+		var tmplist = []
+		var tmpTurnDir = null
+
+		if(villageName == '法兰城'){
+			tmplist.push([11, 8])
+			tmpTurnDir = 0
+		}else if(villageName == '艾尔莎岛' || villageName == '艾夏岛'){
+			tmplist.push([49, 25])
+			tmpTurnDir = 0
+		}else if(villageName == '哥拉尔镇'){
+			tmplist.push([25, 10])
+			tmpTurnDir = 0
+		}else if(villageName == '阿凯鲁法村'){
+			tmplist.push([20, 17])
+			tmpTurnDir = 0
+		}else{
+			throw new Error('[UNA脚本警告]:未知地图index，请联系作者更新。')
+		}
+
+		cga.walkList(
+			tmplist, ()=>{
+				cga.turnDir(tmpTurnDir)
+				setTimeout(() => {
+					if (cb) cb(null)
+				}, 1500);
+				return
+			}
+		);
+		return
 	}
 
 	cga.travel.shenglaluka = {}

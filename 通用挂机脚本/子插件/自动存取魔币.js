@@ -69,43 +69,46 @@ var thisobj = {
 			var remainingSpace = 0
 			var optgold = 0
 
-			cga.travel.falan.toBank(() => {
-				cga.walkList([
-					[11, 8],
-				], () => {
-					cga.turnDir(0);
-					cga.AsyncWaitNPCDialog(() => {
-						var bankgold = cga.GetBankGold()
-						if(typeofact == 'save'){
-							remainingSpace = banklimit - bankgold
-							if(bankgold == 1000000){
-								console.log('个人银行【满】了，去找移动银行')
-								personalflag = false
+			cga.travel.toBank(() => {
+				cga.AsyncWaitNPCDialog(() => {
+					var bankgold = cga.GetBankGold()
+					if(typeofact == 'save'){
+						remainingSpace = banklimit - bankgold
+						if(bankgold == 1000000){
+							console.log('个人银行【满】了，去找移动银行')
+							personalflag = false
+							cga.travel.autopilot('主地图',()=>{
 								setTimeout(thisobj.prepare, 1000, cb2);
-								return
-							}else{// 在尽量多存的基础上，留10万在身上
-								optgold = curgold > remainingSpace + 100000 ? remainingSpace : curgold - 100000
-								setTimeout(() => {
-									GoldAct(optgold, typeofact,cb2)
-								}, 2000);
-							}
-						}else if(typeofact == 'draw'){
-							remainingSpace = 1000000 - curgold -  100000
-							if(bankgold == 0){
-								console.log('个人银行【没钱】了，去找移动银行')
-								personalflag = false
-								setTimeout(thisobj.prepare, 1000, cb2);
-								return
-							}else{// 
-								optgold = (bankgold > remainingSpace) && (bankgold <= 1000000) ? remainingSpace : (bankgold > 10000000 ? remainingSpace : bankgold)
-								setTimeout(() => {
-									GoldAct(optgold, typeofact,cb2)
-								}, 2000);
-							}
+							})
+							return
+						}else{// 在尽量多存的基础上，留10万在身上
+							optgold = curgold > remainingSpace + 100000 ? remainingSpace : curgold - 100000
+							setTimeout(() => {
+								GoldAct(optgold, typeofact,()=>{
+									cga.travel.autopilot('主地图',cb2)
+								})
+							}, 2000);
 						}
-						return
-					}, 1000);
-				});
+					}else if(typeofact == 'draw'){
+						remainingSpace = 1000000 - curgold -  100000
+						if(bankgold == 0){
+							console.log('个人银行【没钱】了，去找移动银行')
+							personalflag = false
+							cga.travel.autopilot('主地图',()=>{
+								setTimeout(thisobj.prepare, 1000, cb2);
+							})
+							return
+						}else{// 
+							optgold = (bankgold > remainingSpace) && (bankgold <= 1000000) ? remainingSpace : (bankgold > 10000000 ? remainingSpace : bankgold)
+							setTimeout(() => {
+								GoldAct(optgold, typeofact,()=>{
+									cga.travel.autopilot('主地图',cb2)
+								})
+							}, 2000);
+						}
+					}
+					return
+				}, 1000);
 			});
 		}
 
@@ -116,7 +119,7 @@ var thisobj = {
 			// 如果背包满了，无法购买暗号物品，则本功能跳过
 			// TODO 如果开了付费移动背包，需要添加40、60、80等数量
 			if(inventory.length == 20){
-				console.log('包满，无法购买特殊数量的暗号物品了，中止此脚本。')
+				console.error('包满，无法购买特殊数量的暗号物品了，中止此脚本。')
 				cb(null);
 				return;
 			}
@@ -138,67 +141,89 @@ var thisobj = {
 				return;
 			}
 
-			// 丢弃暗号物品，一个pos最多丢弃9个物品
-			var dropcount = 0
-			var dropUseless = (cb2)=>{
-				console.log('开始清理暗号物品')
-				cga.travel.falan.toStone('C', ()=>{
-					cga.walkList([
-					[48, 39],
-					], ()=>{
-						if(dropcount < 9 && cga.getInventoryItems().find((inv)=>{
-							return inv.name == ciphername;
-						}) != undefined){
-							var itempos = cga.findItem(ciphername);
-							if(itempos != -1){
-								cga.DropItem(itempos);
-								dropcount+=1
-								setTimeout(dropUseless, 500, cb2);
-								return;
-							}
-						}
-						dropcount = 0
-						cb2(null);
-					});
-				});
-			}
+			// // 丢弃暗号物品，一个pos最多丢弃9个物品
+			// var dropcount = 0
+			// var dropUseless = (cb2)=>{
+			// 	console.log('开始清理暗号物品')
+			// 	cga.travel.falan.toStone('C', ()=>{
+			// 		cga.walkList([
+			// 		[48, 39],
+			// 		], ()=>{
+			// 			if(dropcount < 9 && cga.getInventoryItems().find((inv)=>{
+			// 				return inv.name == ciphername;
+			// 			}) != undefined){
+			// 				var itempos = cga.findItem(ciphername);
+			// 				if(itempos != -1){
+			// 					cga.DropItem(itempos);
+			// 					dropcount+=1
+			// 					setTimeout(dropUseless, 500, cb2);
+			// 					return;
+			// 				}
+			// 			}
+			// 			dropcount = 0
+			// 			cb2(null);
+			// 		});
+			// 	});
+			// }
 			var buycipher = (cb2)=>{
 				console.log('去购买暗号物品：【'+ciphername+'】【' +ciphercnt+ '】个')
-				cga.travel.falan.toStone('E2', ()=>{
+
+				var shopAction = (talkpos, turndir, itemname, cb3)=>{
 					cga.walkList([
-						[217, 53, '拿潘食品店'],
-						[19, 11],
-					], ()=>{
-						cga.turnTo(21, 11);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(0, 0);
-							cga.AsyncWaitNPCDialog((err, dlg)=>{
-								var store = cga.parseBuyStoreMsg(dlg);
-								if(!store)
-								{
-									cb2(new Error('商店内容解析失败'));
-									return;
-								}
-	
-								var buyitem = [];
-								var emptySlotCount = cga.getInventoryEmptySlotCount();
-	
-								store.items.forEach((it)=>{
-									if(it.name == '瓶子' && emptySlotCount > 0){
-										// 保持拥有存/取暗号最大数量，保证交易正常进行
-										buyitem.push({index: it.index, count: ciphercnt});
-									}
-								});
-	
-								cga.BuyNPCStore(buyitem);
+						talkpos
+						], ()=>{
+							cga.turnDir(turndir);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(0, 0);
 								cga.AsyncWaitNPCDialog((err, dlg)=>{
-									setTimeout(thisobj.prepare, 1000, cb2);
-									return;
+									var store = cga.parseBuyStoreMsg(dlg);
+									if(!store)
+									{
+										cb2(new Error('商店内容解析失败'));
+										return;
+									}
+		
+									var buyitem = [];
+									var emptySlotCount = cga.getInventoryEmptySlotCount();
+		
+									store.items.forEach((it)=>{
+										if(it.name == itemname && emptySlotCount > 0){
+											// 保持拥有存/取暗号最大数量，保证交易正常进行
+											buyitem.push({index: it.index, count: ciphercnt});
+										}
+									});
+		
+									cga.BuyNPCStore(buyitem);
+									cga.AsyncWaitNPCDialog((err, dlg)=>{
+										cga.travel.autopilot('主地图',()=>{
+											setTimeout(thisobj.prepare, 1000, cb3);
+										})
+										return;
+									});
 								});
 							});
 						});
+					}
+				var mapname = cga.GetMapName()
+				if (mapname == '哥拉尔镇'){
+					cga.travel.autopilot('杂货店',()=>{
+						shopAction([25,18], 6, '瓶子', cb2)
+					})
+					return
+				}else if(mapname == '阿凯鲁法村'){
+					// TODO 
+					// cga.travel.autopilot('杂货店',()=>{
+					// 	shopAction([25,18], 6, '瓶子', cb2)
+					// })
+					return
+				}else{
+					cga.travel.falan.toStone('E2', ()=>{
+						cga.travel.autopilot('拿潘食品店',()=>{
+							shopAction([19,11], 0, '瓶子', cb2)
+						})
 					});
-				});
+					return
+				}
 			}
 			var trade = (targetname,cb2)=>{
 				// 当移动银行掉线、登出换人物时
@@ -307,13 +332,24 @@ var thisobj = {
 			});
 			// 如果是取出生启动金，或者包里已经有交易暗号物品，才进入交易模式
 			if(cipher == borncipher || item){
-				cga.travel.falan.toStone('C', ()=>{
-					cga.walkList([
-						[48, 38],
-					], ()=>{
-						setTimeout(retry, 2000,cb);
+				var go = ()=>{
+					cga.travel.falan.toStone('C', ()=>{
+						cga.walkList([
+							[48, 38],
+						], ()=>{
+							setTimeout(retry, 2000,cb);
+						});
 					});
-				});
+				}
+				// 添加在国外回来取钱的逻辑
+				var config = cga.loadPlayerConfig();
+				if(config && (config.settledCity == '阿凯鲁法村' || config.settledCity == '哥拉尔镇')){
+					console.log('发现人在国外，需要回法兰取钱。')
+					cga.travel.goAbroad('法兰城',go)
+					return
+				}
+
+				go()
 			}
 			else{
 				setTimeout(buycipher, 1000,cb);
