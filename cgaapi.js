@@ -578,9 +578,9 @@ module.exports = function(callback){
 			result = '索奇亚奇利域'
 		}else if(mapindex == 300 && XY.x >= 379){// 索奇亚地图比较规则，大于379都是洪恩大风洞的右侧
 			result = '索奇亚加纳域'
-		}else if(mapindex == 59520){
+		}else if(mapindex == 59520 || (mapindex >= 59530 && mapindex <= 59537)){
 			result = '艾尔莎岛'
-		}else if(mapindex == 59521){
+		}else if(mapindex >= 59521 || mapindex < 60000){
 			result = '艾夏岛'
 		}else if(mapindex >= 50000 && mapindex < 60000){
 			result = '神圣大陆'
@@ -2003,7 +2003,7 @@ module.exports = function(callback){
 		}
 	}
 	
-	cga.travel.falan.info = {
+	cga.travel.info = {
 		'法兰城':{
 			mainName : '法兰城',
 			mainindex : 1000,
@@ -2934,24 +2934,21 @@ module.exports = function(callback){
 				// 传送石
 				3099:[[36, 40, 3012],[17, 6, 3099],],
 				// 井的底部
-				5005:(r)=>{
+				5005:[[(cb)=>{
 					cga.walkList(
 						[[53, 56]], ()=>{
 							cga.turnTo(53, 55);
-							cga.AsyncWaitMovement({map:'井的底部', delay:1000, timeout:5000}, r);
+							cga.AsyncWaitMovement({map:'井的底部', delay:1000, timeout:5000}, cb);
 						});
-				},
+				}, null, 5005],],
 				// 希尔薇亚的家
-				5006:(r)=>{
+				5006:[[(cb)=>{
 					cga.walkList(
 						[[53, 56]], ()=>{
 							cga.turnTo(53, 55);
-							cga.AsyncWaitMovement({map:'井的底部', delay:1000, timeout:5000}, ()=>{
-								cga.walkList(
-									[[18, 14, 5006]], r);
-							});
+							cga.AsyncWaitMovement({map:'井的底部', delay:1000, timeout:5000}, cb);
 						});
-				},
+				}, null, 5005],[18, 14, 5006]],
 			},
 			walkReverse:{
 				// 装备品店
@@ -3399,6 +3396,63 @@ module.exports = function(callback){
 				43165:[[18, 30, 43100],],
 			},
 		},
+		'艾尔莎岛':{
+			mainName : '艾尔莎岛',
+			mainindex : 59520,
+			minindex : 59520,
+			maxindex : 59599,
+			mapTranslate:{
+				'主地图' : 59520,
+				'神殿　伽蓝' : 59530,
+				'医院' : 59530,
+				'银行' : 59548,
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				59520:[],
+				// 神殿　伽蓝
+				59530:[[201, 96, 59530],],
+				// 银行
+				59548:[[(cb)=>{
+					cga.walkList([
+						[158, 94],
+					], ()=>{
+						cga.turnTo(158, 93);
+						cga.AsyncWaitMovement({map:'艾夏岛'}, ()=>{
+							cga.travel.autopilot('银行',cb)
+						});
+					});
+				}, null, 59548],],
+			},
+			walkReverse:{
+				// 神殿　伽蓝
+				59530:[[59, 95, 59520],],
+				// 银行
+				59548:[[(cb)=>{
+					cga.travel.autopilot('主地图',cb)
+				}, null, 59548],],
+			},
+		},
+		'艾夏岛':{
+			mainName : '艾尔莎岛',
+			mainindex : 59521,
+			minindex : 59521,
+			maxindex : 59999,
+			mapTranslate:{
+				'主地图' : 59521,
+				'银行' : 59548,
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				59521:[],
+				// 银行
+				59548:[[114, 104, 59548],],
+			},
+			walkReverse:{
+				// 银行
+				59548:[[27, 34, 59521],],
+			},
+		},
 	}
 /**
  * UNA: 写了一个全自动导航的API，可以在城镇地图中任意一个地方去另一个任意的地方，无需登出。
@@ -3416,7 +3470,7 @@ module.exports = function(callback){
 
 		var targetindex = null
 		// 所有静态信息
-		const info = cga.travel.falan.info[villageName]
+		const info = cga.travel.info[villageName]
 		if(typeof targetMap == 'string'){
 			targetindex = info.mapTranslate[targetMap]
 			if(typeof targetindex == 'object'){
@@ -3585,7 +3639,7 @@ module.exports = function(callback){
 			return
 		}
 		// 如果没开启过传送，则去开启并记录状态。
-		const info = cga.travel.falan.info[villageName]
+		const info = cga.travel.info[villageName]
 		cga.travel.autopilot('传送石',()=>{
 			cga.walkList(
 				[cga.getRandomSpace(info.stoneNPCpos[0], info.stoneNPCpos[1])], ()=>{

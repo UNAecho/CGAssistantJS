@@ -16,7 +16,7 @@ var playerThinkRunning = false;
 
 var supplyArray = [supplyMode, supplyCastle];
 
-const mainMapInfo = cga.travel.falan.info['维诺亚村']
+const mainMapInfo = cga.travel.info['维诺亚村']
 
 var ringThink = ()=>{
 	if (cga.getItemCount('欧兹尼克的戒指') > 0){

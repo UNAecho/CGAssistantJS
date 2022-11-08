@@ -157,7 +157,7 @@ var cga = require('../cgaapi')(function(){
 								[26,64,'芙蕾雅'],
 								[330,480,'维诺亚村'],
 								], ()=>{
-									cga.waitForLocation({mapindex : cga.travel.falan.info['维诺亚村'].mainindex}, ()=>{
+									cga.waitForLocation({mapindex : cga.travel.info['维诺亚村'].mainindex}, ()=>{
 										cb2(true)
 									});
 								});
@@ -184,7 +184,7 @@ var cga = require('../cgaapi')(function(){
 					var retry = ()=>{
 						cga.addTeammate(teammates[0], (r)=>{
 							if(r){
-								cga.waitForLocation({mapindex : cga.travel.falan.info['维诺亚村'].mainindex}, ()=>{
+								cga.waitForLocation({mapindex : cga.travel.info['维诺亚村'].mainindex}, ()=>{
 									cb2(true)
 								});
 								return;
@@ -237,12 +237,12 @@ var cga = require('../cgaapi')(function(){
 				cga.walkList([
 					[274, 294, '奇利村'],
 				], ()=>{
-					cga.waitForLocation({mapindex : cga.travel.falan.info['奇利村'].mainindex}, ()=>{
+					cga.waitForLocation({mapindex : cga.travel.info['奇利村'].mainindex}, ()=>{
 						cb2(true)
 					});
 					});
 			} else {
-				cga.waitForLocation({mapindex : cga.travel.falan.info['奇利村'].mainindex}, ()=>{
+				cga.waitForLocation({mapindex : cga.travel.info['奇利村'].mainindex}, ()=>{
 					cb2(true)
 				});
 			}
@@ -283,12 +283,12 @@ var cga = require('../cgaapi')(function(){
 				cga.walkList([
 					[704, 147, '加纳村'],
 				], ()=>{
-					cga.waitForLocation({mapindex : cga.travel.falan.info['加纳村'].mainindex}, ()=>{
+					cga.waitForLocation({mapindex : cga.travel.info['加纳村'].mainindex}, ()=>{
 						cb2(true)
 					});
 					});
 			} else {
-				cga.waitForLocation({mapindex : cga.travel.falan.info['加纳村'].mainindex}, ()=>{
+				cga.waitForLocation({mapindex : cga.travel.info['加纳村'].mainindex}, ()=>{
 					cb2(true)
 				});
 			}
@@ -312,7 +312,7 @@ var cga = require('../cgaapi')(function(){
 		},
 		function(){// 2.维诺亚村开传送并补给
 			var config = cga.loadPlayerConfig();
-			return (cga.GetMapIndex().index3 == cga.travel.falan.info['维诺亚村'].mainindex && config && config['维诺亚村'] && !cga.needSupplyInitial()) ? true :false
+			return (cga.GetMapIndex().index3 == cga.travel.info['维诺亚村'].mainindex && config && config['维诺亚村'] && !cga.needSupplyInitial()) ? true :false
 		},
 		function(){// 3.过海底
 			return (cga.GetMapIndex().index3 == 300) ? true : false;
@@ -322,7 +322,7 @@ var cga = require('../cgaapi')(function(){
 		},
 		function(){// 5.奇利村开传送并补给
 			var config = cga.loadPlayerConfig();
-			return (cga.GetMapIndex().index3 == cga.travel.falan.info['奇利村'].mainindex && config && config['奇利村'] && !cga.needSupplyInitial()) ? true :false
+			return (cga.GetMapIndex().index3 == cga.travel.info['奇利村'].mainindex && config && config['奇利村'] && !cga.needSupplyInitial()) ? true :false
 		},
 		function(){// 6.过洪恩大风洞（角笛大风穴）
 			return (cga.travel.switchMainMap() == '索奇亚加纳域') ? true : false;
@@ -332,7 +332,7 @@ var cga = require('../cgaapi')(function(){
 		},
 		function(){// 8.加纳村开传送并补给
 			var config = cga.loadPlayerConfig();
-			return (cga.GetMapIndex().index3 == cga.travel.falan.info['加纳村'].mainindex && config && config['加纳村'] && !cga.needSupplyInitial()) ? true :false
+			return (cga.GetMapIndex().index3 == cga.travel.info['加纳村'].mainindex && config && config['加纳村'] && !cga.needSupplyInitial()) ? true :false
 		},
 	]
 	);

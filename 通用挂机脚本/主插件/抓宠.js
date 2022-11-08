@@ -95,10 +95,10 @@ var commonPilot = (cb)=>{
 	var muster = thisobj.targetPet.muster
 	var goFunc = getMap(muster.map)
 
-	if(mapindex == cga.travel.falan.info[muster.map].mainindex){
+	if(mapindex == cga.travel.info[muster.map].mainindex){
 		setTimeout(cb, 1000);
 	}
-	else if(cga.travel.switchMainMap() == cga.travel.falan.info[muster.map].mainName && mapindex != cga.travel.falan.info[muster.map].mainindex){
+	else if(cga.travel.switchMainMap() == cga.travel.info[muster.map].mainName && mapindex != cga.travel.info[muster.map].mainindex){
 		cga.travel.autopilot('主地图',()=>{
 			commonPilot(cb)
 		})
@@ -466,7 +466,7 @@ var loop = ()=>{
 				});
 				return;
 			}
-			else if(mapindex == cga.travel.falan.info[thisobj.targetPet.muster.map].mainindex){
+			else if(mapindex == cga.travel.info[thisobj.targetPet.muster.map].mainindex){
 				console.log('从集散地出发去宠物捕捉地点..')
 				playerThinkInterrupt.hasInterrupt();//restore interrupt state
 				console.log('playerThink on');
