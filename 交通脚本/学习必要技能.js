@@ -307,6 +307,23 @@ var cga = require('../cgaapi')(function(){
 			}
 		}
 	},
+	{//11
+		intro: '13.昏睡魔法，是咒术师的得意技；也方便传教士学，方便带双王',
+		workFunc: function(cb2){
+			var skillname = '昏睡魔法'
+			if(professionalInfo.jobmainname == '传教士' || professionalInfo.jobmainname == '咒术师'){
+				if(cga.findPlayerSkill(skillname)){
+					console.log('已经学会' + skillname + ',跳过')
+					cb2(true)
+				}else{
+					professionalbehavior(cga, skillname,'learning',cb2)
+				}
+			}else{
+				console.log('除了传教士和咒术师，其它系别不需要【' + skillname + '】')
+				cb2(true)
+			}
+		}
+	},
 	],
 	[//任务阶段是否完成
 		function(){//学治疗

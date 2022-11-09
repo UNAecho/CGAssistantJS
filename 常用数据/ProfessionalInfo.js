@@ -515,6 +515,18 @@ const Professions = [
 		],
 		teacherpos : [16, 9],
 	}, {
+		jobmainname: '',
+		skill:'昏睡魔法',
+		titles: ['昏睡魔法'],
+		category: '一职多技能系',
+        teacherlocation: '法兰城',
+		teacherwalk:[
+			CS,
+			[182, 132, '公寓'],
+			[23, 22],
+		],
+		teacherpos : [24, 21],
+	}, {
 		jobmainname: '封印师',
 		skill:[
 			'精灵的盟约',
