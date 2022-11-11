@@ -223,7 +223,11 @@ var check_drop = ()=>{
 			dropItemPos = item.pos;
 			return;
 		}
-		// 丢弃物品栏中不属于当前采集目标的物品。
+		// 如果是双百买布，那么不能丢弃布类物品。
+		if(mineObject.object.name.indexOf('布') != -1 && isFabricName(item.name)){
+			return;
+		}
+		// 丢弃物品栏中不属于当前采集目标的物品。注意这里的type 31是布类物品，因为秘文之皮的type也是31，需要丢弃。
 		if([29, 30, 31, 32, 34, 35, 36, 40].indexOf(item.type) != -1 && item.name != mineObject.object.name && item.name != (mineObject.object.name + '条')) {
 			dropItemPos = item.pos;
 			console.log('丢弃物品栏中不属于当前采集目标的物品:' + item.name)
