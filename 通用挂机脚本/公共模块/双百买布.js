@@ -7,8 +7,8 @@ var isFabricName = (name)=>{
 	return name == '麻布' || name == '木棉布' || name == '毛毡';
 }
 
-//购买原材料需求的5倍（即造5件的量）
-const MATERIALS_MULTIPLE_TIMES = 5;
+//购买原材料需求的3倍（即造3件的量）
+const MATERIALS_MULTIPLE_TIMES = 3;
 
 var thisobj = {
 	func : (cb) =>{
