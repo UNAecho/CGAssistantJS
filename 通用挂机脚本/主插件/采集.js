@@ -209,6 +209,10 @@ var gatherArray = [
 },
 ]
 
+var isFabricName = (name)=>{
+	return name == '麻布' || name == '木棉布' || name == '毛毡';
+}
+
 var check_drop = ()=>{
 	var dropItemPos = -1;
 	var pattern = /(.+)的卡片/;
@@ -219,10 +223,10 @@ var check_drop = ()=>{
 			dropItemPos = item.pos;
 			return;
 		}
-		// 丢弃物品栏中不属于当前采集目标的物品，只涉及可采集的物品。
+		// 丢弃物品栏中不属于当前采集目标的物品。
 		if([29, 30, 31, 32, 34, 35, 36, 40].indexOf(item.type) != -1 && item.name != mineObject.object.name && item.name != (mineObject.object.name + '条')) {
 			dropItemPos = item.pos;
-			console.log('丢弃物品栏中不属于当前采集目标的物品，只涉及可采集的物品:' + item.name)
+			console.log('丢弃物品栏中不属于当前采集目标的物品:' + item.name)
 			return;
 		}
 		if(mineObject.object &&	mineObject.object.extra_dropping && mineObject.object.extra_dropping(item)) {
@@ -239,6 +243,10 @@ var cleanOtherItems = (cb) =>{
 	var sell = cga.findItemArray((item) => {
 		// 不卖采集目标物品
 		if(item.name == mineObject.object.name || item.name == mineObject.object.name + '条'){
+			return false
+		}
+		// 布类无法卖店
+		if(isFabricName(item.name)){
 			return false
 		}
 		// 23料理、43血瓶
