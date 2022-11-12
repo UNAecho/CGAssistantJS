@@ -15,20 +15,18 @@ var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
 var job = professionalInfo.jobmainname
 var skillname = professionalInfo.skill
 
-// 大于这个等级的采集者才能去任何地方收集，否则最多去6级材料的地点，防止跑路的时候受伤、掉魂。
-var limitLv = 80
+// 40级以下无法过莎莲娜海底。
+var limitLv = 40
 // 如果是制造系冲技能，当全满时，使用何种技能1级来挂机等待下一步人工决策。
 var tmpskill = '挖掘'
 
 /**
- * 原料采集信息，樵夫使用采花冲级，因为前6级都可以去花田。
+ * 原料采集信息。
  * 需要设置不能采集的物品，像砂糖不可以卖店，则需要跳过，改为打其他材料。
- * 注意使用display_name而不是name来判定材料，这样可以区分不同国家采集的物品，如辣椒和辣椒哥拉尔
- * 暂时去掉一些不适合冲技能的材料，如7级狩猎用咖喱块取代辣椒或高级奶油、砂糖不可以卖店等。
  *  */ 
 var mineDict = {
 	'狩猎' : require(rootdir + '/通用挂机脚本/公共模块/狩猎.js').mineArray.filter(i=>{
-		if (['砂糖', '辣椒', '高级奶油', ].indexOf(i.name) != -1){
+		if (['砂糖'].indexOf(i.name) != -1){
 			return false
 		}
 		return true
@@ -45,20 +43,24 @@ var chooseSkill = (cb)=>{
 	thisobj.skill = null
 	mineObject = null
 
+	if(playerinfo.level < limitLv)
+		console.warn('【UNA脚本警告】：你没有【'+limitLv+'】级，冲不了10级哦。')
+
 	for (var key in mineDict) {
 		skill = cga.findPlayerSkill(key)
 		// UNA：cga.GetSkillsInfo()返回的信息中，当前的技能会有大于等级上限的BUG，比如当前3级而max是2级。所以使用skill.lv < skill.maxlv来判断是否要冲
 		if (skill && skill.lv < skill.maxlv) {
 			thisobj.skill = skill
 			mineObject = mineDict[thisobj.skill.name].find((m)=>{
-			// 低级保护，采集7级或以上材料的时候可能会出现赶路受伤掉混的情况，这时封顶使用6级物品冲技能。
-			// 可能会出现6级物品被删了的情况（例如技能是狩猎时，砂糖无法卖店，故删除砂糖），所以使用m.level > 5，6级没有就用7级产品。
-				if(skill.lv > 5 && m.level > 5 && playerinfo.level < limitLv){
-					console.log('等级低于【'+limitLv+'】级，为了避免受伤，尽量选择6级材料来冲技能。')
-					return true
-				}
-				if(m.level == skill.lv){
-					return true
+				// 由于7级开始采集的效率显著降低，故改为6级开始一直打6级材料至10级。并且因此规避了去高级材料地区带来的人物阵亡风险，理论上40级即可完全冲满10级采集。
+				if(skill.lv > 6){
+					if(m.level == 6){
+						return true
+					}
+				}else{
+					if(skill.lv == m.level){
+						return true
+					}
 				}
 				return false
 			});
