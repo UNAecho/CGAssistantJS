@@ -615,7 +615,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '制鞋工',
 		skill:'制鞋',
-		titles: ['制鞋学徒', '制鞋工', '资深制鞋师傅', '御用制鞋师傅', '制鞋名师'],
+		titles: ['制鞋学徒', '制鞋工', '资深制鞋师傅', '御用制鞋师', '制鞋名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorwalk:[
 			[7, 3, '村长的家'],
