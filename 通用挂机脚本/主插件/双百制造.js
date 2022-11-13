@@ -41,7 +41,7 @@ var healObject = require('../公共模块/治疗自己');
 
 const allowMats = [
 	'麻布', 
-	// '印度轻木', 
+	'印度轻木', 
 	'铜条', 
 	'鹿皮', 
 	'毛毡', 
