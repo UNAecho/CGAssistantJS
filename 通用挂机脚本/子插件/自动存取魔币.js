@@ -81,8 +81,8 @@ var thisobj = {
 								setTimeout(thisobj.prepare, 1000, cb2);
 							})
 							return
-						}else{// 在尽量多存的基础上，留10万在身上
-							optgold = curgold > remainingSpace + 100000 ? remainingSpace : curgold - 100000
+						}else{// 在尽量多存的基础上，留15万在身上
+							optgold = curgold > remainingSpace + 150000 ? remainingSpace : curgold - 150000
 							setTimeout(() => {
 								GoldAct(optgold, typeofact,()=>{
 									cga.travel.autopilot('主地图',cb2)
