@@ -4,14 +4,17 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	var rootdir = cga.getrootdir()
 	var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
 	var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
+	// 提取本地职业数据
+	const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
 	var playerinfo = cga.GetPlayerInfo();
+	var jobLevel = getprofessionalInfos.getJobLevel(playerinfo.job)
 	
 	var teammates = [
-        "UNAの格斗2",
-        "UNAの传教士2",
-        "UNAの护士",
-        "UNAの圣骑士",
-        "UNAの格斗3"
+        "UNAの格斗01",
+        "UNAの格斗02",
+        "UNAの咒术师",
+        "UNAの战斧3",
+        "UNAの传教士",
 	];
 	
 	// var teamplayers = cga.getTeamPlayers();
@@ -21,65 +24,38 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
 
-	// var loadBattleConfig = ()=>{
-	// 	var checkSkill = ()=>{
-	// 		var skills = cga.GetSkillsInfo();
-	// 		var job = '其他';
-	// 		skills.filter((sk)=>{
-	// 			if(sk.name.indexOf('补血魔法') >= 0 && sk.lv >= 4){
-	// 				job = '传教士'
-	// 			}else if(sk.name.indexOf('恢复魔法') >= 0 && sk.lv >= 4){
-	// 				job = '巫师'
-	// 			}else if(sk.name.indexOf('气功弹') >= 0 && sk.lv >= 4){
-	// 				job = '格斗士'
-	// 			}else if(sk.name.indexOf('暗黑骑士之力') >= 0){
-	// 				job = '暗黑骑士'
-	// 			}else if(sk.name.indexOf('神圣光芒') >= 0){
-	// 				job = '圣骑士'
-	// 			}
-	// 			return '';
-	// 		});
-	// 		return job;
-	// 	}
-		
-	
-	// 	var settingpath = cga.getrootdir() + '\\战斗配置\\'
-	// 	var role = checkSkill()
-	// 	if (role == '传教士'){
-	// 		settingpath = settingpath + '传教练级.json'
-	
-	// 	}else if (role == '巫师'){
-	// 		settingpath = settingpath + 'BOSS巫师.json'
-	
-	// 	}else if (role == '格斗士'){
-	// 		settingpath = settingpath + '格斗练级.json'
-	
-	// 	}else if (role == '暗黑骑士'){
-	// 		settingpath = settingpath + 'BOSS暗黑骑士.json'
-	
-	// 	}else if (role == '圣骑士'){
-	// 		settingpath = settingpath + 'BOSS圣骑士.json'
-	
-	// 	}else{
-	// 		settingpath = settingpath + 'BOSS合击.json'
-	// 	}
-	
-	// 	var setting = JSON.parse(fs.readFileSync(settingpath))
-	
-	// 	cga.gui.LoadSettings(setting, (err, result)=>{
-	// 		if(err){
-	// 			console.log(err);
-	// 			return;
-	// 		}else{
-	// 			console.log('读取战斗配置【'+settingpath+'】成功')
-	// 		}
-	// 	})
-	// 	return
-	// }
+	var jump =()=>{
+		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+		var body = {
+			path : rootdir + "\\交通脚本\\找职业导师.js",
+		}
+		var settingpath = rootdir +'\\战斗配置\\生产赶路.json';
+		var setting = JSON.parse(fs.readFileSync(settingpath))
+		scriptMode.call_ohter_script(body,setting)
+	}
 
 	var task = cga.task.Task('诅咒的迷宫 (战斗系三转)', [
 	{//0
-		intro: '1.前往阿巴尼斯村民家（40.30）与历史学家雷伯尔森（14.10）对话，选“是”获得【野草莓】。',
+		intro: '1.任务准备',
+		workFunc: function(cb2){
+			var UD = false
+			for (var i = 0 ; i < playerinfo.titles.length ; i++){
+				if(playerinfo.titles[i] == '开启者'){
+					UD = true
+				}
+			}
+			if(UD){
+				healMode.func(()=>{
+					cb2(true)
+				})
+			}else{
+				throw new Error('你没有开启者称号，无法做双王任务')
+			}
+
+		}
+	},
+	{//1
+		intro: '2.前往阿巴尼斯村民家（40.30）与历史学家雷伯尔森（14.10）对话，选“是”获得【野草莓】。',
 		workFunc: function(cb2){
 			
 			var go_1 = ()=>{
@@ -200,22 +176,18 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 			
 			if(cga.isTeamLeader){
-				healMode.func(()=>{
-					cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
-						wait();
-					});
-				})
+				cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
+					wait();
+				});
 			} else {
-				healMode.func(()=>{
-					cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
-						wait3();
-					});
-				})
+				cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
+					wait3();
+				});
 			}
 		}
 	},
-	{//1
-		intro: '2.与米希安（9.4）对话，交出【野草莓】并传送至民家地下。3.调查连接时空的石盘（15.7），选“是”传送至民家地下。4.与战士帕鲁凯斯（15.7）对话，获得【刀刃碎片】。5.通过（5.3）处楼梯至民家，与历史学家雷伯雷翁（14.10）对话。通过（9.4）处楼梯返回民家地下。6.调查连接时空的石盘（15.10），选“是”传送至民家地下。',
+	{//2
+		intro: '3.与米希安（9.4）对话，交出【野草莓】并传送至民家地下。3.调查连接时空的石盘（15.7），选“是”传送至民家地下。4.与战士帕鲁凯斯（15.7）对话，获得【刀刃碎片】。5.通过（5.3）处楼梯至民家，与历史学家雷伯雷翁（14.10）对话。通过（9.4）处楼梯返回民家地下。6.调查连接时空的石盘（15.10），选“是”传送至民家地下。',
 		workFunc: function(cb2){
 			
 			if(cga.getItemCount('野草莓') == 0){
@@ -296,8 +268,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			go();
 		}
 	},
-	{//2
-		intro: '7.出阿巴尼斯村，前往莎莲娜岛（54.161）处，持有【刀刃的碎片】调查鼓动的石盘，交出【刀刃的碎片】传送至诅咒的迷宫。通过（35.9）处楼梯进入诅咒的迷宫。',
+	{//3
+		intro: '4.出阿巴尼斯村，前往莎莲娜岛（54.161）处，持有【刀刃的碎片】调查鼓动的石盘，交出【刀刃的碎片】传送至诅咒的迷宫。通过（35.9）处楼梯进入诅咒的迷宫。',
 		workFunc: function(cb2){
 			var wait = ()=>{
 				cga.WalkTo(8, 8);
@@ -362,8 +334,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//3
-		intro: '9.抵达第一个难关，与纳帕（22.14）对话进入战斗。',
+	{//4
+		intro: '5.抵达第一个难关，与纳帕（22.14）对话进入战斗。',
 		workFunc: function(cb2){
 			var checkSkill = (cb3)=>{
 				var skills = cga.GetSkillsInfo();
@@ -487,8 +459,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//4
-		intro: '11.抵达第二个难关，与德尔麦（26.17）对话进入战斗。',
+	{//5
+		intro: '6.抵达第二个难关，与德尔麦（26.17）对话进入战斗。',
 		workFunc: function(cb2){
 			var checkSkill = (cb3)=>{
 				var skills = cga.GetSkillsInfo();
@@ -621,8 +593,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//5
-		intro: '13.抵达第三个难关，与瑟贝塔（20.21）对话进入战斗。',
+	{//6
+		intro: '7.抵达第三个难关，与瑟贝塔（20.21）对话进入战斗。',
 		workFunc: function(cb2){
 			var checkSkill = (cb3)=>{
 				var skills = cga.GetSkillsInfo();
@@ -767,8 +739,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//6
-		intro: '15.抵达第四个难关，与亚尔法（15.18）对话进入战斗。',
+	{//7
+		intro: '8.抵达第四个难关，与亚尔法（15.18）对话进入战斗。',
 		workFunc: function(cb2){
 			var checkSkill = (cb3)=>{
 				var skills = cga.GetSkillsInfo();
@@ -903,8 +875,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//7
-		intro: '17.抵达第五个难关，与马帝亚（22.14）对话进入战斗。',
+	{//8
+		intro: '9.抵达第五个难关，与马帝亚（22.14）对话进入战斗。',
 		workFunc: function(cb2){
 			var checkSkill = (cb3)=>{
 				var skills = cga.GetSkillsInfo();
@@ -1044,8 +1016,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//7
-		intro: '19.抵达第六个难关，调查封印石（24.19）进入战斗。',
+	{//9
+		intro: '10.抵达第六个难关，调查封印石（24.19）进入战斗。',
 		workFunc: function(cb2){
 
 			var nextMap = [
@@ -1108,18 +1080,16 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 
 				cga.walkList(list, ()=>{
 					// fuckBOSS();
-					var settingpath = cga.getrootdir() + '\\战斗配置\\手动BOSS.json'
-					cga.gui.LoadSettings(settingpath, (err, result)=>{
-						if(err){
-							console.log(err);
-							return;
-						}else{
-							console.log('读取战斗配置【'+settingpath+'】成功')
-						}
-					})
+					cga.waitForMultipleLocation(nextMap);
 				});
 			}
 			
+			// 改为手动打BOSS
+			cga.waitForLocation({mapname : '第六个难关'}, ()=>{
+				configMode.manualLoad('手动BOSS')
+				return
+			});
+
 			if(cga.isTeamLeader){
 				go();
 			} else {
@@ -1127,8 +1097,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		}
 	},
-	{//8
-		intro: '20.战斗胜利后与神官贝米乌斯（21.12）对话，获得晋阶资格并传送至莎莲娜岛，任务完结。',
+	{//10
+		intro: '11.战斗胜利后与神官贝米乌斯（21.12）对话，获得晋阶资格并传送至莎莲娜岛，任务完结。',
 		workFunc: function(cb2){
 
 			var fuckBOSS = ()=>{
@@ -1178,6 +1148,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	],
 	[//任务阶段是否完成
 		function(){
+			return false;
+		},
+		function(){
 			return (cga.getItemCount('野草莓') >= 1) ? true : false;
 		},
 		function(){
@@ -1219,5 +1192,12 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	task.doTask(()=>{
 		var minssionObj = {"诅咒的迷宫" : true}
 		cga.refreshMissonStatus(minssionObj)
+		if(jobLevel < 3){
+			var sayString = '【UNA脚本提示】已做完任务，但人物未晋级' + (jobLevel + 1) + '转，跳转晋级脚本';
+			cga.sayLongWords(sayString, 0, 3, 1);
+			console.log(sayString)
+			// 跳转晋级脚本
+			setTimeout(jump, 3000);
+		}
 	});
 });
