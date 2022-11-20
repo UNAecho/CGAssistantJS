@@ -189,6 +189,25 @@ module.exports.getReputation = function(titles) {
 	return defaultReputation
 }
 
+module.exports.getReputationLv = function(titles) {
+	var index = null
+	for (let i = 0; i < reputationList.length; i++) {
+		for(var t in titles){
+			if(titles[t].length == 0){
+				continue
+			}
+			if(titles[t] == reputationList[i].reputation){
+				index = i
+				break
+			}
+		}
+	}
+	if(index == null){
+		throw new Error('称号输入错误,无法查询战斗称号等级，请检查')
+	}
+	return index
+}
+
 module.exports.getProductReputationLv = function(titles) {
 	var index = null
 	for (let i = 0; i < productReputationList.length; i++) {
