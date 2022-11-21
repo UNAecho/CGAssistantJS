@@ -3685,9 +3685,18 @@ module.exports = function(callback){
 		var villageName = cga.travel.switchMainMap()
 
 		if (cga.GetMapName().indexOf('银行') == -1){
-			cga.travel.autopilot('银行',()=>{
-				cga.travel.toBank(cb)
-			})
+			var goToBank = ()=>{
+				cga.travel.autopilot('银行',()=>{
+					cga.travel.toBank(cb)
+				})
+				return
+			}
+			try {
+				goToBank()
+			} catch (error) {
+				console.log('错误，当前地图没有银行，登出后重试')
+				cga.logBack(goToBank)
+			}
 			return
 		}
 		var tmplist = []
