@@ -10,15 +10,21 @@ var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战�
 var teamMode = require(rootdir + '/通用挂机脚本/公共模块/组队模式');
 var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 
-// 任务名称
-var MissionName = '起司的任务'
+// 任务奖励道具记录
+var award = {
+	'黑暗之戒' : true,
+	'传送石回数票' : true,
+	'白钥匙' : true,
+	'黑钥匙' : true,
+	'猫眼石的碎片' : true,
+	'法国面包' : true,
+	'德特家的布' : true,
+}
 
 // 计时
 var timer = null
-// 计时显示开关
-var timeLoggerRunning = false
-// 十分钟的毫秒数
-var tenMinute = 1000 * 60 * 10
+// 5分钟的毫秒数
+var fiveMinute = 1000 * 60 * 5
 
 // 每次最长挂机时间1931.622秒3603000
 // 计时器
@@ -35,24 +41,33 @@ var timerfunc = ()=>{
 }
 
 // 计时显示
-var timeLogger = ()=>{
-	if(timeLoggerRunning){
-		timerfunc()
+var waitTime = ()=>{
+	var timeRemaining = 61 - timerfunc()
+	var result = 0
+	if(timeRemaining >= 40){
+		result = fiveMinute * 3
+	}else if(timeRemaining >= 30 && timeRemaining < 40){
+		result = fiveMinute * 2
+	}else if(timeRemaining >= 20 && timeRemaining < 30){
+		result = fiveMinute
 	}
-	
-	setTimeout(timeLogger, 60000);
+	console.log('【UNA脚本提醒】距离交付道具还需' + timeRemaining + '分钟，在这里先等待【' + (result / 1000 / 60)+'】分钟后再出发，防止单一位置等待时间过长而掉线')
+	return result
 }
 
 var jump = ()=>{
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','通用挂机脚本')
+		updateConfig.update_config('mainPlugin','双百制造')
 	},5000)
 }
 
 var dialogHandler = (err, dlg)=>{
 	if(dlg){
-		// 用于收集NPC反馈
-		console.log(dlg.message)
+		if(dlg.message.indexOf('再等一段时间') != -1){
+			console.log('道具提交过早，任务失败。起司需要经过59-61分钟之后才能拿酒，拿酒再经过59-61分钟交给德特老B登（老爷爷）才算获得晋级资格。')
+		}else if(dlg.message.indexOf('答谢你') != -1){
+			console.log('提交时间正确，获得晋级资格。【' + configTable.mainPlugin + '】已完成！')
+		}
 	}
 
 	if(dlg && (dlg.options & 4) == 4)
@@ -95,7 +110,6 @@ var checkItem = (item, cb)=>{
 	if(cga.findItem(item) != -1){
 		// 拿到物品开始计时
 		timer = Date.now()
-		timeLoggerRunning = true
 		if (cb) cb(true)
 		return
 	}
@@ -109,13 +123,20 @@ var askNPCForItem = (NPCpos, cb)=>{
 	if (emptySlotCount == 0){
 		throw new Error('背包满了，请清理。')
 	}
+	// 如果是首次拿，则不需要等待，如果已经开始计时，则等待至必要时间再交谈。
+	var holdon = timer === null ? 0 : 3603000 - (Date.now() - timer)
+	if (holdon > 0)
+		console.log('还需要等待【' + (holdon / 1000 / 60) + '】分才能交付道具')
 
 	var target = cga.getRandomSpace(NPCpos[0],NPCpos[1])
 	cga.walkList(
 		[target], ()=>{
-			cga.turnTo(NPCpos[0],NPCpos[1]);
-			cga.AsyncWaitNPCDialog(dialogHandler);
-			if (cb) cb(true)
+			setTimeout(() => {
+				cga.turnTo(NPCpos[0],NPCpos[1]);
+				cga.AsyncWaitNPCDialog(dialogHandler);
+				if (cb) cb(true)
+				return
+			}, holdon);
 			return
 	});			
 }
@@ -127,13 +148,16 @@ var giveNPCItem = (item, NPCpos, cb)=>{
 	// 每秒检查道具交付情况
 	var checkGiveItem = (item)=>{
 		if(cga.findItem(item) == -1){
-			timeLoggerRunning = false
 			if (cb) cb(true)
 			return
 		}
 		setTimeout(checkGiveItem, 1000, item);
 		return
 	}
+	// 等待至必要时间再交谈。TODO 这里timer不可能为null，除非脚本并非从第一步开始运行，后续进行兼容。
+	var holdon = timer === null ? 0 : 3603000 - (Date.now() - timer)
+	if (holdon > 0)
+		console.log('还需要等待【' + (holdon / 1000 / 60) + '】分才能交付道具')
 
 	var target = cga.getRandomSpace(NPCpos[0],NPCpos[1])
 	cga.walkList(
@@ -142,7 +166,7 @@ var giveNPCItem = (item, NPCpos, cb)=>{
 			setTimeout(() => {
 				cga.turnTo(NPCpos[0],NPCpos[1]);
 				cga.AsyncWaitNPCDialog(dialogHandler);
-			}, 500);
+			}, holdon);
 			return
 	});			
 }
@@ -160,16 +184,53 @@ var giveNPCItem = (item, NPCpos, cb)=>{
  * 
  * 进入莎莲娜海底洞窟方法：等级不足Lv.25的生产系，可先在加纳村西边的波塔洞窟（671.157）以2000G购买【伪造的通行证】；持有【伪造的通行证】与莎莲娜海底洞窟外卫兵对话，若检验为有效可通过进入；
  * 【伪造的通行证】可能被卫兵检验出是无效的，若为无效则需返回重新购买直至检验为有效的为止；使用技能Lv.6鉴定【伪造的通行证】后物品右键说明显示“可以以假乱真.....”则为有效。转职战斗系后持有【伪造的通行证】无效。
+ * TODO 如果拿着任务道具可能无法开启传送，那么就需要去掉补给时开传送的逻辑cga.travel.saveAndSupply，待测试
  */
-var task = cga.task.Task(MissionName, [
+var task = cga.task.Task(configTable.mainPlugin, [
 	{//0
 		intro: '1.任务准备',
 		workFunc: function(cb2){
-			healMode.func(()=>{
-				setTimeout(() => {
-					cb2(true)
-				}, 3000);
-			})
+			var config = cga.loadPlayerConfig();
+			if(config && config['加纳村']){
+				healMode.func(()=>{
+					setTimeout(() => {
+						cb2(true)
+					}, 3000);
+				})
+			}else{
+				console.log('【UNA脚本提示】无法找到本地记录中【加纳村】的传送石状态，现去检查【所有法兰王国村庄】的开传送状态，并在启动【' + configTable.mainPlugin + '】沿途顺路开传送逻辑，无需您后续手动开传送。')
+				cga.travel.falan.checkAllTeleRoom(()=>{
+					healMode.func(()=>{
+						cga.travel.falan.toStone('C', (r)=>{
+							cga.walkList([
+								[41, 98, '法兰城'],
+								//南门
+								[153, 241, '芙蕾雅'],
+								[473, 316],
+							], ()=>{
+								cga.TurnTo(472, 316);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(4, -1);
+									cga.AsyncWaitMovement({map:'维诺亚洞穴 地下1楼', delay:1000, timeout:5000}, (err)=>{
+										if(err){
+											console.error('出错，请检查..')
+											return;
+										}
+										cga.walkList([
+											[20,59,'维诺亚洞穴 地下2楼'],
+											[24,81,'维诺亚洞穴 地下3楼'],
+											[26,64,'芙蕾雅'],
+											[330,480,'维诺亚村'],
+											], ()=>{
+												//TODO 尝试拿着咖喱任务的任务道具能否开启维诺亚村的传送石，如果能，再写后续逻辑
+												});
+										});
+									});
+							})
+						});
+					})
+				})
+			}
 		}
 	},
 	{//1
@@ -179,11 +240,21 @@ var task = cga.task.Task(MissionName, [
 			var NPCroom = '酒吧'
 			var NPCpos = [13, 5]
 			var item = '好像很好吃的起司'
-			checkItem(item, cb2)
+			if(cga.findItem(item) != -1){
+				cga.DropItem(cga.findItem(item));
+				setTimeout(() => {
+					cb2('restart stage');
+				}, 1000);
+				return
+			}else{
+				checkItem(item, cb2)
+			}
 
 			var go = () => {
-				cga.travel.autopilot(NPCroom,()=>{
-					askNPCForItem(NPCpos)
+				cga.travel.saveAndSupply(false,()=>{
+					cga.travel.autopilot(NPCroom,()=>{
+						askNPCForItem(NPCpos)
+					})
 				})
 			}
 
@@ -217,6 +288,7 @@ var task = cga.task.Task(MissionName, [
 
 			var mainMap = cga.travel.switchMainMap()
 			if(mainMap == villageName){
+				cga.SayWords('开始徒步行走任务全过程，接下来将会在每一个村庄落脚点自适应等待若干时间再出发，以免出现掉线情况', 0, 3, 1);
 				go()
 			}else{
 				throw new Error('错误，请登出重新启动脚本，不然计时会乱。')
@@ -253,8 +325,12 @@ var task = cga.task.Task(MissionName, [
 
 			var mainMap = cga.travel.switchMainMap()
 			if(mainMap == villageName){
-				cga.travel.toHospital(false,()=>{
-					go()
+				// 顺道开传送，补给，出发
+				cga.travel.saveAndSupply(false,()=>{
+					// 强制等待一段时间，剩余时间长则等待时间长，反之则短。
+					setTimeout(() => {
+						go()
+					}, waitTime());
 				})
 			}else{
 				throw new Error('错误，请登出重新启动脚本，不然计时会乱。')
@@ -283,8 +359,12 @@ var task = cga.task.Task(MissionName, [
 
 			var mainMap = cga.travel.switchMainMap()
 			if(mainMap == villageName){
-				cga.travel.toHospital(false,()=>{
-					go()
+				// 顺道开传送，补给，出发
+				cga.travel.saveAndSupply(false,()=>{
+					// 强制等待一段时间，剩余时间长则等待时间长，反之则短。
+					setTimeout(() => {
+						go()
+					}, waitTime());
 				})
 			}else{
 				throw new Error('错误，请登出重新启动脚本，不然计时会乱。')
@@ -319,8 +399,12 @@ var task = cga.task.Task(MissionName, [
 
 			var mainMap = cga.travel.switchMainMap()
 			if(mainMap == villageName){
-				cga.travel.toHospital(false,()=>{
-					go()
+				// 顺道开传送，补给，出发
+				cga.travel.saveAndSupply(false,()=>{
+					// 强制等待一段时间，剩余时间长则等待时间长，反之则短。
+					setTimeout(() => {
+						go()
+					}, waitTime());
 				})
 			}else{
 				throw new Error('错误，请登出重新启动脚本，不然计时会乱。')
@@ -351,7 +435,7 @@ var task = cga.task.Task(MissionName, [
 		}
 	},
 	{//7
-		intro: '8.徒步至法兰城，全程逃跑约4分钟',
+		intro: '8.徒步至法兰城，全程逃跑约4分钟。到达法兰城时，距离亚留特村拿到酒大概4分钟。',
 		workFunc: function(cb2){
 			var villageName = '亚留特村'
 
@@ -378,7 +462,13 @@ var task = cga.task.Task(MissionName, [
 
 			var mainMap = cga.travel.switchMainMap()
 			if(mainMap == villageName){
-				go()
+				// 顺道开传送，补给，出发
+				cga.travel.saveAndSupply(false,()=>{
+					// 强制等待一段时间，剩余时间长则等待时间长，反之则短。
+					setTimeout(() => {
+						go()
+					}, waitTime());
+				})
 			}else{
 				throw new Error('错误，请登出重新启动脚本，不然计时会乱。')
 			}
@@ -388,7 +478,7 @@ var task = cga.task.Task(MissionName, [
 		intro: '9.徒步至杰诺瓦镇',
 		workFunc: function(cb2){
 			var villageName = '法兰城'
-
+			// 直接包含了去西医补血逻辑
 			var go = () => {
 				cga.walkList([
 					[82, 83, '医院'],
@@ -438,7 +528,10 @@ var task = cga.task.Task(MissionName, [
 
 			var mainMap = cga.travel.switchMainMap()
 			if(mainMap == villageName){
-				go()
+				// 强制等待一段时间，剩余时间长则等待时间长，反之则短。
+				setTimeout(() => {
+					go()
+				}, waitTime());
 			}else{
 				throw new Error('错误，请登出重新启动脚本，不然计时会乱。')
 			}
@@ -460,9 +553,7 @@ var task = cga.task.Task(MissionName, [
 
 			var mainMap = cga.travel.switchMainMap()
 			if(mainMap == villageName){
-				cga.travel.toHospital(false,()=>{
-					go()
-				})
+				go()
 			}else{
 				throw new Error('错误，请登出重新启动脚本，不然计时会乱。')
 			}
@@ -507,7 +598,8 @@ var loop = ()=>{
 	callSubPluginsAsync('prepare', ()=>{
 		cga.SayWords('欢迎使用【UNAの全自动练级+转正+烧技能脚本】，当前正在进行：【'+configTable.mainPlugin+'】阶段。', 0, 3, 1);
 		task.doTask(()=>{
-			var minssionObj = {MissionName : true}
+			var minssionObj = {}
+			minssionObj[configTable.mainPlugin] = true
 			cga.refreshMissonStatus(minssionObj,()=>{
 				console.log('【' + configTable.mainPlugin + '】完成')
 			})
@@ -530,22 +622,22 @@ var thisobj = {
 	},
 	loadconfig : (obj)=>{
 
-		if(!supplyMode.loadconfig(obj))
-			return false;
+		// if(!supplyMode.loadconfig(obj))
+		// 	return false;
 		
-		if(!teamMode.loadconfig(obj))
-			return false;
+		// if(!teamMode.loadconfig(obj))
+		// 	return false;
 
-		if(!configMode.loadconfig(obj))
-			return false;
+		// if(!configMode.loadconfig(obj))
+		// 	return false;
 		
-		configTable.sellStore = obj.sellStore;
-		thisobj.sellStore = obj.sellStore
+		// configTable.sellStore = obj.sellStore;
+		// thisobj.sellStore = obj.sellStore
 		
-		if(thisobj.sellStore == undefined){
-			console.error('读取配置：是否卖石失败！');
-			return false;
-		}
+		// if(thisobj.sellStore == undefined){
+		// 	console.error('读取配置：是否卖石失败！');
+		// 	return false;
+		// }
 		
 		return true;
 	},
@@ -555,7 +647,7 @@ var thisobj = {
 	execute : ()=>{
 		callSubPlugins('init');
 		configMode.manualLoad('生产赶路')
-		timeLogger()
+		// timeLogger()
 		loop();
 	},
 }

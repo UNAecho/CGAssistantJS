@@ -10,12 +10,9 @@ var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战�
 var teamMode = require(rootdir + '/通用挂机脚本/公共模块/组队模式');
 var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 
-// 注意CG官方的翻译是咖哩而不是咖喱
-var MissionName = '咖哩任务'
-
 var jump = ()=>{
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','通用挂机脚本')
+		updateConfig.update_config('mainPlugin','双百制造')
 	},5000)
 }
 
@@ -108,7 +105,7 @@ var giveNPCItem = (item, NPCpos, cb)=>{
 	});			
 }
 
-var task = cga.task.Task(MissionName, [
+var task = cga.task.Task(configTable.mainPlugin, [
 	{//0
 		intro: '1.任务准备',
 		workFunc: function(cb2){
@@ -273,7 +270,8 @@ var loop = ()=>{
 	callSubPluginsAsync('prepare', ()=>{
 		cga.SayWords('欢迎使用【UNAの全自动练级+转正+烧技能脚本】，当前正在进行：【'+configTable.mainPlugin+'】阶段。', 0, 3, 1);
 		task.doTask(()=>{
-			var minssionObj = {MissionName : true}
+			var minssionObj = {}
+			minssionObj[configTable.mainPlugin] = true
 			cga.refreshMissonStatus(minssionObj,()=>{
 				console.log('【' + configTable.mainPlugin + '】完成')
 			})
