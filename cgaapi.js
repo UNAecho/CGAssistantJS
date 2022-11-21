@@ -3561,6 +3561,12 @@ module.exports = function(callback){
 	}
 	// UNA:添加全域自动导航至医院补给。isPro为true是去资深护士处补给，否则是普通护士补给
 	cga.travel.toHospital = (isPro,cb)=>{
+		// 不需要补血则跳过
+		if(!cga.needSupplyInitial({  })){
+			if (cb) cb(null)
+			return
+		}
+		
 		// 当前地图信息
 		var mapindex = cga.GetMapIndex().index3
 		// 获取当前主地图名称
