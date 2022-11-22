@@ -7,6 +7,7 @@ var configTable = global.configTable;
 var rootdir = cga.getrootdir()
 var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
 var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
+var supplyMode = require(rootdir + '/通用挂机脚本/公共模块/营地回补');
 var teamMode = require(rootdir + '/通用挂机脚本/公共模块/组队模式');
 var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 
@@ -33,10 +34,7 @@ var timerfunc = ()=>{
 		return 0
 	}
 	var timeCost = (Date.now() - timer) / 1000 / 60
-	console.log('计时器：已经过' + timeCost + '分。')
-	if(timeCost >= 59 && timeCost <= 61){
-		console.log('【UNA脚本提醒】距离上次收到任务道具已经过【' +timeCost+ '】分，处于59-61分钟之间，此时是提交任务道具的最好时机')
-	}
+	console.log('计时器：已经过' + timeCost.toFixed(2) + '分。')
 	return timeCost
 }
 
@@ -51,7 +49,7 @@ var waitTime = ()=>{
 	}else if(timeRemaining >= 20 && timeRemaining < 30){
 		result = fiveMinute
 	}
-	console.log('【UNA脚本提醒】距离交付道具还需' + timeRemaining + '分钟，在这里先等待【' + (result / 1000 / 60)+'】分钟后再出发，防止单一位置等待时间过长而掉线')
+	console.log('【UNA脚本提醒】距离交付道具还需' + timeRemaining.toFixed(2) + '分钟，在这里先等待【' + (result / 1000 / 60).toFixed(0)+'】分钟后再出发，防止单一位置等待时间过长而掉线')
 	return result
 }
 
@@ -126,7 +124,7 @@ var askNPCForItem = (NPCpos, cb)=>{
 	// 如果是首次拿，则不需要等待，如果已经开始计时，则等待至必要时间再交谈。
 	var holdon = timer === null ? 0 : 3603000 - (Date.now() - timer)
 	if (holdon > 0)
-		console.log('还需要等待【' + (holdon / 1000 / 60) + '】分才能交付道具')
+		console.log('还需要等待【' + (holdon / 1000 / 60).toFixed(2) + '】分才能交付道具')
 
 	var target = cga.getRandomSpace(NPCpos[0],NPCpos[1])
 	cga.walkList(
@@ -157,7 +155,7 @@ var giveNPCItem = (item, NPCpos, cb)=>{
 	// 等待至必要时间再交谈。TODO 这里timer不可能为null，除非脚本并非从第一步开始运行，后续进行兼容。
 	var holdon = timer === null ? 0 : 3603000 - (Date.now() - timer)
 	if (holdon > 0)
-		console.log('还需要等待【' + (holdon / 1000 / 60) + '】分才能交付道具')
+		console.log('还需要等待【' + (holdon / 1000 / 60).toFixed(2) + '】分才能交付道具')
 
 	var target = cga.getRandomSpace(NPCpos[0],NPCpos[1])
 	cga.walkList(
@@ -602,6 +600,7 @@ var loop = ()=>{
 			minssionObj[configTable.mainPlugin] = true
 			cga.refreshMissonStatus(minssionObj,()=>{
 				console.log('【' + configTable.mainPlugin + '】完成')
+				jump()
 			})
 		});
 	});
@@ -621,33 +620,21 @@ var thisobj = {
 		return false;
 	},
 	loadconfig : (obj)=>{
+		// 读取失败也不影响本脚本逻辑，但要调用，因为后续要落盘，不能丢了key。
+		supplyMode.loadconfig(obj)
+		
+		teamMode.loadconfig(obj)
 
-		// if(!supplyMode.loadconfig(obj))
-		// 	return false;
+		configMode.loadconfig(obj)
 		
-		// if(!teamMode.loadconfig(obj))
-		// 	return false;
-
-		// if(!configMode.loadconfig(obj))
-		// 	return false;
-		
-		// configTable.sellStore = obj.sellStore;
-		// thisobj.sellStore = obj.sellStore
-		
-		// if(thisobj.sellStore == undefined){
-		// 	console.error('读取配置：是否卖石失败！');
-		// 	return false;
-		// }
+		configTable.sellStore = obj.sellStore;
+		thisobj.sellStore = obj.sellStore
 		
 		return true;
-	},
-	inputcb : (cb)=>{
-		Async.series([teamMode.inputcb,], cb);
 	},
 	execute : ()=>{
 		callSubPlugins('init');
 		configMode.manualLoad('生产赶路')
-		// timeLogger()
 		loop();
 	},
 }
