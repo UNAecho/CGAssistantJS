@@ -11,6 +11,9 @@ var supplyMode = require(rootdir + '/通用挂机脚本/公共模块/营地回�
 var teamMode = require(rootdir + '/通用挂机脚本/公共模块/组队模式');
 var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 
+// 为了保留config的落盘信息，本任务并不使用
+var healObject = require(rootdir + '/通用挂机脚本/公共模块/治疗自己');
+
 // 任务奖励道具记录
 var award = {
 	'黑暗之戒' : true,
@@ -621,6 +624,7 @@ var thisobj = {
 	},
 	loadconfig : (obj)=>{
 		// 读取失败也不影响本脚本逻辑，但要调用，因为后续要落盘，不能丢了key。
+		// 保留战斗config落盘信息
 		supplyMode.loadconfig(obj)
 		
 		teamMode.loadconfig(obj)
@@ -629,7 +633,27 @@ var thisobj = {
 		
 		configTable.sellStore = obj.sellStore;
 		thisobj.sellStore = obj.sellStore
-		
+		// 保留生产config落盘信息
+		if(obj.craftType)
+			configTable.craftType = obj.craftType;
+		if(obj.forgetSkillAt)
+			configTable.forgetSkillAt = obj.forgetSkillAt;
+		if(obj.listenPort)
+			configTable.listenPort = obj.listenPort;
+		// 保留采集config落盘信息
+		if(obj.mineObject)
+			configTable.mineObject = obj.mineObject;
+		if(obj.gatherObject)
+			configTable.gatherObject = obj.gatherObject;
+		if(obj.target)
+			configTable.target = obj.target;
+		if(obj.mineType)
+			configTable.mineType = obj.mineType;
+		if(obj.logoutTimes)
+			configTable.logoutTimes = obj.logoutTimes;
+		// 生产、采集通用config
+		healObject.loadconfig(obj)
+
 		return true;
 	},
 	execute : ()=>{
