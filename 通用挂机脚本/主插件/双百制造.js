@@ -12,7 +12,8 @@ var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配
 // 提取本地职业数据
 const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
 var professionalInfo = getprofessionalInfos(playerInfoOrigin.job)
-
+// 声望数据
+const reputationInfos = require(rootdir + '/常用数据/reputation.js');
 //开始时间，用于计算效率
 var starttime = new Date().getTime()
 //统计效率时刻的时间点
@@ -582,35 +583,43 @@ var loop = ()=>{
 		// 如果技能没刷满，开始考虑做晋级任务并自动晋级。
 		if(thisobj.craftSkill.lv < 10 && thisobj.craftSkill.lv >= thisobj.craftSkill.maxlv){
 			console.log('【UNA脚本提示】人物技能到达当前阶段上限，开始执行晋级逻辑。')
-			var config = cga.loadPlayerConfig()
-			if(thisobj.craftSkill.lv == 4){
-				if (config && config['mission']['咖哩任务']){
-					setTimeout(()=>{
-						jump('职业晋级')
-					},2000)
-				}else{
-					setTimeout(()=>{
-						updateConfig.update_config('mainPlugin','咖哩任务')
-					},2000)
-				}
-				return
-			}else if(thisobj.craftSkill.lv == 6){
-				var manu_endurance = cga.GetPlayerInfo()['detail'].manu_endurance
-				var manu_skillful = cga.GetPlayerInfo()['detail'].manu_skillful
-				if(manu_endurance == 100 && manu_skillful == 100){
-					if (config && config['mission']['起司的任务']){
+			var playerCurrentInfo = cga.GetPlayerInfo()
+			// 计算当前声望是否有资格晋级
+			var jobLv = getprofessionalInfos.getJobLevel(playerCurrentInfo.job)
+			var titleinfo = reputationInfos.getReputation(playerCurrentInfo.titles)
+			var minimumLv = reputationInfos.promoteReputation[jobLv]
+			// 必须大于等于晋级称号
+			if(titleinfo['titleLv'] >= minimumLv){
+				var config = cga.loadPlayerConfig()
+				if(thisobj.craftSkill.lv == 4){
+					if (config && config['mission']['咖哩任务']){
 						setTimeout(()=>{
 							jump('职业晋级')
 						},2000)
 					}else{
 						setTimeout(()=>{
-							updateConfig.update_config('mainPlugin','起司的任务')
+							updateConfig.update_config('mainPlugin','咖哩任务')
 						},2000)
 					}
+					return
+				}else if(thisobj.craftSkill.lv == 6){
+					var manu_endurance = playerCurrentInfo['detail'].manu_endurance
+					var manu_skillful = playerCurrentInfo['detail'].manu_skillful
+					if(manu_endurance == 100 && manu_skillful == 100){
+						if (config && config['mission']['起司的任务']){
+							setTimeout(()=>{
+								jump('职业晋级')
+							},2000)
+						}else{
+							setTimeout(()=>{
+								updateConfig.update_config('mainPlugin','起司的任务')
+							},2000)
+						}
+					}
+					return
+				}else if(thisobj.craftSkill.lv == 8){
+					//TODO 自动做魔法大学
 				}
-				return
-			}else if(thisobj.craftSkill.lv == 8){
-				//TODO 自动做魔法大学
 			}
 		}
 
