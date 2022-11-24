@@ -7,8 +7,10 @@ var craft_target = null;
 //脚本开始时人物信息，用于检测是否刷双百
 var playerInfoOrigin = cga.GetPlayerInfo()
 
+var rootdir = cga.getrootdir()
+var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 // 提取本地职业数据
-const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
+const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
 var professionalInfo = getprofessionalInfos(playerInfoOrigin.job)
 
 //开始时间，用于计算效率
@@ -37,7 +39,7 @@ if(playerInfoOrigin['detail'].manu_endurance == 100 && playerInfoOrigin['detail'
 //如果刷双百，升级后判断是否达到目标的flag
 var warn_flag = false
 
-var healObject = require('../公共模块/治疗自己');
+var healObject = require(rootdir + '/通用挂机脚本/公共模块/治疗自己');
 
 const allowMats = [
 	'麻布', 
@@ -74,6 +76,14 @@ const allowMats = [
 	'胡椒',
 	'鱼翅',
 ];
+// 跳转脚本
+var jump = (scriptName)=>{
+	var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+	var body = {
+		path : rootdir + '\\' + scriptName + '.js',
+	}
+	scriptMode.call_ohter_script(body)
+}
 
 const isFabricName = (name)=>{
 	return name == '麻布' || name == '木棉布' || name == '毛毡';
@@ -569,6 +579,41 @@ var loop = ()=>{
 			return;
 		}
 		
+		// 如果技能没刷满，开始考虑做晋级任务并自动晋级。
+		if(thisobj.craftSkill.lv < 10 && thisobj.craftSkill.lv >= thisobj.craftSkill.maxlv){
+			console.log('【UNA脚本提示】人物技能到达当前阶段上限，开始执行晋级逻辑。')
+			var config = cga.loadPlayerConfig()
+			if(thisobj.craftSkill.lv == 4){
+				if (config && config['mission']['咖哩任务']){
+					setTimeout(()=>{
+						jump('职业晋级')
+					},2000)
+				}else{
+					setTimeout(()=>{
+						updateConfig.update_config('mainPlugin','咖哩任务')
+					},2000)
+				}
+				return
+			}else if(thisobj.craftSkill.lv == 6){
+				var manu_endurance = cga.GetPlayerInfo()['detail'].manu_endurance
+				var manu_skillful = cga.GetPlayerInfo()['detail'].manu_skillful
+				if(manu_endurance == 100 && manu_skillful == 100){
+					if (config && config['mission']['起司的任务']){
+						setTimeout(()=>{
+							jump('职业晋级')
+						},2000)
+					}else{
+						setTimeout(()=>{
+							updateConfig.update_config('mainPlugin','起司的任务')
+						},2000)
+					}
+				}
+				return
+			}else if(thisobj.craftSkill.lv == 8){
+				//TODO 自动做魔法大学
+			}
+		}
+
 		if(thisobj.craftSkill.lv >= thisobj.forgetSkillAt){
 			var teacher = teachers.find((t)=>{
 				return t.skillname == thisobj.craftSkill.name;

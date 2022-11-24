@@ -55,6 +55,7 @@ const Professions = [
 		titles: ['见习盗贼', '盗贼', '小偷', '欺诈师', '偷窃高手', '盗贼头目'],
 		category: '物理系',
 		tutorlocation: '哥拉尔镇',
+		tutorRoom: 47003,
 		tutorwalk:[
 			[13, 9],
 			],
@@ -232,7 +233,6 @@ const Professions = [
 			[20, 23]
 			],
 		tutorpos : [20, 22],
-		//TODO
 		teacherwalk:[
 			[153, 100, '里谢里雅堡 1楼'],
 			[74, 19, '里谢里雅堡 2楼'],
@@ -302,7 +302,6 @@ const Professions = [
 			[16, 9]
 			],
 		tutorpos : [17, 9],
-		//TODO
 		teacherwalk:[
 			[153, 100, '里谢里雅堡 1楼'],
 			[74, 19, '里谢里雅堡 2楼'],
@@ -431,6 +430,7 @@ const Professions = [
 		titles: ['见习咒术师', '咒术师', '王宫咒术师', '降头师', '咒术大师', '咒缚者'],
 		category: '魔法系',
         tutorlocation: '莎莲娜海底洞窟',
+		tutorRoom: 15011,
 		tutorwalk:[
 			CW,
 			[22, 88, '芙蕾雅'],
@@ -577,6 +577,7 @@ const Professions = [
 		titles: ['见习封印师', '封印师', '王宫封印师', '封印术师范', '封印大师', '召唤师'],
 		category: '魔物系',
         tutorlocation: '法兰城',
+		tutorRoom: 1508,
 		tutorwalk:[
 			[41, 50, '里谢里雅堡 1楼'],
 			[74, 19, '里谢里雅堡 2楼'],
@@ -597,6 +598,7 @@ const Professions = [
 		titles: ['见习饲养师', '饲养师', '王宫饲养师', '高级饲养师', '饲养大师', '星之饲养师'],
 		category: '魔物系',
         tutorlocation: '法兰城',
+		tutorRoom: '饲养师之家',
 		tutorwalk:[
 			CN,
 			[122, 36, '饲养师之家'],
@@ -616,6 +618,7 @@ const Professions = [
 		titles: ['见习驯兽师', '驯兽师', '王宫驯兽师', '驯兽师范', '驯兽大师', '兽王'],
 		category: '魔物系',
         tutorlocation: '法兰城',
+		tutorRoom: '职业公会',
 		tutorwalk:[
 			CW,
 			[73, 60, '职业公会'],
@@ -637,6 +640,7 @@ const Professions = [
 		skill:'制鞋',
 		titles: ['制鞋学徒', '制鞋工', '资深制鞋师傅', '御用制鞋师', '制鞋名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -661,6 +665,7 @@ const Professions = [
 		skill:'造斧',
 		titles: ['造斧学徒', '造斧工', '资深造斧师傅', '御用造斧师', '造斧名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -685,6 +690,7 @@ const Professions = [
 		titles: ['造弓学徒', '造弓工', '资深造弓师傅', '御用造弓师', '造弓名师'],
 		skill:'造弓',
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -709,6 +715,7 @@ const Professions = [
 		skill:'造盾',
 		titles: ['造盾学徒', '造盾工', '资深造盾师傅', '御用造盾师傅', '造盾名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -734,6 +741,7 @@ const Professions = [
 		skill:'制衣服',
 		titles: ['裁缝学徒', '裁缝工', '资深裁缝师傅', '御用裁缝师傅', '裁缝名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -759,6 +767,7 @@ const Professions = [
 		skill:'制长袍',
 		titles: ['长袍学徒', '长袍工', '资深长袍师傅', '御用长袍师傅', '长袍名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -784,6 +793,7 @@ const Professions = [
 		skill:'料理',
 		titles: ['料理学徒', '厨师', '资深大厨师', '御用厨师', '料理铁人'],
         tutorlocation: '伊尔村',
+		tutorRoom: '旧金山酒吧',
 		tutorwalk:[
 			[12, 17, '村长的家'],
 			[6, 13, '伊尔村'],
@@ -804,6 +814,7 @@ const Professions = [
 		skill:'造铠',
 		titles: ['铠甲学徒', '铠甲工', '资深铠甲师傅', '御用铠甲师傅', '铠甲名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -827,6 +838,7 @@ const Professions = [
 		skill:'制帽子',
 		titles: ['帽子学徒', '帽子工', '资深帽子师傅', '御用帽子师傅', '帽子名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -852,6 +864,7 @@ const Professions = [
 		skill:'造头盔',
 		titles: ['头盔学徒', '头盔工', '资深头盔师傅', '御用头盔师傅', '头盔名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -877,6 +890,7 @@ const Professions = [
 		skill:'造投掷武器',
 		titles: ['投掷武器学徒', '投掷武器工', '资深投掷武器师傅', '御用投掷武器师傅', '投掷武器名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -902,6 +916,7 @@ const Professions = [
 		skill:'造小刀',
 		titles: ['小刀学徒', '小刀工', '资深小刀师傅', '御用小刀师傅', '小刀名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -927,6 +942,7 @@ const Professions = [
 		skill:'制药',
 		titles: ['实习药剂师', '药剂师', '资深药剂大师', '御用药剂师', '炼金术士'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: 2311,
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -948,6 +964,7 @@ const Professions = [
 		skill:'造枪',
 		titles: ['造枪学徒', '造枪工', '资深造枪师傅', '御用造枪师傅', '造枪名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -973,6 +990,7 @@ const Professions = [
 		skill:'造杖',
 		titles: ['造杖学徒', '造杖工', '资深造杖师傅', '御用造杖师傅', '造杖名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -998,6 +1016,7 @@ const Professions = [
 		skill:'制长靴',
 		titles: ['制靴学徒', '制靴工', '资深制靴师傅', '御用制靴师傅', '制靴名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -1023,6 +1042,7 @@ const Professions = [
 		skill:'铸剑',
 		titles: ['铸剑学徒', '铸剑工', '资深铸剑师傅', '御用铸剑师傅', '铸剑名师'],
         tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '地下工房',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[2, 9, '圣拉鲁卡村'],
@@ -1046,6 +1066,8 @@ const Professions = [
 		skill:'防具修理',
 		titles: ['防具修理学徒', '防具修理工', '资深防具修理师', '御用防具修理师', '修理防具专家'],
         tutorlocation: '法兰城',
+		tutorRoom: '米克尔工房',
+		tutorpos : [14, 15],
 		teacherlocation: '法兰城',
 		teacherwalk:[
 			CW,
@@ -1060,6 +1082,7 @@ const Professions = [
 		skill:'急救',
 		titles: ['实习护士', '护士', '资深护士', '护士长', '护理专家', '白衣天使'],
         tutorlocation: '法兰城',
+		tutorRoom: 1507,
 		tutorwalk:[
 			[153, 100, '里谢里雅堡'],
 			[41, 50, '里谢里雅堡 1楼'],
@@ -1081,6 +1104,7 @@ const Professions = [
 		skill:'鉴定',
 		titles: ['鉴定学徒', '鉴定士', '资深鉴定师傅', '御用鉴定师', '鉴定专家'],
         tutorlocation: '法兰城',
+		tutorRoom: '强哥杂货店',
 		tutorwalk:[
 			CE,
 			[191, 37, '强哥杂货店'],
@@ -1100,6 +1124,8 @@ const Professions = [
 		skill:'武器修理',
 		titles: ['武器修理学徒', '武器修理工', '资深武器修理师', '御用武器修理师', '修理武器专家'],
         tutorlocation: '法兰城',
+		tutorRoom: '米克尔工房',
+		tutorpos : [11, 12],
 		teacherlocation:'法兰城',
 		teacherwalk:[
 			CW,
@@ -1126,6 +1152,7 @@ const Professions = [
 		skill:'治疗',
 		titles: ['实习医师','医师','资深医师','御医','超级医生','神医'],
         tutorlocation: '法兰城',
+		tutorRoom: 1111,
 		tutorwalk:[
 			CE,
 			[221, 83, '医院'],
@@ -1145,6 +1172,7 @@ const Professions = [
 		skill:'挖掘',
 		titles: ['见习矿工', '矿工', '资深矿工', '御用矿工', '超级矿工'],
 		tutorlocation: '圣拉鲁卡村',
+		tutorRoom: '村长的家 2楼',
 		tutorwalk:[
 			[7, 3, '村长的家'],
 			[6, 14, '村长的家 2楼'],
@@ -1164,6 +1192,7 @@ const Professions = [
 		skill:'狩猎',
 		titles: ['见习猎人', '猎人', '资深猎人', '御用猎人', '超级猎人'],
         tutorlocation: '伊尔村',
+		tutorRoom: '装备店',
 		tutorwalk:[
 			[12, 17, '村长的家'],
 			[6, 13, '伊尔村'],
@@ -1184,6 +1213,7 @@ const Professions = [
 		skill:'伐木',
 		titles: ['见习樵夫', '樵夫', '资深樵夫', '御用樵夫', '超级樵夫'],
 		tutorlocation: '法兰城',
+		tutorRoom: '职业介绍所',
 		tutorwalk:[
 			CE,
 			[195, 50, '职业介绍所'],

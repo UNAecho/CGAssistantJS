@@ -160,7 +160,8 @@ var calculate =(inputreputation,percentage) => {
 	});
 	return count;
 };
-
+module.exports.reputationList = reputationList
+module.exports.productReputationList = productReputationList
 module.exports.skillCount = function(inputreputation,percentage) {
 	var result = 0
 	if(inputreputation == null){
@@ -218,4 +219,17 @@ module.exports.getReputation = function(titles) {
 		}
 	}
 	return result
+}
+
+/**
+ * 职业晋级的声望条件，和各系职业声望列表的的index有关
+ * 如战斗系1转需要reputationList的reputationList[6]：呢喃的歌声才能晋升。
+ */
+module.exports.promoteReputation = {
+	0 : 6 ,
+	1 : 9 ,
+	2 : 11 ,
+	3 : 13 ,
+	4 : 14 ,
+	5 : 0 ,
 }
