@@ -15,7 +15,7 @@ var skillname = professionalInfo.skill
 // 声望数据
 const reputationInfos = require('../../常用数据/reputation.js');
 // 声望等级，需要大于等于【神匠】才能完成三转任务，否则只能当采集工具人
-var repuLv = reputationInfos.getProductReputationLv(cga.GetPlayerInfo().titles)
+var repuLv = reputationInfos.getReputation(cga.GetPlayerInfo().titles)['titleLv']
 // 队长职业
 var leaderJob = ['厨师','药剂师','武器修理工','防具修理工']
 

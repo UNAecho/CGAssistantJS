@@ -31,6 +31,7 @@ const reputationList = [
 		min: 5000,
 		max: 9999,
 	},{
+		// 晋级条件
 		reputation: '呢喃的歌声',
 		min: 10000,
 		max: 19999,
@@ -43,6 +44,7 @@ const reputationList = [
 		min: 33000,
 		max: 49999,
 	},{
+		// 晋级条件
 		reputation: '苍之风云',
 		min: 50000,
 		max: 69999,
@@ -51,6 +53,7 @@ const reputationList = [
 		min: 70000,
 		max: 99999,
 	},{
+		// 晋级条件
 		reputation: '欢喜的慈雨',
 		min: 100000,
 		max: 129999,
@@ -59,10 +62,12 @@ const reputationList = [
 		min: 130000,
 		max: 159999,
 	},{
+		// 晋级条件
 		reputation: '敬畏的寂静',
 		min: 160000,
 		max: 199999,
 	},{
+		// 晋级条件
 		reputation: '无尽星空',
 		min: 200000,
 		max: 999999,
@@ -172,57 +177,45 @@ module.exports.skillCount = function(inputreputation,percentage) {
 	return result;
 };
 
+/**
+ * 返回人物的称号信息以及称号级别，战斗或生产称号均可，从0-14级，从恶人到无尽星空，或者从恶人到持石之贤者。
+ * 无论战斗还是生产，等级都是从0的恶人，到14的满称号无尽星空或者持石之贤者。
+ * 返回人物是战斗系还是生产系，称号以及称号等级。
+ * 其中，等级分别为6，9，11，13为全类别1-4转条件
+ * 特殊：14级为战斗5转条件
+ * 
+ * @param {list} titles 人物的称号数组
+ * @returns obj
+ * 
+ */
 module.exports.getReputation = function(titles) {
-	// 如果是异常称号，返回树旁的落叶默认
-	var defaultReputation = '路旁的落叶'
-	reputationList.forEach(p => {
-		for(var i in titles){
-			if(titles[i].length == 0){
-				continue
-			}
-			if(titles[i] == p.reputation){
-				defaultReputation = titles[i];
-				break
-			}
-		}
-	});
-	return defaultReputation
-}
-
-module.exports.getReputationLv = function(titles) {
-	var index = null
-	for (let i = 0; i < reputationList.length; i++) {
+	var result = {}
+	for (let i = 0; i < 15; i++) {
 		for(var t in titles){
 			if(titles[t].length == 0){
 				continue
 			}
 			if(titles[t] == reputationList[i].reputation){
-				index = i
-				break
+				result['type'] = '战斗系'
+				result['title'] = titles[t]
+				result['titleLv'] = i
+				return result
 			}
 		}
 	}
-	if(index == null){
-		throw new Error('称号输入错误,无法查询战斗称号等级，请检查')
-	}
-	return index
-}
 
-module.exports.getProductReputationLv = function(titles) {
-	var index = null
-	for (let i = 0; i < productReputationList.length; i++) {
+	for (let i = 0; i < 15; i++) {
 		for(var t in titles){
 			if(titles[t].length == 0){
 				continue
 			}
 			if(titles[t] == productReputationList[i].reputation){
-				index = i
-				break
+				result['type'] = '生产系'
+				result['title'] = titles[t]
+				result['titleLv'] = i
+				return result
 			}
 		}
 	}
-	if(index == null){
-		throw new Error('称号输入错误,无法查询生产称号等级，请检查')
-	}
-	return index
+	return result
 }

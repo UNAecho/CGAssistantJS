@@ -8,6 +8,7 @@ var CW = [17, 53, '法兰城']
 var CN = [41, 14, '法兰城']
 
 /**
+ * tutorRoom : 就职、转职、晋阶导师所在的房间名称，如果出现重复的歧义房间名称，则使用index代替。
  * tutorpos : 就职、转职、晋阶导师的具体坐标,用来进行脚本的turnto对话
  * teacherpos : 对应职业的得意技学习处
  * skill : 职业得意技，晋级时候有等级要求
@@ -31,6 +32,7 @@ const Professions = [
 		titles: ['见习暗黑骑士', '暗黑骑士', '高阶暗黑骑士', '暗黑领主', '暗黑之魂', '漆黑之影'],
 		category: '物理系',
 		tutorlocation: '法兰城',
+		tutorRoom: '主地图',
 		tutorwalk:[
 			CE,
 			[194, 191],
@@ -76,7 +78,8 @@ const Professions = [
 		],
 		titles: ['见习格斗士', '格斗士', '格斗专家', '格斗家师范', '格斗王', '斗圣'],
 		category: '物理系',
-        tutorlocation: '奇利村',
+        tutorlocation: '其它',
+		tutorRoom: '师范的房间',
 		tutorwalk:[
 			[7, 6, 3214],
 			[7, 1, 3212],
@@ -117,6 +120,7 @@ const Professions = [
 		titles: ['见习弓箭手', '弓箭手', '王宫弓箭手', '弓术师范', '弓术大师', '神射手'],
 		category: '物理系',
         tutorlocation: '法兰城',
+		tutorRoom: '弓箭手公会',
 		tutorwalk:[
 			CS,
 			[190, 133, '弓箭手公会'],
@@ -131,10 +135,14 @@ const Professions = [
 			],
 		teacherpos : [8 ,4],
 	}, {
+		/**
+		 * 曙光营地指挥部里的教团骑士职业房间index：27015的6,9处NPC可以对话选择用20000魔币交换一个护身符
+		 * 效果为：气绝回复70%魔力消耗，遗忘+10，魔力+300
+		 */
 		jobmainname: '教团骑士',
 		skill:[
 			'神圣之力'
-			,'神圣之光'
+			,'神圣光芒'
 		],
 		trainskills:[
 			'气绝回复'
@@ -145,6 +153,7 @@ const Professions = [
 		titles: ['见习教团骑士', '教团骑士', '高阶教团骑士', '圣骑士', '光明骑士', '仲裁者'],
 		category: '物理系',
         tutorlocation: '曙光骑士团营地',
+		tutorRoom: 27015,
 		tutorwalk:[
 			[10, 5]
 			],
@@ -160,6 +169,7 @@ const Professions = [
 		titles: ['见习骑士', '骑士', '王宫骑士', '近卫骑士', '枪术大师', '枪圣'],
 		category: '物理系',
         tutorlocation: '法兰城',
+		tutorRoom: 27015,
 		tutorwalk:[
 			[41, 50, '里谢里雅堡 1楼'],
 			[74, 19, '里谢里雅堡 2楼'],
@@ -168,6 +178,7 @@ const Professions = [
 			],
 		tutorpos : [11, 4],
         teacherlocation: '法兰城',
+		tutorRoom: 1509,
 		teacherwalk:[
 			CS,
 			[182, 132, '公寓'],
@@ -186,7 +197,9 @@ const Professions = [
 		skill:'',
 		titles: ['见习士兵', '士兵', '王宫士兵', '士兵长', '重战士', '指挥官'],
 		category: '物理系',
-        tutorlocation: '法兰城'
+        tutorlocation: '法兰城',
+		tutorRoom:'里谢里雅堡 1楼',
+		tutorpos : [81, 22],
 	}, {
 		jobmainname: '舞者',
 		skill:'',
@@ -212,6 +225,7 @@ const Professions = [
 		titles: ['见习战斧斗士', '战斧斗士', '王宫战斧斗士', '战斧师范', '战斧大师', '斧圣'],
 		category: '物理系',
 		tutorlocation: '法兰城',
+		tutorRoom:'后台',
 		tutorwalk:[
 			[15, 6, '竞技场'],
 			[35, 8, '后台'],
@@ -231,7 +245,9 @@ const Professions = [
 		skill:'',
 		titles: ['见习剑士', '剑士', '王宫剑士', '剑术师范', '剑术大师', '剑圣'],
 		category: '物理系',
-        tutorlocation: '法兰城'
+        tutorlocation: '法兰城',
+		tutorRoom: 1401,
+		tutorpos : [18, 10],
 	}, {
 		jobmainname: '传教士',
 		skill:[
@@ -277,6 +293,7 @@ const Professions = [
 		titles: ['见习传教士', '传教士', '牧师', '主教', '大主教', '圣使'],
 		category: '魔法系',
 		tutorlocation: '法兰城',
+		tutorRoom: 1207,
 		tutorwalk:[
 			CN,
 			[154, 29, '大圣堂的入口'],
@@ -298,7 +315,9 @@ const Professions = [
 		skill:'',
 		titles: ['见习魔术师', '魔术师', '王宫魔法师', '魔导士', '大魔术师', '狂魔导师'],
 		category: '魔法系',
-        tutorlocation: '法兰城'
+        tutorlocation: '魔女之家',
+		tutorRoom: '魔女之家',
+		tutorpos : [19, 13],
 	}, {
 		jobmainname: '巫师',
 		skill:[
@@ -351,7 +370,8 @@ const Professions = [
 		],
 		titles: ['见习巫师', '巫师', '王宫巫师', '巫术大师', '巫王', '幻之巫王'],
 		category: '魔法系',
-        tutorlocation: '索奇亚'
+        tutorlocation: '冯奴的家',
+		tutorRoom: '冯奴的家',
 	}, {
 		jobmainname: '咒术师',
 		// 咒术师晋级没有得意技要求，故置空
