@@ -615,8 +615,8 @@ var loop = ()=>{
 								updateConfig.update_config('mainPlugin','起司的任务')
 							},2000)
 						}
+						return
 					}
-					return
 				}else if(thisobj.craftSkill.lv == 8){
 					//TODO 自动做魔法大学
 				}
