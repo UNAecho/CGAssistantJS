@@ -618,7 +618,18 @@ var loop = ()=>{
 						return
 					}
 				}else if(thisobj.craftSkill.lv == 8){
-					//TODO 自动做魔法大学
+					if (config && config['mission']['魔法大学']){
+						setTimeout(()=>{
+							jump('职业晋级')
+						},2000)
+					}else{
+						//TODO 自动做魔法大学
+						// setTimeout(()=>{
+							// updateConfig.update_config('mainPlugin','咖哩任务')
+						// },2000)
+					}
+					// 魔法大学部分完成后需要打开，否则会卡住
+					// return
 				}
 			}
 		}

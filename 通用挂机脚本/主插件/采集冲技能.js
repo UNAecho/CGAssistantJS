@@ -8,12 +8,16 @@ var healObject = require(rootdir + '/通用挂机脚本/公共模块/治疗自�
 var healPetObject = require(rootdir + '/通用挂机脚本/公共模块/治疗宠物');
 var supplyObject = require(rootdir + '/通用挂机脚本/公共模块/通用登出回补');
 var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
+var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 
 // 提取本地职业数据
 const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
 var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
 var job = professionalInfo.jobmainname
 var skillname = professionalInfo.skill
+
+// 声望数据
+const reputationInfos = require(rootdir + '/常用数据/reputation.js');
 
 // 40级以下无法过莎莲娜海底。
 var limitLv = 40
@@ -64,6 +68,58 @@ var chooseSkill = (cb)=>{
 				}
 				return false
 			});
+		}
+		// 如果本职技能冲满了需要晋级，优先做任务晋级
+		else if(skill && skill.lv < 10 && skill.lv >= skill.maxlv && key == skillname){
+			var playerCurrentInfo = cga.GetPlayerInfo()
+			// 计算当前声望是否有资格晋级
+			var jobLv = getprofessionalInfos.getJobLevel(playerCurrentInfo.job)
+			var titleinfo = reputationInfos.getReputation(playerCurrentInfo.titles)
+			var minimumLv = reputationInfos.promoteReputation[jobLv]
+			// 必须大于等于晋级称号
+			if(titleinfo['titleLv'] >= minimumLv){
+				var config = cga.loadPlayerConfig()
+				if(skill.lv == 4){
+					if (config && config['mission']['咖哩任务']){
+						setTimeout(()=>{
+							jump('职业晋级')
+						},2000)
+					}else{
+						setTimeout(()=>{
+							updateConfig.update_config('mainPlugin','咖哩任务')
+						},2000)
+					}
+					return
+				}else if(skill.lv == 6){
+					var manu_endurance = playerCurrentInfo['detail'].manu_endurance
+					var manu_skillful = playerCurrentInfo['detail'].manu_skillful
+					if(manu_endurance == 100 && manu_skillful == 100){
+						if (config && config['mission']['起司的任务']){
+							setTimeout(()=>{
+								jump('职业晋级')
+							},2000)
+						}else{
+							setTimeout(()=>{
+								updateConfig.update_config('mainPlugin','起司的任务')
+							},2000)
+						}
+						return
+					}
+				}else if(skill.lv == 8){
+					if (config && config['mission']['魔法大学']){
+						setTimeout(()=>{
+							jump('职业晋级')
+						},2000)
+					}else{
+						//TODO 自动做魔法大学
+						// setTimeout(()=>{
+							// updateConfig.update_config('mainPlugin','咖哩任务')
+						// },2000)
+					}
+					// 魔法大学部分完成后需要打开，否则会卡住
+					// return
+				}
+			}
 		}
 		// 如果有本职技能没有烧满，则优先选择烧本职技能
 		if(mineObject && key == skillname){
