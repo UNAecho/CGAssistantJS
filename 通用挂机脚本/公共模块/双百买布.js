@@ -3,8 +3,93 @@ var configTable = global.configTable;
 
 var socket = null;
 
+/**
+ * UNAecho: 制作了一个1-10级所有买布自适应脚本，人物会接受所有买布需求，依次去各地购买。
+ * index:物品对应商店所处的index
+ * price:单价，一组20个就要乘以20算
+ * 所有布料的堆叠数都是20
+ */
+const fabricInfo = {
+	'麻布' : {
+		itemid : 10400,
+		index : 0,
+		price : 20,
+		village : '法兰城',
+	},
+	'木棉布' : {
+		itemid : 10401,
+		index : 1,
+		price : 25,
+		village : '法兰城',
+	},
+	'毛毡' : {
+		itemid : 10402,
+		index : 2,
+		price : 29,
+		village : '法兰城',
+	},
+	'绵' : {
+		itemid : 10403,
+		index : 3,
+		price : 33,
+		village : '法兰城',
+	},
+	'细线' : {
+		itemid : 10404,
+		index : 4,
+		price : 40,
+		village : '法兰城',
+	},
+	'绢布' : {
+		itemid : 10405,
+		index : 0,// 维诺亚和魔法大学index都是0
+		price : 50,
+		village : '维诺亚村',
+	},
+	'莎莲娜线' : {
+		itemid : 10406,
+		index : 9,
+		price : 100,
+		village : '杰诺瓦镇',
+	},
+	'杰诺瓦线' : {
+		itemid : 10407,
+		index : 10,
+		price : 120,
+		village : '杰诺瓦镇',
+	},
+	'阿巴尼斯制的线' : {
+		itemid : 10410,
+		index : 1,
+		price : 400,
+		village : '魔法大学',
+	},
+	'阿巴尼斯制的布' : {
+		itemid : 10411,
+		index : 2,
+		price : 400,
+		village : '魔法大学',
+	},
+	'细麻布' : {
+		itemid : 10408,
+		index : 0,
+		price : 130,
+		village : '阿巴尼斯村',
+	},
+	'开米士毛线' : {
+		itemid : 10409,
+		index : 1,
+		price : 170,
+		village : '阿巴尼斯村',
+	},
+}
+
 var isFabricName = (name)=>{
-	return name == '麻布' || name == '木棉布' || name == '毛毡';
+	return ['麻布', '木棉布', '毛毡', '绵', '细线', '绢布', '莎莲娜线', '杰诺瓦线', '阿巴尼斯制的线', '阿巴尼斯制的布', '细麻布', '开米士毛线', ].indexOf(name) != -1 ? true : false
+}
+
+var buyCount = (item, gatherCount) => {
+	return gatherCount - cga.getItemCount(item) > 0 ? gatherCount - cga.getItemCount(item) : 0
 }
 
 //购买原材料需求的3倍（即造3件的量）
@@ -31,26 +116,88 @@ var thisobj = {
 				return
 			}
 
-			// console.log('开始买布...');
-			
-			var buyArray = [];
-			if(thisobj.object.gatherCount['麻布']){
-				buyArray.push({index:0, count: thisobj.object.gatherCount['麻布']});
-			}
-			if(thisobj.object.gatherCount['木棉布']){
-				buyArray.push({index:1, count: thisobj.object.gatherCount['木棉布']});
-			}
-			if(thisobj.object.gatherCount['毛毡']){
-				buyArray.push({index:2, count: thisobj.object.gatherCount['毛毡']});
-			}
-
-			cga.craft.buyFabricLv1Multi(buyArray, ()=>{
-				if(!thisobj.check_done()){
-					thisobj.object.func(cb);
-					return;
+			for (var key in fabricInfo){
+				// 如果制造方不需要买某种布，则跳过
+				if(!thisobj.object.gatherCount[key]){
+					// console.log('【'+ key + '】不需要购买')
+					continue
 				}
-				cb(true);
-			});
+				// 如果身上已经有足够数量，则跳过
+				var needBuy = buyCount(key, thisobj.object.gatherCount[key])
+				if(needBuy == 0){
+					// console.log('【'+ key + '】已有足够数量')
+					continue
+				}
+				// console.log('【'+ key + '】需要购买【' + needBuy + '】个')
+				if(!thisobj.object.order[fabricInfo[key].village]){
+					thisobj.object.order[fabricInfo[key].village] = []
+					thisobj.object.order[fabricInfo[key].village].push({item : key, index:fabricInfo[key].index, count: needBuy})
+				}else{
+					thisobj.object.order[fabricInfo[key].village].push({item : key, index:fabricInfo[key].index, count: needBuy})
+				}
+
+
+			}
+			
+			// 绢布可以在魔法大学顺便购买
+			if (thisobj.object.order.hasOwnProperty('维诺亚村') && thisobj.object.order.hasOwnProperty('魔法大学')){
+				console.log('【UNA脚本提醒】：绢布可以顺便在魔法大学直接买，就不去维诺亚村买了')
+				thisobj.object.order['魔法大学'].push({item: '绢布', index:fabricInfo['绢布'].index, count: thisobj.object.order['维诺亚村'][0].count})
+				delete thisobj.object.order['维诺亚村']
+			}
+			for (var village in thisobj.object.order){
+				if(village == '法兰城'){
+					cga.craft.buyFabricLv1Multi(thisobj.object.order[village], ()=>{
+						thisobj.object.order = {}
+						if(!thisobj.check_done()){
+							thisobj.object.func(cb);
+							return;
+						}
+						cb(true);
+					});
+					return
+				}else if(village == '维诺亚村'){
+					cga.craft.buyFabricLv2Multi(thisobj.object.order[village], ()=>{
+						thisobj.object.order = {}
+						if(!thisobj.check_done()){
+							thisobj.object.func(cb);
+							return;
+						}
+						cb(true);
+					});
+					return
+				}else if(village == '杰诺瓦镇'){
+					cga.craft.buyFabricLv3Multi(thisobj.object.order[village], ()=>{
+						thisobj.object.order = {}
+						if(!thisobj.check_done()){
+							thisobj.object.func(cb);
+							return;
+						}
+						cb(true);
+					});
+					return
+				}else if(village == '魔法大学'){
+					cga.craft.buyFabricLv4Multi(thisobj.object.order[village], ()=>{
+						thisobj.object.order = {}
+						if(!thisobj.check_done()){
+							thisobj.object.func(cb);
+							return;
+						}
+						cb(true);
+					});
+					return
+				}else if(village == '阿巴尼斯村'){
+					cga.craft.buyFabricLv5Multi(thisobj.object.order[village], ()=>{
+						thisobj.object.order = {}
+						if(!thisobj.check_done()){
+							thisobj.object.func(cb);
+							return;
+						}
+						cb(true);
+					});
+					return
+				}
+			}
 		},
 		doneManager : (cb)=>{
 			thisobj.object.state = 'done';
@@ -116,6 +263,8 @@ var thisobj = {
 		},
 		state : 'gathering',
 		gatherCount : {},
+		// 采购清单，key为要去的村镇、城市，value为商品index和数量的dict
+		order : {},
 	},
 	check_done : ()=>{
 		if(Object.keys(thisobj.object.gatherCount) == 0)
@@ -126,6 +275,8 @@ var thisobj = {
 				return false;
 		}
 
+		// 如果状态为done，则刷新采购单
+		thisobj.object.order = {}
 		return true;
 	},
 	translate : (pair)=>{

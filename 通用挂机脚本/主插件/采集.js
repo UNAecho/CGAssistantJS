@@ -210,7 +210,7 @@ var gatherArray = [
 ]
 
 var isFabricName = (name)=>{
-	return name == '麻布' || name == '木棉布' || name == '毛毡';
+	return ['麻布', '木棉布', '毛毡', '绵', '细线', '绢布', '莎莲娜线', '杰诺瓦线', '阿巴尼斯制的线', '阿巴尼斯制的布', '细麻布', '开米士毛线', ].indexOf(name) != -1 ? true : false
 }
 
 var check_drop = ()=>{

@@ -246,6 +246,24 @@ var waitStuffs = (name, materials, cb)=>{
 							stuffs.gold += find_player.cga_data.count[key] * 25;
 						else if(key == '毛毡')
 							stuffs.gold += find_player.cga_data.count[key] * 29;
+						else if(key == '绵')
+							stuffs.gold += find_player.cga_data.count[key] * 33;
+						else if(key == '细线')
+							stuffs.gold += find_player.cga_data.count[key] * 40;
+						else if(key == '绢布')
+							stuffs.gold += find_player.cga_data.count[key] * 50;
+						else if(key == '莎莲娜线')
+							stuffs.gold += find_player.cga_data.count[key] * 100;
+						else if(key == '杰诺瓦线')
+							stuffs.gold += find_player.cga_data.count[key] * 120;
+						else if(key == '阿巴尼斯制的线')
+							stuffs.gold += find_player.cga_data.count[key] * 400;
+						else if(key == '阿巴尼斯制的布')
+							stuffs.gold += find_player.cga_data.count[key] * 400;
+						else if(key == '细麻布')
+							stuffs.gold += find_player.cga_data.count[key] * 130;
+						else if(key == '开米士毛线')
+							stuffs.gold += find_player.cga_data.count[key] * 170;
 					}
 				}
 				if(find_player.cga_data.job_name == '鹿皮'){
