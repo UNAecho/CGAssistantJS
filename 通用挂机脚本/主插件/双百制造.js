@@ -123,7 +123,9 @@ io.on('connection', (socket) => {
 				'组员': [socket.cga_data.player_name],
 			}
 		}
-		console.log(roominfos)
+		// 打印同生产队的组员信息
+		// console.log(roominfos)
+
 		// 统计资产信息
 		if(socket.cga_data.initial_funding){
 			// 重新计算初始化资产
@@ -303,10 +305,10 @@ var waitStuffs = (name, materials, cb)=>{
 				if(find_player.cga_data.job_name == '鱼翅'){
 					stuffs.gold += Math.ceil(find_player.cga_data.count * 31.0 + 0)
 				}
-				console.log('交易对象信息:')
-				console.log(find_player.cga_data)
-				console.log('交易金钱信息:')
-				console.log(stuffs)
+				// console.log('交易对象信息:')
+				// console.log(find_player.cga_data)
+				// console.log('交易金钱信息:')
+				// console.log(stuffs)
 				cga.positiveTrade(find_player.cga_data.player_name, stuffs, null, (result)=>{
 					if (result.success == true){
 						cb(true);
