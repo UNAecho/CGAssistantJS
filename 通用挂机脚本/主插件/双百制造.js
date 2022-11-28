@@ -208,7 +208,7 @@ var waitStuffs = (name, materials, cb)=>{
 		
 		//修复：防止面向方向不正确导致无法交易
 		if(cga.GetPlayerInfo().direction != 4){
-			cga.turnTo(32, 88);
+			cga.turnTo(tradeTurnTo[0], tradeTurnTo[1]);
 			setTimeout(repeat, 500);
 			return;
 		}
