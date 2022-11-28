@@ -651,7 +651,6 @@ var loop = ()=>{
 		
 		// 如果技能没刷满，开始考虑做晋级任务并自动晋级。
 		if(thisobj.craftSkill.lv < 10 && thisobj.craftSkill.lv >= thisobj.craftSkill.maxlv){
-			console.log('【UNA脚本提示】人物技能到达当前阶段上限，开始执行晋级逻辑。')
 			var playerCurrentInfo = cga.GetPlayerInfo()
 			// 计算当前声望是否有资格晋级
 			var jobLv = getprofessionalInfos.getJobLevel(playerCurrentInfo.job)
@@ -659,6 +658,7 @@ var loop = ()=>{
 			var minimumLv = reputationInfos.promoteReputation[jobLv]
 			// 必须大于等于晋级称号
 			if(titleinfo['titleLv'] >= minimumLv){
+				console.log('【UNA脚本提示】人物技能到达当前阶段上限，且称号满足要求，开始执行晋级逻辑。')
 				var config = cga.loadPlayerConfig()
 				if(thisobj.craftSkill.lv == 4){
 					if (config && config['mission']['咖哩任务']){
