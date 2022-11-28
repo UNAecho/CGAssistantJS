@@ -18,6 +18,14 @@ var cga = require('./cgaapi')(function () {
 		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
 		var body = {
 			path : rootdir + "\\就职传教-全自动流程.js",
+		}// 根据人物名字简单判断跳转脚本
+		var playerName = cga.GetPlayerInfo().name
+		if(playerName.indexOf('伐木') != -1){
+			cga.SayWords('樵夫是可以1级就职的，启动就职樵夫脚本', 0, 3, 1);
+			body['path'] = rootdir + "\\就职樵夫.js"
+		}else{
+			cga.SayWords('因为游民无法学习调教。而1级号走不到伊尔、圣拉鲁卡，故先就职传教。', 0, 3, 1);
+			body['path'] = rootdir + "\\就职传教-全自动流程.js"
 		}
 		var settingpath = rootdir +'\\战斗配置\\生产赶路.json';
 		var setting = JSON.parse(fs.readFileSync(settingpath))

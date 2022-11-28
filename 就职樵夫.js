@@ -1,4 +1,17 @@
+var fs = require('fs');
 var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
+
+	var jump =()=>{
+		global.cga = cga
+		var rootdir = cga.getrootdir()
+		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+		var body = {
+			path : rootdir + "\\交通脚本\\学习必要技能.js",
+		}
+		var settingpath = rootdir +'\\战斗配置\\生产赶路.json';
+		var setting = JSON.parse(fs.readFileSync(settingpath))
+		scriptMode.call_ohter_script(body,setting)
+	}
 
 	var task = cga.task.Task('就职樵夫', [
 	{
@@ -250,5 +263,5 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	]
 	);
 	
-	task.doTask();
+	task.doTask(jump);
 });

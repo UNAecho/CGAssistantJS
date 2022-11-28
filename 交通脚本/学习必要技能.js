@@ -308,7 +308,7 @@ var cga = require('../cgaapi')(function(){
 		}
 	},
 	{//11
-		intro: '13.昏睡魔法，是咒术师的得意技；也方便传教士学，方便带双王',
+		intro: '13.昏睡魔法，是咒术师的得意技；传教士也要学，方便带双王',
 		workFunc: function(cb2){
 			var skillname = '昏睡魔法'
 			if(professionalInfo.jobmainname == '传教士' || professionalInfo.jobmainname == '咒术师'){
@@ -382,8 +382,10 @@ var cga = require('../cgaapi')(function(){
 	);
 	task.anyStepDone = false;
 	task.doTask(()=>{
-		while (true) {
-			
-		}
+		cga.gui.LoadScript({
+			autorestart : false,
+		}, (err, result)=>{
+			console.log('脚本结束。');
+		})
 	});
 });

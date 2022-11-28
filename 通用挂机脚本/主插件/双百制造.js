@@ -14,6 +14,11 @@ const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.j
 var professionalInfo = getprofessionalInfos(playerInfoOrigin.job)
 // 声望数据
 const reputationInfos = require(rootdir + '/常用数据/reputation.js');
+
+// 制造者交易时的站立坐标以及朝向坐标，不要使用cga.turnDir()，默认朝向cga.turnDir(4)的方向，也就是左下方向。
+var tradePos = [34, 89]
+var tradeTurnTo = [tradePos[0] - 2, tradePos[1]]
+
 //开始时间，用于计算效率
 var starttime = new Date().getTime()
 //统计效率时刻的时间点
@@ -239,35 +244,68 @@ var waitStuffs = (name, materials, cb)=>{
 
 			setTimeout(()=>{
 				var stuffs = { gold:0 };
-				
+				// 补贴一些传送石的费用，去过的村庄为true
+				var villageFlag = {
+					'维诺亚村' : false,
+					'杰诺瓦镇' : false,
+					'阿巴尼斯村' : false,
+				}
+
 				if(find_player.cga_data.job_name == '买布' && Object.keys(find_player.cga_data.count).length > 0){
 					for(var key in find_player.cga_data.count){
-						if(key == '麻布')
+						if(key == '麻布'){
 							stuffs.gold += find_player.cga_data.count[key] * 20;
-						else if(key == '木棉布')
+						}
+						else if(key == '木棉布'){
 							stuffs.gold += find_player.cga_data.count[key] * 25;
-						else if(key == '毛毡')
+						}
+						else if(key == '毛毡'){
 							stuffs.gold += find_player.cga_data.count[key] * 29;
-						else if(key == '绵')
+						}
+						else if(key == '绵'){
 							stuffs.gold += find_player.cga_data.count[key] * 33;
-						else if(key == '细线')
+						}
+						else if(key == '细线'){
 							stuffs.gold += find_player.cga_data.count[key] * 40;
-						else if(key == '绢布')
+						}
+						else if(key == '绢布'){
 							stuffs.gold += find_player.cga_data.count[key] * 50;
-						else if(key == '莎莲娜线')
+							villageFlag['维诺亚村'] = true
+						}
+						else if(key == '莎莲娜线'){
 							stuffs.gold += find_player.cga_data.count[key] * 100;
-						else if(key == '杰诺瓦线')
+							villageFlag['杰诺瓦镇'] = true
+						}
+						else if(key == '杰诺瓦线'){
 							stuffs.gold += find_player.cga_data.count[key] * 120;
-						else if(key == '阿巴尼斯制的线')
+							villageFlag['杰诺瓦镇'] = true
+						}
+						else if(key == '阿巴尼斯制的线'){
 							stuffs.gold += find_player.cga_data.count[key] * 400;
-						else if(key == '阿巴尼斯制的布')
+							villageFlag['阿巴尼斯村'] = true
+						}
+						else if(key == '阿巴尼斯制的布'){
 							stuffs.gold += find_player.cga_data.count[key] * 400;
-						else if(key == '细麻布')
+							villageFlag['阿巴尼斯村'] = true
+						}
+						else if(key == '细麻布'){
 							stuffs.gold += find_player.cga_data.count[key] * 130;
-						else if(key == '开米士毛线')
+							villageFlag['阿巴尼斯村'] = true
+						}
+						else if(key == '开米士毛线'){
 							stuffs.gold += find_player.cga_data.count[key] * 170;
+							villageFlag['阿巴尼斯村'] = true
+						}
 					}
 				}
+
+				for (var v in villageFlag){
+					if(villageFlag[v]){
+						console.log('采购员去过【' + v +'】，补贴【' + cga.travel.teleCost[v] + '】魔币')
+						stuffs.gold += cga.travel.teleCost[v];
+					}
+				}
+
 				if(find_player.cga_data.job_name == '鹿皮'){
 					stuffs.gold += find_player.cga_data.count * 1;
 				}
@@ -327,9 +365,9 @@ var waitStuffs = (name, materials, cb)=>{
 
 	cga.travel.falan.toStone('C', ()=>{
 		cga.walkList([
-		[34, 88]
+			tradePos
 		], ()=>{
-			cga.turnTo(32, 88);
+			cga.turnTo(tradeTurnTo[0], tradeTurnTo[1]);
 			setTimeout(repeat, 500);
 		});
 	});

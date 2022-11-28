@@ -14,6 +14,10 @@ var food = require('./狩猎.js').mineArray;
 var wood = require('./伐木.js').mineArray;
 var mine = require('./挖矿.js').mineArray;
 
+// 采集员交易时的站立坐标以及朝向坐标，不要使用cga.turnDir()，默认朝向cga.turnDir(0)的方向，也就是右上方向。
+var tradePos = [33, 89]
+var tradeTurnTo = [tradePos[0] + 2, tradePos[1]]
+
 // 丢弃物品的类别
 var dropTypeArr = [
 	// 鹿皮
@@ -223,9 +227,9 @@ var thisobj = {
 				var go = ()=>{
 					cga.travel.falan.toStone('C', () => {
 						cga.walkList([
-							[33, 88]
+							tradePos
 						], () => {
-							cga.TurnTo(35, 88);
+							cga.TurnTo(tradeTurnTo[0], tradeTurnTo[1]);
 							setTimeout(repeat, 1000);
 						});
 					});

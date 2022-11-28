@@ -214,6 +214,15 @@ var cga = require('./cgaapi')(function () {
 								
 								}
 								// return;
+							}else if(dlg && dlg.message.indexOf('有位贤人讲过') >= 0){
+								/*UNA:纳塞的台词为【
+								　有位贤人讲过……。特定的规则不应该限定行为方式。
+								*/
+								console.log('没见过的对话，请自行抉择。')
+								while (true) {
+								
+								}
+								// return;
 							}else if(dlg && dlg.message.indexOf('博士') >= 0){
 
 								console.log('完成卵1状态')
@@ -250,7 +259,9 @@ var cga = require('./cgaapi')(function () {
 					cga.ClickNPCDialog(4, -1);
 					cga.AsyncWaitNPCDialog(()=>{
 						cga.ClickNPCDialog(1, -1);
-						cga.travel.falan.toCity('艾尔莎岛', next);
+						cga.travel.autopilot('里谢里雅堡',()=>{
+							cga.travel.falan.toCity('艾尔莎岛', next);
+						})
 					});
 				});
 			});
