@@ -376,9 +376,9 @@ var waitStuffs = (name, materials, cb)=>{
 
 	cga.travel.falan.toStone('C', ()=>{
 		cga.walkList([
-			tradePos
+			craftPlayerPos
 		], ()=>{
-			cga.turnTo(tradeTurnTo[0], tradeTurnTo[1]);
+			cga.turnDir(craftPlayerTurnDir);
 			setTimeout(repeat, 500);
 		});
 	});
