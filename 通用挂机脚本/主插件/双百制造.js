@@ -15,9 +15,13 @@ var professionalInfo = getprofessionalInfos(playerInfoOrigin.job)
 // 声望数据
 const reputationInfos = require(rootdir + '/常用数据/reputation.js');
 
-// 制造者交易时的站立坐标以及朝向坐标，不要使用cga.turnDir()，默认朝向cga.turnDir(4)的方向，也就是左下方向。
-var tradePos = [34, 89]
-var tradeTurnTo = [tradePos[0] - 2, tradePos[1]]
+// 制造者交易时的站立坐标以及朝向坐标
+var craftPlayerPos = [34, 89]
+var craftPlayerTurnDir = 4
+
+// 采集员自动适配制造者的坐标以及朝向
+var workerPos = cga.getStaticOrientationPosition(craftPlayerPos, craftPlayerTurnDir, 1)
+var workerTurnDir = cga.tradeDir(craftPlayerTurnDir)
 
 //开始时间，用于计算效率
 var starttime = new Date().getTime()
@@ -82,6 +86,7 @@ const allowMats = [
 	'胡椒',
 	'鱼翅',
 ];
+
 // 跳转脚本
 var jump = (scriptName)=>{
 	var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
@@ -92,7 +97,7 @@ var jump = (scriptName)=>{
 }
 
 const isFabricName = (name)=>{
-	return name == '麻布' || name == '木棉布' || name == '毛毡';
+	return ['麻布', '木棉布', '毛毡', '绵', '细线', '绢布', '莎莲娜线', '杰诺瓦线', '阿巴尼斯制的线', '阿巴尼斯制的布', '细麻布', '开米士毛线', ].indexOf(name) != -1 ? true : false
 }
 
 const teachers = [
@@ -111,6 +116,9 @@ io.on('connection', (socket) => {
 	socket.emit('init', {
 		craft_player : cga.GetPlayerInfo().name,
 		craft_materials : craft_target ? craft_target.materials : [],
+		craft_player_pos : craftPlayerPos,
+		worker_pos : workerPos,
+		worker_turn_dir : workerTurnDir,
 	});
 	
 	socket.on('register', (data) => {
@@ -207,8 +215,8 @@ var waitStuffs = (name, materials, cb)=>{
 	var repeat = ()=>{
 		
 		//修复：防止面向方向不正确导致无法交易
-		if(cga.GetPlayerInfo().direction != 4){
-			cga.turnTo(tradeTurnTo[0], tradeTurnTo[1]);
+		if(cga.GetPlayerInfo().direction != craftPlayerTurnDir){
+			cga.turnDir(craftPlayerTurnDir)
 			setTimeout(repeat, 500);
 			return;
 		}
@@ -231,13 +239,16 @@ var waitStuffs = (name, materials, cb)=>{
 			find_player.emit('init', {
 				craft_player : cga.GetPlayerInfo().name,
 				craft_materials : materials,
+				craft_player_pos : craftPlayerPos,
+				worker_pos : workerPos,
+				worker_turn_dir : workerTurnDir,
 			});
 			
 			find_player.emit('trade');
 
 			var unit = cga.findPlayerUnit(find_player.cga_data.player_name);
-
-			if(unit == null || unit.xpos != 33 || unit.ypos != 88){
+			// UNAecho:采集者坐标更改为动态调整
+			if(unit == null || unit.xpos != workerPos[0] || unit.ypos != workerPos[1]){
 				setTimeout(repeat, 1000);
 				return;
 			}
@@ -727,6 +738,9 @@ var loop = ()=>{
 		io.sockets.emit('init', {
 			craft_player : cga.GetPlayerInfo().name,
 			craft_materials : craft_target ? craft_target.materials : [],
+			craft_player_pos : craftPlayerPos,
+			worker_pos : workerPos,
+			worker_turn_dir : workerTurnDir,
 		});
 
 		var lackStuffs = null;

@@ -204,10 +204,44 @@ module.exports = function(callback){
 				return new Error('无效参数');
 		}
 	}
-		
+	// UNAecho:添加一个计算静态坐标的API，用于部分自定义场景。
+	cga.getStaticOrientationPosition = (staticPos, orientation, offset)=>{
+		switch (orientation) {
+			case 0:
+				return [staticPos[0] + offset, staticPos[1]];
+			case 1:
+				return [staticPos[0] + offset, staticPos[1] + offset];
+			case 2:
+				return [staticPos[0], staticPos[1] + offset];
+			case 3:
+				return [staticPos[0] - offset, staticPos[1] + offset];
+			case 4:
+				return [staticPos[0] - offset, staticPos[1]];
+			case 5:
+				return [staticPos[0] - offset, staticPos[1] - offset];
+			case 6:
+				return [staticPos[0], staticPos[1] - offset];
+			case 7:
+				return [staticPos[0] + offset, staticPos[1] - offset];
+			default:
+				return new Error('无效参数');
+		}
+	}
+
 	cga.turnDir = cga.turnOrientation = (orientation, offset = 2) => {
 		var pos = cga.getOrientationPosition(orientation, offset);
 		cga.TurnTo(pos[0], pos[1]);
+	}
+
+	/**
+	 * UNAecho:获取双方交易朝向，如A是朝向1，B则朝向5；如果A朝向7，B则朝向3。主要目的是为了调用cga.turnDir()时方便。
+	 * @param {int} dir 
+	 */
+	cga.tradeDir = (dir) =>{
+		if(!(dir >= 0 && dir < 8)){
+			throw new Error('错误，dir朝向必须为0 - 7')
+		}
+		return dir < 4 ? dir + 4 : dir - 4
 	}
 
 	/*  异步登出回城

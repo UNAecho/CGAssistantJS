@@ -14,10 +14,6 @@ var food = require('./狩猎.js').mineArray;
 var wood = require('./伐木.js').mineArray;
 var mine = require('./挖矿.js').mineArray;
 
-// 采集员交易时的站立坐标以及朝向坐标，不要使用cga.turnDir()，默认朝向cga.turnDir(0)的方向，也就是右上方向。
-var tradePos = [33, 89]
-var tradeTurnTo = [tradePos[0] + 2, tradePos[1]]
-
 // 丢弃物品的类别
 var dropTypeArr = [
 	// 鹿皮
@@ -227,9 +223,9 @@ var thisobj = {
 				var go = ()=>{
 					cga.travel.falan.toStone('C', () => {
 						cga.walkList([
-							tradePos
+							thisobj.worker_pos
 						], () => {
-							cga.TurnTo(tradeTurnTo[0], tradeTurnTo[1]);
+							cga.TurnTo(thisobj.worker_turn_dir);
 							setTimeout(repeat, 1000);
 						});
 					});
@@ -492,6 +488,9 @@ var thisobj = {
 		socket.on('init', (data) => {
 			thisobj.craft_player = data.craft_player;
 			thisobj.craft_materials = data.craft_materials;
+			thisobj.craft_player_pos = data.craft_player_pos;
+			thisobj.worker_pos = data.worker_pos;
+			thisobj.worker_turn_dir = data.worker_turn_dir;
 			data.craft_materials.forEach((m) => {
 				if (m.name == thisobj.object.name){
 					thisobj.object.gatherCount = m.count * MATERIALS_MULTIPLE_TIMES;
