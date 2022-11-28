@@ -3,6 +3,10 @@ var configTable = global.configTable;
 
 var socket = null;
 
+// 采集员交易时的站立坐标以及朝向坐标，不要使用cga.turnDir()，默认朝向cga.turnDir(0)的方向，也就是右上方向。
+var tradePos = [33, 89]
+var tradeTurnTo = [tradePos[0] + 2, tradePos[1]]
+
 /**
  * UNAecho: 制作了一个1-10级所有买布自适应脚本，人物会接受所有买布需求，依次去各地购买。
  * index:物品对应商店所处的index
@@ -245,17 +249,17 @@ var thisobj = {
 				cga.walkList([
 					[0, 9, '法兰城'],
 					[141, 89, '里谢里雅堡'],
-					[33, 88]
+					tradePos
 					], ()=>{
-						cga.turnTo(35, 88);
+						cga.turnTo(tradeTurnTo[0], tradeTurnTo[1]);
 						setTimeout(repeat, 1000);
 					});
 			}else{
 				cga.travel.falan.toStone('C', ()=>{
 					cga.walkList([
-					[33, 88]
+						tradePos
 					], ()=>{
-						cga.turnTo(35, 88);
+						cga.turnTo(tradeTurnTo[0], tradeTurnTo[1]);
 						setTimeout(repeat, 1000);
 					});
 				});
