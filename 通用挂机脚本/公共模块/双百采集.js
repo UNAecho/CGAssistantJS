@@ -225,7 +225,7 @@ var thisobj = {
 						cga.walkList([
 							thisobj.worker_pos
 						], () => {
-							cga.TurnTo(thisobj.worker_turn_dir);
+							cga.turnDir(thisobj.worker_turn_dir);
 							setTimeout(repeat, 1000);
 						});
 					});

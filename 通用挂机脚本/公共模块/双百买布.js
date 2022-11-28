@@ -247,7 +247,7 @@ var thisobj = {
 					[141, 89, '里谢里雅堡'],
 					thisobj.worker_pos
 					], ()=>{
-						cga.turnTo(thisobj.worker_turn_dir);
+						cga.turnDir(thisobj.worker_turn_dir);
 						setTimeout(repeat, 1000);
 					});
 			}else{
@@ -255,7 +255,7 @@ var thisobj = {
 					cga.walkList([
 						thisobj.worker_pos
 					], ()=>{
-						cga.turnTo(thisobj.worker_turn_dir);
+						cga.turnDir(thisobj.worker_turn_dir);
 						setTimeout(repeat, 1000);
 					});
 				});
