@@ -702,15 +702,32 @@ var loop = ()=>{
 				}
 			}
 		}
-
+		/**
+		 * UNAecho:调整了忘记技能的逻辑，现在判断如果人物在提升技能时发现直接做到10级可以正好满足双百的话，就跳过忘记技能，避免不必要的浪费时间。
+		 * 武器/防具制作每级提升2耐力4灵巧
+		 * 采集每级提升5耐力1灵巧
+		 */
 		if(thisobj.craftSkill.lv >= thisobj.forgetSkillAt){
-			var teacher = teachers.find((t)=>{
-				return t.skillname == thisobj.craftSkill.name;
-			})
-			if(teacher != undefined){
-				craft_count = 0;
-				forgetAndLearn(teacher, loop);
-				return;
+			if(thisobj.forgetSkillAt < 5){
+				console.log('【UNAecho脚本提醒】:生产技能在1-4级时不会增加双百数值，请设置大于等于5的数字，您当前设置为【'+thisobj.forgetSkillAt+'】')
+			}
+			var CurrentEndurance = cga.GetPlayerInfo()['detail'].manu_endurance
+			var CurrentSkillful = cga.GetPlayerInfo()['detail'].manu_skillful
+			if(
+				(CurrentEndurance < (100 - (10 - thisobj.craftSkill.lv) * 2))
+				|| (CurrentSkillful < (100 - (10 - thisobj.craftSkill.lv) * 4))
+				){
+					var teacher = teachers.find((t)=>{
+						return t.skillname == thisobj.craftSkill.name;
+					})
+					if(teacher != undefined){
+						console.log('【UNAecho脚本提醒】人物当前耐力：【' + CurrentEndurance + '】')
+						console.log('【UNAecho脚本提醒】人物当前灵巧：【' + CurrentSkillful + '】')
+						console.log('【UNAecho脚本提醒】耐力或灵巧不满足双百条件，需要忘记技能重新刷级')
+						craft_count = 0;
+						forgetAndLearn(teacher, loop);
+						return;
+					}
 			}
 		}
 
