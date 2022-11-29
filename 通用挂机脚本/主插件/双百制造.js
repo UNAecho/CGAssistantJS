@@ -660,29 +660,7 @@ var loop = ()=>{
 			if(titleinfo['titleLv'] >= minimumLv){
 				console.log('【UNA脚本提示】人物技能到达当前阶段上限，且称号满足要求，开始执行晋级逻辑。')
 				var config = cga.loadPlayerConfig()
-				if(thisobj.craftSkill.lv == 4){
-					if (config && config['mission']['咖哩任务']){
-						setTimeout(()=>{
-							jump('职业晋级')
-						},2000)
-					}else{
-						setTimeout(()=>{
-							updateConfig.update_config('mainPlugin','咖哩任务')
-						},2000)
-					}
-					return
-				}else if(thisobj.craftSkill.lv == 6){
-					if (config && config['mission']['起司的任务']){
-						setTimeout(()=>{
-							jump('职业晋级')
-						},2000)
-					}else{
-						setTimeout(()=>{
-							updateConfig.update_config('mainPlugin','起司的任务')
-						},2000)
-					}
-					return
-				}else if(thisobj.craftSkill.lv == 8){
+				if(thisobj.craftSkill.lv >= 8){
 					if (config && config['mission']['魔法大学']){
 						setTimeout(()=>{
 							jump('职业晋级')
@@ -695,6 +673,28 @@ var loop = ()=>{
 					}
 					// 魔法大学部分完成后需要打开，否则会卡住
 					// return
+				}else if(thisobj.craftSkill.lv >= 6){
+					if (config && config['mission']['起司的任务']){
+						setTimeout(()=>{
+							jump('职业晋级')
+						},2000)
+					}else{
+						setTimeout(()=>{
+							updateConfig.update_config('mainPlugin','起司的任务')
+						},2000)
+					}
+					return
+				}else if(thisobj.craftSkill.lv >= 4){
+					if (config && config['mission']['咖哩任务']){
+						setTimeout(()=>{
+							jump('职业晋级')
+						},2000)
+					}else{
+						setTimeout(()=>{
+							updateConfig.update_config('mainPlugin','咖哩任务')
+						},2000)
+					}
+					return
 				}
 			}
 		}
