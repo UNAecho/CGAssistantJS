@@ -672,20 +672,16 @@ var loop = ()=>{
 					}
 					return
 				}else if(thisobj.craftSkill.lv == 6){
-					var manu_endurance = playerCurrentInfo['detail'].manu_endurance
-					var manu_skillful = playerCurrentInfo['detail'].manu_skillful
-					if(manu_endurance == 100 && manu_skillful == 100){
-						if (config && config['mission']['起司的任务']){
-							setTimeout(()=>{
-								jump('职业晋级')
-							},2000)
-						}else{
-							setTimeout(()=>{
-								updateConfig.update_config('mainPlugin','起司的任务')
-							},2000)
-						}
-						return
+					if (config && config['mission']['起司的任务']){
+						setTimeout(()=>{
+							jump('职业晋级')
+						},2000)
+					}else{
+						setTimeout(()=>{
+							updateConfig.update_config('mainPlugin','起司的任务')
+						},2000)
 					}
+					return
 				}else if(thisobj.craftSkill.lv == 8){
 					if (config && config['mission']['魔法大学']){
 						setTimeout(()=>{
