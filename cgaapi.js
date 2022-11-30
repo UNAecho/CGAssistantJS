@@ -4270,6 +4270,17 @@ module.exports = function(callback){
 					cga.travel.newisland.toStoneInternal(stone, cb);
 				});
 			});
+		}else if(cga.travel.falan.isSettled()){
+			console.log('检测到你的记录点在法兰，登出测试是否已经记录在了艾尔莎岛，如果是，则更新');
+			cga.logBack(()=>{
+				cga.AsyncWaitMovement({map:desiredMap, delay:1000, timeout:5000}, (err, reason)=>{
+					if(err){
+						cb(err, reason);
+						return;
+					}
+					cga.travel.newisland.toStoneInternal(stone, cb);
+				});
+			});
 		}
 	}
 	
