@@ -88,7 +88,6 @@ var teamModeArray = [
 						return
 					}else if(thisobj.timeout > 0){
 						console.log('固定组队等待超时，执行回调函数并返回false')
-						cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
 						cb(false)
 						return;
 					}
@@ -117,6 +116,7 @@ var teamModeArray = [
 						return
 					}else if(thisobj.timeout > 0){
 						console.log('固定组队等待超时，执行回调函数并返回false')
+						cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
 						cb(false)
 						return;
 					}
