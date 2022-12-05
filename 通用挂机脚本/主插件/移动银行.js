@@ -121,9 +121,23 @@ var waitcipher = ()=>{
 			stuffs.gold = newbornlimit
 			cga.waitTrade(stuffs, null, (result)=>{
 				if(result && result.success == true){
-					console.log('已从【'+player.name+'】处收取存款')
-				}else if(result && result.success == false){
-					console.log('交易中止，已被取消或包满')
+					console.log('已交给【'+player.name+'】【' + stuffs.gold + '】魔币，作为启动金。')
+				}else if(result && result.success == false){// TODO 取钱，对方满了如何作出处理
+					if (result.reason == '交易被拒绝'){
+						console.log('交易被人为终止')
+						if (cga.GetPlayerInfo().gold < stuffs.gold){
+							console.log('交易被人为终止，可能是没钱了')
+							setTimeout(() => {
+								switchlogic(-1,loop)
+							}, 1000);
+						}
+					}else if(result.reason == '物品栏已满'){
+						console.log('物品栏满了，可能是魔币、物品以及宠物，需要存银行或换号了。')
+						setTimeout(() => {
+							switchlogic(-1,loop)
+						}, 1000);
+					}
+				
 				}
 				// 不管成功与否，都禁止再次交易。由对方再说出暗号才可继续交易
 				cga.EnableFlags(cga.ENABLE_FLAG_TRADE, false);
