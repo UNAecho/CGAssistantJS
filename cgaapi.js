@@ -3534,6 +3534,8 @@ module.exports = function(callback){
 				'地下实验室' : 4402,
 				'青龙的洞窟 1楼' : 4403,
 				'魔法大学内部' : 4410,
+				// 魔法大学内部即为补给处，这里自定义为医院，用于cga.tohospital()
+				'医院' : 4410,
 				// 幻之钢、幻之银压条。木材、矿石换钱
 				'技术室' : 4411,
 				// 6级、8级布
@@ -3558,6 +3560,8 @@ module.exports = function(callback){
 				'夜晚音乐室' : 4431,
 				// 18,9处（玩家站立18,10处）购买魔法手套。由于另外4个仓库内部的房子里面没有有用的NPC，故省略
 				'仓库内部' : 4455,
+				'地底湖 地下1楼' : 4456,
+				'地底湖 地下2楼' : 4457,
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -3596,6 +3600,34 @@ module.exports = function(callback){
 				4431:[[75, 93, 4410],[76, 30, 4431],],
 				// 仓库内部
 				4455:[[117, 164, 4455],],
+				// 地底湖 地下1楼
+				4456:[[(cb)=>{
+					cga.walkList(
+						[[36, 31]], ()=>{
+							cga.turnTo(36, 29);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, 0);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(4, 0);
+									cga.AsyncWaitMovement({map:'地底湖 地下1楼'}, cb);
+								});
+							})
+						});
+				}, null, 4456],],
+				// 地底湖 地下2楼
+				4457:[[(cb)=>{
+					cga.walkList(
+						[[36, 31]], ()=>{
+							cga.turnTo(36, 29);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, 0);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(4, 0);
+									cga.AsyncWaitMovement({map:'地底湖 地下1楼'}, cb);
+								});
+							})
+						});
+				}, null, 4456],[6, 23, 4457]],
 			},
 			walkReverse:{
 				// 实验室
@@ -3636,6 +3668,30 @@ module.exports = function(callback){
 				4431:[[15, 25, 4410],],
 				// 仓库内部
 				4455:[[6, 14, 4400],],
+				// 地底湖 地下1楼
+				4456:[[10, 32, 4400],],
+				// 地底湖 地下2楼
+				4457:[[(cb)=>{
+					var xy = cga.GetMapXY();
+					if(xy.x >= 34 && xy.x <= 41 && xy.y >= 47 && xy.y <= 51){
+						cga.walkList(
+							[[38, 51]], ()=>{
+								cga.turnDir(2);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(4, 0);
+									cga.AsyncWaitMovement({x : 38, y : 54}, ()=>{
+										cga.walkList([
+										[14, 5,4456],
+										], cb);
+									});
+								})
+							});
+					}else{
+						cga.walkList([
+							[14, 5,4456],
+							], cb);
+					}
+				}, null, 4456],],
 			},
 		},
 		'哥拉尔镇':{
@@ -3811,7 +3867,7 @@ module.exports = function(callback){
 				})
 				return
 			}else{
-				// 遍历寻找找本次路径有没有自定义func
+				// 遍历寻找找本次路径有没有自定义func，如果有，则截取至自定义func之前的walklist一口气走完，并调用递归。递归后会进入上面的if逻辑，执行自定义func。
 				for (let i = 0; i < tmplist.length; i++) {
 					if(tmplist && tmplist[i] && typeof tmplist[i][0] == 'function'){
 						tmplist = tmplist.slice(0,i)
@@ -3842,8 +3898,25 @@ module.exports = function(callback){
 		var mapindex = cga.GetMapIndex().index3
 		// 获取当前主地图名称
 		var villageName = cga.travel.switchMainMap()
-
-		if (cga.GetMapName().indexOf('医院') == -1){
+		// 所有医院的cga.GetMapIndex().index3集合
+		const hospitalList = [
+			1111,
+			1112,
+			27012,
+			2310,
+			2010,
+			2410,
+			2110,
+			3210,
+			3010,
+			4010,
+			4210,
+			4310,
+			4410,
+			43110,
+			59530,
+		] 
+		if (hospitalList.indexOf(mapindex) == -1){
 			cga.travel.autopilot('医院',()=>{
 				cga.travel.toHospital(isPro,cb)
 			})
@@ -3881,6 +3954,9 @@ module.exports = function(callback){
 		}else if(villageName == '阿巴尼斯村'){
 			tmplist.push(isPro == true ? [14, 10] : [10, 6])
 			tmpTurnDir = isPro == true ? 6 : 0
+		}else if(villageName == '魔法大学'){
+			tmplist.push(isPro == true ? [33, 48] : [35, 48])
+			tmpTurnDir = 6
 		}else if(villageName == '法兰城'){
 
 		}else if(villageName == '艾尔莎岛'){

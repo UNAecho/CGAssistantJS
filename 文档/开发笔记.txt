@@ -1,0 +1,1 @@
+1、与游戏相关的参数获取逻辑，都在CGAssistant/cgahook/gameservice.cpp中。注意这是另一个项目，而不是本项目CGAssistantJS。CGAssistant是用于编译的cpp项目，而本项目CGAssistantJS是完整的打包客户端。
