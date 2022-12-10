@@ -659,7 +659,14 @@ var loop = ()=>{
 			// 必须大于等于晋级称号
 			if(titleinfo['titleLv'] >= minimumLv){
 				console.log('【UNA脚本提示】人物技能到达当前阶段上限，且称号满足要求，开始执行晋级逻辑。')
+				
 				var config = cga.loadPlayerConfig()
+				
+				// 如果没有任务记录，则初始化
+				if(config && !config['mission']){
+					config['mission'] = {}
+				}
+
 				if(thisobj.craftSkill.lv >= 8){
 					if (config && config['mission']['魔法大学']){
 						setTimeout(()=>{

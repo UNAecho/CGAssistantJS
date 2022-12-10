@@ -2,11 +2,16 @@ var Async = require('async');
 var cga = global.cga;
 var configTable = global.configTable;
 var rootdir = cga.getrootdir()
-
+// 治疗受伤
 var healObject = require(rootdir + '/通用挂机脚本/公共模块/治疗自己');
 var healPetObject = require(rootdir + '/通用挂机脚本/公共模块/治疗宠物');
-var supplyObject = require(rootdir + '/通用挂机脚本/公共模块/通用登出回补');
+// 为了保留config的落盘信息
+var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
+var teamMode = require(rootdir + '/通用挂机脚本/公共模块/组队模式');
+// 回补模块
+var supplyMode = require(rootdir + '/通用挂机脚本/公共模块/通用登出回补');
 var supplySelena = require(rootdir + '/通用挂机脚本/公共模块/莎莲娜回补');
+// 跳转模块
 var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 
 // 提取本地职业数据
@@ -119,9 +124,8 @@ var dialogHandler = (err, dlg)=>{
 	}
 	else if(dlg && dlg.options == 1)
 	{
-		console.log(dlg)
 		// 获取进阶资格则结束本脚本
-		if(dlg.message.indexOf('升阶') != -1){
+		if(dlg.message.indexOf('已经得到了') != -1){
 			var minssionObj = {}
 			minssionObj[configTable.mainPlugin] = true
 			cga.refreshMissonStatus(minssionObj,()=>{
@@ -344,8 +348,8 @@ var getInRoom = (name, cb)=>{
 }
 // 仅服务端使用
 var waitAssess = (cb)=>{
-
-	console.log('等待鉴定师');
+	// 会刷屏，注掉
+	// console.log('等待鉴定师');
 
 	cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, true);
 
@@ -738,14 +742,17 @@ var loop = ()=>{
 								if(err && err.message.indexOf('没有空位') != -1){
 									thisobj.isFull = true
 								}
-								loop();
+								setTimeout(loop, 1000);
 							});
 						});
 					});
 				});
 			}else{
-				console.log('银行已满，多余的深蓝药剂卖店。')
-				var sell = cga.findItemArray((item) => { 
+				console.log('银行已满，多余的深蓝药剂：满足3个一组的卖店，不满则丢弃')
+				// 由于身上不能有鉴定好的深蓝药剂，否则无法在NPC处交换多个药？，所以在银行已满的情况下只能卖店或丢弃。
+				check_drop();
+
+				var sell = cga.findItemArray((item) => {
 					// 银行已满，直接卖店
 					if ([15630, 18526].indexOf(item.itemid) != -1 && item.count == 3) {
 						item.count /= 3
@@ -765,7 +772,7 @@ var loop = ()=>{
 					});
 					return
 				}else{
-					loop()
+					setTimeout(loop, 1000);
 					return
 				}
 			}
@@ -860,8 +867,8 @@ var loop = ()=>{
 		{	// 如果血量充足，则使用走路至就近村镇、大学等回补，节约时间以及传送费用
 			if(playerInfo.hp >= 1000 && playerInfo.hp > playerInfo.maxhp * 0.8 && supplySelena.isAvailable())
 				supplySelena.func(loop);
-			else if(supplyObject.func)
-				supplyObject.func(loop);
+			else if(supplyMode.func)
+				supplyMode.func(loop);
 			return;
 		}
 
@@ -969,8 +976,17 @@ var loop = ()=>{
 	}else{// 蹭车3转的小号逻辑
 		callSubPluginsAsync('prepare', ()=>{
 			/**
-			 * 走到10,10处和11,10的NPC对话
+			 * 走到10,10处和11,10的NPC对话，对话一次即可，无需第二次对话
+			 * 第1次对话：
 			 * {
+				type: 0,
+				options: 1,
+				dialog_id: 326,
+				npc_id: 7858,
+				message: '\n\n恭喜你通过测验。你已经得到了入仕王宫的资格。但是未来还是要多努力一点喔！\n学习是永无止境的，共勉之。'
+				}
+			 * 第2次对话：
+				{
 				type: 0,
 				options: 1,
 				dialog_id: 326,
@@ -1004,6 +1020,18 @@ var loop = ()=>{
 					setTimeout(leaveteam, 1000, cb);
 				}else{
 					setTimeout(leaveteam, 1000, cb);	
+				}
+				return;
+			}
+
+			var playerInfo = cga.GetPlayerInfo();
+			if(playerInfo.hp < playerInfo.maxhp) {
+				if(cga.travel.switchMainMap() == '魔法大学'){
+					cga.travel.toHospital(false, loop)
+				}else{
+					cga.travel.falan.toCastleHospital(()=>{
+						setTimeout(loop, 3000);
+					});
 				}
 				return;
 			}
@@ -1159,7 +1187,12 @@ var thisobj = {
 	},
 	// 客户端用
 	extra_dropping : (item)=>{
-		return (item.name == '腐烂的树枝');
+		if(item.name == '腐烂的树枝'){
+			return true
+		}else if(item.itemid == 18526 && item.count < 3){
+			return true
+		}
+		return false;
 	},
 	// 客户端用
 	workwork : (err, result)=>{
@@ -1233,6 +1266,35 @@ var thisobj = {
 				console.error('读取配置：服务端口失败！');
 				return false;
 			}
+		}else{
+			// 读取失败也不影响本脚本逻辑，但要调用，因为后续要落盘，不能丢了key。
+			// 保留战斗config落盘信息
+			supplyMode.loadconfig(obj)
+			
+			teamMode.loadconfig(obj)
+
+			configMode.loadconfig(obj)
+			
+			configTable.sellStore = obj.sellStore;
+			thisobj.sellStore = obj.sellStore
+			// 保留生产config落盘信息
+			if(obj.craftType)
+				configTable.craftType = obj.craftType;
+			if(obj.forgetSkillAt)
+				configTable.forgetSkillAt = obj.forgetSkillAt;
+			if(obj.listenPort)
+				configTable.listenPort = obj.listenPort;
+			// 保留采集config落盘信息
+			if(obj.mineObject)
+				configTable.mineObject = obj.mineObject;
+			if(obj.gatherObject)
+				configTable.gatherObject = obj.gatherObject;
+			if(obj.target)
+				configTable.target = obj.target;
+			if(obj.mineType)
+				configTable.mineType = obj.mineType;
+			if(obj.logoutTimes)
+				configTable.logoutTimes = obj.logoutTimes;
 		}
 		
 		if(!healObject.loadconfig(obj))
@@ -1370,6 +1432,7 @@ var thisobj = {
 					
 		}
 		callSubPlugins('init');
+		configMode.manualLoad('生产赶路')
 		loop();
 	},
 };

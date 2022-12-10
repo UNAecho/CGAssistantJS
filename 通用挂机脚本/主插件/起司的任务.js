@@ -7,7 +7,7 @@ var configTable = global.configTable;
 var rootdir = cga.getrootdir()
 var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
 var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
-var supplyMode = require(rootdir + '/通用挂机脚本/公共模块/营地回补');
+var supplyMode = require(rootdir + '/通用挂机脚本/公共模块/通用登出回补');
 var teamMode = require(rootdir + '/通用挂机脚本/公共模块/组队模式');
 var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 
