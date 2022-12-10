@@ -670,8 +670,7 @@ var loop = ()=>{
 							updateConfig.update_config('mainPlugin','魔法大学')
 						},2000)
 					}
-					// 魔法大学部分完成后需要打开，否则会卡住
-					// return
+					return
 				}else if(thisobj.craftSkill.lv >= 6){
 					if (config && config['mission']['起司的任务']){
 						setTimeout(()=>{
