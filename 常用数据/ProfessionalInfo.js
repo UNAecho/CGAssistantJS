@@ -1040,7 +1040,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '铸剑工',
 		skill:'铸剑',
-		titles: ['铸剑学徒', '铸剑工', '资深铸剑师傅', '御用铸剑师傅', '铸剑名师'],
+		titles: ['铸剑学徒', '铸剑工', '资深铸剑师傅', '御用铸剑师', '铸剑名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorRoom: '地下工房',
 		tutorwalk:[

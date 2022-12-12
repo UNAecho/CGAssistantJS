@@ -729,6 +729,10 @@ var loop = ()=>{
 			return (inv.assessed == true && inv.itemid == 18526);
 		});
 		if(found_assessed != undefined){
+			// 为了保持银行满负荷，丢弃不成一组的深蓝药剂。TODO这个方法是异步方法，不是很稳定，容易一边丢东西一边高频执行loop。
+			check_drop();
+
+			// 银行没满
 			if(!thisobj.isFull){
 				cga.travel.falan.toBank(()=>{
 					cga.walkList([
@@ -736,8 +740,8 @@ var loop = ()=>{
 					], ()=>{
 						cga.turnDir(0);
 						cga.AsyncWaitNPCDialog(()=>{
-							cga.saveToBankAll((item)=>{
-								return item.itemid == 18526 && item.assessed == true;
+							cga.saveToBankAll((item)=>{// 3个一组放入银行，多余丢弃
+								return item.itemid == 18526 && item.count == 3 && item.assessed == true;
 							}, 3, (err)=>{
 								if(err && err.message.indexOf('没有空位') != -1){
 									thisobj.isFull = true
@@ -747,9 +751,10 @@ var loop = ()=>{
 						});
 					});
 				});
-			}else{
+			}else{// 银行满了
 				console.log('银行已满，多余的深蓝药剂：满足3个一组的卖店，不满则丢弃')
 				// 由于身上不能有鉴定好的深蓝药剂，否则无法在NPC处交换多个药？，所以在银行已满的情况下只能卖店或丢弃。
+				// TODO这个方法是异步方法，不是很稳定，容易一边丢东西一边高频执行loop。
 				check_drop();
 
 				var sell = cga.findItemArray((item) => {
@@ -780,7 +785,7 @@ var loop = ()=>{
 		}
 
 		var playerInfo = cga.GetPlayerInfo();
-		if(playerInfo.mp < 80 || playerInfo.hp < playerInfo.maxhp) {
+		if(playerInfo.hp < playerInfo.maxhp || playerInfo.mp < playerInfo.maxmp) {
 			if(cga.travel.switchMainMap() == '魔法大学'){
 				cga.travel.toHospital(false, loop)
 			}else{

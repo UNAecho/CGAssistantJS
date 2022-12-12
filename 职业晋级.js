@@ -66,7 +66,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	{//0
 		intro: '1.任务准备',
 		workFunc: function(cb2){
-			console.log('当前职业【' + job + '】')
+			console.log('当前职业通用名称【' + job + '】')
 			var jobLv = getprofessionalInfos.getJobLevel(playerinfo.job)
 			var repuLv = titleinfo['titleLv']
 			var minimumLv = reputationInfos.promoteReputation[jobLv]
