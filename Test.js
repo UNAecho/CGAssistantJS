@@ -7,8 +7,10 @@ var cga = require('./cgaapi')(function () {
     var switchAccount = require('./通用挂机脚本/公共模块/切换同类账号');
     var petGrade = require('./常用数据/petGrade.js');
     var petInfos = require('./常用数据/petInfo.js');
-    var configMode = require('./通用挂机脚本/公共模块/自动读取战斗配置');
+    var configMode = require('./通用挂机脚本/公共模块/读取战斗配置');
+    var testMode = require('./通用挂机脚本/公共模块/莎莲娜回补');
     var log = require('./unalog');
+    const reputationInfos = require('./常用数据/reputation.js');
     
     // 提取本地职业数据
     const getprofessionalInfos = require('./常用数据/ProfessionalInfo.js');
@@ -38,10 +40,12 @@ var cga = require('./cgaapi')(function () {
     var units = cga.GetMapUnits()
     var dropitem = cga.getInventoryItems().find(uselessFilter)
     var map = cga.getMapObjects()
-    var banks = cga.GetBankGold();
+    var banks = cga.GetBankItemsInfo();
+    var bankGold = cga.GetBankGold();
     var teamplayers = cga.getTeamPlayers();
     var skills = cga.GetSkillsInfo();
     var petindex = cga.findbattlepet()
+    var inventory = cga.getInventoryItems();
 
 	var today = new Date().toLocaleString()
     // console.log(typeof today)
@@ -54,7 +58,7 @@ var cga = require('./cgaapi')(function () {
     // // 获取当前主地图名称
     // var villageName = cga.travel.switchMainMap()
     // if(villageName == target){
-    //     cga.travel.falan.autopilot('医院',success)
+    //     cga.travel.autopilot('医院',success)
     //     // cga.travel.toHospital(false,success)
     // }else{
     //     cga.travel.falan.toTeleRoom(target, (r)=>{});
@@ -120,37 +124,37 @@ var cga = require('./cgaapi')(function () {
         console.log(dlg)
         if(dlg && (dlg.options & 4) == 4)
         {
-            cga.ClickNPCDialog(4, 0);
+            // cga.ClickNPCDialog(4, 0);
             cga.AsyncWaitNPCDialog(dialogHandler);
             return;
         }
         if(dlg && (dlg.options & 32) == 32)
         {
-            cga.ClickNPCDialog(32, 0);
+            // cga.ClickNPCDialog(32, 0);
             cga.AsyncWaitNPCDialog(dialogHandler);
             return;
         }
         else if(dlg && dlg.options == 1)
         {	
-            cga.ClickNPCDialog(1, 0);
+            // cga.ClickNPCDialog(1, 0);
             cga.AsyncWaitNPCDialog(dialogHandler);
             return;
         }
         else if(dlg && dlg.options == 3)
         {
-            cga.ClickNPCDialog(1, 0);
+            // cga.ClickNPCDialog(1, 0);
             cga.AsyncWaitNPCDialog(dialogHandler);
             return;
         }
         else if(dlg && dlg.options == 12)
         {
-            cga.ClickNPCDialog(4, -1);
+            // cga.ClickNPCDialog(4, -1);
             cga.AsyncWaitNPCDialog(dialogHandler);
             return;
         }
         return
     }
-    // cga.AsyncWaitNPCDialog(dialogHandler);
+    cga.AsyncWaitNPCDialog(dialogHandler);
 
     // var talkNpcSayYesToChangeMap = (cb,npcPosArr,type)=>{
     //     var wait = (cb)=>{
@@ -281,6 +285,83 @@ var cga = require('./cgaapi')(function () {
     // cga.travel.falan.toCamp(()=>{
     //     console.log('test123')
     // })
-    // cga.travel.falan.autopilot('竞技场',()=>{console.log('成功')})
-    console.log(undefined !== '补血魔法')
+
+    // cga.travel.autopilot('希尔薇亚的家',()=>{
+    //     cga.travel.autopilot('主地图',success)
+    // })
+    // var retry = ()=>{
+
+	// 	var unit = cga.GetMapUnits().find((u)=>{
+	// 		if(u.valid == 2 && u.type == 1 && u.model_id != 0 && (u.flags & 4096) != 0 && u.unit_name == '陌生的神官'){
+	// 			return true;
+    //         }
+	// 		return false;
+	// 	});
+
+    //     if(unit){
+    //         cga.waitForLocation({pos:[unit.xpos, unit.ypos]}, ()=>{
+                // configMode.func('节能模式')
+    //         });
+    //         return
+    //     }
+    //     setTimeout(retry, 1000);
+    // }
+    
+    // retry()
+
+    // var dict = {}
+    // var rootdir = cga.getrootdir()
+    // filenames = fs.readdirSync(rootdir + '\\leo')
+    // filenames.forEach(file => {
+    //     var filepath = rootdir + '\\leo\\'  + file
+    //     if (path.extname(filepath) == '.json'){
+    //         var itemdroplist = JSON.parse(fs.readFileSync(filepath)).itemdroplist
+    //         for (var t in itemdroplist){
+    //             if (dict.hasOwnProperty(itemdroplist[t])){
+    //                 dict[itemdroplist[t]]++
+    //             }else{
+    //                 dict[itemdroplist[t]] = 1
+    //             }
+    //         }
+    //     }
+    //   }); 
+    //   res = []
+    //   for (var i in dict){
+    //     res.push(i)
+    //   }
+    //   writefile = rootdir + '\\测试.json'
+    //   console.log(writefile)
+    //   fs.writeFile(writefile, JSON.stringify(res), (err)=>{
+    //     if(err){
+    //         console.log('个人配置文件保存失败：');
+    //         return;
+    //     }			
+    //     console.log('成功')
+    // });
+    // console.log(cga.buildMapCollisionMatrix().matrix)
+    // cga.refreshMissonStatus(null)
+    // cga.travel.falan.toTeleRoom('圣拉鲁卡村', (r)=>{
+        
+    // });
+
+    // cga.travel.autopilot(1401,success)
+    // cga.travel.falan.toTeleRoom('魔法大学', ()=>{
+    //     cga.travel.autopilot(4457,success)
+    // });
+    // cga.travel.autopilot('魔法大学内部',success)
+
+
+    // var mainMapName = cga.travel.switchMainMap()
+    // var target = '杰诺瓦镇'
+    // if(mainMapName == target)
+    // {
+    //     cga.travel.autopilot('主地图',success)
+    // }
+    // else
+    // {
+    //     cga.travel.falan.toTeleRoom(target, ()=>{
+    //         cga.travel.autopilot('主地图',success)
+    //     });
+    // }
+    testMode.func(success)
 })
