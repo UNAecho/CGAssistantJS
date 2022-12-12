@@ -16,11 +16,11 @@
     "supplyMode": 1,
     "teamMode": 0,
     "teammates": [
-        "UNAの咒术师",
         "UNAの格斗03",
-        "UNAの格斗3",
         "UNAの格斗04",
-        "UNAの传教士2"
+        "UNAの矿工08",
+        "UNAの矿工09",
+        "UNAの矿工10"
     ],
     "timeout" : 180000,
     "battleArea": 0,

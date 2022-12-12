@@ -12,15 +12,15 @@
         "自动存取魔币",
         "队员卖石"
     ],
-    "finalJob":"格斗士",
+    "finalJob":"矿工",
     "supplyMode": 1,
     "teamMode": 0,
     "teammates": [
-        "UNAの咒术师",
         "UNAの格斗03",
-        "UNAの格斗1",
         "UNAの格斗04",
-        "UNAの伐木01"
+        "UNAの矿工01",
+        "UNAの猎人05",
+        "UNAの矿工02"
     ],
     "timeout" : 180000,
     "battleArea": 0,
@@ -28,12 +28,12 @@
     "layerLevel": 1,
     "minHp": "25%",
     "minMp": "25%",
-    "buyCrystal": "火风的水晶（5：5）",
+    "buyCrystal": "水火的水晶（5：5）",
     "minLoyality": 40,
-    "maxEndurance": 186,
-    "maxStrength": 300,
+    "maxEndurance": 233,
+    "maxStrength": 0,
     "maxDefense": 0,
-    "maxAgility": 130,
-    "maxMagical": 50,
-    "petpoint": 4
+    "maxAgility": 100,
+    "maxMagical": 333,
+    "petpoint": 1
 }

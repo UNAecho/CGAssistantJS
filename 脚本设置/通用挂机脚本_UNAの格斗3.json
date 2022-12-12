@@ -17,10 +17,10 @@
     "teamMode": 0,
     "teammates": [
         "UNAの咒术师",
-        "UNAの格斗03",
+        "UNAの暗黑骑士",
+        "UNAの格斗2",
         "UNAの格斗3",
-        "UNAの格斗04",
-        "UNAの传教士2"
+        "UNAの圣骑士"
     ],
     "timeout" : 180000,
     "battleArea": 0,
@@ -30,10 +30,10 @@
     "minMp": "25%",
     "buyCrystal": "水火的水晶（5：5）",
     "minLoyality": 40,
-    "maxEndurance": 226,
+    "maxEndurance": 186,
     "maxStrength": 300,
     "maxDefense": 0,
-    "maxAgility": 90,
+    "maxAgility": 130,
     "maxMagical": 50,
     "petpoint": 4
 }

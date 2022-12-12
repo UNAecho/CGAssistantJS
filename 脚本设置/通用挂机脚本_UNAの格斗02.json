@@ -16,11 +16,11 @@
     "supplyMode": 1,
     "teamMode": 0,
     "teammates": [
-        "UNAの巫师",
         "UNAの格斗01",
         "UNAの格斗02",
-        "UNAの猎人02",
-        "UNAの传教士"
+        "UNAの武器修理工",
+        "UNAの防具修理工",
+        "UNAの医生"
     ],
     "timeout" : 180000,
     "battleArea": 0,
