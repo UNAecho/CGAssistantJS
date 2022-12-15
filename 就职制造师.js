@@ -237,7 +237,7 @@ var cga = require('./cgaapi')(function(){
 				], ()=>{
 					cga.turnTo(8, 11);
 					forgetskill('伐木体验')
-					cb2(true)
+					setTimeout(cb2, 3500, true);
 				});
 			});
 		}
@@ -283,39 +283,56 @@ var cga = require('./cgaapi')(function(){
 				});
 				return;
 			}
-			cga.travel.falan.toStone('E1', ()=>{
-				cga.walkList([
-					[281, 88, '芙蕾雅'],
-					[596, 247]
-				], ()=>{
-					var skill = cga.findPlayerSkill('狩猎体验');
-					cga.StartWork(skill.index, 0);
-					var waitEnd = function(cb2){
-						cga.AsyncWaitWorkingResult(()=>{
-							var playerInfo = cga.GetPlayerInfo();
-							if(playerInfo.mp == 0)
-							{
-								cb2(true);
-								return;
-							}								
-							if(cga.getItemCount('鹿皮') >= 20)
-							{
-								cb2(true);
-								return;
-							}
-							var item = cga.getInventoryItems().find((it)=>{
-								return ((it.name == '传说中的鹿皮') && it.count == 40)
-							});
-							if(item){
-								cga.DropItem(item.pos);
-							}
-							cga.StartWork(skill.index, 0);
-							waitEnd(cb2);
-						}, 10000);
-					}
-					waitEnd(cb2);
+
+			var workwork = ()=>{
+				var skill = cga.findPlayerSkill('狩猎体验');
+				cga.StartWork(skill.index, 0);
+				var waitEnd = function(cb2){
+					cga.AsyncWaitWorkingResult(()=>{
+						var playerInfo = cga.GetPlayerInfo();
+						if(playerInfo.mp == 0)
+						{
+							cb2(true);
+							return;
+						}								
+						if(cga.getItemCount('鹿皮') >= 20)
+						{
+							cb2(true);
+							return;
+						}
+						var item = cga.getInventoryItems().find((it)=>{
+							return ((it.name == '传说中的鹿皮') && it.count == 40)
+						});
+						if(item){
+							cga.DropItem(item.pos);
+						}
+						cga.StartWork(skill.index, 0);
+						waitEnd(cb2);
+					}, 10000);
+				}
+				waitEnd(cb2);
+			
+			}
+
+			var config = cga.loadPlayerConfig();
+
+			if(config && config['伊尔村']){
+				cga.travel.falan.toTeleRoom('伊尔村', ()=>{
+					cga.walkList([
+						[12, 17, '村长的家'],
+						[6, 13, '伊尔村'],
+						[45, 31, '芙蕾雅'],
+						[596, 247]
+					], workwork);
 				});
-			});
+			}else{
+				cga.travel.falan.toStone('E1', ()=>{
+					cga.walkList([
+						[281, 88, '芙蕾雅'],
+						[596, 247]
+					], workwork);
+				});
+			}
 		}
 	},
 	{
@@ -329,7 +346,7 @@ var cga = require('./cgaapi')(function(){
 				], ()=>{
 					cga.turnTo(8, 11);
 					forgetskill('狩猎体验')
-					cb2(true)
+					setTimeout(cb2, 3500, true);
 				});
 			});
 		}
@@ -431,7 +448,7 @@ var cga = require('./cgaapi')(function(){
 				], ()=>{
 					cga.turnTo(8, 11);
 					forgetskill('锻造体验')
-					cb2(true)
+					setTimeout(cb2, 3500, true);
 				});
 			});
 		}
@@ -460,46 +477,58 @@ var cga = require('./cgaapi')(function(){
 			if(professionalInfo.tutorlocation == undefined){
 				throw new error('professioninfo未登录职业导师坐标信息,请手动就职!')
 			}
-			cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, ()=>{
-				cga.walkList(professionalInfo.tutorwalk, ()=>{
-					cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
-					cga.AsyncWaitNPCDialog(()=>{
-						// 是转职
-						if(transferflag){
-							cga.ClickNPCDialog(0, 1);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(32, 0);
-								cga.AsyncWaitNPCDialog((err,dlg)=>{
-									console.log(dlg)
-									if(dlg && dlg.options == 0){
-										cga.ClickNPCDialog(0, 0);
-									}
-								});	
-							});	
-						}else{
-							//是就职
-							cga.ClickNPCDialog(0, 0);
-						}
+			var induction = ()=>{
+				cga.travel.autopilot('地下工房',()=>{
+					var target = cga.getRandomSpace(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+					cga.walkList([
+					target
+					], ()=>{
+						cga.turnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
 						cga.AsyncWaitNPCDialog(()=>{
-							cb2(true);
-						});
-					});			
-				});
-			});
+							// 是转职
+							if(transferflag){
+								cga.ClickNPCDialog(0, 1);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(32, 0);
+									cga.AsyncWaitNPCDialog((err,dlg)=>{
+										console.log(dlg)
+										if(dlg && dlg.options == 0){
+											cga.ClickNPCDialog(0, 0);
+											setTimeout(cb2, 5000, true);
+										}
+									});	
+								});	
+							}else{
+								//是就职
+								cga.ClickNPCDialog(0, 0);
+								setTimeout(cb2, 5000, true);
+							}
+						});			
+					});
+				})
+			}
+
+			var villageName = cga.travel.switchMainMap()
+			if(villageName == professionalInfo.tutorlocation){
+				induction()
+			}else{
+				cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, induction);
+			}
 		}
 	},
 	{
 		intro: '14.学习制造技能。 ',
 		workFunc: function(cb2){
-			if(professionalInfo.tutorlocation == undefined){
+			if(professionalInfo.teacherlocation == undefined){
 				throw new error('professioninfo未登录职业导师坐标信息,请手动学习技能!')
 			}
-			// 学习本职得意技
+
 			var learn = ()=>{
-				// professionalInfo.teacherwalk[professionalInfo.teacherwalk.length-1]是取teacherwalk的最后一组list,用于房内寻址.
-				// 注意用于cga.walkList时,外层要套一层array,不然会报错
-				cga.walkList([professionalInfo.teacherwalk[professionalInfo.teacherwalk.length-1]], ()=>{
-					cga.TurnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
+				var target = cga.getRandomSpace(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
+				cga.walkList([
+				target
+				], ()=>{
+					cga.turnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
 					cga.AsyncWaitNPCDialog(()=>{
 						cga.ClickNPCDialog(0, 0);
 						cga.AsyncWaitNPCDialog(()=>{
@@ -521,18 +550,44 @@ var cga = require('./cgaapi')(function(){
 					});
 				});
 			}
-			if(cga.getMapInfo().name != '地下工房'){
-				cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, ()=>{
-					cga.walkList(professionalInfo.teacherwalk, ()=>{
-						// 寻找可以遗忘的技能
-						learn()
+
+			if(job == '铠甲工'){
+				var sayWords = '【UNA脚本提醒】造铠并不在圣拉鲁卡村学习，出发前往小备前之洞窟'
+				healMode.func(()=>{
+					cga.SayWords(sayWords, 0, 3, 1);
+					cga.travel.falan.toStone('C', () => {
+						cga.walkList([
+							[41, 98, '法兰城'],
+							[153, 241, '芙蕾雅'],
+							[421, 308, '小备前之洞窟'],
+							], (r)=>{
+								learn()
+							});
 					});
-				});
+				})
+			}else if(job == '铸剑工'){
+				var sayWords = '【UNA脚本提醒】铸剑并不在圣拉鲁卡村学习，出发前往小村正之洞窟'
+				healMode.func(()=>{
+					cga.SayWords(sayWords, 0, 3, 1);
+					cga.travel.falan.toStone('C', () => {
+						cga.walkList([
+							[17, 53, '法兰城'],
+							[22, 87, '芙蕾雅'],
+							[446, 101, '小村正之洞窟'],
+							], (r)=>{
+								learn()
+							});
+					});
+				})
 			}else{
-				cga.walkList([professionalInfo.teacherwalk[professionalInfo.teacherwalk.length-1]], ()=>{
-				// 寻找可以遗忘的技能
-				learn()
-				});
+				var villageName = cga.travel.switchMainMap()
+				if(villageName == professionalInfo.teacherlocation){
+					cga.travel.autopilot('地下工房',learn)
+				}else{
+					cga.travel.falan.toTeleRoom(professionalInfo.teacherlocation, ()=>{
+						cga.travel.autopilot('地下工房',learn)
+					});
+				}
 			}
 		}
 	}

@@ -713,7 +713,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '造盾工',
 		skill:'造盾',
-		titles: ['造盾学徒', '造盾工', '资深造盾师傅', '御用造盾师傅', '造盾名师'],
+		titles: ['造盾学徒', '造盾工', '资深造盾师傅', '御用造盾师', '造盾名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorRoom: '地下工房',
 		tutorwalk:[
@@ -765,7 +765,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '长袍工',
 		skill:'制长袍',
-		titles: ['长袍学徒', '长袍工', '资深长袍师傅', '御用长袍师傅', '长袍名师'],
+		titles: ['长袍学徒', '长袍工', '资深长袍师傅', '御用长袍师', '长袍名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorRoom: '地下工房',
 		tutorwalk:[
@@ -812,7 +812,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '铠甲工',
 		skill:'造铠',
-		titles: ['铠甲学徒', '铠甲工', '资深铠甲师傅', '御用铠甲师傅', '铠甲名师'],
+		titles: ['铠甲学徒', '铠甲工', '资深铠甲师傅', '御用铠甲师', '铠甲名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorRoom: '地下工房',
 		tutorwalk:[
@@ -831,12 +831,12 @@ const Professions = [
 			[421, 308,'小备前之洞窟'],
 			[8, 7],
 			],
-		teacherpos : [7 ,7],
+			teacherpos : [7 ,7],
 	}, {
 		category: '制造系',
 		jobmainname: '帽子工',
 		skill:'制帽子',
-		titles: ['帽子学徒', '帽子工', '资深帽子师傅', '御用帽子师傅', '帽子名师'],
+		titles: ['帽子学徒', '帽子工', '资深帽子师傅', '御用帽子师', '帽子名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorRoom: '地下工房',
 		tutorwalk:[
@@ -862,7 +862,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '头盔工',
 		skill:'造头盔',
-		titles: ['头盔学徒', '头盔工', '资深头盔师傅', '御用头盔师傅', '头盔名师'],
+		titles: ['头盔学徒', '头盔工', '资深头盔师傅', '御用头盔师', '头盔名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorRoom: '地下工房',
 		tutorwalk:[
@@ -888,7 +888,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '投掷武器工',
 		skill:'造投掷武器',
-		titles: ['投掷武器学徒', '投掷武器工', '资深投掷武器师傅', '御用投掷武器师傅', '投掷武器名师'],
+		titles: ['投掷武器学徒', '投掷武器工', '资深投掷武器师傅', '御用投掷武器师', '投掷武器名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorRoom: '地下工房',
 		tutorwalk:[
@@ -914,7 +914,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '小刀工',
 		skill:'造小刀',
-		titles: ['小刀学徒', '小刀工', '资深小刀师傅', '御用小刀师傅', '小刀名师'],
+		titles: ['小刀学徒', '小刀工', '资深小刀师傅', '御用小刀师', '小刀名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorRoom: '地下工房',
 		tutorwalk:[
@@ -962,7 +962,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '造枪工',
 		skill:'造枪',
-		titles: ['造枪学徒', '造枪工', '资深造枪师傅', '御用造枪师傅', '造枪名师'],
+		titles: ['造枪学徒', '造枪工', '资深造枪师傅', '御用造枪师', '造枪名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorRoom: '地下工房',
 		tutorwalk:[
@@ -988,7 +988,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '造杖工',
 		skill:'造杖',
-		titles: ['造杖学徒', '造杖工', '资深造杖师傅', '御用造杖师傅', '造杖名师'],
+		titles: ['造杖学徒', '造杖工', '资深造杖师傅', '御用造杖师', '造杖名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorRoom: '地下工房',
 		tutorwalk:[

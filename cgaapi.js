@@ -4357,6 +4357,9 @@ module.exports = function(callback){
 					cga.travel.newisland.toStoneInternal(stone, cb);
 				});
 			});
+		}else{
+			console.log('你没有记录在艾尔莎岛，登出检测你的记录点..')
+			cga.logBack(cb);
 		}
 	}
 	
