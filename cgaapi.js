@@ -2185,6 +2185,7 @@ module.exports = function(callback){
 				'召唤之间':1535,
 				'召唤之间':1536,
 				'饲养师之家':1810,
+				'气功弹':'气功弹',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -2548,6 +2549,10 @@ module.exports = function(callback){
 				1810:[[122, 36, 1810],],
 				// 客房
 				32830:[[219, 136, 1101],[27, 20, 1102],[10, 17, 32830],],
+				// 学气功弹
+				'气功弹':[[(cb)=>{
+					cga.travel.autopilot(1400,cb)
+				}, null, 1400],[15, 6, 1401],[15, 57]],
 			},
 			walkReverse:{
 				// 拿潘食品店
@@ -3800,8 +3805,10 @@ module.exports = function(callback){
 		var mapindex = cga.GetMapIndex().index3
 		// 获取当前主地图名称
 		var villageName = cga.travel.switchMainMap()
-
+		// 目标地图index
 		var targetindex = null
+		// 仅在自定义地点时，此变量生效
+		var customerPos = null
 		// 所有静态信息
 		const info = cga.travel.info[villageName]
 		if(typeof targetMap == 'string'){
@@ -3834,12 +3841,26 @@ module.exports = function(callback){
 		try {
 			// 目标路径信息
 			var targetPath = info.walkForward[targetindex]
+			// 如果目标是自定义地点，更改targetindex为倒数第二个index，因为倒数第一个list是不切换地图的。
+			if(typeof targetindex == 'string'){
+				var walkListlength = info.walkForward[targetindex].length
+				customerPos = info.walkForward[targetindex][walkListlength - 1]
+				targetindex = info.walkForward[targetindex][walkListlength - 2][2]
+			}
 			// 自动导航路径
 			var tmplist = null
 			// 主逻辑分歧点
 			if(mapindex == targetindex){
-				if (cb) cb(null)
-				return
+				// 如果是自定义地点
+				var curPos = cga.GetMapXY();
+				if (customerPos && (curPos.x != customerPos[0] || curPos.y != customerPos[1])){
+					cga.walkList(
+						[customerPos], cb);
+					return
+				}else{
+					if (cb) cb(null)
+					return
+				}
 			}else if(mapindex == info.mainindex){
 				tmplist = targetPath
 			}else{// 自动导航逻辑
