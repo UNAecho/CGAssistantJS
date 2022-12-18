@@ -35,9 +35,9 @@
                 "pettargetsel": -1,
                 "playeraction": 100,
                 "playerskilllevel": 0,
-                "playerskillname": "神圣之光",
-                "playertarget": 1,
-                "playertargetsel": 3
+                "playerskillname": "吸血攻击",
+                "playertarget": 0,
+                "playertargetsel": 0
             },
             {
                 "condition": 1,
