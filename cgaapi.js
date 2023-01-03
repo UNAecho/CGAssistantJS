@@ -3911,7 +3911,9 @@ module.exports = function(callback){
 	cga.travel.toHospital = (isPro,cb)=>{
 		// 不需要补血则跳过
 		if(!cga.needSupplyInitial({  })){
-			if (cb) cb(null)
+			cga.travel.autopilot('主地图',()=>{
+				if (cb) cb(null)
+			})
 			return
 		}
 		
@@ -4009,6 +4011,17 @@ module.exports = function(callback){
 		}
 		
 		var villageName = cga.travel.switchMainMap()
+
+		// 魔法大学没有传送石，直接转为回补模式
+		if(villageName == '魔法大学'){
+			console.log('魔法大学没有传送点，跳过开启传送阶段。')
+			cga.travel.toHospital(isPro,()=>{
+				if (cb) cb(null)
+				return
+			})
+			return
+		}
+		
 		// 如果已经开启过传送，则直接补给并结束函数
 		if(config[villageName]){
 			console.log('你已开启过【'+villageName+'】传送石，跳过开启传送阶段。')
@@ -4102,6 +4115,305 @@ module.exports = function(callback){
 			}
 		);
 		return
+	}
+
+	cga.travel.isInVillage = () => {
+		var villageArr = ['圣拉鲁卡村', '伊尔村', '亚留特村', '维诺亚村', '奇利村', '加纳村', '杰诺瓦镇','魔法大学','阿巴尼斯村','蒂娜村'] 
+		var mainMapName = cga.travel.switchMainMap()
+		if(villageArr.indexOf(mainMapName) != -1){
+			return true
+		}
+		return false
+	}
+	
+	/**
+	 * 
+	 * @param {*} villageName
+	 * @param {*} cb 
+	 * @param {*} finalVillage 
+	 */
+	cga.travel.toVillage = (villageName, cb, finalVillage = null) => {
+		var config = cga.loadPlayerConfig();
+		if(!config){
+			config = {};
+		}
+		if(finalVillage){
+			console.log('当前目标为【' + villageName+ '】，最终目标为【' + finalVillage + '】')
+		}
+		var mainMapName = cga.travel.switchMainMap()
+
+		if(cga.needSupplyInitial({  })){
+			console.log('需要回补，并重新调用cga.trave.toVillage')
+			if(cga.travel.isInVillage()){
+				cga.travel.toHospital(false,()=>{
+					cga.travel.toVillage(villageName, cb, finalVillage)
+				})
+			}else{
+				cga.travel.falan.toCastleHospital(()=>{
+					setTimeout(() => {
+						cga.travel.toVillage(villageName, cb, finalVillage)
+					}, 2500);
+				})
+			}
+			return
+		}
+
+		var villageArray = [
+			['圣拉鲁卡村'],
+			['伊尔村'],
+			['维诺亚村', '奇利村', '加纳村'],
+			['亚留特村'],
+			['杰诺瓦镇', '蒂娜村'],
+			['杰诺瓦镇', '阿巴尼斯村'],
+		]
+
+		var tmpPath = null
+		var tmpIndex = null
+
+		for (var i = 0; i < villageArray.length; i++){
+			for(var j = 0; j < villageArray[i].length; j++){
+				if(villageArray[i][j] == villageName){
+					tmpPath = villageArray[i]
+					tmpIndex = j
+					break
+				}
+			}
+		}
+		if(!tmpPath || tmpIndex === null){
+			throw new Error('错误，请传入正确的村庄名称。你输入的村庄名称为【'+ villageName +'】')
+		}
+
+		var next = (cb) => {
+			cga.travel.saveAndSupply(false, ()=>{
+				if(finalVillage && villageName != finalVillage){
+					console.log('抵达【' + villageName + '】，最终目标为【 ' + finalVillage + ' 】下一步前往【' + tmpPath[tmpIndex + 1] +'】。')
+					cga.travel.toVillage(tmpPath[tmpIndex + 1], cb, finalVillage)
+				}else{
+					console.log('抵达【' + villageName + '】。')
+					if (cb) cb(null)
+				}
+				return
+			})
+		}
+
+		if(config[villageName]){
+			console.log('你已经开过【' + villageName + '】传送，直接使用传送石抵达。')
+			if(mainMapName == villageName){
+				next(cb)
+			}else{
+				cga.travel.falan.toTeleRoom(villageName, ()=>{
+					next(cb)
+				})
+			}
+			return
+		}
+		// 用于判断角色的过关资格
+		var playerInfo = cga.GetPlayerInfo()
+		// tmpIndex > 0情况，也就是自定义序列的非首位，尝试选择去前一个村庄抄近路，再徒步前往目的地。
+		if(tmpIndex > 0){
+			if(mainMapName == tmpPath[tmpIndex - 1]){
+				if(villageName == '奇利村'){
+					// 提取本地职业数据，查询人物是战斗系还是生产系。
+					const getprofessionalInfos = require('./常用数据/ProfessionalInfo.js');
+					var category = getprofessionalInfos(playerInfo.job).category
+					var ring = cga.findItem('欧兹尼克的戒指')
+					if(category != '制造系' && category != '初始系' && ring == -1){
+						throw new Error('你不是制造系或游民，需要【欧兹尼克的戒指】过海底。')
+					}
+					cga.walkList([
+						[67, 46, '芙蕾雅'],
+						[343, 497, '索奇亚海底洞窟 地下1楼'],
+						[18, 34, '索奇亚海底洞窟 地下2楼'],
+						[27, 29, '索奇亚海底洞窟 地下1楼'],
+						[7,37]
+					], ()=>{
+						cga.TurnTo(8, 37);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(1, 0);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1)
+								cga.AsyncWaitMovement({map:'索奇亚', delay:1000, timeout:5000}, (err)=>{
+									if(err){
+										console.error('出错，请检查..')
+										return;
+									}
+									cga.walkList([
+										[274, 294, '奇利村'],
+									], ()=>{
+										next(cb)
+										});
+									});
+								});
+							});
+					});
+				}else if(villageName == '加纳村'){
+					cga.walkList([
+						[79, 76, '索奇亚'],
+						[356, 334, '角笛大风穴'],
+						[133, 26, '索奇亚'],
+					], ()=>{
+						cga.walkList([
+							[704, 147, '加纳村'],
+						], ()=>{
+							next(cb)
+							})
+					});
+				}else if(villageName == '阿巴尼斯村'){
+					cga.walkList([
+						[24, 40, '莎莲娜'],
+						[235,338,'莎莲娜西方洞窟'],
+						[45,9,14001],
+						[57,13,14002],
+						[36,7,'莎莲娜'],
+						[183,161,'阿巴尼斯村'],
+					], ()=>{
+						next(cb)
+					});
+				}else if(villageName == '蒂娜村'){
+					if (!cga.travel.canEntryDina()){
+						console.log('现在不可进入蒂娜村，开始等待至白天...')
+						setTimeout(() => {
+							cga.travel.toVillage(villageName, cb, finalVillage)
+						}, 60000);
+						return
+					}
+					cga.walkList([
+						[71, 18, 400],
+						[570, 275, '蒂娜村'],
+					], ()=>{
+						next(cb)
+					});
+				}
+				return
+			}else{
+				console.log('要去【' + villageName + '】，先去【' + tmpPath[tmpIndex - 1] +'】抄一下近路。')
+				cga.travel.toVillage(tmpPath[tmpIndex - 1], cb, finalVillage ? finalVillage : villageName)
+			}
+			return
+		}else{// tmpIndex == 0情况，也就是自定义序列的首位，只能选择徒步前进
+			var go = (cb) => {
+				cga.travel.falan.toStone('C', ()=>{
+					if(villageName == '圣拉鲁卡村'){
+						cga.walkList([
+							[17, 53, '法兰城'],
+							[22, 88,'芙蕾雅'],
+							[134, 218, '圣拉鲁卡村'],
+						], ()=>{
+							next(cb)
+						})
+					}else if(villageName == '伊尔村'){
+						cga.walkList([
+							[65, 53, '法兰城'],
+							[281, 88,'芙蕾雅'],
+							[681, 343, '伊尔村'],
+						], ()=>{
+							next(cb)
+						})
+					}else if(villageName == '亚留特村'){
+						cga.walkList([
+							[27, 82],
+							[41,98,'法兰城'],
+							[281, 88, '芙蕾雅'],
+							[672,223,'哈巴鲁东边洞穴 地下1楼'],
+							[41,8,'哈巴鲁东边洞穴 地下2楼'],
+							[17,18]
+							], ()=>{
+								cga.ForceMove(6, true);
+								cga.ForceMove(6, true);
+								cga.walkList([
+									[16,11,'哈巴鲁东边洞穴 地下1楼'],
+									[30,4,'芙蕾雅'],
+									[596,84,'亚留特村'],
+									], ()=>{
+										next(cb)
+									});
+							});
+					}else if(villageName == '维诺亚村'){
+						if(playerInfo.level < 20){
+							throw new Error('过维诺亚村洞穴需要至少20级，或制造系携带3级物品通过')
+						}
+						cga.walkList([
+							[41, 98, '法兰城'],
+							//南门
+							[153, 241, '芙蕾雅'],
+							[473, 316],
+						], ()=>{
+							cga.TurnTo(472, 316);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(4, -1);
+								cga.AsyncWaitMovement({map:'维诺亚洞穴 地下1楼', delay:1000, timeout:5000}, (err)=>{
+									if(err){
+										console.error('出错，请检查..')
+										return;
+									}
+									cga.walkList([
+										[20,59,'维诺亚洞穴 地下2楼'],
+										[24,81,'维诺亚洞穴 地下3楼'],
+										[26,64,'芙蕾雅'],
+										[330,480,'维诺亚村'],
+										], ()=>{
+											next(cb)
+											});
+									});
+								});
+						})
+					}else if(villageName == '杰诺瓦镇'){
+						if(playerInfo.level < 40){
+							throw new Error('过莎莲娜海底隧道需要至少40级')
+						}
+						cga.walkList([
+							//里谢里雅堡西门
+							[17, 53, '法兰城'],
+							//西门
+							[22, 88, '芙蕾雅'],
+						], ()=>{
+							cga.walkList([
+								[201, 166],
+							], ()=>{
+								cga.TurnTo(201, 165);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(1, -1)
+									cga.AsyncWaitMovement({map:15000, delay:1000, timeout:5000}, (err)=>{
+										if(err){
+											console.error('出错，请检查..')
+											return;
+										}
+										cga.walkList([
+											[20,8,'莎莲娜海底洞窟 地下2楼'],
+											[11,9,'莎莲娜海底洞窟 地下1楼'],
+											[24,11,'莎莲娜'],
+											[217,455,'杰诺瓦镇'],
+											], ()=>{
+												next(cb)
+												});
+										});
+									});
+								});
+						})
+					}
+				});
+			}
+			
+			if(mainMapName == villageName){
+				next(cb)
+			}else{
+				go(cb)
+			}
+		}
+		return
+	}
+	/**
+	 * UNAecho:是否可以进入白天蒂娜村的API
+	 * 蒂娜准确时间为游戏时间内的下午16:00 - 凌晨6点为夜晚蒂娜村。
+	 * 考虑到人物走路至传送石，或步行至蒂娜村也需要消耗时间，所以在15:00以后则视为夜晚蒂娜村。
+	 */
+	cga.travel.canEntryDina = ()=>{
+		var sysTime = cga.GetSysTime();
+		// 16:00才算作夜晚蒂娜村，但需要预留1小时的步行时间，所以15:00就视为夜晚蒂娜村
+		if(sysTime.hours > 6 && sysTime.hours < 15){
+			return true
+		}
+		return false
 	}
 
 	cga.travel.shenglaluka = {}
@@ -6308,8 +6620,8 @@ module.exports = function(callback){
 			var result = true;
 			try
 			{
-				var curindex3 = cga.GetMapIndex().index3;
-				if(curindex3 == index3)
+				var tmpIndex3 = cga.GetMapIndex().index3;
+				if(tmpIndex3 == index3)
 				{
 					var curpos = cga.GetMapXY();
 					if(freqMoveDir == 0){
