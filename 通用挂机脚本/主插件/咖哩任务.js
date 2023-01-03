@@ -7,8 +7,12 @@ var configTable = global.configTable;
 var rootdir = cga.getrootdir()
 var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
 var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
+var supplyMode = require(rootdir + '/通用挂机脚本/公共模块/通用登出回补');
 var teamMode = require(rootdir + '/通用挂机脚本/公共模块/组队模式');
 var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
+
+// 为了保留config的落盘信息，本任务并不使用
+var healObject = require(rootdir + '/通用挂机脚本/公共模块/治疗自己');
 
 var jump = ()=>{
 	setTimeout(()=>{
@@ -125,22 +129,12 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			var item = 18320
 			checkItem(item, cb2)
 
-			var go = () => {
+			cga.travel.toVillage(villageName, ()=>{
 				cga.travel.autopilot(NPCroom,()=>{
 					askNPCForItem(NPCpos)
 				})
-			}
-
-			var mainMap = cga.travel.switchMainMap()
-			if(mainMap == villageName){
-				go()
-			}else{
-				cga.travel.falan.toTeleRoom(villageName, (r)=>{
-					go()
-				});
-			}
-
-
+			})
+			return
 		}
 	},
 	{//2
@@ -152,24 +146,12 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			var item = 18321
 			checkItem(item, cb2)
 
-			var go = () => {
+			cga.travel.toVillage(villageName, ()=>{
 				cga.travel.autopilot(NPCroom,()=>{
 					askNPCForItem(NPCpos)
 				})
-			}
-
-			var mainMap = cga.travel.switchMainMap()
-			if(mainMap == villageName){
-				go()
-			}else{
-				cga.travel.falan.toStone('C', () => {
-					cga.walkList([
-						[65, 53, '法兰城'],
-						[281, 88,'芙蕾雅'],
-						[681, 343, villageName],
-						], go);
-				});
-			}
+			})
+			return
 		}
 	},
 	{//3
@@ -181,24 +163,12 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			var item = 18322
 			checkItem(item, cb2)
 
-			var go = () => {
+			cga.travel.toVillage(villageName, ()=>{
 				cga.travel.autopilot(NPCroom,()=>{
 					askNPCForItem(NPCpos)
 				})
-			}
-
-			var mainMap = cga.travel.switchMainMap()
-			if(mainMap == villageName){
-				go()
-			}else{
-				cga.travel.falan.toStone('C', () => {
-					cga.walkList([
-						[17, 53, '法兰城'],
-						[22, 88,'芙蕾雅'],
-						[134, 218, villageName],
-						], go);
-				});
-			}
+			})
+			return
 		}
 	},
 	{//4
@@ -209,41 +179,12 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			var NPCpos = [11, 6]
 			var item = 18322
 
-			var go = () => {
+			cga.travel.toVillage(villageName, ()=>{
 				cga.travel.autopilot(NPCroom,()=>{
 					giveNPCItem(item, NPCpos, cb2)
 				})
-			}
-
-			var mainMap = cga.travel.switchMainMap()
-			if(mainMap == villageName){
-				go()
-			}else{
-				healMode.func(()=>{
-					cga.walkList([
-						[41, 98, '法兰城'],
-						[153, 241, '芙蕾雅'],
-						[473, 316],
-					], ()=>{
-						cga.TurnTo(472, 316);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(4, -1);
-							cga.AsyncWaitMovement({map:'维诺亚洞穴 地下1楼', delay:1000, timeout:5000}, (err)=>{
-								if(err){
-									console.error('出错，请检查..')
-									return;
-								}
-								cga.walkList([
-									[20,59,'维诺亚洞穴 地下2楼'],
-									[24,81,'维诺亚洞穴 地下3楼'],
-									[26,64,'芙蕾雅'],
-									[330,480,'维诺亚村'],
-									], go);
-								});
-							});
-					})
-				})
-			}
+			})
+			return
 		}
 	},
 	],
@@ -274,6 +215,7 @@ var loop = ()=>{
 			minssionObj[configTable.mainPlugin] = true
 			cga.refreshMissonStatus(minssionObj,()=>{
 				console.log('【' + configTable.mainPlugin + '】完成')
+				jump()
 			})
 		});
 	});
@@ -294,23 +236,37 @@ var thisobj = {
 	},
 	loadconfig : (obj)=>{
 
-		if(!supplyMode.loadconfig(obj))
-			return false;
+		// 读取失败也不影响本脚本逻辑，但要调用，因为后续要落盘，不能丢了key。
+		// 保留战斗config落盘信息
+		supplyMode.loadconfig(obj)
 		
-		if(!teamMode.loadconfig(obj))
-			return false;
+		teamMode.loadconfig(obj)
 
-		if(!configMode.loadconfig(obj))
-			return false;
+		configMode.loadconfig(obj)
 		
 		configTable.sellStore = obj.sellStore;
 		thisobj.sellStore = obj.sellStore
-		
-		if(thisobj.sellStore == undefined){
-			console.error('读取配置：是否卖石失败！');
-			return false;
-		}
-		
+		// 保留生产config落盘信息
+		if(obj.craftType)
+			configTable.craftType = obj.craftType;
+		if(obj.forgetSkillAt)
+			configTable.forgetSkillAt = obj.forgetSkillAt;
+		if(obj.listenPort)
+			configTable.listenPort = obj.listenPort;
+		// 保留采集config落盘信息
+		if(obj.mineObject)
+			configTable.mineObject = obj.mineObject;
+		if(obj.gatherObject)
+			configTable.gatherObject = obj.gatherObject;
+		if(obj.target)
+			configTable.target = obj.target;
+		if(obj.mineType)
+			configTable.mineType = obj.mineType;
+		if(obj.logoutTimes)
+			configTable.logoutTimes = obj.logoutTimes;
+		// 生产、采集通用config
+		healObject.loadconfig(obj)
+
 		return true;
 	},
 	inputcb : (cb)=>{
