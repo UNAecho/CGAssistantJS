@@ -826,8 +826,8 @@ const Professions = [
 		tutorpos : [27, 31],
 		teacherlocation: '法兰城',
 		teacherwalk:[
-			CW,
-			[22, 88,'芙蕾雅'],
+			CS,
+			[153, 241, '芙蕾雅'],
 			[421, 308,'小备前之洞窟'],
 			[8, 7],
 			],
@@ -1070,8 +1070,8 @@ const Professions = [
 		tutorpos : [14, 15],
 		teacherlocation: '法兰城',
 		teacherwalk:[
-			CW,
-			[22, 88,'芙蕾雅'],
+			CS,
+			[153, 241, '芙蕾雅'],
 			[421, 308,'小备前之洞窟'],
 			[25, 4],
 			],

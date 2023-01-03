@@ -89,11 +89,13 @@ const allowMats = [
 
 // 跳转脚本
 var jump = (scriptName)=>{
-	var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
-	var body = {
-		path : rootdir + '\\' + scriptName + '.js',
-	}
-	scriptMode.call_ohter_script(body)
+	setTimeout(() => {
+		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+		var body = {
+			path : rootdir + '\\' + scriptName + '.js',
+		}
+		scriptMode.call_ohter_script(body)
+	}, 2000);
 }
 
 const isFabricName = (name)=>{
@@ -428,14 +430,14 @@ var getBestCraftableItem = ()=>{
 	return item;
 }
 
-var forgetAndLearn = (teacher, cb)=>{
+var forgetAndLearn = (cb)=>{
 
 	var goAndLearn = (cb2)=>{
-		cga.walkList(teacher.path, ()=>{
-			cga.turnTo(teacher.pos[0], teacher.pos[1]);
+		cga.walkList(professionalInfo.teacherwalk, ()=>{
+			cga.turnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
 			var dialogHandler = (err, dialog)=>{
 				if(dialog){
-					var hasSkill = cga.findPlayerSkill(teacher.skillname) ? true : false;
+					var hasSkill = cga.findPlayerSkill(professionalInfo.skill) ? true : false;
 					if( hasSkill )
 					{
 						if (dialog.type == 16) {
@@ -444,7 +446,7 @@ var forgetAndLearn = (teacher, cb)=>{
 							return;
 						}
 						if (dialog.type == 18) {
-							const skillIndex = cga.GetSkillsInfo().sort((a,b) => a.pos - b.pos).findIndex(s => s.name == teacher.skillname);
+							const skillIndex = cga.GetSkillsInfo().sort((a,b) => a.pos - b.pos).findIndex(s => s.name == professionalInfo.skill);
 							if (skillIndex > -1) {
 								cga.ClickNPCDialog(0, skillIndex);
 								cga.AsyncWaitNPCDialog(dialogHandler);
@@ -459,7 +461,7 @@ var forgetAndLearn = (teacher, cb)=>{
 					}
 					if (dialog.message.indexOf('已经删除') >= 0 || !hasSkill) {
 						setTimeout(()=>{
-							cga.TurnTo(teacher.pos[0], teacher.pos[1]);
+							cga.TurnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
 							cga.AsyncWaitNPCDialog((dlg)=>{
 								cga.ClickNPCDialog(0, 0);
 								cga.AsyncWaitNPCDialog((dlg2)=>{
@@ -476,7 +478,7 @@ var forgetAndLearn = (teacher, cb)=>{
 		});
 	}
 
-	if(teacher.location == '法兰城'){
+	if(professionalInfo.teacherlocation == '法兰城'){
 		cga.travel.falan.toStone('C', () => {
 			goAndLearn(cb)
 		});
@@ -629,16 +631,9 @@ var loop = ()=>{
 	
 	if(!thisobj.craftSkill)
 	{
-		var teacher = teachers.find((t)=>{
-			return t.skillname == configTable.craftType;
-		})
-		if(teacher != undefined){
-			craft_count = 0;
-			forgetAndLearn(teacher, loop);
-			return;
-		} else {
-			throw new Error('没有学习对应的制造技能!');
-		}
+		craft_count = 0;
+		forgetAndLearn(loop);
+		return;
 	}
 
 	callSubPluginsAsync('prepare', ()=>{
@@ -649,6 +644,31 @@ var loop = ()=>{
 			return;
 		}
 		
+		/**
+		 * UNAecho:调整了忘记技能的逻辑，现在判断如果人物在提升技能时发现直接做到10级可以正好满足双百的话，就跳过忘记技能，避免不必要的浪费时间。
+		 * 武器/防具制作每级提升2耐力4灵巧
+		 * 采集每级提升5耐力1灵巧
+		 */
+		if(thisobj.craftSkill.lv >= thisobj.forgetSkillAt){
+			if(thisobj.forgetSkillAt < 5){
+				console.log('【UNAecho脚本提醒】:生产技能在1-4级时不会增加双百数值，请设置大于等于5的数字，您当前设置为【'+thisobj.forgetSkillAt+'】')
+			}
+			var curDetail = cga.GetPlayerInfo()['detail']
+			var CurrentEndurance = curDetail.manu_endurance
+			var CurrentSkillful = curDetail.manu_skillful
+			if(
+				(CurrentEndurance < (100 - (10 - thisobj.craftSkill.lv) * 2))
+				|| (CurrentSkillful < (100 - (10 - thisobj.craftSkill.lv) * 4))
+				){
+					console.log('【UNAecho脚本提醒】人物当前耐力：【' + CurrentEndurance + '】')
+					console.log('【UNAecho脚本提醒】人物当前灵巧：【' + CurrentSkillful + '】')
+					console.log('【UNAecho脚本提醒】耐力或灵巧不满足双百条件，需要忘记技能重新刷级')
+					craft_count = 0;
+					forgetAndLearn(loop);
+					return;
+			}
+		}
+
 		// 如果技能没刷满，开始考虑做晋级任务并自动晋级。
 		if(thisobj.craftSkill.lv < 10 && thisobj.craftSkill.lv >= thisobj.craftSkill.maxlv){
 			var playerCurrentInfo = cga.GetPlayerInfo()
@@ -669,9 +689,7 @@ var loop = ()=>{
 
 				if(thisobj.craftSkill.lv >= 8){
 					if (config && config['mission']['魔法大学']){
-						setTimeout(()=>{
-							jump('职业晋级')
-						},2000)
+						jump('职业晋级')
 					}else{
 						setTimeout(()=>{
 							updateConfig.update_config('mainPlugin','魔法大学')
@@ -680,9 +698,7 @@ var loop = ()=>{
 					return
 				}else if(thisobj.craftSkill.lv >= 6){
 					if (config && config['mission']['起司的任务']){
-						setTimeout(()=>{
-							jump('职业晋级')
-						},2000)
+						jump('职业晋级')
 					}else{
 						setTimeout(()=>{
 							updateConfig.update_config('mainPlugin','起司的任务')
@@ -691,9 +707,7 @@ var loop = ()=>{
 					return
 				}else if(thisobj.craftSkill.lv >= 4){
 					if (config && config['mission']['咖哩任务']){
-						setTimeout(()=>{
-							jump('职业晋级')
-						},2000)
+						jump('职业晋级')
 					}else{
 						setTimeout(()=>{
 							updateConfig.update_config('mainPlugin','咖哩任务')
@@ -701,34 +715,6 @@ var loop = ()=>{
 					}
 					return
 				}
-			}
-		}
-		/**
-		 * UNAecho:调整了忘记技能的逻辑，现在判断如果人物在提升技能时发现直接做到10级可以正好满足双百的话，就跳过忘记技能，避免不必要的浪费时间。
-		 * 武器/防具制作每级提升2耐力4灵巧
-		 * 采集每级提升5耐力1灵巧
-		 */
-		if(thisobj.craftSkill.lv >= thisobj.forgetSkillAt){
-			if(thisobj.forgetSkillAt < 5){
-				console.log('【UNAecho脚本提醒】:生产技能在1-4级时不会增加双百数值，请设置大于等于5的数字，您当前设置为【'+thisobj.forgetSkillAt+'】')
-			}
-			var CurrentEndurance = cga.GetPlayerInfo()['detail'].manu_endurance
-			var CurrentSkillful = cga.GetPlayerInfo()['detail'].manu_skillful
-			if(
-				(CurrentEndurance < (100 - (10 - thisobj.craftSkill.lv) * 2))
-				|| (CurrentSkillful < (100 - (10 - thisobj.craftSkill.lv) * 4))
-				){
-					var teacher = teachers.find((t)=>{
-						return t.skillname == thisobj.craftSkill.name;
-					})
-					if(teacher != undefined){
-						console.log('【UNAecho脚本提醒】人物当前耐力：【' + CurrentEndurance + '】')
-						console.log('【UNAecho脚本提醒】人物当前灵巧：【' + CurrentSkillful + '】')
-						console.log('【UNAecho脚本提醒】耐力或灵巧不满足双百条件，需要忘记技能重新刷级')
-						craft_count = 0;
-						forgetAndLearn(teacher, loop);
-						return;
-					}
 			}
 		}
 
@@ -889,7 +875,7 @@ var thisobj = {
 
 		var stage1 = (cb2)=>{
 			var craftSkillList = cga.GetSkillsInfo().filter((sk)=>{
-				return (sk.name.indexOf('制') == 0 || sk.name.indexOf('造') == 0 || sk.name.indexOf('铸') == 0 );
+				return (sk.name.indexOf('制') == 0 || sk.name.indexOf('造') == 0 || sk.name.indexOf('铸') == 0  || sk.name.indexOf('料理') == 0 || sk.name.indexOf('制药') == 0);
 			});
 			
 			var sayString = '【双百插件】请选择刷的技能:';
