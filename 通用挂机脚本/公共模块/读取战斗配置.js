@@ -15,50 +15,106 @@ var configModeArray = [
 		return
 	},
 	think : (ctx)=>{
-		if(!ctx.skills){
+		// 如果ctx没有技能信息，或者被认为只需要读取一次配置时，直接return，防止无限IO
+		if(!ctx.skills || thisobj.once){
 			return
 		}
-		var filename = null
+		
+		// 默认读取练级.json文件，如果有烧技能需要，则复写为JSON格式的obj
+		var train = '练级'
 
-		if(!thisobj.finalJob.skill && !thisobj.finalJob.trainskills){
-			console.log('未指定角色修炼技能,读取默认战斗配置')
-			filename = '练级'
-		}
-		// 只有战斗系的技能才需要在战斗过程中烧
-		if(thisobj.needLoad()){
-			// 由于转职保证书的存在（转职后保留当前技能等级），当前技能等级可能出现比上限还高的情况，所以需要用小于来判断是否需要继续烧。
-			var skill = ctx.skills.find((sk)=>{
-				// 优先本职技能
-				if((thisobj.finalJob.skill && thisobj.finalJob.skill.indexOf(sk.name) != -1) && sk.lv < sk.maxlv){
-					return true
-				}
-				// 其次是自定义技能
-				if((thisobj.finalJob.trainskills && thisobj.finalJob.trainskills.indexOf(sk.name) != -1) && sk.lv < sk.maxlv){
-					return true
-				}
-				return false;
-			});
-		}else{
-			filename = '练级'
-		}
-		// 如果技能还没烧满，则返回，防止无限读取config造成性能浪费。
-		if(thisobj.training && filename && thisobj.training == filename){
-			return
-		}
-		if(!skill){
-			// 此处注意文件的名字，是统称+练级二字，如：格斗士练级
-			if(accompany.indexOf(thisobj.finalJob.jobmainname) != -1){
-				thisobj.manualLoad(thisobj.finalJob.jobmainname + '练级')
-			}else{
-				thisobj.manualLoad('练级')
+		if(!thisobj.finalJob || (!thisobj.finalJob.skill && !thisobj.finalJob.trainskills)){
+			console.log('未指定角色修炼技能或指定修炼技能已满，本次使用默认战斗配置')
+			// 没有指定要烧的技能，使用默认配置并且仅读取一次。
+			if(!thisobj.training && thisobj.manualLoad(train)){
+				thisobj.once = true
 			}
 			return
 		}
+		// 只有战斗系的技能才需要在战斗过程中烧
+		// 由于转职保证书的存在（转职后保留当前技能等级），当前技能等级可能出现比上限还高的情况，所以需要用小于来判断是否需要继续烧。
+		var skill = ctx.skills.find((sk)=>{
+			// 优先本职技能
+			if((thisobj.finalJob.skill && thisobj.finalJob.skill.indexOf(sk.name) != -1) && sk.lv < sk.maxlv){
+				train = sk.name
+				return true
+			}
+			// 其次是自定义技能
+			if((thisobj.finalJob.trainskills && thisobj.finalJob.trainskills.indexOf(sk.name) != -1) && sk.lv < sk.maxlv){
+				train = sk.name
+				return true
+			}
+			return false;
+		});
+		// 此处注意文件的名字，是统称+练级二字，如：格斗士练级
+		if(!skill && accompany.indexOf(thisobj.finalJob.jobmainname) != -1){
+			train = thisobj.finalJob.jobmainname + '练级'
+		}
 
-		// 读取对应需要烧的技能的战斗配置
-		filename = skill.name
+		setting = JSON.parse(fs.readFileSync(cga.getrootdir() + '\\战斗配置\\' + train + '.json'))
+		// 如果是默认的通用格式，则直接读取，无需其他处理
+		if(train.indexOf('练级') != -1 && thisobj.manualLoad(setting)){
+			console.log('没有需要修炼的技能，读取通用练级模式或保姆练级模式，并不再改变战斗配置。')
+			thisobj.once = true
+			return
+		}else if(skill){// 如果发现需要烧的技能，则调整技能顺序并选择好默认目标
+			// 如果没烧完则继续
+			if (skill.name == thisobj.training){
+				return
+			}
+			// 制作要修炼技能的的战斗配置
+			var skillObj = skillInfos.getSkillObj(skill.name)
+			var battleObj = 
+            {
+                "condition": 1,
+                "condition2": 2,
+                "condition2rel": 0,
+                "condition2val": "25%",
+                "conditionrel": 0,
+                "conditionval": "25%",
+                "index": 0,
+                "petaction": -1,
+                "pettarget": -1,
+                "pettargetsel": -1,
+                "playeraction": 100,
+                "playerskilllevel": 0,
+                "playerskillname": skillObj.name,
+                "playertarget": actionTarget.indexOf(skillObj.target),
+                "playertargetsel": actionTargetSel[skillObj.target]
+            }
+			// 小于10级以下普攻战斗，节约蓝量
+			var attackObj = 
+            {
+                "condition": 13,
+                "condition2": 0,
+                "condition2rel": 0,
+                "condition2val": "",
+                "conditionrel": 3,
+                "conditionval": "10",
+                "index": 0,
+                "petaction": -1,
+                "pettarget": -1,
+                "pettargetsel": -1,
+                "playeraction": 1,
+                "playertarget": 0,
+                "playertargetsel": 0
+            }
 
-		thisobj.manualLoad(filename)
+			// 逆序置顶
+			setting.battle.list.unshift(battleObj)
+			setting.battle.list.unshift(attackObj)
+		}
+		
+
+		// 刷新index（顺序），防止乱序
+		for (var i = 0; i < setting.battle.list.length; i++){
+			setting.battle.list[i]["index"] = i
+		}
+
+		if(thisobj.manualLoad(setting)){
+			thisobj.training = skill.name
+			console.log('正在训练【' + thisobj.training +'】技能')
+		}
 
 		return
 	}
@@ -145,7 +201,7 @@ var configModeArray = [
 			filename = '练级'
 		}
 
-		// 读取对应需要烧的技能的战斗配置
+		// 读取战斗配置
 		thisobj.manualLoad(filename)
 		return
 
@@ -162,8 +218,22 @@ var configTable = global.configTable;
 const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
 const professionalArray = getprofessionalInfos.Professions
 
+
+// 提取本地技能数据
+const skillInfos = require('../../常用数据/skills.js');
+
 // 在烧技能模式中，可能需要陪同练级的职业，需要读取【职业+练级.json】的战斗配置文件。其余职业都读取默认的【练级.json】
 const accompany = ['格斗士', '传教士', '弓箭手',]
+// 技能作用目标顺序
+const actionTarget = ['敌人', '己方', '玩家', '宠物', '条件']
+// 技能作用目标选择
+const actionTargetSel = {
+	'敌人' : 4,
+	'己方' : 3,
+	'玩家' : -1,
+	'宠物' : -1,
+	'条件' : -1,
+}
 
 var thisobj = {
 	func : (type)=>{
@@ -181,31 +251,26 @@ var thisobj = {
 		thisobj.object.func()
 
 	},
-	manualLoad : (filename)=>{
-		if (thisobj.training && thisobj.training == filename) {
-			return
+	manualLoad : (obj)=>{
+		var setting = null
+		if (typeof obj == 'object' && obj.battle && obj.battle.list && obj.battle.list.length > 0){
+			setting = obj
+		}else if(typeof obj == 'string'){
+			setting = JSON.parse(fs.readFileSync(cga.getrootdir() + '\\战斗配置\\' + obj + '.json'))
+		}else{
+			throw new Error('错误，手动读取战斗配置只接受string的文件名称格式，或object类型的可加载格式（标准格式请参考战斗配置文件夹中的文件）。')
 		}
-
-		var settingpath = cga.getrootdir() + '\\战斗配置\\' + filename + '.json'
-		var setting = JSON.parse(fs.readFileSync(settingpath))
-	
+		// 注意这个API是异步的，所以不能在callback里面更改变量，因为在loading成功之前，程序已经开始往下走了。
 		cga.gui.LoadSettings(setting, (err, result)=>{
 			if(err){
-				console.log(err);
+				console.error(err);
 				return;
 			}else{
-				thisobj.training = filename
-				console.log('【战斗配置插件】读取战斗配置【'+settingpath+'】成功')
+				console.log('【战斗配置插件】读取战斗配置成功')
 				return
 			}
 		})
-		return
-	},
-	needLoad : ()=>{
-		if(['物理系','魔法系','魔物系'].indexOf(thisobj.finalJob.category) != -1){
-			return true
-		}
-		return false
+		return true
 	},
 	think : (ctx)=>{// 暂时仅支持烧技能模式，其他模式多数都会手动调用
 		configModeArray[0].think(ctx);
