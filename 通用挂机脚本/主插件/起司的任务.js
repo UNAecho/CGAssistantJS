@@ -191,47 +191,11 @@ var task = cga.task.Task(configTable.mainPlugin, [
 	{//0
 		intro: '1.任务准备',
 		workFunc: function(cb2){
-			var config = cga.loadPlayerConfig();
-			if(config && config['加纳村']){
-				healMode.func(()=>{
-					setTimeout(() => {
-						cb2(true)
-					}, 3000);
-				})
-			}else{
-				console.log('【UNA脚本提示】无法找到本地记录中【加纳村】的传送石状态，现去检查【所有法兰王国村庄】的开传送状态，并在启动【' + configTable.mainPlugin + '】沿途顺路开传送逻辑，无需您后续手动开传送。')
-				cga.travel.falan.checkAllTeleRoom(()=>{
-					healMode.func(()=>{
-						cga.travel.falan.toStone('C', (r)=>{
-							cga.walkList([
-								[41, 98, '法兰城'],
-								//南门
-								[153, 241, '芙蕾雅'],
-								[473, 316],
-							], ()=>{
-								cga.TurnTo(472, 316);
-								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(4, -1);
-									cga.AsyncWaitMovement({map:'维诺亚洞穴 地下1楼', delay:1000, timeout:5000}, (err)=>{
-										if(err){
-											console.error('出错，请检查..')
-											return;
-										}
-										cga.walkList([
-											[20,59,'维诺亚洞穴 地下2楼'],
-											[24,81,'维诺亚洞穴 地下3楼'],
-											[26,64,'芙蕾雅'],
-											[330,480,'维诺亚村'],
-											], ()=>{
-												//TODO 尝试拿着咖喱任务的任务道具能否开启维诺亚村的传送石，如果能，再写后续逻辑
-												});
-										});
-									});
-							})
-						});
-					})
-				})
-			}
+			healMode.func(()=>{
+				setTimeout(() => {
+					cb2(true)
+				}, 3000);
+			})
 		}
 	},
 	{//1
@@ -251,22 +215,12 @@ var task = cga.task.Task(configTable.mainPlugin, [
 				checkItem(item, cb2)
 			}
 
-			var go = () => {
-				cga.travel.saveAndSupply(false,()=>{
-					cga.travel.autopilot(NPCroom,()=>{
-						askNPCForItem(NPCpos)
-					})
+			cga.travel.toVillage(villageName, ()=>{
+				cga.travel.autopilot(NPCroom,()=>{
+					askNPCForItem(NPCpos)
 				})
-			}
-
-			var mainMap = cga.travel.switchMainMap()
-			if(mainMap == villageName){
-				go()
-			}else{
-				cga.travel.falan.toTeleRoom(villageName, (r)=>{
-					go()
-				});
-			}
+			})
+			return
 		}
 	},
 	{//2
