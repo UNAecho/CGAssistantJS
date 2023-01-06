@@ -4143,7 +4143,7 @@ module.exports = function(callback){
 		var mainMapName = cga.travel.switchMainMap()
 
 		if(cga.needSupplyInitial({  })){
-			console.log('需要回补，并重新调用cga.trave.toVillage')
+			console.log('人物没有满状态，先回补。')
 			if(cga.travel.isInVillage()){
 				cga.travel.toHospital(false,()=>{
 					cga.travel.toVillage(villageName, cb, finalVillage)
@@ -4164,7 +4164,7 @@ module.exports = function(callback){
 			['维诺亚村', '奇利村', '加纳村'],
 			['亚留特村'],
 			['杰诺瓦镇', '蒂娜村'],
-			['杰诺瓦镇', '阿巴尼斯村'],
+			['杰诺瓦镇', '阿巴尼斯村', '魔法大学'],
 		]
 
 		var tmpPath = null
@@ -4206,6 +4206,9 @@ module.exports = function(callback){
 				})
 			}
 			return
+		}else if(villageName != '魔法大学'){
+			console.log('你没有开启【' + villageName + '】传送权限，开始计算最优步行模式...')
+
 		}
 		// 用于判断角色的过关资格
 		var playerInfo = cga.GetPlayerInfo()
@@ -4220,55 +4223,61 @@ module.exports = function(callback){
 					if(category != '制造系' && category != '初始系' && ring == -1){
 						throw new Error('你不是制造系或游民，需要【欧兹尼克的戒指】过海底。')
 					}
-					cga.walkList([
-						[67, 46, '芙蕾雅'],
-						[343, 497, '索奇亚海底洞窟 地下1楼'],
-						[18, 34, '索奇亚海底洞窟 地下2楼'],
-						[27, 29, '索奇亚海底洞窟 地下1楼'],
-						[7,37]
-					], ()=>{
-						cga.TurnTo(8, 37);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(1, 0);
+					cga.travel.autopilot('主地图', ()=>{
+						cga.walkList([
+							[67, 46, '芙蕾雅'],
+							[343, 497, '索奇亚海底洞窟 地下1楼'],
+							[18, 34, '索奇亚海底洞窟 地下2楼'],
+							[27, 29, '索奇亚海底洞窟 地下1楼'],
+							[7,37]
+						], ()=>{
+							cga.TurnTo(8, 37);
 							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(4, -1)
-								cga.AsyncWaitMovement({map:'索奇亚', delay:1000, timeout:5000}, (err)=>{
-									if(err){
-										console.error('出错，请检查..')
-										return;
-									}
-									cga.walkList([
-										[274, 294, '奇利村'],
-									], ()=>{
-										next(cb)
+								cga.ClickNPCDialog(1, 0);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(4, -1)
+									cga.AsyncWaitMovement({map:'索奇亚', delay:1000, timeout:5000}, (err)=>{
+										if(err){
+											console.error('出错，请检查..')
+											return;
+										}
+										cga.walkList([
+											[274, 294, '奇利村'],
+										], ()=>{
+											next(cb)
+											});
 										});
 									});
 								});
-							});
-					});
+						});
+					})
 				}else if(villageName == '加纳村'){
-					cga.walkList([
-						[79, 76, '索奇亚'],
-						[356, 334, '角笛大风穴'],
-						[133, 26, '索奇亚'],
-					], ()=>{
+					cga.travel.autopilot('主地图', ()=>{
 						cga.walkList([
-							[704, 147, '加纳村'],
+							[79, 76, '索奇亚'],
+							[356, 334, '角笛大风穴'],
+							[133, 26, '索奇亚'],
+						], ()=>{
+							cga.walkList([
+								[704, 147, '加纳村'],
+							], ()=>{
+								next(cb)
+								})
+						});
+					})
+				}else if(villageName == '阿巴尼斯村'){
+					cga.travel.autopilot('主地图', ()=>{
+						cga.walkList([
+							[24, 40, '莎莲娜'],
+							[235,338,'莎莲娜西方洞窟'],
+							[45,9,14001],
+							[57,13,14002],
+							[36,7,'莎莲娜'],
+							[183,161,'阿巴尼斯村'],
 						], ()=>{
 							next(cb)
-							})
-					});
-				}else if(villageName == '阿巴尼斯村'){
-					cga.walkList([
-						[24, 40, '莎莲娜'],
-						[235,338,'莎莲娜西方洞窟'],
-						[45,9,14001],
-						[57,13,14002],
-						[36,7,'莎莲娜'],
-						[183,161,'阿巴尼斯村'],
-					], ()=>{
-						next(cb)
-					});
+						});
+					})
 				}else if(villageName == '蒂娜村'){
 					if (!cga.travel.canEntryDina()){
 						console.log('现在不可进入蒂娜村，开始等待至白天...')
@@ -4277,12 +4286,23 @@ module.exports = function(callback){
 						}, 60000);
 						return
 					}
-					cga.walkList([
-						[71, 18, 400],
-						[570, 275, '蒂娜村'],
-					], ()=>{
-						next(cb)
-					});
+					cga.travel.autopilot('主地图', ()=>{
+						cga.walkList([
+							[71, 18, 400],
+							[570, 275, '蒂娜村'],
+						], ()=>{
+							next(cb)
+						});
+					})
+				}else if(villageName == '魔法大学'){
+					cga.travel.autopilot('主地图', ()=>{
+						cga.walkList([
+							[37, 71, '莎莲娜'],
+							[118, 100, '魔法大学'],
+							], ()=>{
+								next(cb)
+							})
+					})
 				}
 				return
 			}else{
