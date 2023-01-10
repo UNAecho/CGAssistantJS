@@ -22,6 +22,15 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 
 	var missionName = '职业晋级'
 
+	var jump = ()=>{
+		console.log('晋级完毕。跳转至通用挂机脚本')
+		var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
+		var body = {
+			path : rootdir + "\\通用挂机脚本.js",
+		}
+		scriptMode.call_ohter_script(body)
+	}
+
 	var talkToTutor = (tutorPos, cb)=>{
 		var target = cga.getRandomSpace(tutorPos[0],tutorPos[1])
 		// 驯兽师导师在柜台里，必须指定唯一对话坐标
@@ -71,12 +80,24 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			var repuLv = titleinfo['titleLv']
 			var minimumLv = reputationInfos.promoteReputation[jobLv]
 			var reputationList = titleinfo['type'] == '战斗系' ? reputationInfos.reputationList : reputationInfos.productReputationList
-			if (repuLv < minimumLv){
-				console.warn('【UNA脚本警告：】当前声望：【' + reputationList[repuLv].reputation + '】不足以晋级，需要至少【' + reputationList[minimumLv].reputation + '】以上才行。')
-			}
-			healMode.func(()=>{
-				setTimeout(cb2, 1000, true);
-			})
+			cga.travel.falan.toStone('E2', ()=>{
+				cga.walkList([
+				[230, 82],
+				], ()=>{
+					cga.turnDir(2);
+					setTimeout(()=>{
+						if (repuLv < minimumLv){
+							console.warn('【UNA脚本警告：】当前声望：【' + reputationList[repuLv].reputation + '】不足以晋级，需要至少【' + reputationList[minimumLv].reputation + '】以上才行。')
+							jump()
+							return
+						}else{
+							healMode.func(()=>{
+								setTimeout(cb2, 1000, true);
+							})
+						}
+					}, 3000);
+				});
+			});
 		}
 	},
 	{//1
@@ -265,13 +286,6 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	);
 	configMode.manualLoad('生产赶路')
 	task.doTask(()=>{
-		cga.refreshMissonStatus(null,()=>{
-			console.log('晋级完毕。跳转至通用挂机脚本')
-			var scriptMode = require(rootdir + '\\通用挂机脚本\\公共模块\\跳转其它脚本');
-			var body = {
-				path : rootdir + "\\通用挂机脚本.js",
-			}
-			scriptMode.call_ohter_script(body)
-		})
+		cga.refreshMissonStatus(null,jump)
 	});
 });

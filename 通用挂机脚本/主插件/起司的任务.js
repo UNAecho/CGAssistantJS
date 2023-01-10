@@ -5,15 +5,17 @@ var cga = global.cga;
 var configTable = global.configTable;
 
 var rootdir = cga.getrootdir()
+// 法兰城找医生治疗+招魂
 var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
+// 自己治疗自己
+var healObject = require(rootdir + '/通用挂机脚本/公共模块/治疗自己');
 var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
 var supplyMode = require(rootdir + '/通用挂机脚本/公共模块/通用登出回补');
 var teamMode = require(rootdir + '/通用挂机脚本/公共模块/组队模式');
 var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 
-// 为了保留config的落盘信息，本任务并不使用
-var healObject = require(rootdir + '/通用挂机脚本/公共模块/治疗自己');
-
+// 人物治疗技能，如果没有，则路上不会治疗自己
+var skill_heal = cga.findPlayerSkill('治疗');
 // 任务奖励道具记录
 var award = {
 	'黑暗之戒' : true,
@@ -25,18 +27,16 @@ var award = {
 	'德特家的布' : true,
 }
 
-// 计时
-var timer = null
 // 5分钟的毫秒数
 var fiveMinute = 1000 * 60 * 5
 
 // 每次最长挂机时间1931.622秒3603000
 // 计时器
 var timerfunc = ()=>{
-	if(!timer){
+	if(!thisobj.timestamp){
 		return 0
 	}
-	var timeCost = (Date.now() - timer) / 1000 / 60
+	var timeCost = (Date.now() - thisobj.timestamp) / 1000 / 60
 	console.log('计时器：已经过' + timeCost.toFixed(2) + '分。')
 	return timeCost
 }
@@ -46,11 +46,11 @@ var waitTime = ()=>{
 	var timeRemaining = 61 - timerfunc()
 	var result = 0
 	if(timeRemaining >= 40){
-		result = fiveMinute * 3
+		result = fiveMinute * 4
 	}else if(timeRemaining >= 30 && timeRemaining < 40){
-		result = fiveMinute * 2
+		result = fiveMinute * 3
 	}else if(timeRemaining >= 20 && timeRemaining < 30){
-		result = fiveMinute
+		result = fiveMinute * 2
 	}
 	console.log('【UNA脚本提醒】距离交付道具还需' + timeRemaining.toFixed(2) + '分钟，在这里先等待【' + (result / 1000 / 60).toFixed(0)+'】分钟后再出发，防止单一位置等待时间过长而掉线')
 	return result
@@ -110,8 +110,17 @@ var dialogHandler = (err, dlg)=>{
 var checkItem = (item, cb)=>{
 	if(cga.findItem(item) != -1){
 		// 拿到物品开始计时
-		timer = Date.now()
-		if (cb) cb(true)
+		thisobj.timestamp = Date.now()
+		var config = cga.loadPlayerConfig();
+
+		if(!config)
+			config = {};
+		if(!config["mission"])
+			config["mission"] = {}
+
+		config["mission"][item] = thisobj.timestamp;
+
+		cga.savePlayerConfig(config, cb);
 		return
 	}
 	setTimeout(checkItem, 1000, item, cb);
@@ -125,7 +134,7 @@ var askNPCForItem = (NPCpos, cb)=>{
 		throw new Error('背包满了，请清理。')
 	}
 	// 如果是首次拿，则不需要等待，如果已经开始计时，则等待至必要时间再交谈。
-	var holdon = timer === null ? 0 : 3603000 - (Date.now() - timer)
+	var holdon = !thisobj.timestamp ? 0 : 3603000 - (Date.now() - thisobj.timestamp)
 	if (holdon > 0)
 		console.log('还需要等待【' + (holdon / 1000 / 60).toFixed(2) + '】分才能交付道具')
 
@@ -155,8 +164,8 @@ var giveNPCItem = (item, NPCpos, cb)=>{
 		setTimeout(checkGiveItem, 1000, item);
 		return
 	}
-	// 等待至必要时间再交谈。TODO 这里timer不可能为null，除非脚本并非从第一步开始运行，后续进行兼容。
-	var holdon = timer === null ? 0 : 3603000 - (Date.now() - timer)
+	// 等待至必要时间再交谈。这里thisobj.timestamp不可能为null。
+	var holdon = 3603000 - (Date.now() - thisobj.timestamp)
 	if (holdon > 0)
 		console.log('还需要等待【' + (holdon / 1000 / 60).toFixed(2) + '】分才能交付道具')
 
@@ -171,6 +180,29 @@ var giveNPCItem = (item, NPCpos, cb)=>{
 			return
 	});			
 }
+
+var checkHealth = (cb)=>{
+	var requiremp = 25 + skill_heal.lv * 5;
+	var playerinfo = cga.GetPlayerInfo();
+
+	if(playerinfo.mp < requiremp && cga.travel.isInVillage()){
+		cga.travel.toHospital(false,()=>{
+			checkHealth(cb)
+		})
+		return
+	}
+
+	if (playerinfo.health != 0){
+		console.log('人物受伤，开始治疗')
+		healObject.func(()=>{
+			checkHealth(cb)
+		});
+		return
+	}
+	if(cb) cb(null)
+	return
+}
+
 /**
  * 拿到【好像很好吃的起司】开始计时。本任务需要花费2小时左右完成任务，生产系（医生、护士除外）才能获得2转资格
  * 获得本任务相关【道具】后无法再使用各村落间传送石，任务道具登出回消失，只可徒步行走；
@@ -217,6 +249,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 
 			cga.travel.toVillage(villageName, ()=>{
 				cga.travel.autopilot(NPCroom,()=>{
+					// 重置时间
+					thisobj.timestamp = 0
 					askNPCForItem(NPCpos)
 				})
 			})
@@ -244,7 +278,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			var mainMap = cga.travel.switchMainMap()
 			if(mainMap == villageName){
 				cga.SayWords('开始徒步行走任务全过程，接下来将会在每一个村庄落脚点自适应等待若干时间再出发，以免出现掉线情况', 0, 3, 1);
-				go()
+				checkHealth(go)
 			}else{
 				throw new Error('错误，请登出重新启动脚本，不然计时会乱。')
 			}
@@ -284,7 +318,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 				cga.travel.saveAndSupply(false,()=>{
 					// 强制等待一段时间，剩余时间长则等待时间长，反之则短。
 					setTimeout(() => {
-						go()
+						checkHealth(go)
 					}, waitTime());
 				})
 			}else{
@@ -318,9 +352,27 @@ var task = cga.task.Task(configTable.mainPlugin, [
 				cga.travel.saveAndSupply(false,()=>{
 					// 强制等待一段时间，剩余时间长则等待时间长，反之则短。
 					setTimeout(() => {
-						go()
+						checkHealth(go)
 					}, waitTime());
 				})
+			}
+			// 如果人物被飞，在这里续上流程。
+			else if((mainMap == '法兰城' || mainMap == '艾尔莎岛') && cga.findItem('好像很好吃的起司') != -1){
+				cga.travel.falan.toStone('C', (r)=>{
+					healMode.func(()=>{
+						setTimeout(() => {
+							cga.travel.autopilot('主地图',()=>{
+								cga.walkList([
+									[281, 88,'芙蕾雅'],
+									[681, 343, '伊尔村'],
+								], ()=>{
+									setTimeout(cb2, 1000, true);
+								})
+							})
+						}, waitTime());
+
+					})
+				});
 			}else{
 				throw new Error('错误，请登出重新启动脚本，不然计时会乱。')
 			}
@@ -358,7 +410,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 				cga.travel.saveAndSupply(false,()=>{
 					// 强制等待一段时间，剩余时间长则等待时间长，反之则短。
 					setTimeout(() => {
-						go()
+						checkHealth(go)
 					}, waitTime());
 				})
 			}else{
@@ -383,7 +435,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 
 			var mainMap = cga.travel.switchMainMap()
 			if(mainMap == villageName){
-				go()
+				checkHealth(go)
 			}else{
 				throw new Error('错误，请登出重新启动脚本，不然计时会乱。')
 			}
@@ -421,7 +473,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 				cga.travel.saveAndSupply(false,()=>{
 					// 强制等待一段时间，剩余时间长则等待时间长，反之则短。
 					setTimeout(() => {
-						go()
+						checkHealth(go)
 					}, waitTime());
 				})
 			}else{
@@ -436,57 +488,43 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			// 直接包含了去西医补血逻辑
 			var go = () => {
 				cga.walkList([
-					[82, 83, '医院'],
+					//西门
+					[22, 88, '芙蕾雅'],
+				], ()=>{
+					cga.walkList([
+						[201, 166],
 					], ()=>{
-						cga.walkList([
-							[9, 31,],
-						], ()=>{
-							setTimeout(() => {
-								cga.turnDir(6);
-								setTimeout(() => {
-									cga.walkList([
-										[12, 42, '法兰城'],
+						cga.TurnTo(201, 165);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(1, -1)
+							cga.AsyncWaitMovement({map:15000, delay:1000, timeout:5000}, (err)=>{
+								if(err){
+									console.error('出错，请检查..')
+									return;
+								}
+								cga.walkList([
+									[20,8,'莎莲娜海底洞窟 地下2楼'],
+									[11,9,'莎莲娜海底洞窟 地下1楼'],
+									[24,11,'莎莲娜'],
+									[217,455,'杰诺瓦镇'],
 									], ()=>{
-										cga.walkList([
-											//西门
-											[22, 88, '芙蕾雅'],
-										], ()=>{
-											cga.walkList([
-												[201, 166],
-											], ()=>{
-												cga.TurnTo(201, 165);
-												cga.AsyncWaitNPCDialog(()=>{
-													cga.ClickNPCDialog(1, -1)
-													cga.AsyncWaitMovement({map:15000, delay:1000, timeout:5000}, (err)=>{
-														if(err){
-															console.error('出错，请检查..')
-															return;
-														}
-														cga.walkList([
-															[20,8,'莎莲娜海底洞窟 地下2楼'],
-															[11,9,'莎莲娜海底洞窟 地下1楼'],
-															[24,11,'莎莲娜'],
-															[217,455,'杰诺瓦镇'],
-															], ()=>{
-																setTimeout(cb2, 1000, true);
-																});
-														});
-													});
-												});
-										})
-									});	
-								}, 5000);
-							}, 1000);
-						});	
-					});
+										setTimeout(cb2, 1000, true);
+										});
+								});
+							});
+						});
+				})
 			}
 
 			var mainMap = cga.travel.switchMainMap()
 			if(mainMap == villageName){
-				// 强制等待一段时间，剩余时间长则等待时间长，反之则短。
-				setTimeout(() => {
-					go()
-				}, waitTime());
+				healMode.func(()=>{
+					// 强制等待一段时间，剩余时间长则等待时间长，反之则短。
+					setTimeout(() => {
+						cga.travel.autopilot('主地图',go)
+					}, waitTime());
+
+				})
 			}else{
 				throw new Error('错误，请登出重新启动脚本，不然计时会乱。')
 			}
@@ -508,7 +546,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 
 			var mainMap = cga.travel.switchMainMap()
 			if(mainMap == villageName){
-				go()
+				checkHealth(go)
 			}else{
 				throw new Error('错误，请登出重新启动脚本，不然计时会乱。')
 			}
@@ -520,31 +558,61 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			return false;
 		},
 		function(){//2.前往加纳村酒吧（51.34）与葛达对话，选“是”交出100G获得【好像很好吃的起司】。
+			if(cga.travel.switchMainMap() == '加纳村' && cga.findItem('好像很好吃的起司') != -1){
+				return true
+			}
 			return false;
 		},
-		function(){//3.从现在开始直至任务结束，都必须徒步。而且必须在刚好1小时的时候交付任务道具。先徒步至奇利村
+		function(){//3.从现在开始直至任务结束，都必须徒步。而且必须在刚好1小时的时候交付任务道具。先徒步至奇利村，全程逃跑约5分钟
+			if(cga.travel.switchMainMap() == '奇利村' && cga.findItem('好像很好吃的起司') != -1){
+				return true
+			}
 			return false;
 		},
-		function(){//4.徒步至维诺亚村
+		function(){//4.徒步至维诺亚村，全程逃跑约3分钟。到达维诺亚村时，距离加纳村拿到起司大概8分钟。
+			var mainMap = cga.travel.switchMainMap()
+			if((mainMap == '法兰城' || mainMap == '艾尔莎岛' || mainMap == '维诺亚村') && cga.findItem('好像很好吃的起司') != -1){
+				return true
+			}
 			return false;
 		},
-		function(){//5.徒步至伊尔村
+		function(){//5.徒步至伊尔村，全程逃跑约6分钟。到达伊尔村时，距离加纳村拿到起司大概12分钟。
+			if(cga.travel.switchMainMap() == '伊尔村' && cga.findItem('好像很好吃的起司') != -1){
+				return true
+			}
 			return false;
 		},
-		function(){//6.徒步至亚留特村
+		function(){//6.徒步至亚留特村，全程逃跑约4分钟。到达亚留特村时，距离加纳村拿到起司大概16分钟。
+			if(cga.travel.switchMainMap() == '亚留特村' && cga.findItem('好像很好吃的起司') != -1){
+				return true
+			}
 			return false;
 		},
 		function(){//7.前往亚留特村村长的家，在获得【好像很好吃的起司】后的1小时左右与努波对话，交出100G获得【好像很好喝的酒】。
+			if(cga.travel.switchMainMap() == '亚留特村' && cga.findItem('好像很好喝的酒') != -1){
+				return true
+			}
 			return false;
 		},
-		function(){//8.徒步至法兰城
+		function(){//8.徒步至法兰城，全程逃跑约4分钟。到达法兰城时，距离亚留特村拿到酒大概4分钟。
+			var mainMap = cga.travel.switchMainMap()
+			if((mainMap == '法兰城' || mainMap == '艾尔莎岛') && cga.findItem('好像很好喝的酒') != -1){
+				return true
+			}
 			return false;
 		},
 		function(){//9.徒步至杰诺瓦镇
+			if(cga.travel.switchMainMap() == '杰诺瓦镇' && cga.findItem('好像很好喝的酒') != -1){
+				return true
+			}
 			return false;
 		},
 		function(){//10.前往杰诺瓦镇民家（38.59），在获得【好像很好喝的酒】后的1小时左右与德特老爷爷对话。若被告知为好吃则代表时间刚好并获得晋阶资格，选“确定”交出【好像很好吃的起司】、【好像很好喝的酒】根据时间不同随机获得【奖品】，任务完结。
-			return false;
+			var config = cga.loadPlayerConfig();
+			if(config && config["mission"] && config["mission"]["起司的任务"]){
+				return true
+			}
+			return false
 		},
 	]
 	);
@@ -555,6 +623,9 @@ var loop = ()=>{
 		task.doTask(()=>{
 			var minssionObj = {}
 			minssionObj[configTable.mainPlugin] = true
+			// 重置道具离线计时
+			minssionObj['好像很好吃的起司'] = 0
+			minssionObj['好像很好喝的酒'] = 0
 			cga.refreshMissonStatus(minssionObj,()=>{
 				console.log('【' + configTable.mainPlugin + '】完成')
 				jump()
@@ -577,6 +648,21 @@ var thisobj = {
 		return false;
 	},
 	loadconfig : (obj)=>{
+		var config = cga.loadPlayerConfig();
+
+		if(config && config["mission"]){
+			var item = '好像很好吃的起司'
+			if(cga.findItem(item) != -1 && config["mission"][item]){
+				console.log('检测到你身上有【' + item +'】，现在继续流程。')
+				thisobj.timestamp = config["mission"][item]
+			}
+			item = '好像很好喝的酒'
+			if(cga.findItem(item) != -1 && config["mission"][item]){
+				console.log('检测到你身上有【' + item +'】，现在继续流程。')
+				thisobj.timestamp = config["mission"][item]
+			}
+		}
+		
 		// 读取失败也不影响本脚本逻辑，但要调用，因为后续要落盘，不能丢了key。
 		// 保留战斗config落盘信息
 		supplyMode.loadconfig(obj)

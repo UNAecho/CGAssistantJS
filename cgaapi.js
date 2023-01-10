@@ -718,6 +718,10 @@ module.exports = function(callback){
 		var curXY = cga.GetMapXY();
 		var curMap = cga.GetMapName();
 		const desiredMap = ['法兰城','里谢里雅堡','艾尔莎岛','市场一楼 - 宠物交易区','市场三楼 - 修理专区','召唤之间'];
+		// UNAecho:如果有不能登出的道具，则考虑在法兰城内步行。
+		const itemNotLogBack = ['好像很好吃的起司','好像很好喝的酒',];
+		var notLogBack = false
+
 		if(curMap == '法兰城'){
 			if(stone == 'C'){
 				cga.travel.falan.toCastle(cb);
@@ -860,6 +864,21 @@ module.exports = function(callback){
 				cga.travel.falan.toStoneInternal(stone, cb);
 			});
 			return;
+		}
+		// UNAecho:如果持有登出就消失的道具，那么尝试回到法兰城主地图，再次执行cga.travel.falan.toStoneInternal
+		for(var i in itemNotLogBack){
+			if(cga.findItem(itemNotLogBack[i]) != -1){
+				notLogBack = true
+				console.log('你持有登出即消失的【' + itemNotLogBack[i] + '】道具')
+				break
+			}
+		}
+		if(notLogBack && cga.travel.switchMainMap() == '法兰城'){
+			console.log('不可登出，尝试徒步至法兰城主地图')
+			cga.travel.autopilot('主地图',()=>{
+				cga.travel.falan.toStoneInternal(stone, cb);
+			})
+			return
 		}
 		cga.logBack(()=>{
 			cga.AsyncWaitMovement({map:desiredMap, delay:1000, timeout:5000}, (err, reason)=>{
