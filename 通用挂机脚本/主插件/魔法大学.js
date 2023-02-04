@@ -1436,8 +1436,8 @@ var loop = ()=>{
 var thisobj = {
 	// 晋级小号信息
 	promote : {},
-	// 客户端仓库是否已存满3转物品（深蓝药剂或其他3转物品）
-	isFull : false,
+	// 客户端仓库是否已存满3转物品（深蓝药剂或其他3转物品），默认值为null，不要使用false
+	isFull : null,
 	// 客户端状态，鉴定初始化waiting，采集初始化gathering
 	state : job == '鉴定师' ? 'waiting' : 'gathering',
 	// 客户端采集者用
