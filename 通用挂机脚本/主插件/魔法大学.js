@@ -960,38 +960,6 @@ var loop = ()=>{
 			}
 			// 如果开始做药剂，则重置鉴定师是否已经收到deepblue_ready的状态
 			thisobj.received = false
-
-			// //物品栏里的未交换或交换了但未鉴定的深蓝药剂超过3个
-			// var inventory = cga.getInventoryItems();
-			// var count = getExtractedItemCount(inventory);
-			// if(count >= 3 && inventory.find((inv)=>{
-			// 	return inv.itemid == 15630;
-			// }) != undefined){
-			// 	if(Object.keys(io.sockets.sockets).length === 0){
-			// 		console.log('等待其他账号注册...')
-			// 		setTimeout(loop, 1000);
-			// 		return
-			// 	}
-			// 	var appraiser = null
-			// 	for(var i in io.sockets.sockets){
-			// 		if(io.sockets.sockets[i].cga_data && io.sockets.sockets[i].cga_data.job_name == '鉴定师'){
-			// 			appraiser = io.sockets.sockets[i].cga_data
-			// 			break
-			// 		}
-			// 	}
-			// 	if(!appraiser){
-			// 		console.log('等待鉴定师注册...')
-			// 		setTimeout(loop, 1000);
-			// 		return
-			// 	}
-			// 	if(appraiser.state != 'deepblue_ready'){
-			// 		console.log('等待鉴定师响应deepblue_ready...')
-			// 		io.sockets.emit('deepblue_ready');
-			// 		setTimeout(loop, 1000);
-			// 		return
-			// 	}
-			// 	return;
-			// }
 	
 			io.sockets.emit('init', {
 				craft_player : cga.GetPlayerInfo().name,

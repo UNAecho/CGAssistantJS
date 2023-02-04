@@ -1234,7 +1234,7 @@ const Professions = [
 	}, {
 		jobmainname: '游民',
 		category: '初始系',
-		skill:'绝技-身无分文',
+		skill:[''],
 		titles: ['游民'],
         tutorlocation: '法兰城'
 	}
