@@ -186,7 +186,7 @@ var checkHealth = (cb)=>{
 	var playerinfo = cga.GetPlayerInfo();
 
 	if(playerinfo.mp < requiremp && cga.travel.isInVillage()){
-		cga.travel.toHospital(false,()=>{
+		cga.travel.toHospital(()=>{
 			checkHealth(cb)
 		})
 		return

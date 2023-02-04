@@ -5,6 +5,8 @@ var rootdir = cga.getrootdir()
 // 治疗受伤
 var healObject = require(rootdir + '/通用挂机脚本/公共模块/治疗自己');
 var healPetObject = require(rootdir + '/通用挂机脚本/公共模块/治疗宠物');
+// 私人治疗和招魂
+var healMode = require(rootdir + '/通用挂机脚本/公共模块/治疗和招魂');
 // 为了保留config的落盘信息
 var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
 var teamMode = require(rootdir + '/通用挂机脚本/公共模块/组队模式');
@@ -20,8 +22,12 @@ var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
 var job = professionalInfo.jobmainname
 var jobLv = getprofessionalInfos.getJobLevel(cga.GetPlayerInfo().job)
 
-// 由于小号不参与socket，所以需要手动指定服务端带队者是谁
-var serverPlayerName = 'UNAの药剂'
+// 小号申请蹭车暗号
+var cipher = '水龙衣'
+// 客户端回应暗号
+var cipherAnswer = '咒术'
+// 小号识别带队者标识符 TODO改为更为灵活的自动识别方式，例如检测人物昵称（cga.ChangeNickName()可以修改人物昵称，可自定义一个暗号让小号识别）
+var namefilters = ['UNA','砂の']
 
 // 没有3转的号会被认定为需要蹭车晋级的小号
 if (jobLv < 3){
@@ -34,13 +40,27 @@ var craft_target = null;
 // 3是因为一次药剂和鉴定的配合只能在NPC那里获得3个未鉴定药剂，所以一次打3份（1组）材料就行。
 const MATERIALS_MULTIPLE_TIMES = 3;
 
-// 制造者交易时的站立坐标以及朝向坐标
-var craftPlayerPos = [35, 45]
-var craftPlayerTurnDir = 4
+// 魔法大学和里堡的交易地点信息，用于交易对接。
+var universityPosObj = {
+	mainmap : '魔法大学',
+	mapindex : 4410,
+	pos : job == '药剂师' ? [35, 45] : [34, 45],
+	dir : job == '药剂师' ? 4 : 0
+}
+var castlePosObj = {
+	mainmap : '法兰城',
+	mapindex : 1500,
+	pos : job == '药剂师' ? [34, 87] : [33, 87],
+	dir : job == '药剂师' ? 4 : 0
+}
 
-// 采集员自动适配制造者的坐标以及朝向
-var workerPos = cga.getStaticOrientationPosition(craftPlayerPos, craftPlayerTurnDir, 1)
-var workerTurnDir = cga.tradeDir(craftPlayerTurnDir)
+// 鉴定师waiting时所在坐标以及朝向
+var waitingPos = [33, 86]
+var waitingTurnDir = 2
+
+// 小号动适配鉴定师的坐标以及朝向
+var memberPos = cga.getStaticOrientationPosition(waitingPos, waitingTurnDir, 1)
+var memberTurnDir = cga.tradeDir(waitingTurnDir)
 
 var isDarkBlueMaterials = (name)=>{
 	return ['湿地毒蛇', '魔法红萝卜', '瞿麦', '百里香'].indexOf(name) != -1 ? true : false
@@ -62,6 +82,10 @@ if(job == '药剂师'){
 			socket.cga_data = data;
 			socket.join('gather_'+data.gather_name);
 			console.log(socket.cga_data.player_name +' 已加入魔法大学节点');
+			if(data.job_name == '鉴定师'){
+				thisobj.isFull = data.is_full
+				console.log('鉴定师通知:thisobj.isFull : ' + thisobj.isFull)
+			}
 		});
 	
 		socket.on('done', (data) => {
@@ -78,10 +102,53 @@ if(job == '药剂师'){
 			console.log('appraiser_joined');
 			socket.cga_data.state = 'appraiser_joined'; 
 		});
+		// 服务端接收客户端通知，银行是否已满
+		socket.on('is_full', (data) => {
+			thisobj.isFull = data.isFull
+			console.log('收到客户端更新的银行状态：【' + (thisobj.isFull ? '满':'未满') +'】')
+		});
+
+		// 服务端回答客户端所询问的交易地点
+		socket.on('trade_centre', () => {
+			socket.emit('cur_centre',{centre : thisobj.centre})
+		});
 		
+		socket.on('waiting', () => {
+			console.log('waiting');
+			socket.cga_data.state = 'waiting'; 
+		});
+		// 药剂师得知鉴定师收到了药剂ready提醒
+		socket.on('received', () => {
+			console.log('received');
+			thisobj.received = true
+		});
+
 		socket.on('traveling', () => {
 			console.log('traveling');
 			socket.cga_data.state = 'traveling'; 
+		});
+
+		socket.on('exam', (data) => {
+			console.log('出发去魔法大学，本次【' + (Object.keys(data.promote).length ? '有' : '无') +'】小号晋级');
+			thisobj.promote = data.promote
+			// 需要等待人物静止站好位置再调用去魔法大学的逻辑，不然容易walklist运行冲突
+			var waitWalk = (cb) => {
+				var XY = cga.GetMapXY();
+				var index = cga.GetMapIndex().index3
+				if(index == thisobj.centre.mapindex && XY.x == thisobj.centre.pos[0] && XY.y == thisobj.centre.pos[1]){
+					// 这里本来是在loop中的逻辑，现在改为收到socket信号才去魔法大学
+					goExam(()=>{
+						waitAssess(loop);
+					})
+					return
+				}
+				console.log('未满足出发条件')
+				console.log("🚀 ~ file: 魔法大学.js:137 ~ waitWalk ~ XY", XY)
+				console.log("🚀 ~ file: 魔法大学.js:139 ~ waitWalk ~ thisobj.centre", thisobj.centre)
+				setTimeout(waitWalk, 2000, cb);
+				return
+			}
+			waitWalk()
 		});
 		
 		socket.on('exchange_finish', (fn) => {
@@ -124,7 +191,13 @@ var dialogHandler = (err, dlg)=>{
 	}
 	else if(dlg && dlg.options == 1)
 	{
-		// 获取进阶资格则结束本脚本
+		// 声望不够，不记录状态，并结束脚本，回到烧技能循环。
+		if(dlg.message.indexOf('没有满足') != -1){
+			console.log('【' + configTable.mainPlugin + '】完成')
+			jump()
+			return
+		}
+		// 获取进阶资格，记录进度并结束脚本，回到烧技能循环。
 		if(dlg.message.indexOf('已经得到了') != -1){
 			var minssionObj = {}
 			minssionObj[configTable.mainPlugin] = true
@@ -155,11 +228,70 @@ var dialogHandler = (err, dlg)=>{
 		return;
 	}
 }
+
 // 跳转脚本
 var jump = ()=>{
+	// 关闭队聊
+	cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, false);
+	var mainPluginName = null
+	var category = cga.job.getJob().category
+	// 不写else，方便debug没有涉及到的分类错误
+	if(category == '制造系'){
+		mainPluginName = '双百制造'
+	}else if(category == '采集系'){
+		mainPluginName = '采集冲技能'
+	}
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','双百制造')
+		updateConfig.update_config('mainPlugin',mainPluginName)
 	},5000)
+}
+// 通用，前往魔法大学考官面前
+var goExam = (cb)=>{
+	var pos = job == '药剂师' ? [40, 20] : [40, 21]
+	// var pos = job == '药剂师' ? [31, 89] : [31, 90]
+	cga.travel.toVillage('魔法大学',()=>{
+		cga.travel.autopilot('魔法大学内部',()=>{
+			cga.walkList([
+				pos,
+			], cb);
+		})	
+	})
+
+	// cga.walkList([
+	// 	pos,
+	// ], cb);
+	return
+}
+
+// 根据仓库是否已满，灵活适配集散地
+var goToCentre = (cb) => {
+	var mainMapName = cga.travel.switchMainMap()
+	var go = (cb)=>{
+		cga.walkList([
+			thisobj.centre.pos,
+		], cb);
+		return
+	}
+
+	if(mainMapName == thisobj.centre.mainmap){
+		cga.travel.autopilot(thisobj.centre.mapindex,()=>{
+			go(cb)
+		})
+	}else{
+		if(thisobj.centre.mapindex == 4410){
+			cga.travel.falan.toTeleRoom('魔法大学', ()=>{
+				cga.travel.autopilot(thisobj.centre.mapindex,()=>{
+					go(cb)
+				})
+			});
+		}else if(thisobj.centre.mapindex == 1500){
+			cga.travel.falan.toStone('C', (r)=>{
+				go(cb)
+			});
+		}else{
+			throw new Error('未知的集散地，请检查。目前只能是魔法大学或里谢里雅堡')
+		}
+	}
 }
 
 // 仅服务端使用
@@ -199,8 +331,9 @@ var waitStuffs = (name, materials, cb)=>{
 			find_player.emit('trade');
 
 			var unit = cga.findPlayerUnit(find_player.cga_data.player_name);
-
-			if(unit == null || unit.xpos != 34 || unit.ypos != 45){
+			// 需要计算采集者所站立的坐标，如果不匹配则不发起交易
+			var targetPos = cga.getStaticOrientationPosition(thisobj.centre.pos, thisobj.centre.dir, 1)
+			if(unit == null || unit.xpos != targetPos[0] || unit.ypos != targetPos[1]){
 				setTimeout(repeat, 1000);
 				return;
 			}
@@ -228,9 +361,9 @@ var waitStuffs = (name, materials, cb)=>{
 	}
 
 	cga.walkList([
-		[35, 45]
+		thisobj.centre.pos
 	], ()=>{
-		cga.TurnTo(34, 45);
+		cga.turnDir(thisobj.centre.dir)
 		setTimeout(repeat, 500);
 	});
 }
@@ -266,7 +399,11 @@ var exchangeItem2 = (name, cb)=>{
 		cga.waitTrade(stuffs, null, (result)=>{
 			if(find_player.cga_data.state == 'exchange_finish'){
 				// 如果有蹭车小号需要晋级，陪同至合格房间再解散队伍
-				promote(cb)
+				if(Object.keys(thisobj.promote).length){
+					promote(cb)
+				}else{
+					cb(null)
+				}
 			}
 			else{
 				exchangeItem2(name, cb);
@@ -274,9 +411,13 @@ var exchangeItem2 = (name, cb)=>{
 		});
 	} else {
 		console.log(new Error('未找到鉴定师，可能已掉线。或已成功带小号进入合格房间，重新开始循环'));
-		promote(()=>{
+		if(Object.keys(thisobj.promote).length){
+			promote(()=>{
+				cb(new Error('未找到鉴定师，可能已掉线。或已成功带小号进入合格房间，重新开始循环'));
+			})
+		}else{
 			cb(new Error('未找到鉴定师，可能已掉线。或已成功带小号进入合格房间，重新开始循环'));
-		})
+		}
 	}
 }
 
@@ -365,26 +506,28 @@ var waitAssess = (cb)=>{
 	
 	if(find_player){
 		
-		console.log('等待鉴定师...');
+		console.log('等待鉴定师' + (Object.keys(thisobj.promote).length > 0 ? '与小号' : '') + '...');
 
-		if(find_player.cga_data.state == 'appraiser_joined'){
-			console.log('鉴定师已加入，将其状态变更为exchange')
-			find_player.cga_data.state = 'exchange';
-			find_player.emit('exchange');
-			// 允许其他人加入队伍，因为小号要加入蹭车
-			// cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
-			getInRoom(find_player.cga_data.player_name, cb);
-			return;
-		}
+		// if(find_player.cga_data.state == 'appraiser_joined'){
+		// 	console.log('鉴定师已加入，将其状态变更为exchange')
+		// 	find_player.cga_data.state = 'exchange';
+		// 	find_player.emit('exchange');
+		// 	// 允许其他人加入队伍，因为小号要加入蹭车
+		// 	// cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
+		// 	getInRoom(find_player.cga_data.player_name, cb);
+		// 	return;
+		// }
 
 		find_player.cga_data.state = 'addteam';
 		find_player.emit('addteam');
 		/**
 		 * 自定义一个队伍等待，逻辑如下
-		 * 等待鉴定师加入，如果有小号加入要蹭车3转，也可以。所以这样就不能使用cga.waitTeammates来等待队员，不然会把小号踢出去。
+		 * 等待鉴定师加入，并且兼顾蹭车小号的人数
+		 * Object.keys(thisobj.promote).length 是晋级小号人数，后面+2是因为药剂师、鉴定师固定2人。
+		 * 小号最多只能3个人同时蹭车。
 		 */
 		var wait = (cb, find_player)=>{
-			if(cga.getTeamPlayers().length > 1 && find_player.cga_data.state == 'appraiser_joined'){
+			if(cga.getTeamPlayers().length >= Object.keys(thisobj.promote).length + 2 && find_player.cga_data.state == 'appraiser_joined'){
 				console.log('发送addteam之后，鉴定师已加入，将其状态变更为exchange')
 				find_player.cga_data.state = 'exchange';
 				find_player.emit('exchange');
@@ -403,7 +546,10 @@ var waitAssess = (cb)=>{
 		setTimeout(waitAssess, 1000, cb);
 	}
 }
+
 // 仅服务端使用
+// 注意这里计算的方式是所有道具都算1，而药剂每个count算1
+// 因为药剂师在和鉴定师在教室里交换NPC的未鉴定药剂时，未鉴定物品不能叠加，会占用更多的格子
 var getExtractedItemCount = (inventory)=>{
 	var count = 0;
 	inventory.forEach((inv)=>{
@@ -415,6 +561,102 @@ var getExtractedItemCount = (inventory)=>{
 	
 	return count;
 }
+
+var checkUnassessed = ()=>{
+	var result = false
+	// 物品栏里的物品数+拆开叠加的15630药剂数量+未鉴定的18526药剂数量大于15个时
+	var inventory = cga.getInventoryItems();
+	var count = getExtractedItemCount(inventory);
+	if(count >= 15 && inventory.find((inv)=>{
+		return inv.itemid == 15630;
+	}) != undefined){
+		result = true
+	}
+	return result
+}
+
+/**
+ * UNAecho:鉴定师等待药剂师或者小号的逻辑
+ * 如果鉴定师银行没满，并且接到服务端通知去魔法大学的【瞬间】，如果队伍里没有小号，那么不等待小号加入，直接去魔法大学。
+ * 这么做是为了快速满足鉴定师攒满一仓库的深蓝药剂。因为小号可能会掉线、开传送等原因迟到。
+ * @param {*} cb 
+ * @returns 
+ */
+var checkTeamAndGo = (cb) => {
+	// 临时方案，由于药剂师通知的时候，鉴定师刚好走在回班车点的路上，造成walklist已在运行中
+	// TODO 优化等待以及出发的逻辑，因为无论怎么延时，都有可能出现衔接不完美的时候。
+	var pos = cga.GetMapXY();
+	if(pos.x != waitingPos[0] || pos.y != waitingPos[1]){
+		console.log('等待鉴定师走到班车点...')
+		setTimeout(checkTeamAndGo, 3000, cb);
+		return
+	}
+	if(thisobj.state != 'deepblue_ready'){
+		console.log('等待药剂师准备好未鉴定药剂...')
+		setTimeout(checkTeamAndGo, 1000, cb);
+		return
+	}
+
+	// 在班车点站立10秒并且deepblue_ready后开始判断是继续等待还是直接去魔法大学
+	setTimeout(() => {
+		var teamplayers = cga.getTeamPlayers();
+		// 如果银行已满，需要等待小号加入，才通知服务端发车
+		if(thisobj.isFull && !teamplayers.length){
+			checkTeamAndGo(cb)
+			return
+		}
+		// 如果没有小号，直接发车
+		if(!teamplayers.length){
+			socket.emit('exam',{promote : thisobj.promote})
+			cga.disbandTeam(cb)
+		}else{// 有小号则需要作出提醒
+			for(var t in teamplayers){
+				if(!teamplayers[t].is_me && !thisobj.promote[teamplayers[t].name]){
+					console.log('队伍中有小号未登记，继续等待...')
+					setTimeout(checkTeamAndGo, 1000, cb);
+					return
+				}
+			}
+			socket.emit('exam',{promote : thisobj.promote})
+			cga.SayWords(cipherAnswer , 0, 3, 1);
+			// 延迟解散队伍，给小号记录自己的称号（服务端玩家名称）留一点时间
+			console.log('延迟解散队伍，给小号记录自己的称号（服务端玩家名称）留一点时间')
+			setTimeout(cga.disbandTeam, 5000, cb);
+		}
+		return
+	}, 10000);
+
+	
+	// setTimeout(() => {
+
+
+
+	// // 如果没有小号晋级，直接去魔法大学
+	// 	if(!Object.keys(thisobj.promote).length){
+	// 		socket.emit('exam',{promote : false, promoteCount : Object.keys(thisobj.promote).length})
+	// 		setTimeout(cb, 1000);
+	// 		return
+	// 	}
+	// 	// 以下为有小号晋级逻辑
+	// 	var teamplayers = cga.getTeamPlayers();
+	// 	// 队伍没人的情况
+	// 	if(!teamplayers.length){
+	// 		// 如果之前已经决定晋级（如小号超时掉线），但银行未满，则通知药剂师放弃等待小号，直接进入考场进入深蓝药剂流程，提高产出效率。
+	// 		if(!thisobj.isFull){
+	// 			thisobj.promote = {}
+	// 			socket.emit('exam',{promote : false, promoteCount : Object.keys(thisobj.promote).length})
+	// 		}else{//如果之前已经决定晋级（如小号超时掉线）而银行深蓝药剂已满，则通知药剂师一直等待小号加入才能参加考试
+	// 			socket.emit('exam',{promote : true, promoteCount : Object.keys(thisobj.promote).length})
+	// 		}
+	// 	}else{// 如果小号已经在队里，则通知药剂师需要带小号通过考试
+	// 		socket.emit('exam',{promote : true, promoteCount : Object.keys(thisobj.promote).length})
+	// 	}
+	// 	// 无论怎样，去魔法大学前都需要单人赶路
+	// 	cga.disbandTeam(cb)
+	// }, 10000);
+	return
+}
+
 // 仅客户端使用
 var exchangeItemForUnassessed = (name, cb)=>{
 	var stuffs = 
@@ -441,7 +683,11 @@ var exchangeItemForUnassessed = (name, cb)=>{
 				console.log('exchangeItemForUnassessed阶段，已经拿到所有深蓝');
 				//看看有没有蹭车晋级需求
 				cga.assessAllItems(()=>{
-					setTimeout(promote, 1000, cb);
+					if(Object.keys(thisobj.promote).length){
+						promote(cb)
+					}else{
+						cb(null)
+					}
 				});
 			}
 			else
@@ -488,7 +734,11 @@ var exchangeNPC = (name, cb)=>{
 						console.log('exchangeNPC阶段，已经拿到所有深蓝');
 						//看看有没有蹭车晋级需求
 						cga.assessAllItems(()=>{
-							setTimeout(promote, 1000, cb);
+							if(Object.keys(thisobj.promote).length){
+								promote(cb)
+							}else{
+								cb(null)
+							}
 						});
 					}
 				});
@@ -556,45 +806,87 @@ var check_drop = ()=>{
 
 // 仅客户端使用，带小号晋级
 var promote = (cb)=>{
-	console.log('开始判断是否需要带小号晋级...')
-	var index = cga.GetMapIndex().index3
-	var teamplayers = cga.getTeamPlayers();
-	
-	var disbandTeam = (cb)=>{
-		var isTeamLeader = teamplayers.length > 0 && teamplayers[0].is_me == true ? true : false;
-		if(isTeamLeader){
-			console.log('队长解散队伍')
-			cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
-		}
+	cga.waitForLocation({mapindex : 4421}, ()=>{
+		console.log('已到达合格房间')
 		setTimeout(cb, 1000);
+		return
+	});
+	
+	if(job == '鉴定师'){
+		cga.TurnTo(6, 7);
+		cga.AsyncWaitNPCDialog(dialogHandler);
 	}
 
-	// 如果在第一考场中，队伍人数大于2人，那么一定有除了药剂师和鉴定师之外的小号需要蹭车晋级
-	if(teamplayers.length > 2){
-		if(index == 4415){
-			cga.waitForLocation({mapindex : 4421}, ()=>{
-				console.log('已到达合格房间')
-				setTimeout(disbandTeam, 1000, cb);
-			});
-		}else if(index == 4421){
-			setTimeout(disbandTeam, 1000, cb);
-		}
+	// console.log('开始判断是否需要带小号晋级...')
+	// var index = cga.GetMapIndex().index3
+	// var teamplayers = cga.getTeamPlayers();
+	
+	// var disbandTeam = (cb)=>{
+	// 	var isTeamLeader = teamplayers.length > 0 && teamplayers[0].is_me == true ? true : false;
+	// 	if(isTeamLeader){
+	// 		console.log('队长解散队伍')
+	// 		cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+	// 	}
+	// 	setTimeout(cb, 1000);
+	// }
 
-		if(job == '鉴定师'){
-			cga.TurnTo(6, 7);
-			cga.AsyncWaitNPCDialog(dialogHandler);
-		}
-		return;
+	// // 如果在第一考场中，队伍人数大于2人，那么一定有除了药剂师和鉴定师之外的小号需要蹭车晋级
+	// if(teamplayers.length > 2){
+	// 	if(index == 4415){
+	// 		cga.waitForLocation({mapindex : 4421}, ()=>{
+	// 			console.log('已到达合格房间')
+	// 			setTimeout(disbandTeam, 1000, cb);
+	// 		});
+	// 	}else if(index == 4421){
+	// 		setTimeout(disbandTeam, 1000, cb);
+	// 	}
+
+	// 	if(job == '鉴定师'){
+	// 		cga.TurnTo(6, 7);
+	// 		cga.AsyncWaitNPCDialog(dialogHandler);
+	// 	}
+	// 	return;
+	// }else{
+	// 	console.log('没有晋级需求。')
+	// 	setTimeout(disbandTeam, 1000, cb);
+	// }
+}
+
+// 仅客户端使用
+var checkBank = (cb) => {
+	if(thisobj.isFull === null){
+		cga.travel.toBank(()=>{
+			var bankitem = cga.GetBankItemsInfo()
+			console.log('银行物品:【' + bankitem.length + '】个')
+			if(bankitem.length >= 20){
+				thisobj.isFull = true
+			}else{
+				thisobj.isFull = false
+			}
+			socket.emit('is_full', {isFull : thisobj.isFull})
+			setTimeout(cb, 1500);
+		})
 	}else{
-		console.log('没有晋级需求。')
-		setTimeout(disbandTeam, 1000, cb);
+		socket.emit('is_full', {isFull : thisobj.isFull})
+		setTimeout(cb, 1500);
 	}
+	return
 }
 
 var loop = ()=>{
 	// loop里的药剂师逻辑
 	if(job == '药剂师'){
 		callSubPluginsAsync('prepare', ()=>{
+			// 由于涉及到去魔法大学还是里谢里雅堡等待交易的问题，在鉴定师没确认库存之前，药剂师先休眠，节约传送费用。
+			if(thisobj.isFull === null){
+				console.log('等待鉴定师检查银行深蓝药剂库存...')
+				setTimeout(loop, 2000);
+				return
+			}else if(thisobj.isFull === true){
+				thisobj.centre = castlePosObj
+			}else if(thisobj.isFull === false){
+				thisobj.centre = universityPosObj
+			}
 		
 			var skill = cga.findPlayerSkill('制药');
 			
@@ -613,36 +905,33 @@ var loop = ()=>{
 			}
 
 			var mapindex = cga.GetMapIndex().index3;
-			
-			if(mapindex != 4410) {
-				var mainMapName = cga.travel.switchMainMap()
-
-				var go = ()=>{
-					cga.walkList([
-						[35, 45],
-					], loop);
-				}
-	
-				if(mainMapName == '魔法大学'){
-					cga.travel.autopilot('魔法大学内部',go)
-					return;
-				}else{
-					cga.travel.falan.toTeleRoom('魔法大学', ()=>{
-						cga.travel.autopilot('魔法大学内部',go)
-						return;
-					});
-				}
-				return
-			}else if(mapindex == 4410 && (cga.GetMapXY().x != 35 || cga.GetMapXY().y != 45)){
-				cga.walkList([
-					[35, 45],
-					], loop);
+			var XY = cga.GetMapXY();
+			// 如果成功进入晋级房间，则重置所有晋级小号信息
+			if(mapindex == 4421 && cga.getTeamPlayers().length){
+				thisobj.promote = {}
+				cga.disbandTeam(loop)
 				return
 			}
 	
 			var playerInfo = cga.GetPlayerInfo();
 			if(playerInfo.mp < craft_target.cost) {
-				cga.TurnTo(35, 47);
+				if(mapindex == 4410){
+					cga.walkList([
+						[35, 48]
+					], ()=>{
+							cga.turnDir(6)
+						}
+					);
+				}else if(mapindex == 1500){
+					cga.walkList([
+						[34, 89]
+					], ()=>{
+							cga.turnDir(7)
+						}
+					);
+				}else{
+					throw new Error('补蓝逻辑只有魔法大学和里谢里雅堡，请检查')
+				}
 				setTimeout(loop, 3000);
 				return;
 			}
@@ -651,16 +940,58 @@ var loop = ()=>{
 				healObject.func(loop);
 				return;
 			}
-	
-			//物品栏里的未交换或交换了但未鉴定的深蓝药剂超过3个
-			var inventory = cga.getInventoryItems();
-			var count = getExtractedItemCount(inventory);
-			if(count >= 3 && inventory.find((inv)=>{
-				return inv.itemid == 15630;
-			}) != undefined){
-				waitAssess(loop);
-				return;
+			// 检查完人物状态，才能继续下一步
+			if(mapindex != thisobj.centre.mapindex) {
+				goToCentre(loop)
+				return
 			}
+			if(XY.x != thisobj.centre.pos[0] || XY.y != thisobj.centre.pos[1]){
+				goToCentre(loop)
+				return
+			}
+
+			if(checkUnassessed()){
+				if(!thisobj.received){
+					io.sockets.emit('deepblue_ready')
+					console.log('鉴定师没收到ready信息...')
+					setTimeout(loop, 1000);
+				}
+				return
+			}
+			// 如果开始做药剂，则重置鉴定师是否已经收到deepblue_ready的状态
+			thisobj.received = false
+
+			// //物品栏里的未交换或交换了但未鉴定的深蓝药剂超过3个
+			// var inventory = cga.getInventoryItems();
+			// var count = getExtractedItemCount(inventory);
+			// if(count >= 3 && inventory.find((inv)=>{
+			// 	return inv.itemid == 15630;
+			// }) != undefined){
+			// 	if(Object.keys(io.sockets.sockets).length === 0){
+			// 		console.log('等待其他账号注册...')
+			// 		setTimeout(loop, 1000);
+			// 		return
+			// 	}
+			// 	var appraiser = null
+			// 	for(var i in io.sockets.sockets){
+			// 		if(io.sockets.sockets[i].cga_data && io.sockets.sockets[i].cga_data.job_name == '鉴定师'){
+			// 			appraiser = io.sockets.sockets[i].cga_data
+			// 			break
+			// 		}
+			// 	}
+			// 	if(!appraiser){
+			// 		console.log('等待鉴定师注册...')
+			// 		setTimeout(loop, 1000);
+			// 		return
+			// 	}
+			// 	if(appraiser.state != 'deepblue_ready'){
+			// 		console.log('等待鉴定师响应deepblue_ready...')
+			// 		io.sockets.emit('deepblue_ready');
+			// 		setTimeout(loop, 1000);
+			// 		return
+			// 	}
+			// 	return;
+			// }
 	
 			io.sockets.emit('init', {
 				craft_player : cga.GetPlayerInfo().name,
@@ -720,9 +1051,20 @@ var loop = ()=>{
 			craft();		
 		})
 	}else if(job == '鉴定师'){
-		thisobj.state = 'traveling';
-		socket.emit('traveling');
+		// 极端情况下，药剂师通过socket.emit通知鉴定师状态更改为deepblue_ready，刚好鉴定师loop运行，就会将deepblue_ready覆盖掉，这里做一下处理
+		if(thisobj.state != 'deepblue_ready'){
+			console.log('loop开始，thisobj != deepblue_ready，将其置为waiting')
+			thisobj.state = 'waiting';
+			socket.emit('waiting');
+		}
 
+		// 执行loop时，首先清空晋级小号信息
+		console.log('清空晋级小号信息...')
+		console.log('isFull : ' + thisobj.isFull)
+		// 关闭队聊
+		cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, false);
+		thisobj.promote = {}
+		
 		// 身上的鉴定药剂存银行，主要因为身上不能有鉴定好的深蓝药剂，因为要和NPC交换未鉴定的药剂。
 		var inventory = cga.getInventoryItems();
 		var found_assessed = inventory.find((inv)=>{
@@ -745,6 +1087,7 @@ var loop = ()=>{
 							}, 3, (err)=>{
 								if(err && err.message.indexOf('没有空位') != -1){
 									thisobj.isFull = true
+									socket.emit('is_full', {isFull : true})
 								}
 								setTimeout(loop, 1000);
 							});
@@ -787,7 +1130,7 @@ var loop = ()=>{
 		var playerInfo = cga.GetPlayerInfo();
 		if(playerInfo.hp < playerInfo.maxhp || playerInfo.mp < playerInfo.maxmp) {
 			if(cga.travel.switchMainMap() == '魔法大学'){
-				cga.travel.toHospital(false, loop)
+				cga.travel.toHospital(loop)
 			}else{
 				cga.travel.falan.toCastleHospital(()=>{
 					setTimeout(loop, 3000);
@@ -814,27 +1157,41 @@ var loop = ()=>{
 		}
 
 		callSubPluginsAsync('prepare', ()=>{
-
-			var mainMapName = cga.travel.switchMainMap()
-
-			var go = ()=>{
+			cga.travel.falan.toStone('C', (r)=>{
 				cga.walkList([
-					[34, 45],
+					waitingPos,
 				], ()=>{
-					thisobj.state = 'ready_addteam';
-					socket.emit('ready_addteam');
-				});
-			}
+					console.log('等待服务端通知去魔法大学，并开启小号暗号监听')
+					// 开启队聊
+					cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, true);
+					// 鉴定师监听小号所说的暗号
+					cga.waitTeammateSay((player, msg)=>{
+						console.log('监听中.....')
+						// 如果发现有小号，则开启小号蹭车模式。由于需要登记数量，所以只能一直开启监听。
+						if(player.index > 0 && player.index < 5 && msg.indexOf(cipher) != -1){
+							thisobj.promote[player.name] = true
+							console.log('小号【' + player.name + '】已报名需要晋级')
+						}
+						// 收到药剂师的信号去魔法大学时，关闭本次监听
+						if(thisobj.state == 'traveling'){
+							console.log('出发去魔法大学，关闭小号监听')
+							return false
+						}
+						return true;
+					});
 
-			if(mainMapName == '魔法大学'){
-				cga.travel.autopilot('魔法大学内部',go)
-				return;
-			}else{
-				cga.travel.falan.toTeleRoom('魔法大学', ()=>{
-					cga.travel.autopilot('魔法大学内部',go)
-					return;
+					// 进入等待药剂师以及检查队伍逻辑，通过后再继续下一步
+					checkTeamAndGo(()=>{
+						// 如果满足检查条件，则发送状态，并出发
+						thisobj.state = 'traveling'
+						socket.emit('traveling');
+						goExam(()=>{
+							thisobj.state = 'ready_addteam';
+							socket.emit('ready_addteam');
+						})
+					})
 				});
-			}
+			});
 		});
 	}else if(job == '猎人' || job == '樵夫'){
 		// 没有需求则进入休眠状态
@@ -877,8 +1234,9 @@ var loop = ()=>{
 			return;
 		}
 
+		// 改为询问服务端交易地点在哪，并将donemanager移至socket中调用
 		if(thisobj.check_done()){
-			thisobj.doneManager(loop)
+			socket.emit('trade_centre')
 			return
 		}
 		console.log('你是【' + job + '】，要去打【' + thisobj.workingItem +'】材料')
@@ -979,7 +1337,63 @@ var loop = ()=>{
 			}
 		});
 	}else{// 蹭车3转的小号逻辑
-		callSubPluginsAsync('prepare', ()=>{
+		var index = cga.GetMapIndex().index3;
+		var teamplayers = cga.getTeamPlayers();
+
+		var retry = (cb)=>{
+			var teamplayers = cga.getTeamPlayers();
+			var finder = cga.findPlayerUnit((u)=>{
+				// 检测移动银行是否是目标，方法暂时使用名称fliter+坐标
+				for (var filter in namefilters){
+					if(u.unit_name.indexOf(namefilters[filter]) == 0 && u.xpos == waitingPos[0] && u.ypos == waitingPos[1]){
+						console.log('发现班车:'+ u.unit_name)
+						return true;
+					}
+				}
+				return false
+			});
+			if(finder && !teamplayers.length){
+				var target = cga.getRandomSpace(finder.xpos,finder.ypos);
+				cga.walkList([
+					target
+				], ()=>{
+					cga.addTeammate(finder.unit_name, (r)=>{
+						// 开启队聊，防止干扰其他玩家
+						cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, true);
+						// 监听队长暗号
+						cga.waitTeammateSay((player, msg)=>{
+							console.log('调用cga.waitTeammateSay监听...')
+							// 如果收到暗号，等待解散队伍并执行下一步，同时关闭监听
+							if(player.index == 0 && msg.indexOf(cipherAnswer) != -1){
+								// 通过回答暗号的人的昵称，来得知去魔法大学谁是队长。因为小号不参与socket
+								thisobj.leaderName = player.nick
+								// 记录完队长名称再重新进入循环
+								setTimeout(loop, 1000);
+								console.log('关闭监听...')
+								return false
+							}
+							return true;
+						});
+						// 随机延迟发话，防止多个小号同时说话造成统计疏漏
+						var randomtime = Math.ceil(Math.random()*3000) + Math.ceil(Math.random()*1000)
+						setTimeout(()=>{
+							cga.SayWords(cipher, 0, 3, 1);
+						}, randomtime);
+						return
+					})
+				});
+			} else {
+				setTimeout(retry, 1500,cb);
+			}
+		}
+
+		if(teamplayers.length){
+			if(index == 4421){
+				console.log('成功抵达合格房间，等待解散')
+			}
+			cga.disbandTeam(loop)
+			return
+		}else{
 			/**
 			 * 走到10,10处和11,10的NPC对话，对话一次即可，无需第二次对话
 			 * 第1次对话：
@@ -990,7 +1404,7 @@ var loop = ()=>{
 				npc_id: 7858,
 				message: '\n\n恭喜你通过测验。你已经得到了入仕王宫的资格。但是未来还是要多努力一点喔！\n学习是永无止境的，共勉之。'
 				}
-			 * 第2次对话：
+			* 第2次对话：
 				{
 				type: 0,
 				options: 1,
@@ -998,87 +1412,74 @@ var loop = ()=>{
 				npc_id: 7858,
 				message: '\n\n你已经得到了必要的资格。\n回到担任你职业的公会会长那边升阶吧！'
 				}
-			 */
-			var waitSuccessRoom = (cb)=>{
-				var index = cga.GetMapIndex().index3;
-				if (index == 4421){
-					console.log('成功抵达合格房间')
-					cga.walkList([
-						[10, 10],
-					], ()=>{
-						cga.TurnTo(11, 10);
-						cga.AsyncWaitNPCDialog(dialogHandler);
-					});
-					return
+			* 声望不够：
+				{
+				type: 0,
+				options: 1,
+				dialog_id: 326,
+				npc_id: 8179,
+				message: '\n\n嗯？你好像没有满足升阶的条件。'
 				}
-				if(cga.getTeamPlayers().length == 0){
-					console.log('队伍已解散，可能有队友已掉线')
-					loop()
-					return;
-				}
-				setTimeout(waitSuccessRoom, 1000, cb);
+			*/
+			console.log('小号loop...')
+			console.log('thisobj.leaderName : ' + thisobj.leaderName)
+
+			var waitAddTeam = ()=>{
+				cga.addTeammate(thisobj.leaderName, (r)=>{
+					// 必须加入队伍，才能继续逻辑
+					if(r){
+						thisobj.leaderName = null
+						cga.disbandTeam(loop)
+						return;
+					}
+					setTimeout(waitAddTeam, 1000);
+				});
 			}
 
-			var leaveteam = (cb)=>{
-				if(cga.getTeamPlayers().length){
-					cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
-					setTimeout(leaveteam, 1000, cb);
-				}else{
-					setTimeout(leaveteam, 1000, cb);	
-				}
-				return;
-			}
-
-			var playerInfo = cga.GetPlayerInfo();
-			if(playerInfo.hp < playerInfo.maxhp) {
-				if(cga.travel.switchMainMap() == '魔法大学'){
-					cga.travel.toHospital(false, loop)
-				}else{
-					cga.travel.falan.toCastleHospital(()=>{
-						setTimeout(loop, 3000);
-					});
-				}
-				return;
-			}
-
-			var go = (cb)=>{
+			if(index == 4421){
 				cga.walkList([
-					[34, 45],
-				], ()=>{			
-					cga.addTeammate(serverPlayerName, (r)=>{
-						if(r){
-							waitSuccessRoom(cb)
-							return;
-						}
-						setTimeout(go, 1000, cb);
+					[10, 10],
+				], ()=>{
+					cga.TurnTo(11, 10);
+					cga.AsyncWaitNPCDialog(dialogHandler);
+				});
+				return
+			}
+			if(index == 1500 && thisobj.leaderName){
+				goExam(waitAddTeam)
+				return
+			}
+			callSubPluginsAsync('prepare', ()=>{
+				// 治疗和招魂完毕再进行下一步逻辑
+				healMode.func(()=>{
+					cga.travel.falan.toStone('C', (r)=>{
+						cga.walkList([
+							memberPos
+						], ()=>{
+							retry(loop)
+						});
 					});
-				});
-			}
-			
-			var mainMapName = cga.travel.switchMainMap()
-
-			if(mainMapName == '魔法大学'){
-				cga.travel.autopilot('魔法大学内部',()=>{
-					go(loop)
 				})
-			}else{
-				cga.travel.falan.toTeleRoom('魔法大学', ()=>{
-					cga.travel.autopilot('魔法大学内部',()=>{
-						go(loop)
-					})
-				});
-			}
-		});
+			})
+		}
 	}
 }
 
 var thisobj = {
-	// 客户端状态，鉴定初始化traveling，采集初始化gathering
-	state : job == '鉴定师' ? 'traveling' : 'gathering',
+	// 晋级小号信息
+	promote : {},
+	// 客户端仓库是否已存满3转物品（深蓝药剂或其他3转物品）
+	isFull : false,
+	// 客户端状态，鉴定初始化waiting，采集初始化gathering
+	state : job == '鉴定师' ? 'waiting' : 'gathering',
 	// 客户端采集者用
 	gatherInfo : {},
 	// 客户端采集者用，正在采集的物品名称
 	workingItem : null,
+	// 集散地信息，方便灵活切换。默认在魔法大学内部
+	centre : null,
+	// 小号专用，用来保存魔法大学带队者名称，因为小号不参与socket
+	leaderName : null,
 	getDangerLevel : ()=>{
 		return 0;
 	},
@@ -1164,37 +1565,37 @@ var thisobj = {
 			setTimeout(repeat, 1500);
 		}
 		var mainMapName = cga.travel.switchMainMap()
-		if(mainMapName == '魔法大学')
+		if(mainMapName == thisobj.centre.mainmap)
 		{
-			cga.travel.autopilot('魔法大学内部',() => {
+			cga.travel.autopilot(thisobj.centre.mapindex,() => {
 				cga.walkList([
-					workerPos,
+					thisobj.centre.pos,
 					], ()=>{
-						cga.turnDir(workerTurnDir);
+						cga.turnDir(thisobj.centre.dir);
 						setTimeout(repeat, 1000);
 					});
 			})
 
-		}
-		else
-		{
-			cga.travel.falan.toTeleRoom('魔法大学', ()=>{
-				cga.travel.autopilot('魔法大学内部',() => {
-					cga.walkList([
-						workerPos,
-						], ()=>{
-							cga.turnDir(workerTurnDir);
-							setTimeout(repeat, 1000);
-						});
-				})
-			});
+		}else{
+			if(thisobj.centre.mainmap == '魔法大学'){
+				cga.travel.falan.toTeleRoom('魔法大学', ()=>{
+					thisobj.doneManager(cb)
+				});
+			}else if(thisobj.centre.mainmap == '法兰城'){
+				cga.travel.falan.toStone('C', (r)=>{
+					thisobj.doneManager(cb)
+				});
+			}else{
+				throw new Error('异常集散点，请检查')
+			}
+
 		}
 	},
 	// 客户端用
 	extra_dropping : (item)=>{
 		if(item.name == '腐烂的树枝'){
 			return true
-		}else if(item.itemid == 18526 && item.count < 3){
+		}else if(item.itemid == 18526 && item.count < 3){// 鉴定师逻辑，在银行已满的情况下，丢弃背包中不成一组的深蓝药剂。
 			return true
 		}
 		return false;
@@ -1344,9 +1745,13 @@ var thisobj = {
 		Async.series([stage3, healObject.inputcb], cb);
 	},
 	execute : ()=>{
-		// 药剂师为服务端
+		// 通用，都需要先初始化
+		callSubPlugins('init');
+
+		// 服务端逻辑，暂时只支持药剂师一种职业。
 		if (job == '药剂师'){
 			io.listen(thisobj.listenPort);
+			loop()
 		}else{// 其余职业为客户端
 			socket = require('socket.io-client')('http://localhost:'+thisobj.serverPort, { reconnection: true });
 
@@ -1356,13 +1761,14 @@ var thisobj = {
 					state : thisobj.state,
 					player_name : cga.GetPlayerInfo().name,
 					job_name : job,
+					is_full : thisobj.isFull
 				});
 			});
 			
 			socket.on('init', (data)=>{
 				thisobj.craft_player = data.craft_player;
 				thisobj.craft_materials = data.craft_materials;
-				if(job == '猎人' || '樵夫'){
+				if(job == '猎人' || job == '樵夫'){
 					data.craft_materials.forEach((m)=>{
 						if( m.name == '湿地毒蛇' && job == '猎人')
 							thisobj.gatherInfo[m.name] = m.count * MATERIALS_MULTIPLE_TIMES;
@@ -1374,10 +1780,15 @@ var thisobj = {
 							thisobj.gatherInfo[m.name] = m.count * MATERIALS_MULTIPLE_TIMES;
 					});
 				}
+				// 用修改昵称的方式来告知晋级小号，魔法大学队长是谁。
+				// 因为小号可能为多台机器运行，不参加服务端的socket，无法传递信息。
+				else if(job == '鉴定师'){
+					cga.ChangeNickName(thisobj.craft_player)
+				}
 			});
 
 			// 采集员的交易socket逻辑
-			if(job == '猎人' || '樵夫'){
+			if(job == '猎人' || job == '樵夫'){
 				socket.on('trade', ()=>{
 
 					thisobj.state = 'trading';
@@ -1414,9 +1825,26 @@ var thisobj = {
 						//cga.EnableFlags(cga.ENABLE_FLAG_TRADE, false);
 					}
 				});
+
+				// 小号接收到交易地点后，调用doneManager
+				socket.on('cur_centre', (data)=>{
+					thisobj.centre = data.centre
+					thisobj.centre.pos = cga.getStaticOrientationPosition(thisobj.centre.pos, thisobj.centre.dir, 1)
+					thisobj.centre.dir = cga.tradeDir(thisobj.centre.dir)
+					thisobj.doneManager(loop)
+				});
+				// 首次调用loop
+				loop()
 			}
 
 			if(job == '鉴定师'){
+				// 服务端通知客户端已备好药剂
+				socket.on('deepblue_ready', () => {
+					console.log('deepblue_ready');
+					thisobj.state = 'deepblue_ready'
+					socket.emit('received');
+				});
+
 				socket.on('exchange', ()=>{
 					thisobj.state = 'exchange';
 					console.log('进入交易阶段');
@@ -1429,6 +1857,14 @@ var thisobj = {
 						addTeam(loop);
 					}
 				});
+				// 鉴定师最初需要先检查银行，再进行loop
+				checkBank(loop)
+			}
+			if(job == '小号'){
+				// 开启队聊
+				cga.EnableFlags(cga.ENABLE_FLAG_TEAMCHAT, true);
+				// 首次调用loop
+				loop()
 			}
 	
 			socket.on('disconnect', ()=>{
@@ -1436,9 +1872,8 @@ var thisobj = {
 			});
 					
 		}
-		callSubPlugins('init');
 		configMode.manualLoad('生产赶路')
-		loop();
+		// loop改为不在execute()中执行，因为鉴定师一开始需要去检查银行
 	},
 };
 

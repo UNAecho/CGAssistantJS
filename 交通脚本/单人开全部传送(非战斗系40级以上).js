@@ -160,7 +160,7 @@ var cga = require('../cgaapi')(function(){
 			var villageName = cga.travel.switchMainMap()
 			if(villageName == '维诺亚村'){
 				if(cga.needSupplyInitial({  })){
-					cga.travel.toHospital(false,()=>{
+					cga.travel.toHospital(()=>{
 						setTimeout(()=>{
 							cb2('restart stage');
 						}, 3000);
@@ -217,7 +217,7 @@ var cga = require('../cgaapi')(function(){
 			var villageName = cga.travel.switchMainMap()
 			if(villageName == '奇利村'){
 				if(cga.needSupplyInitial({  })){
-					cga.travel.toHospital(false,()=>{
+					cga.travel.toHospital(()=>{
 						setTimeout(()=>{
 							cb2('restart stage');
 						}, 3000);
@@ -345,7 +345,7 @@ var cga = require('../cgaapi')(function(){
 				var villageName = cga.travel.switchMainMap()
 				if(villageName == '杰诺瓦镇'){
 					if(cga.needSupplyInitial({  })){
-						cga.travel.toHospital(false,()=>{
+						cga.travel.toHospital(()=>{
 							setTimeout(()=>{
 								cb2('restart stage');
 							}, 3000);
@@ -380,7 +380,7 @@ var cga = require('../cgaapi')(function(){
 			var villageName = cga.travel.switchMainMap()
 			if(villageName == '杰诺瓦镇'){
 				if(cga.needSupplyInitial({  })){
-					cga.travel.toHospital(false,()=>{
+					cga.travel.toHospital(()=>{
 						setTimeout(()=>{
 							cb2('restart stage');
 						}, 3000);

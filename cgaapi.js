@@ -612,6 +612,14 @@ module.exports = function(callback){
 			result = '索奇亚奇利域'
 		}else if(mapindex == 300 && XY.x >= 379){// 索奇亚地图比较规则，大于379都是洪恩大风洞的右侧
 			result = '索奇亚加纳域'
+		}
+		// 莎莲娜岛西边区域，以【通往阿巴尼斯的地下道为界限】，包括：阿巴尼斯和魔法大学的郊外。
+		else if(mapindex == 402){
+			result = '莎莲娜魔法大学域'
+		}
+		// 莎莲娜岛西边区域，以【通往阿巴尼斯的地下道为界限】，包括：杰诺瓦镇、蒂娜村、神兽入口等郊外区域。
+		else if(mapindex == 400){
+			result = '莎莲娜杰诺瓦域'
 		}else if(mapindex == 59520 || (mapindex >= 59530 && mapindex <= 59537)){
 			result = '艾尔莎岛'
 		}else if(mapindex >= 59521 || mapindex < 60000){
@@ -3927,7 +3935,7 @@ module.exports = function(callback){
 		return
 	}
 	// UNA:添加全域自动导航至医院补给。isPro为true是去资深护士处补给，否则是普通护士补给
-	cga.travel.toHospital = (isPro,cb)=>{
+	cga.travel.toHospital = (cb, isPro = false)=>{
 		// 不需要补血则跳过
 		if(!cga.needSupplyInitial({  })){
 			cga.travel.autopilot('主地图',()=>{
@@ -3940,6 +3948,24 @@ module.exports = function(callback){
 		var mapindex = cga.GetMapIndex().index3
 		// 获取当前主地图名称
 		var villageName = cga.travel.switchMainMap()
+		// 法兰城直接在里谢里雅堡回补，效率高
+		if(villageName == '法兰城'){
+			cga.travel.falan.toStone('C', (r)=>{
+				cga.walkList([
+					[34, 89]
+				], ()=>{
+						cga.turnDir(7)
+						setTimeout(() => {
+							cga.travel.autopilot('主地图',()=>{
+								if (cb) cb(null)
+							})
+						}, 5000);
+						return
+					}
+				);
+			});
+			return
+		}
 		// 所有医院的cga.GetMapIndex().index3集合
 		const hospitalList = [
 			1111,
@@ -3960,7 +3986,7 @@ module.exports = function(callback){
 		] 
 		if (hospitalList.indexOf(mapindex) == -1){
 			cga.travel.autopilot('医院',()=>{
-				cga.travel.toHospital(isPro,cb)
+				cga.travel.toHospital(cb, isPro)
 			})
 			return
 		}
@@ -4034,20 +4060,20 @@ module.exports = function(callback){
 		// 魔法大学没有传送石，直接转为回补模式
 		if(villageName == '魔法大学'){
 			console.log('魔法大学没有传送点，跳过开启传送阶段。')
-			cga.travel.toHospital(isPro,()=>{
+			cga.travel.toHospital(()=>{
 				if (cb) cb(null)
 				return
-			})
+			}, isPro)
 			return
 		}
 		
 		// 如果已经开启过传送，则直接补给并结束函数
 		if(config[villageName]){
 			console.log('你已开启过【'+villageName+'】传送石，跳过开启传送阶段。')
-			cga.travel.toHospital(isPro,()=>{
+			cga.travel.toHospital(()=>{
 				if (cb) cb(null)
 				return
-			})
+			}, isPro)
 			return
 		}
 		// 如果没开启过传送，则去开启并记录状态。
@@ -4064,10 +4090,10 @@ module.exports = function(callback){
 								cga.savePlayerConfig(config, ()=>{
 									console.log('【'+villageName+'】传送石已开启，离线信息已记录完毕')
 									// 记录之后去补给
-									cga.travel.toHospital(isPro,()=>{
+									cga.travel.toHospital(()=>{
 										if (cb) cb(null)
 										return
-									})
+									}, isPro)
 								});
 							}, 1000);
 						}
@@ -4080,7 +4106,7 @@ module.exports = function(callback){
 
 	// 
 	/**
-	 * UNAecho:添加全域自动导航至银行，与柜员对话。
+	 * UNAecho:添加全域自动导航至银行，与柜员对话。// TODO 逻辑不完善，需要仿照cga.travel.tohospital的逻辑
 	 * @param {*} cb 打开银行界面后的回调函数，需要自定义传入
 	 * @returns 
 	 */
@@ -4127,9 +4153,9 @@ module.exports = function(callback){
 		cga.walkList(
 			tmplist, ()=>{
 				cga.turnDir(tmpTurnDir)
-				setTimeout(() => {
-					if (cb) cb(null)
-				}, 1500);
+				cga.AsyncWaitNPCDialog(()=>{
+					if(cb) cb(null)
+				});
 				return
 			}
 		);
@@ -7363,7 +7389,23 @@ module.exports = function(callback){
 		
 		walk();
 	}
-	
+
+	// UNAecho:通用离队逻辑，队长主动解散队伍，队员被动等待队伍解散。
+	// 循环上述逻辑，直至不在队伍中，执行callback
+	cga.disbandTeam = (cb) => {
+		var teamplayers = cga.getTeamPlayers()
+		if(!teamplayers.length){
+			setTimeout(cb, 1000);
+			return
+		}
+		var isTeamLeader = teamplayers.length > 0 && teamplayers[0].is_me == true ? true : false;
+		if(isTeamLeader){
+			cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+		}
+		
+		setTimeout(cga.disbandTeam, 1000, cb);
+	}
+
 	//监听自己聊天输入（只支持数字）
 	cga.waitForChatInput = (cb)=>{
 		cga.waitTeammateSay((player, msg)=>{
@@ -9059,6 +9101,79 @@ module.exports = function(callback){
             return stages[3];
         }
     }
+
+	// UNAecho:添加关于职业信息的API
+	cga.job = {}
+
+	// 获取本地职业数据。
+	cga.job.loadJobData = () => {
+		const getprofessionalInfos = require('./常用数据/ProfessionalInfo.js');
+		return getprofessionalInfos
+	}
+
+	// 获取本地职业声望数据。
+	cga.job.loadReputationData = () => {
+		const reputationInfos = require('./常用数据/reputation.js');
+		return reputationInfos
+	}
+
+	cga.job.getJob = () =>{
+		var jobObj = null
+		var data = cga.job.loadJobData().Professions
+		var playerInfo = cga.GetPlayerInfo()
+
+		for (var i in data){
+			for(var j in data[i].titles){
+				if(playerInfo.job == data[i].titles[j]){
+					jobObj = data[i]
+					jobObj.job = data[i].jobmainname
+					jobObj.jobLv = j
+					jobObj.curJob = playerInfo.job
+					break
+				}
+			}
+		}
+		if(!jobObj){
+			throw new Error('错误，职业数据库中暂无职业信息，请添加')
+		}
+
+		var reputationData = cga.job.loadReputationData()
+		var category = jobObj.category
+		var titles = playerInfo.titles
+		if(category == '物理系' || category == '魔法系' || category == '魔物系' ){
+			reputationData = reputationData.reputationList
+			for (let i = 0; i < 15; i++) {
+				for(var t in titles){
+					if(titles[t].length == 0){
+						continue
+					}
+					if(titles[t] == reputationData[i].reputation){
+						jobObj.jobType = '战斗系'
+						jobObj.reputation = titles[t]
+						jobObj.reputationLv = i
+						break
+					}
+				}
+			}
+		}else{
+			reputationData = reputationData.productReputationList
+			for (let i = 0; i < 15; i++) {
+				for(var t in titles){
+					if(titles[t].length == 0){
+						continue
+					}
+					if(titles[t] == reputationData[i].reputation){
+						jobObj.jobType = '生产系'
+						jobObj.reputation = titles[t]
+						jobObj.reputationLv = i
+						break
+					}
+				}
+			}
+		}
+
+		return jobObj
+	}
 
 	return cga;
 }

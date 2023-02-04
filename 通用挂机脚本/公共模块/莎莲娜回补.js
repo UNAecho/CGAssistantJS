@@ -7,7 +7,7 @@ module.exports = {
 		console.log('莎莲娜回补模块开始...')
 		// TODO 默认非资深回补，需要添加资深回补逻辑
 		if(module.exports.isInVillage()){
-			cga.travel.toHospital(false,cb)
+			cga.travel.toHospital(cb)
 			return
 		}
 		// 杰诺瓦各村口的入口

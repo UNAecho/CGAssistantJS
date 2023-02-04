@@ -146,11 +146,18 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			var item = 18321
 			checkItem(item, cb2)
 
-			cga.travel.toVillage(villageName, ()=>{
-				cga.travel.autopilot(NPCroom,()=>{
-					askNPCForItem(NPCpos)
+			cga.travel.falan.toStone('C', () => {
+				cga.travel.toHospital(()=>{
+					cga.walkList([
+						[281, 88,'芙蕾雅'],
+						[681, 343, '伊尔村'],
+					], ()=>{
+						cga.travel.autopilot(NPCroom,()=>{
+							askNPCForItem(NPCpos)
+						})
+					})
 				})
-			})
+			});
 			return
 		}
 	},
@@ -163,11 +170,18 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			var item = 18322
 			checkItem(item, cb2)
 
-			cga.travel.toVillage(villageName, ()=>{
-				cga.travel.autopilot(NPCroom,()=>{
-					askNPCForItem(NPCpos)
+			cga.travel.falan.toStone('C', () => {
+				cga.travel.toHospital(()=>{
+					cga.walkList([
+						[22, 88,'芙蕾雅'],
+						[134, 218, '圣拉鲁卡村'],
+					], ()=>{
+						cga.travel.autopilot(NPCroom,()=>{
+							askNPCForItem(NPCpos)
+						})
+					})
 				})
-			})
+			});
 			return
 		}
 	},
@@ -179,11 +193,39 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			var NPCpos = [11, 6]
 			var item = 18322
 
-			cga.travel.toVillage(villageName, ()=>{
-				cga.travel.autopilot(NPCroom,()=>{
-					giveNPCItem(item, NPCpos, cb2)
+			cga.travel.falan.toStone('C', () => {
+				cga.travel.toHospital(()=>{
+					if(cga.GetPlayerInfo().level < 20){
+						throw new Error('过维诺亚村洞穴需要至少20级，或制造系携带3级物品通过')
+					}
+					cga.walkList([
+						//南门
+						[153, 241, '芙蕾雅'],
+						[473, 316],
+					], ()=>{
+						cga.TurnTo(472, 316);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(4, -1);
+							cga.AsyncWaitMovement({map:'维诺亚洞穴 地下1楼', delay:1000, timeout:5000}, (err)=>{
+								if(err){
+									console.error('出错，请检查..')
+									return;
+								}
+								cga.walkList([
+									[20,59,'维诺亚洞穴 地下2楼'],
+									[24,81,'维诺亚洞穴 地下3楼'],
+									[26,64,'芙蕾雅'],
+									[330,480,'维诺亚村'],
+									], ()=>{
+										cga.travel.autopilot(NPCroom,()=>{
+											giveNPCItem(item, NPCpos, cb2)
+										})
+										});
+								});
+							});
+					})
 				})
-			})
+			});
 			return
 		}
 	},
