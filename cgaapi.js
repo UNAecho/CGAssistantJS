@@ -4106,29 +4106,26 @@ module.exports = function(callback){
 
 	// 
 	/**
-	 * UNAecho:添加全域自动导航至银行，与柜员对话。// TODO 逻辑不完善，需要仿照cga.travel.tohospital的逻辑
+	 * UNAecho:添加全域自动导航至银行，与柜员对话。// TODO 完善哥拉尔和阿凯鲁法银行
 	 * @param {*} cb 打开银行界面后的回调函数，需要自定义传入
 	 * @returns 
 	 */
 	cga.travel.toBank = (cb)=>{
-		// 当前地图信息
-		var mapindex = cga.GetMapIndex().index3
-		// 获取当前主地图名称
-		var villageName = cga.travel.switchMainMap()
 
-		if (cga.GetMapName().indexOf('银行') == -1){
-			var goToBank = ()=>{
-				cga.travel.autopilot('银行',()=>{
-					cga.travel.toBank(cb)
-				})
-				return
-			}
-			try {
-				goToBank()
-			} catch (error) {
-				console.log('错误，当前地图没有银行，登出后重试')
-				cga.logBack(goToBank)
-			}
+		// 所有银行的cga.GetMapIndex().index3集合
+		const bankList = [
+			// 法兰城
+			1121,
+			// 哥拉尔
+			43125,
+			// 艾尔莎岛
+			59548,
+			// TODO 阿凯鲁法
+		] 
+		if (bankList.indexOf(mapindex) == -1){
+			cga.travel.autopilot('银行',()=>{
+				cga.travel.toBank(cb)
+			})
 			return
 		}
 		var tmplist = []
@@ -4137,11 +4134,11 @@ module.exports = function(callback){
 		if(villageName == '法兰城'){
 			tmplist.push([11, 8])
 			tmpTurnDir = 0
-		}else if(villageName == '艾尔莎岛' || villageName == '艾夏岛'){
-			tmplist.push([49, 25])
-			tmpTurnDir = 0
 		}else if(villageName == '哥拉尔镇'){
 			tmplist.push([25, 10])
+			tmpTurnDir = 0
+		}else if(villageName == '艾尔莎岛'){
+			tmplist.push([49, 25])
 			tmpTurnDir = 0
 		}else if(villageName == '阿凯鲁法村'){
 			tmplist.push([20, 17])
@@ -4153,8 +4150,12 @@ module.exports = function(callback){
 		cga.walkList(
 			tmplist, ()=>{
 				cga.turnDir(tmpTurnDir)
-				cga.AsyncWaitNPCDialog(()=>{
-					if(cb) cb(null)
+				cga.AsyncWaitNPCDialog((err, dlg)=>{
+					if(err && err.message.indexOf('timeout') > 0){
+						cb(new Error('读取银行超时，请检查网络'))
+					}else{
+						cb(null)
+					}
 				});
 				return
 			}

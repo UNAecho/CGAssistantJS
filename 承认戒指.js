@@ -1,53 +1,87 @@
+/**
+ * TODOlist
+ * 大号扔多余的承认戒指和神之金
+ * 战斗配置里，练级选项第一个逃跑容易出现20级以下练不了级的情况，一直逃跑
+ * 手动BOSS分为高速战斗和不高速战斗2个版本
+ * 打手需要自动攻击，打最低级的怪
+ * BOSS处重新组队，传教队长，2个打手分别是2、3号位。小号最后加入，方便大号W站位和放强力回复魔法
+ * 如果可以，做一个自动W站位和收宠的模式
+ * 有时候第三步无法结束，导致boss那里没有读取战斗配置。通常发生在队伍第3个人身上（3.前往辛希亚探索指挥部（55.47），通过楼梯下楼抵达辛希亚探索指挥部。5.与教团骑士克罗米（40.22）对话，交出【团长的证明】并通过栅栏，通过黄色传送石（44.22）抵达废墟。）
+ * 小号进入遗迹的时候改为BOSS防御
+ * 神之金:#35256@29
+ * 怪物碎片#720311@26
+ *  */ 
+
 var fs = require('fs');
 var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
-	
-	// 提取本地职业数据
-	const getprofessionalInfos = require('./常用数据/ProfessionalInfo.js');
-	var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
+	global.cga = cga
+	var rootdir = cga.getrootdir()
 
+	var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
 	var playerinfo = cga.GetPlayerInfo();
 	
-	// 不使用动态组队，避免脚本运行时需要手动组队的麻烦
-	var teammates = [
-		"UNAの传教士2",
-		"UNAの格斗2",
-		"UNAの制头盔",
-		"UNAの矿工4",
-		"UNAの矿工5",
-	];
-	
-	// 本次任务自由组队人数
-	var maxteammate = 5
+	// 可以填写多个队伍，人物自动识别
+	var teammates = null
+	var teams = [
+		[
+			"UNAの传教士",
+			"UNAの格斗2",
+			"UNAの格斗3",
+			"UNAの造袍",
+			"UNAの裁缝",
+		],[
+			"UNAの传教士2",
+			"UNAの格斗01",
+			"UNAの格斗02",
+			"UNAの造斧",
+			"UNAの制鞋",
+		]
+	]
 
-	// var teamplayers = cga.getTeamPlayers();
-
-	// for(var i in teamplayers)
-	// 	teammates[i] = teamplayers[i].name;
-	
+	for(var i in teams){
+		if(teammates){
+			break
+		}
+		for(var j in teams[i]){
+			if(playerinfo.name == teams[i][j]){
+				teammates = teams[i]
+				break
+			}
+		}
+	}
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
 
 	var loadBattleConfig = ()=>{
-
-		var settingpath = cga.getrootdir() + '\\战斗配置\\'
-		// 因为传教士可能还有正在刷声望的小号，这样可以区分是保姆还是小号
-		if (professionalInfo.jobmainname == '传教士'){
-			settingpath = settingpath + 'BOSS传教.json'
-		}else if(professionalInfo.jobmainname == '格斗士'){
-			settingpath = settingpath + '格斗练级.json'
-		}else{
-			settingpath = settingpath + '营地组队普攻刷声望.json'
-		}
-	
-		var setting = JSON.parse(fs.readFileSync(settingpath))
-	
-		cga.gui.LoadSettings(setting, (err, result)=>{
-			if(err){
-				console.log(err);
-				return;
+		var index = cga.GetMapIndex().index3
+		var jobObj = cga.job.getJob()
+		var filename = null
+		
+		if(jobObj.job == '传教士'){
+			if(index == 44707){
+				filename = '手动BOSS'
+			}else if(index == 27101){
+				filename = 'BOSS传教'
 			}else{
-				console.log('读取战斗配置【'+settingpath+'】成功')
+				filename = '生产赶路'
 			}
-		})
+		}else if(jobObj.job == '格斗士'){
+			if(index == 44707){
+				filename = '手动BOSS'
+			}else if(index == 27101){
+				filename = '格斗士练级'
+			}else{
+				filename = '生产赶路'
+			}
+		}else{
+			if(index == 44707){
+				filename = 'BOSS防御'
+			}else if(index == 27101){
+				filename = 'BOSS防御'
+			}else{
+				filename = '生产赶路'
+			}
+		}
+		configMode.manualLoad(filename)
 		return
 	}
 
@@ -138,7 +172,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		}
 	},
 	{//2
-		intro: '3.前往辛希亚探索指挥部（55.47），通过楼梯下楼抵达辛希亚探索指挥部。5.与教团骑士克罗米（40.22）对话，交出【团长的证明】并通过栅栏，通过黄色传送石（44.22）抵达废墟。',
+		intro: '3.前往辛希亚探索指挥部（55.47），通过楼梯下楼抵达辛希亚探索指挥部。并与教团骑士克罗米（40.22）对话，交出【团长的证明】并通过栅栏，通过黄色传送石（44.22）抵达废墟。',
 		workFunc: function(cb2){
 
 			if(cga.needSupplyInitial({  })){
@@ -152,8 +186,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			// 队员在随机迷宫门口集合
 			var gather = ()=>{
 				if(cga.isTeamLeader){
+					cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, true);
 					cga.WalkTo(39, 23);
-					if(cga.getTeamPlayers().length >= maxteammate){
+					if(cga.getTeamPlayers().length >= teammates.length){
 						go_1();
 						return;
 					}else{
@@ -161,7 +196,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 					}
 				} else {
 					cga.addTeammate(teammates[0], ()=>{
-						if(cga.getTeamPlayers().length >= maxteammate){
+						if(cga.getTeamPlayers().length >= teammates.length){
 							go_1();
 							return;
 						}
@@ -184,6 +219,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 			// 走随机迷宫
 			var go_2 = ()=>{
+				// 通用读取战斗配置逻辑
+				loadBattleConfig()
 				// 队长逻辑
 				if (cga.isTeamLeader){
 					// 如果中途在迷宫中脚本停止，重新运行会用到下面if逻辑
@@ -265,24 +302,33 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 				}
 			}
 
-			var waitBOSS = ()=>{
-				if(cga.isInBattle())
-				{
-					setTimeout(waitBOSS, 1000);
-					return;
-				}
+			// 暂时取消自动进入战斗，改为手动
+
+			// var waitBOSS = ()=>{
+			// 	if(cga.isInBattle())
+			// 	{
+			// 		setTimeout(waitBOSS, 1000);
+			// 		return;
+			// 	}
 				
-				setTimeout(cb2, 1000, true);
-			}
+			// 	setTimeout(cb2, 1000, true);
+			// }
 			
-			cga.walkList([
-			[13, 14]
-			], ()=>{
-				cga.TurnTo(14, 14);
-				cga.AsyncWaitNPCDialog(()=>{
-					cga.ClickNPCDialog(1, 0);
-					setTimeout(waitBOSS, 1500);
-				});
+			// cga.walkList([
+			// [13, 14]
+			// ], ()=>{
+			// 	cga.TurnTo(14, 14);
+			// 	cga.AsyncWaitNPCDialog(()=>{
+			// 		cga.ClickNPCDialog(1, 0);
+			// 		setTimeout(waitBOSS, 1500);
+			// 	});
+			// });
+			cga.SayWords('请手动战斗，战斗胜利后脚本继续' , 0, 3, 1);
+			setTimeout(loadBattleConfig, 1000);
+			cga.waitForLocation({mapindex : 44708},()=>{
+				// 后续没有困难战斗了，改为逃跑
+				setTimeout(loadBattleConfig, 1000);
+				cb2(true);
 			});
 		}
 	},
@@ -397,11 +443,13 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 		},
 		function(){
+			// boss房间index 44707
 			// 存在带打账号在BOSS期间登出的bug，注销掉查明原因中
 			// return (cga.GetMapIndex().index3 == 44707 || cga.getItemCount('怪物碎片') >= 1) ? true : false;
 			return false
 		},
 		function(){
+			// 战斗胜利boss房间index 44708
 			// 存在带打账号在BOSS期间登出的bug，注销掉查明原因中
 			// return (cga.GetMapIndex().index3 == 44708 || cga.getItemCount('怪物碎片') >= 1) ? true : false;
 			return false

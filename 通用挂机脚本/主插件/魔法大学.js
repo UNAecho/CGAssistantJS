@@ -143,8 +143,6 @@ if(job == '药剂师'){
 					return
 				}
 				console.log('未满足出发条件')
-				console.log("🚀 ~ file: 魔法大学.js:137 ~ waitWalk ~ XY", XY)
-				console.log("🚀 ~ file: 魔法大学.js:139 ~ waitWalk ~ thisobj.centre", thisobj.centre)
 				setTimeout(waitWalk, 2000, cb);
 				return
 			}
@@ -592,7 +590,6 @@ var checkTeamAndGo = (cb) => {
 		return
 	}
 	if(thisobj.state != 'deepblue_ready'){
-		console.log('等待药剂师准备好未鉴定药剂...')
 		setTimeout(checkTeamAndGo, 1000, cb);
 		return
 	}

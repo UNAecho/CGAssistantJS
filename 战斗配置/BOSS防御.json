@@ -1,6 +1,7 @@
 {
     "battle": {
         "autobattle": true,
+        "beep": false,
         "bossprot": false,
         "delayfrom": 4000,
         "delayto": 4500,
@@ -54,21 +55,13 @@
                 "playertargetsel": -1
             }
         ],
-        "lockcd": false,
+        "lockcd": true,
         "lv1prot": false,
         "pet2action": false,
-        "playerforceaction": false,
         "r1nodelay": false,
-        "showhpmp": false
+        "waitafterbattle": true
     },
     "chat": {
-        "displayname": true,
-        "displaytime": true,
-        "mychat": true,
-        "npcmsg": true,
-        "playerchat": true,
-        "sysmsg": true,
-        "todayonly": true
     },
     "itemdroplist": [
         "魔石",
@@ -115,9 +108,11 @@
         "毛毡|20"
     ],
     "player": {
+        "antiafkkick": false,
         "autosupply": true,
+        "gametextui": false,
         "movespd": 100,
-        "noswitchanim": true,
+        "noswitchanim": false,
         "petfood": false,
         "petfoodat": "",
         "petmed": false,
