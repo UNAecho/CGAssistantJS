@@ -33,7 +33,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		}
 	},
 	{
-		name : '维诺亚村',
+		name : '绢布',
 		func : (count, cb)=>{
 			cga.craft.buyFabricLv2(0, count, cb);
 		}
