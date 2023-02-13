@@ -4111,7 +4111,8 @@ module.exports = function(callback){
 	 * @returns 
 	 */
 	cga.travel.toBank = (cb)=>{
-
+		// 当前地图信息
+		var mapindex = cga.GetMapIndex().index3
 		// 所有银行的cga.GetMapIndex().index3集合
 		const bankList = [
 			// 法兰城
@@ -4131,13 +4132,14 @@ module.exports = function(callback){
 		var tmplist = []
 		var tmpTurnDir = null
 
+		var villageName = cga.travel.switchMainMap()
 		if(villageName == '法兰城'){
 			tmplist.push([11, 8])
 			tmpTurnDir = 0
 		}else if(villageName == '哥拉尔镇'){
 			tmplist.push([25, 10])
 			tmpTurnDir = 0
-		}else if(villageName == '艾尔莎岛'){
+		}else if(villageName == '艾尔莎岛' || '艾夏岛'){
 			tmplist.push([49, 25])
 			tmpTurnDir = 0
 		}else if(villageName == '阿凯鲁法村'){
@@ -5856,7 +5858,9 @@ module.exports = function(callback){
 			cga.SayWords('', 0, 3, 1);
 			return;
 		}
-		
+		// 加个时间提醒
+		if(typeof filter == 'string')
+			console.log('【' + filter + '】出现，时间:',cga.GetSysTime())
 		cb(null);
 	}
 
@@ -7421,8 +7425,14 @@ module.exports = function(callback){
 			return true;
 		});
 	}
-	
-	//监听系统消息
+
+	/**
+	 * UNAecho:监听系统消息
+	 * 提示：可用于监听迷宫消失。
+	 * 消失预警：你感觉到一股不可思议的力量，而【迷宫名称】好像快消失了。
+	 * 消失瞬间：被不可思议的力量送出了【迷宫名称】。
+	 * @param {*} cb 
+	 */
 	cga.waitSysMsg = (cb)=>{
 		cga.AsyncWaitChatMsg((err, r)=>{
 			if(!r || r.unitid != -1){
@@ -7650,7 +7660,31 @@ module.exports = function(callback){
 		
 		setTimeout(cga.waitForMultipleLocation, 1000, arr);
 	}
-	
+
+	/**
+	 * UNAecho : 曼哈顿距离
+	 * @param {number} x 起始X坐标
+	 * @param {number} y 起始Y坐标
+	 * @param {number} targetX 目标X坐标
+	 * @param {number} targetY 目标Y坐标
+	 * @returns
+	 */
+	cga.manhattanDistance = (x, y, targetX,targetY) => {
+		return Math.abs(targetX - x) + Math.abs(targetY - y);
+	}
+
+	/**
+	 * UNAecho : 切比雪夫距离
+	 * @param {number} x 起始X坐标
+	 * @param {number} y 起始Y坐标
+	 * @param {number} targetX 目标X坐标
+	 * @param {number} targetY 目标Y坐标
+	 * @return {number}
+	 */
+	cga.chebyshevDistance = (x, y, targetX,targetY) => {
+		return Math.max(Math.abs(targetX - x), Math.abs(targetY - y))
+	}
+
 	cga.cachedMapTileMatrix = null;
 	cga.cachedMapTileMatrixTime = 0;
 	
@@ -7700,7 +7734,18 @@ module.exports = function(callback){
 	
 	cga.cachedMapCollisionMatrix = null;
 	cga.cachedMapCollisionMatrixTime = 0;
-	
+	/**
+	 * UNAecho阅读注释：
+	 * 由于cga.GetMapCollisionTable()返回的cell碰撞数据是array格式，不够直观，本API返回处理后的对象数据，其中包含碰撞数组。
+	 * 返回值里，matrix为碰撞数组，其中1为碰撞单位，0为非碰撞单位。
+	 * exitIsBlocked，为true时，调用cga.GetMapObjectTable来辅助判断。
+	 * cga.GetMapObjectTable()是较为接近raw数据的地图API，其中cell里的某个格子的值需要0xFF后进行判断
+	 * (cell & 0xFF) == 2可能是碰撞（路过碰撞也算）的NPC BOSS。
+	 * (cell & 0xFF) == 3猜测为【目的地并未唯一index】的切换点，例如野外随机迷宫传送石、有昼夜去别的地图入口等。（随机迷宫里的上下楼梯也是3，猜测为迷宫本身的index就是随机的）
+	 * (cell & 0xFF) == 10猜测为和3一样是地图切换口，只不过【目的地唯一】比如法兰城各种门。
+	 * @param {*} exitIsBlocked 
+	 * @returns 
+	 */
 	cga.buildMapCollisionMatrix = (exitIsBlocked)=>{
 		var curtime = (new Date()).getTime();
 		if(1 || cga.cachedMapCollisionMatrix == null || curtime > cga.cachedMapCollisionMatrixTime + 200)
@@ -7726,7 +7771,7 @@ module.exports = function(callback){
 			cga.cachedMapCollisionMatrixTime = curtime;
 			cga.cachedMapCollisionMatrix = {matrix : matrix, x_bottom : wall.x_bottom, y_bottom : wall.y_bottom, x_size : wall.x_size, y_size : wall.y_size};
 		}
-		
+
 		return cga.cachedMapCollisionMatrix;
 	}
 	
@@ -7891,7 +7936,9 @@ module.exports = function(callback){
 					tile : tiles.matrix[obj.mapy][obj.mapx],
 					colraw : colraw.matrix[obj.mapy][obj.mapx],
 					obj : obj,
-				}) == true ){
+				}) == true &&
+				// UNAecho:如果这里不加上isPathAvailable判断，会出现隔墙看到迷宫出口导致下面calculatePath直接报错的情况
+				cga.isPathAvailable(cga.GetMapXY().x, cga.GetMapXY().y, obj.mapx, obj.mapy)){
 					target = obj;
 					return false;
 				}
@@ -7906,8 +7953,8 @@ module.exports = function(callback){
 						return;
 					}
 				}
-
-				if(target == null && obj.cell == 3){
+				// UNAecho:如果这里不加上isPathAvailable判断，会出现隔墙看到迷宫出口导致下面calculatePath直接报错的情况
+				if(target == null && obj.cell == 3  && cga.isPathAvailable(cga.GetMapXY().x, cga.GetMapXY().y, obj.mapx, obj.mapy)){
 					target = obj;
 					return false;
 				}
@@ -7922,7 +7969,7 @@ module.exports = function(callback){
 		console.log('迷宫出口：('+target.mapx+', '+target.mapy+')');
 
 		var pos = cga.GetMapXY();
-
+		// UNAecho:这里计算迷宫出口路径，如果上面没有验证迷宫出口是否路径可达，就会报错。
 		var walklist = cga.calculatePath(pos.x, pos.y, target.mapx, target.mapy, newmap, null, null, []);
 		if(walklist.length == 0){
 			cb(new Error('无法计算到迷宫出口的路径'));
@@ -7975,8 +8022,7 @@ module.exports = function(callback){
 					cga.searchMap(()=>{
 						return cga.getMapObjects().find((obj)=>{
 							
-							console.log('cga.walkMazeStartPosition');
-							console.log(cga.walkMazeStartPosition);
+							// console.log('cga.walkRandomMaze起始坐标:',cga.walkMazeStartPosition);
 							
 							if(cga.walkMazeStartPosition != null && obj.mapx == cga.walkMazeStartPosition.x && obj.mapy == cga.walkMazeStartPosition.y)
 								return false;
@@ -7984,8 +8030,8 @@ module.exports = function(callback){
 							if(obj.cell == 3){
 								console.log(obj);
 							}
-
-							return obj.cell == 3 ? true : false;
+							// UNAecho:这里必须判断看到的出口是否路径可达，如果路径不可达则一样需要继续探索地图
+							return (obj.cell == 3 && cga.isPathAvailable(cga.GetMapXY().x, cga.GetMapXY().y, obj.mapx, obj.mapy)) ? true : false;
 						}) != undefined ? true : false;
 					}, (err)=>{
 						if(err && err.message.indexOf('无法找到') >= 0){
@@ -8061,55 +8107,185 @@ module.exports = function(callback){
 			}
 		});
 	}
+	// UNAecho: 弃用原探索迷宫API，注释备用
 
+	// cga.searchMap = (targetFinder, cb) => {
+	// 	const getMovablePoints = (map, start) => {
+	// 		const foundedPoints = {};
+	// 		foundedPoints[start.x + '-' + start.y] = start;
+	// 		const findByNextPoints = (centre) => {
+	// 			const nextPoints = [];
+	// 			const push = (p) => {
+	// 				if (p.x > map.x_bottom && p.x < map.x_size && p.y > map.y_bottom && p.y < map.y_size) {
+	// 					if (map.matrix[p.y][p.x] === 0) {
+	// 						const key = p.x + '-' + p.y;
+	// 						if (!foundedPoints[key]) {
+	// 							foundedPoints[key] = p;
+	// 							nextPoints.push(p);
+	// 						}
+	// 					}
+	// 				}
+	// 			};
+	// 			push({x: centre.x + 1, y: centre.y});
+	// 			push({x: centre.x + 1, y: centre.y + 1});
+	// 			push({x: centre.x, y: centre.y + 1});
+	// 			push({x: centre.x - 1, y: centre.y + 1});
+	// 			push({x: centre.x - 1, y: centre.y});
+	// 			push({x: centre.x - 1, y: centre.y - 1});
+	// 			push({x: centre.x, y: centre.y - 1});
+	// 			push({x: centre.x + 1, y: centre.y - 1});
+	// 			nextPoints.forEach(findByNextPoints);
+	// 		};
+	// 		findByNextPoints(start);
+	// 		return foundedPoints;
+	// 	};
+	// 	const getFarthestEntry = (current) => {
+	// 		return cga.getMapObjects().filter(e => [3,10].indexOf(e.cell) >= 0 && (e.mapx != current.x || e.mapy != current.y)).sort((a, b) => {
+	// 			const distanceA = Math.abs(a.mapx - current.x) + Math.abs(a.mapy - current.y);
+	// 			const distanceB = Math.abs(b.mapx - current.x) + Math.abs(b.mapy - current.y);
+	// 			return distanceB - distanceA;
+	// 		}).shift();
+	// 	};
+	// 	const getTarget = (noTargetCB) => {
+	// 		const target = targetFinder(cga.GetMapUnits());
+	// 		if (typeof target == 'object') {
+	// 			console.log('成功找到有效目标2');
+	// 			const walkTo = cga.getRandomSpace(target.xpos, target.ypos);
+	// 			if (walkTo) {
+	// 				cga.walkList([walkTo], () => cb(null, target));
+	// 			} else {
+	// 				noTargetCB();
+	// 			}
+	// 		} else if (target === true){
+	// 			console.log('成功找到有效目标1');
+	// 			cb(null);
+	// 		} else{
+	// 			console.log('未找到有效目标');
+	// 			noTargetCB();
+	// 		}
+	// 	};
+	// 	const toNextPoint = (points, current, toNextCB) => {
+	// 		const remain = points.filter(p => {
+	// 			const xd = Math.abs(p.x - current.x);
+	// 			const yd = Math.abs(p.y - current.y);
+	// 			p.d = xd + yd;
+	// 			return !(xd < 12 && yd < 12);
+	// 		}).sort((a,b) => a.d - b.d);
+	// 		const next = remain.shift();
+	// 		if (next)
+	// 		{
+	// 			if(cga.isPathAvailable(current.x, current.y, next.x, next.y))
+	// 			{
+	// 				cga.walkList([[next.x,next.y]], () => getTarget(() => toNextPoint(remain, next, toNextCB)));
+	// 			}
+	// 			else
+	// 			{
+	// 				getTarget(() => toNextPoint(remain, next, toNextCB))
+	// 			}
+	// 		}
+	// 		else 
+	// 		{
+	// 			toNextCB();
+	// 		}
+	// 	};
+	// 	//const start = cga.GetMapXY();
+	// 	//let entry = null;
+	// 	const findNext = (walls) => {
+	// 		const current = cga.GetMapXY();
+	// 		//if (!entry && recursion) entry = getFarthestEntry(start);
+	// 		toNextPoint(Object.values(getMovablePoints(walls, current)), current, () => {
+	// 			cb(new Error('无法找到符合条件的对象'));
+	// 		});
+	// 	};
+	// 	getTarget(() => {
+	// 		let walls = cga.buildMapCollisionMatrix();
+	// 		/*if(walls.matrix[0][0] == 1
+	// 			|| walls.matrix[walls.y_size-1][0] == 1
+	// 			|| walls.matrix[walls.y_size-1][walls.x_size-1] == 1
+	// 			|| walls.matrix[0][walls.x_size-1] == 1
+	// 		) {
+	// 			cga.downloadMap(() => findNext(cga.buildMapCollisionMatrix()));
+	// 		} else findNext(walls);*/
+	// 		findNext(walls);
+	// 	});
+	// }
+	
 	/**
-	 * targetFinder返回unit object 或者 true都将停止搜索
-	 * cga.searchMap(units => units.find(u => u.unit_name == '守墓员' && u.type == 1) || cga.GetMapName() == '？？？', result => {
-	 * 	console.log(result);
-	 * });
+	 * UNAecho：
+	 * 重写cga.searchMap方法。原方法有很多注释掉的代码，再涂改则容易混乱，所以考虑自己新写一个。
+	 * 写探索地图的逻辑的初衷是因为：目前官方封禁了下载功能，无法调用download去加载全部地图。
+	 * 
+	 * 原cga.searchMap的原理大致为：
+	 * 1、寻找出口，如果没找到，则进入迷宫探索模式
+	 * 2、探索模式下，使用cga.buildMapCollisionMatrix()来获取所有的非碰撞(0点，碰撞点值为1）
+	 * 3、初次迭代，计算以自己为中心，曼哈顿距离大于24(x,y均大于12)的点作为目标点进行移动
+	 * 4、进入迭代，每次取第3步最近的坐标。如果候选集走完，则重新回到第1步，来刷新当前地图状态。
+	 * 
+	 * 由于上面第4步每次迭代，是选取目标地点作为下一次迭代的中心，这么做有3个弊端：
+	 * 1、会选到墙外的0点，这种点无法到达，而这种点很多。
+	 * 2、当1说的情况出现时，迭代中会以墙外点作为下一次计算曼哈顿距离大于24的点，这样会导致目标过于随机
+	 * 3、目标过于随机，人物会经常重复走已探索过的区域。
+	 * 4、由于随机，极端情况下甚至无法走出迷宫。
+	 * 
+	 * 但也有优点，速度快，性能较优。
+	 * 
+	 * 现在，重新一个新的地图探索逻辑：
+	 * 
+	 * 1、使用cga.buildMapCollisionMatrix(true)获取全图碰撞矩阵，里面0为非碰撞，1为碰撞。
+	 * 2、建立黑名单矩阵，与1中的数组长宽一致。使用null值进行初始化填充。
+	 * 3、所有逻辑以碰撞点（以下称作1点）为目标，将所有非碰撞点（以下称为0点）均加入至黑名单。
+	 * 4、勘测碰撞矩阵周围8格存在0点的1点，也就是找到周围8格有可达点的墙壁
+	 * 5、第4步中的墙壁，如果周围8格的墙壁超过5（包含）个，则视为待探索区域。追加到候选集中
+	 * 6、将第5步的候选集过滤，仅保留切比雪夫距离大于12的点，并且以距离人物最近的点为升序进行排序。（也就是选择优先前往距离自己最近的未探索区域，而不是未探索区域面积最大的地方）
+	 * 7、由于已探索完毕，将第6步所有探索过的墙壁点加入黑名单，降低人物消耗
+	 * 8、6-7步中，每走一步监测地图是否有变化。
+	 * 9、如果第8步有变化，则要么寻找地图出口，要么回到第4步并调用cga.buildMapCollisionMatrix刷新矩阵，迭代逻辑。
+	 * 10、无论第8步是否有变化，都将探索过的墙壁都加入黑名单，因为探索一次即可。
+	 * 
+	 * 这个方法有缺点，虽然肯定会找到迷宫出口，但性能较差，运行时间长。TODO性能优化
+	 * 注意：
+	 * 不要使用new Array(y_size).fill(new Array(x_size).fill(null))这种方式创建2维全null数组
+	 * 这样会变成使用同一个new Array(x_size).fill(null)去填充1维数组
+	 * 后果就是更改任何一列，其他列的数值也都跟着替换，因为是浅拷贝！
+	 * 
+	 * @param {Function} targetFinder
+	 * @param {callback} cb 
 	 */
-	 //, recursion = true
 	cga.searchMap = (targetFinder, cb) => {
-		const getMovablePoints = (map, start) => {
-			const foundedPoints = {};
-			foundedPoints[start.x + '-' + start.y] = start;
-			const findByNextPoints = (centre) => {
-				const nextPoints = [];
-				const push = (p) => {
-					if (p.x > map.x_bottom && p.x < map.x_size && p.y > map.y_bottom && p.y < map.y_size) {
-						if (map.matrix[p.y][p.x] === 0) {
-							const key = p.x + '-' + p.y;
-							if (!foundedPoints[key]) {
-								foundedPoints[key] = p;
-								nextPoints.push(p);
-							}
-						}
-					}
-				};
-				push({x: centre.x + 1, y: centre.y});
-				push({x: centre.x + 1, y: centre.y + 1});
-				push({x: centre.x, y: centre.y + 1});
-				push({x: centre.x - 1, y: centre.y + 1});
-				push({x: centre.x - 1, y: centre.y});
-				push({x: centre.x - 1, y: centre.y - 1});
-				push({x: centre.x, y: centre.y - 1});
-				push({x: centre.x + 1, y: centre.y - 1});
-				nextPoints.forEach(findByNextPoints);
-			};
-			findByNextPoints(start);
-			return foundedPoints;
-		};
-		const getFarthestEntry = (current) => {
-			return cga.getMapObjects().filter(e => [3,10].indexOf(e.cell) >= 0 && (e.mapx != current.x || e.mapy != current.y)).sort((a, b) => {
-				const distanceA = Math.abs(a.mapx - current.x) + Math.abs(a.mapy - current.y);
-				const distanceB = Math.abs(b.mapx - current.x) + Math.abs(b.mapy - current.y);
-				return distanceB - distanceA;
-			}).shift();
-		};
+		// 用cga.GetMapCollisionTableRaw()来获取地图大小，给下面黑名单数组初始化
+		var mapCollisionTableRaw = cga.GetMapCollisionTableRaw(true)
+		// 黑名单，用于记录不需要探索的墙壁，注意深浅拷贝的问题，容易debug很久
+		var cacheBlacklistWalls = new Array(mapCollisionTableRaw.y_size)
+		for (let i = 0; i < cacheBlacklistWalls.length; i++) {
+			cacheBlacklistWalls[i] = new Array(mapCollisionTableRaw.x_size).fill(null)
+		}
+		// 计算周围8点有多少碰撞点
+		var calCnt = (walls,x,y)=>{
+			var cnt = 0
+			if(walls[y][x-1] == 1)
+				cnt += 1
+			if(walls[y][x+1] == 1)
+				cnt += 1
+			if(walls[y-1][x] == 1)
+				cnt += 1
+			if(walls[y+1][x] == 1)
+				cnt += 1
+			if(walls[y+1][x+1] == 1)
+				cnt += 1
+			if(walls[y+1][x-1] == 1)
+				cnt += 1
+			if(walls[y-1][x+1] == 1)
+				cnt += 1
+			if(walls[y-1][x-1] == 1)
+				cnt += 1
+			
+			return cnt;
+		}
+
 		const getTarget = (noTargetCB) => {
 			const target = targetFinder(cga.GetMapUnits());
 			if (typeof target == 'object') {
-				console.log('成功找到有效目标2');
+				console.log('成功找到有效目标');
 				const walkTo = cga.getRandomSpace(target.xpos, target.ypos);
 				if (walkTo) {
 					cga.walkList([walkTo], () => cb(null, target));
@@ -8117,56 +8293,108 @@ module.exports = function(callback){
 					noTargetCB();
 				}
 			} else if (target === true){
-				console.log('成功找到有效目标1');
+				console.log('成功找到楼梯...');
 				cb(null);
 			} else{
 				console.log('未找到有效目标');
 				noTargetCB();
 			}
 		};
-		const toNextPoint = (points, current, toNextCB) => {
-			const remain = points.filter(p => {
-				const xd = Math.abs(p.x - current.x);
-				const yd = Math.abs(p.y - current.y);
-				p.d = xd + yd;
-				return !(xd < 12 && yd < 12);
-			}).sort((a,b) => a.d - b.d);
-			const next = remain.shift();
-			if (next)
-			{
-				if(cga.isPathAvailable(current.x, current.y, next.x, next.y))
-				{
-					cga.walkList([[next.x,next.y]], () => getTarget(() => toNextPoint(remain, next, toNextCB)));
-				}
-				else
-				{
-					getTarget(() => toNextPoint(remain, next, toNextCB))
-				}
+
+		const go = (collisionMatrix, next, cb)=>{
+			let point = next.shift()
+			if(point){
+				cga.walkList(
+					[point], 
+					() => {
+						if(collisionMatrix.join() === cga.buildMapCollisionMatrix(true).matrix.join()){
+							console.log('视野无变化，将x',point[0],'y',point[1],'加入黑名单，并继续探索剩余坐标。')
+							cacheBlacklistWalls[point[1]][point[0]]
+							go(collisionMatrix, next, cb);
+						}else{
+							console.log('视野有变化，重新进入getTarget...')
+							cacheBlacklistWalls[point[1]][point[0]]
+							getTarget(() => toNextPoint(cb))	
+						}
+					}
+				);	
+			}else{
+				console.log('【注意】未找到符合条件的未探索墙壁，请检查。')
+				cb(null)
 			}
-			else 
-			{
-				toNextCB();
-			}
-		};
-		//const start = cga.GetMapXY();
-		//let entry = null;
-		const findNext = (walls) => {
+		}
+
+		const toNextPoint = (toNextCB) => {
+			// 考虑到迷宫可能非常大，cga.buildMapCollisionMatrix需要全图加载，所以传入true
+			let collisionMatrix = cga.buildMapCollisionMatrix(true).matrix;
 			const current = cga.GetMapXY();
-			//if (!entry && recursion) entry = getFarthestEntry(start);
-			toNextPoint(Object.values(getMovablePoints(walls, current)), current, () => {
-				cb(new Error('无法找到符合条件的对象'));
-			});
+            let next = []
+
+			// 注意y和x与平时相反，因为常用的xy代表游戏坐标，而cga.buildMapCollisionMatrix().matrix的xy代表横纵轴
+        	// 地图边缘不参与计算，所以改为index从1开始，length - 1结束
+			for (let y = 1; y < collisionMatrix.length - 1; y++) {
+				for (let x = 1; x < collisionMatrix[y].length - 1; x++) {
+					// 在黑名单中则跳过此点的计算
+                    if(cacheBlacklistWalls[y][x] !== null){
+                        continue
+					}
+					// 非碰撞点不参与计算
+					if(collisionMatrix[y][x] == 0){
+                        cacheBlacklistWalls[y][x] = 0
+						continue
+                    }
+					// 四周都是碰撞点，可能是未探索区域，只跳过，不加黑名单
+                    if(collisionMatrix[y][x-1] == 1 && collisionMatrix[y][x+1] == 1 &&
+                        collisionMatrix[y-1][x] == 1 && collisionMatrix[y+1][x] == 1)
+							continue
+                    if(collisionMatrix[y][x-1] == 0 && cga.isPathAvailable(current.x, current.y, x - 1, y)){
+                        if(calCnt(collisionMatrix, x, y) < 5){
+							cacheBlacklistWalls[y][x] = 1
+                        }else{
+                            next.push([x-1,y])
+                        }
+						continue
+                    }
+					if(collisionMatrix[y][x+1] == 0 && cga.isPathAvailable(current.x, current.y, x + 1, y)){
+                        if(calCnt(collisionMatrix, x, y) < 5){
+							cacheBlacklistWalls[y][x] = 1
+                        }else{
+                            next.push([x+1,y])
+                        }
+						continue
+                    }
+					if(collisionMatrix[y-1][x] == 0 && cga.isPathAvailable(current.x, current.y, x, y - 1)){
+                        if(calCnt(collisionMatrix, x, y) < 5){
+							cacheBlacklistWalls[y][x] = 1
+                        }else{
+                            next.push([x,y-1])
+                        }
+						continue
+                    }
+					if(collisionMatrix[y+1][x] == 0 && cga.isPathAvailable(current.x, current.y, x, y + 1)){
+                        if(calCnt(collisionMatrix, x, y) < 5){
+							cacheBlacklistWalls[y][x] = 1
+                        }else{
+                            next.push([x,y+1])
+                        }
+						continue
+                    }
+				}
+			}
+			// 规则过滤与排序
+			// 保留逻辑为，保留距离自己曼哈顿距离大于24的墙
+			// 排序逻辑为，以切比雪夫距离最近的点为优先，而不是以周围8格墙壁数最多的点为优先。
+			next = next.filter((p)=>{
+				return cga.manhattanDistance(current.x, current.y, p[0], p[1]) > 24 ? true : false
+			}).sort((a,b) => cga.chebyshevDistance(current.x, current.y, a[0], a[1]) - cga.chebyshevDistance(current.x, current.y, b[0], b[1]))
+
+			go(collisionMatrix, next, toNextCB)
+
 		};
 		getTarget(() => {
-			let walls = cga.buildMapCollisionMatrix();
-			/*if(walls.matrix[0][0] == 1
-				|| walls.matrix[walls.y_size-1][0] == 1
-				|| walls.matrix[walls.y_size-1][walls.x_size-1] == 1
-				|| walls.matrix[0][walls.x_size-1] == 1
-			) {
-				cga.downloadMap(() => findNext(cga.buildMapCollisionMatrix()));
-			} else findNext(walls);*/
-			findNext(walls);
+			toNextPoint(() => {
+				cb(new Error('无法找到符合条件的对象'));
+			});
 		});
 	}
 	
