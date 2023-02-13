@@ -768,7 +768,7 @@ const Professions = [
 		category: '制造系',
 		jobmainname: '长袍工',
 		skill:'制长袍',
-		titles: ['长袍学徒', '长袍工', '资深长袍师傅', '御用长袍师', '长袍名师'],
+		titles: ['长袍学徒', '长袍工', '资深长袍师傅', '御用长袍师傅', '长袍名师'],
         tutorlocation: '圣拉鲁卡村',
 		tutorRoom: '地下工房',
 		tutorwalk:[

@@ -11,10 +11,6 @@ var cga = global.cga;
 var configTable = global.configTable;
 var logbackEx = require('../公共模块/登出防卡住');
 
-// 提取本地职业数据
-const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
-var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
-
 var sellStoreArray = ['不卖石', '卖石'];
 
 var interrupt = require('../公共模块/interrupt');
@@ -507,67 +503,10 @@ var walkMazeBack = (cb)=>{
 		}
 	});
 }
-// UNAecho:更新了自动读取练级配置，此方法作废
-// var loadBattleConfig = ()=>{
-
-// 	var settingpath = cga.getrootdir() + '\\战斗配置\\'
-// 	// 因为传教士可能还有正在刷声望的小号，这样可以区分是保姆还是小号
-// 	if (professionalInfo.jobmainname == '传教士'){
-// 		if(!cga.ismaxbattletitle()){
-// 			settingpath = settingpath + '营地组队普攻刷声望.json'
-// 		}else{
-// 			var healSingle = cga.findPlayerSkill('补血魔法')
-// 			var healStrong = cga.findPlayerSkill('强力补血魔法')
-// 			var healUltra = cga.findPlayerSkill('超强补血魔法')
-// 			if(healSingle && healSingle.lv != healSingle.maxlv){
-// 				settingpath = settingpath + '传教练级烧单补.json'
-// 			}else if(healStrong && healStrong.lv != healStrong.maxlv){
-// 				settingpath = settingpath + '传教练级烧强补.json'
-// 			}else if(healUltra && healUltra.lv != healUltra.maxlv){
-// 				settingpath = settingpath + '传教练级烧超补.json'
-// 			}else{
-// 				settingpath = settingpath + '传教练级.json'
-// 			}
-// 		}
-// 	}else if(professionalInfo.jobmainname == '格斗士'){
-// 		var chaos = cga.findPlayerSkill('混乱攻击')
-// 		if (chaos && chaos.lv != chaos.maxlv){
-// 			settingpath = settingpath + '格斗练级烧混乱攻击.json'
-// 		}else{
-// 			settingpath = settingpath + '格斗练级.json'
-// 		}
-// 	}else if(professionalInfo.jobmainname == '弓箭手'){
-// 		settingpath = settingpath + '弓箭练级.json'
-// 	}else if(professionalInfo.jobmainname == '剑士'){
-// 		settingpath = settingpath + '剑士练级.json'
-// 	}else if(professionalInfo.jobmainname == '战斧斗士'){
-// 		settingpath = settingpath + '战斧练级.json'
-// 	}else if(professionalInfo.jobmainname == '魔术师'){
-// 		settingpath = settingpath + '法师练级.json'
-// 	}else if(professionalInfo.jobmainname == '巫师'){
-// 		settingpath = settingpath + '巫师练级.json'
-// 	}else if(professionalInfo.jobmainname == '封印师'){
-// 		settingpath = settingpath + '封印师练级.json'
-// 	}else{
-// 		settingpath = settingpath + '营地组队普攻刷声望.json'
-// 	}
-
-// 	var setting = JSON.parse(fs.readFileSync(settingpath))
-
-// 	cga.gui.LoadSettings(setting, (err, result)=>{
-// 		if(err){
-// 			console.log(err);
-// 			return;
-// 		}else{
-// 			console.log('读取战斗配置【'+settingpath+'】成功')
-// 		}
-// 	})
-// 	return
-// }
 
 var levelRegion= (cb)=>{
 	if (!teamMode.is_enough_teammates()){
-		console.log('注意teamMode.is_enough_teammates()并没有满足，推测是队员的队伍信息没有改正，队员的组队信息teammates不止需要填上队长，其他队员的信息也要正确。')
+		// console.log('注意teamMode.is_enough_teammates()并没有满足，推测是队员的队伍信息没有改正，队员的组队信息teammates不止需要填上队长，其他队员的信息也要正确。')
 		setTimeout(levelRegion, 1000, cb);
 		return
 	}
@@ -692,8 +631,6 @@ var playerThink = ()=>{
 	}
 
 	teamMode.think(ctx);
-	// 自动读取战斗配置
-	configMode.think(ctx);
 
 	global.callSubPlugins('think', ctx);
 	if(cga.isTeamLeaderEx())
@@ -854,6 +791,8 @@ var loop = ()=>{
 				switchArea(()=>{
 					callSubPluginsAsync('prepare', ()=>{
 						thisobj.battleAreaObj.muster(()=>{
+							// playerThink on开始前，先读取战斗配置。
+							configMode.think({skills : cga.GetSkillsInfo()});
 
 							playerThinkInterrupt.hasInterrupt();//restore interrupt state
 							console.log('playerThink on');
@@ -885,6 +824,9 @@ var loop = ()=>{
 						loop();
 						return;
 					}
+
+					// playerThink on开始前，先读取战斗配置。
+					configMode.think({skills : cga.GetSkillsInfo()});
 
 					playerThinkInterrupt.hasInterrupt();//restore interrupt state
 					console.log('playerThink on');
@@ -939,6 +881,9 @@ var loop = ()=>{
 					return;
 				}
 
+				// playerThink on开始前，先读取战斗配置。
+				configMode.think({skills : cga.GetSkillsInfo()});
+					
 				playerThinkInterrupt.hasInterrupt();//restore interrupt state
 				console.log('playerThink on');
 				playerThinkRunning = true;
@@ -958,6 +903,9 @@ var loop = ()=>{
 		// 练级地点逻辑
 		if(thisobj.battleAreaObj.isDesiredMap(map)){
 
+			// playerThink on开始前，先读取战斗配置。
+			configMode.think({skills : cga.GetSkillsInfo()});
+			
 			playerThinkInterrupt.hasInterrupt();//restore interrupt state
 			console.log('playerThink on');
 			playerThinkRunning = true;
@@ -968,6 +916,10 @@ var loop = ()=>{
 
 			return
 		}
+
+		// playerThink on开始前，先读取战斗配置。
+		configMode.think({skills : cga.GetSkillsInfo()});
+
 		// 正常在集散地出发
 		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 		console.log('playerThink on');
@@ -981,6 +933,9 @@ var loop = ()=>{
 
 		return
 	} else if(!isleader){
+		// playerThink on开始前，先读取战斗配置。
+		configMode.think({skills : cga.GetSkillsInfo()});
+
 		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 		console.log('playerThink on');
 		playerThinkRunning = true;
