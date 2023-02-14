@@ -8382,10 +8382,10 @@ module.exports = function(callback){
 				}
 			}
 			// 规则过滤与排序
-			// 保留逻辑为，保留距离自己曼哈顿距离大于24的墙
-			// 排序逻辑为，以切比雪夫距离最近的点为优先，而不是以周围8格墙壁数最多的点为优先。
+			// 目标点过滤逻辑为，删除距离自己切比雪夫距离小于12的点（因为已在视野内）
+			// 排序逻辑为，以切比雪夫距离最近的点为优先，而不是以周围8格墙壁数最多的墙为优先。
 			next = next.filter((p)=>{
-				return cga.manhattanDistance(current.x, current.y, p[0], p[1]) > 24 ? true : false
+				return cga.chebyshevDistance(current.x, current.y, p[0], p[1]) > 12 ? true : false
 			}).sort((a,b) => cga.chebyshevDistance(current.x, current.y, a[0], a[1]) - cga.chebyshevDistance(current.x, current.y, b[0], b[1]))
 
 			go(collisionMatrix, next, toNextCB)
