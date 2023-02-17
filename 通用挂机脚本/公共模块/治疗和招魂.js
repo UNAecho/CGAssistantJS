@@ -100,7 +100,7 @@ var modeArray = [
 				healflag = true
 			}
 		}
-		// 没有受伤宠物，退出治疗宠物模块
+
 		if(healflag){
 			var retry = ()=>{
 		

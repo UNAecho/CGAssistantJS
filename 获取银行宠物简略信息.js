@@ -28,10 +28,12 @@ var cga = require('./cgaapi')(function () {
 			}
 			console.log('银行共有宠物：【' + pets.length + '】只\n详情：')
 			console.log(result)
-			// 阻塞，防止不断重启脚本
-			while (true) {
-		
-			}
+			
+			cga.gui.LoadScript({
+				autorestart : false,
+			}, (err, result)=>{
+				console.log('脚本结束，关闭自动重启脚本。')
+			})
 		});
 
 	});

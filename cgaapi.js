@@ -6590,7 +6590,7 @@ module.exports = function(callback){
 				if(bankitem != undefined)
 				{
 					//保存成功
-					console.log(bankitem.name+' 成功存到银行第 ' + (bankitem.pos - 100 + 1) + ' 格!');
+					console.log(bankitem.name+' 成功将物品存到银行第 ' + (bankitem.pos - 100 + 1) + ' 格!');
 					cb(null);
 				}
 				else
@@ -6625,7 +6625,7 @@ module.exports = function(callback){
 			if(bankpet != undefined)
 			{
 				//保存成功
-				console.log(bankpet.name+' 成功存到银行第 ' + (bankpet.index - 100 + 1) + ' 格!');
+				console.log(bankpet.name+' 成功将宠物存到银行第 ' + (bankpet.index - 100 + 1) + ' 格!');
 				cb(null);
 			}
 			else
@@ -7051,13 +7051,14 @@ module.exports = function(callback){
 					teaminfo[i].nick = units[j].nick_name;
 					teaminfo[i].xpos = units[j].xpos;
 					teaminfo[i].ypos = units[j].ypos;
-					teaminfo[i].injury = units[j].injury;
 					teaminfo[i].level = units[j].level;
+					teaminfo[i].injury = units[j].injury;
 					break;
 				}
 			}
 			if(playerinfo.unitid == teaminfo[i].unit_id){
 				teaminfo[i].name = playerinfo.name;
+				teaminfo[i].nick = playerinfo.nick;
 				teaminfo[i].level = playerinfo.level;
 				teaminfo[i].injury = playerinfo.health > 0 ? 1 : 0;
 				teaminfo[i].is_me = true;
@@ -7310,7 +7311,83 @@ module.exports = function(callback){
 			return true;
 		});
 	}
-	
+
+	// UNAecho:队内使用自定义称号进行交流，注意称号有16字节长度限制
+	cga.waitTeammateInfo = (teammates, infoFunc, cb)=>{
+		// 如果没传入指定队伍，则自动以队内人员为准。
+		if(!teammates)
+			teammates = cga.getTeamPlayers()
+		if(!teammates.length){
+			console.log('没有队员，退出cga.teamCommunicateTest')
+			setTimeout(cb, 1000);
+			return
+		}
+		
+		const identifier = ["z","j","f","m","a"]
+		const reg = new RegExp(/[zjfma]{1}[oknu\d]{2}/g)
+		const infoFuncValue = infoFunc()
+		
+		var teammate_info = {};
+		cga.isTeamLeader = (teammates[0].name == cga.GetPlayerInfo().name || teammates.length == 0) ? true : false;
+
+		var checkTeammates = (cb)=>{
+			var listen = true
+
+			// 注意这里是刷新队内状态，一切以teamCommunicateTest传入的teammates为验证数据的基础。
+			// 因为可能在验证期间，有非teammates的角色（如：其他玩家）错加入队伍。
+			var teamplayers = cga.getTeamPlayers()
+
+			if(teammates.length != teamplayers.length){
+				console.warn('队内玩家数量与预期玩家数量不符')
+				setTimeout(checkTeammates, 1000, cb);
+				return
+			}
+
+			for (let t = 0; t < teamplayers.length; t++) {
+				let tmpNick = identifier[t].toString() + infoFuncValue
+				if(teamplayers[t].is_me){
+					if(teamplayers[t].nick != tmpNick){
+						cga.ChangeNickName(tmpNick)
+						console.log("更改nickname:【" + tmpNick + "】")
+					}
+					continue
+				}
+				
+				if(!cga.isTeamLeader && t > 0)
+					continue
+				
+				memberNick = teamplayers[t].nick.match(reg)
+				if(!memberNick){
+					continue	
+				}
+				memberNick.forEach((n)=>{
+					let k = identifier.indexOf(n[0])
+					if(k == -1)
+						return
+					let v = n.slice(1,3)
+					let result = infoFunc(v)
+					if(result === true){
+						teammate_info[teamplayers[k].name] = v
+						return
+					}
+				})
+			}
+
+			listen = cb(teammate_info)
+			if(listen == true)
+				setTimeout(checkTeammates, 1000, cb);
+		}
+		
+		checkTeammates((teammate_info)=>{
+			let readycount = cga.isTeamLeader ? teammates.length - 1 : 1
+			if(Object.keys(teammate_info).length == readycount){
+				cb(teammate_info)
+				return false
+			}
+			return true
+		})
+	}
+
 	//把队友带至posArray指定的位置
 	cga.walkTeammateToPosition = (posArray, cb) =>{
 		

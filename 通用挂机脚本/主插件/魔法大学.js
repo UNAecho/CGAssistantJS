@@ -1306,9 +1306,9 @@ var loop = ()=>{
 		var teamplayers = cga.getTeamPlayers();
 
 		var retry = (cb)=>{
-			var teamplayers = cga.getTeamPlayers();
+			teamplayers = cga.getTeamPlayers();
 			var finder = cga.findPlayerUnit((u)=>{
-				// 检测移动银行是否是目标，方法暂时使用名称fliter+坐标
+				// 检测班车角色是否是目标，方法暂时使用名称fliter+坐标
 				for (var filter in namefilters){
 					if(u.unit_name.indexOf(namefilters[filter]) == 0 && u.xpos == waitingPos[0] && u.ypos == waitingPos[1]){
 						console.log('发现班车:'+ u.unit_name)
