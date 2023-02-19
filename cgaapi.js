@@ -7318,8 +7318,8 @@ module.exports = function(callback){
 		if(!teammates)
 			teammates = cga.getTeamPlayers()
 		if(!teammates.length){
-			console.log('没有队员，退出cga.teamCommunicateTest')
-			setTimeout(cb, 1000);
+			console.log('没有队员，退出cga.waitTeammateInfo，回调参数传入null')
+			setTimeout(cb, 1000, null);
 			return
 		}
 		
@@ -7388,6 +7388,128 @@ module.exports = function(callback){
 		})
 	}
 
+	/**
+	 * UNAecho:队员之间共享全队信息。
+	 * 使用修改【玩家称号】作为传递手段。注意玩家自定义的称号有【16字节】长度限制
+	 * @param {*} teammates String数组。期望队员名称的数组形式，传null视为自动获取当前队员。
+	 * @param {*} infoFunc 
+	 * 交流信息的函数，会在API内调用，需要调用方自行定义。此函数必须被定义为：
+	 * 1、无参数传递时，返回要交流的信息数据，如【ok】【7】。【注意】String类型必须为2字节，int型最多2位数。
+	 * 2、有参数传递时，判断传入信息是否合规，合规需要返回true，不合规返回false
+	 * 例1：如果定义想传递队员手持多少长老之证时
+	 * 比如infoFunc()返回7，infoFunc(7)进入自定义函数，你需要自己指定返回true或false规则。
+	 * 例2：想看其他队员手中是否有觉醒的文言抄本，
+	 * 如果有，infoFunc()返回"ok"，infoFunc("ok")进入自定义函数，你需要自己指定返回true或false规则。
+	 * 
+	 * 【注意】infoFunc()所使用的String类型字母有限制，只能使用"ok"，"no"，"un"3种
+	 * 
+	 * @param {*} cb 回调函数，全员信息收集完毕后制作成object，调用cb并将object传入
+	 * @returns 
+	 */
+	cga.shareTeammateInfo = (teammates, infoFunc, cb)=>{
+		// 如果没传入指定队伍，则自动以队内人员为准。
+		if(!teammates)
+			teammates = cga.getTeamPlayers()
+		if(!teammates.length){
+			console.log('没有队员，退出cga.waitTeammateInfo，回调参数传入null')
+			setTimeout(cb, 1000, null);
+			return
+		}
+		// 用英语首字母zjfma代表0、1、2、3、4。其中z是zero首字母，jfma是1234月份首字母
+		const identifier = ["z","j","f","m","a"]
+		// 正则匹配类似z01jok这种字符，每3个一组。
+		// 例：z01就是队长数值为"01"，jok就是第2个队员数值为"ok"
+		const reg = new RegExp(/[zjfma]{1}[oknu\d]{2}/g)
+		// 拼写用于传递信息的玩家自定义称号
+		var infoFuncValue = infoFunc()
+		if(typeof infoFuncValue == 'number'){
+			if(parseInt(infoFuncValue, 10) != infoFuncValue){
+				throw new Error('错误，必须输入3位以下整数或字符串')
+			}else if(infoFuncValue >= 0 && infoFuncValue < 10){
+				infoFuncValue = "0" + infoFuncValue.toString()
+			}else if(infoFuncValue >= 10 && infoFuncValue < 100){
+				infoFuncValue = infoFuncValue.toString()
+			}else{
+				throw new Error('错误，必须输入3位以下整数或字符串')
+			}
+		}else if(typeof infoFuncValue == 'string' && infoFuncValue.length != 2){
+			throw new Error('错误，必须输入3位以下整数或字符串')
+		}
+
+		var teammate_info = {};
+		cga.isTeamLeader = (teammates[0].name == cga.GetPlayerInfo().name || teammates.length == 0) ? true : false;
+
+		var check = (cb)=>{
+			var listen = true
+
+			// 注意这里是刷新队内状态，一切以cga.shareTeammateInfo传入的teammates为验证数据的基础。
+			// 因为可能在验证期间，有非teammates的角色（如：其他玩家）错加入队伍。
+			var teamplayers = cga.getTeamPlayers()
+			// 如果人数与预期不符，则等待
+			if(teammates.length != teamplayers.length){
+				console.warn('队内玩家数量与预期玩家数量不符，清空数据记录情况')
+				teammate_info = {}
+				setTimeout(check, 1000, cb);
+				return
+			}
+
+			for (let t = 0; t < teamplayers.length; t++) {
+				// 以自己在队内的序号来拼接类似z01j02的自定义称号
+				let tmpNick = identifier[t] + infoFuncValue
+				if(teamplayers[t].is_me){
+					if(teamplayers[t].nick != tmpNick){
+						cga.ChangeNickName(tmpNick)
+						console.log("更改nickname:【" + tmpNick + "】")
+					}
+					// 更新自己的实时数据
+					teammate_info[identifier[t]] = isNaN(parseInt(infoFuncValue)) ? infoFuncValue : parseInt(infoFuncValue)
+					continue
+				}
+				
+				memberNick = teamplayers[t].nick.match(reg)
+				if(!memberNick){
+					continue
+				}
+
+				memberNick.forEach((n)=>{
+					// 如果解析的3位字符串不以zjfma为开头，则跳过
+					if(identifier.indexOf(n[0]) == -1)
+						return
+					let v = n.slice(1,3)
+					v = isNaN(parseInt(v)) ? v : parseInt(v)
+					// 这里验证数值的合规性，需要infoFunc(v)返回true才会计入统计
+					let result = infoFunc(v)
+					if(result === true){
+						teammate_info[n[0]] = v
+						return
+					}
+				})
+			}
+			// 为true则持续监听
+			listen = cb(teammate_info)
+			if(listen == true)
+				setTimeout(check, 1000, cb);
+		}
+
+		
+		check((result)=>{
+			// 验证完整性，通过了才能进行回调
+			if(Object.keys(result).length == teammates.length){
+				// 翻译数据，将数字的String转换为int传给cb
+				var obj = {}
+				const identifier = {"z" : 0, "j" : 1, "f" : 2, "m" : 3, "a" : 4}
+				var teamplayers = cga.getTeamPlayers()
+				Object.keys(result).forEach(k =>{
+					obj[teamplayers[identifier[k]].name] = result[k]
+				})
+				// 本函数出口
+				cb(obj)
+				return false
+			}
+			return true
+		})
+	}
+	
 	//把队友带至posArray指定的位置
 	cga.walkTeammateToPosition = (posArray, cb) =>{
 		
