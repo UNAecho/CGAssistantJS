@@ -6600,6 +6600,44 @@ module.exports = function(callback){
 			}, 1000);
 		});
 	}
+
+	// UNAecho:将符合条件的物品从银行取出，maxcount为最大堆叠数量
+	// filter仅支持String。TODO filter支持number、#开头的String类型itemid（参考其他背包类API）以及func自定义函数
+	cga.drawFromBankOnce = (filter, maxcount, cb)=>{
+		var targetItem = cga.GetBankItemsInfo().find((it)=>{
+			if(it.name == filter)
+				return true
+		});
+		
+		if(!targetItem){
+			cb(new Error('银行里没有该物品, 无法取出。'));
+			return;
+		}
+
+		var emptyslot = cga.findInventoryEmptySlot(filter, maxcount);
+		if(emptyslot == -1){
+			cb(new Error('背包没有空位, 无法从银行取出'));
+			return;
+		}
+		
+		cga.MoveItem(targetItem.pos, emptyslot, -1);
+
+		setTimeout(()=>{
+			var item = cga.GetItemsInfo().find((item)=>{
+				return item.pos == emptyslot;
+			});
+			if(item != undefined)
+			{
+				//取出成功
+				console.log(item.name+' 成功从银行中取出到背包第 ' + (item.pos - 8 + 1) + ' 格!');
+				cb(null);
+			}
+			else
+			{
+				cb(new Error('从银行取物品失败，可能背包格子已满、未与柜员对话或网络问题'));
+			}
+		}, 1000);
+	}
 	
 	//将符合条件的宠物存至银行
 	cga.savePetToBankOnce = (filter, customerName, cb)=>{
@@ -6647,6 +6685,34 @@ module.exports = function(callback){
 				}
 				if(cga.findItem(filter) == -1){
 					console.log('包里已经没有指定物品，批量保存到银行执行完毕！');
+					cb(null);
+					return;
+				}
+				setTimeout(repeat, 1000);
+			});
+		}
+		
+		repeat();		
+	}
+
+	// UNAecho:循环将符合条件的物品从银行取出，maxcount为最大堆叠数量
+	// filter仅支持String。TODO filter支持number、#开头的String类型itemid（参考其他背包类API）以及func自定义函数
+	cga.drawFromBankAll = (filter, maxcount, cb)=>{
+		console.log('开始批量从银行取出物品...');
+		var repeat = ()=>{
+			cga.drawFromBankOnce(filter, maxcount, (err)=>{
+				if(err){
+					console.log(err);
+					cb(err);
+					return;
+				}
+				var targetItem = cga.GetBankItemsInfo().find((it)=>{
+					if(it.name == filter)
+						return true
+					return false
+				});
+				if(targetItem == undefined){
+					console.log('银行里已经没有指定物品，批量从银行取出物品执行完毕！');
 					cb(null);
 					return;
 				}
