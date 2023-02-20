@@ -7458,21 +7458,25 @@ module.exports = function(callback){
 	 * UNAecho:队员之间共享全队信息。
 	 * 使用修改【玩家称号】作为传递手段。注意玩家自定义的称号有【16字节】长度限制
 	 * @param {*} teammates String数组。期望队员名称的数组形式，传null视为自动获取当前队员。
-	 * @param {*} infoFunc 
-	 * 交流信息的函数，会在API内调用，需要调用方自行定义。此函数必须被定义为：
-	 * 1、无参数传递时，返回要交流的信息数据，如【ok】【7】。【注意】String类型必须为2字节，int型最多2位数。
-	 * 2、有参数传递时，判断传入信息是否合规，合规需要返回true，不合规返回false
+	 * @param {*} func 
+	 * 复合功能函数，此函数必须被定义为：
+	 * 1、无参数传递时，执行自定义动作，如喊话、调整战斗配置等。
+	 * 但返回值要返回传递给队员的信息。如【ok】【7】等。
+	 * 【注意】此函数无参数情况下仅执行一次，也就是调用方传入的自定义动作仅执行一次。
+	 * 此函数返回值如果是String类型必须为2字节，int型则最多2位数。
+	 * 2、有参数传递时，判断传入信息是否合规，合规需要返回true，不合规返回false。
+	 * 【注意】有参时，必须遍历所有true和false的情况进行return。
 	 * 例1：如果定义想传递队员手持多少长老之证时
-	 * 比如infoFunc()返回7，infoFunc(7)进入自定义函数，你需要自己指定返回true或false规则。
+	 * 比如func()返回7，func(7)进入自定义函数，你需要自己指定返回true或false规则。
 	 * 例2：想看其他队员手中是否有觉醒的文言抄本，
-	 * 如果有，infoFunc()返回"ok"，infoFunc("ok")进入自定义函数，你需要自己指定返回true或false规则。
+	 * 如果有，func()返回"ok"，func("ok")进入自定义函数，你需要自己指定返回true或false规则。
 	 * 
-	 * 【注意】infoFunc()所使用的String类型字母有限制，只能使用"ok"，"no"，"un"3种
+	 * 【注意】func()所使用的String类型字母有限制，只能使用"ok"，"no"，"un"3种
 	 * 
 	 * @param {*} cb 回调函数，全员信息收集完毕后制作成object，调用cb并将object传入
 	 * @returns 
 	 */
-	cga.shareTeammateInfo = (teammates, infoFunc, cb)=>{
+	cga.shareTeammateInfo = (teammates, func, cb)=>{
 		// 如果没传入指定队伍，则自动以队内人员为准。
 		if(!teammates)
 			teammates = cga.getTeamPlayers()
@@ -7487,18 +7491,18 @@ module.exports = function(callback){
 		// 例：z01就是队长数值为"01"，jok就是第2个队员数值为"ok"
 		const reg = new RegExp(/[zjfma]{1}[oknu\d]{2}/g)
 		// 拼写用于传递信息的玩家自定义称号
-		var infoFuncValue = infoFunc()
-		if(typeof infoFuncValue == 'number'){
-			if(parseInt(infoFuncValue, 10) != infoFuncValue){
+		var funcValue = func()
+		if(typeof funcValue == 'number'){
+			if(parseInt(funcValue, 10) != funcValue){
 				throw new Error('错误，必须输入3位以下整数或字符串')
-			}else if(infoFuncValue >= 0 && infoFuncValue < 10){
-				infoFuncValue = "0" + infoFuncValue.toString()
-			}else if(infoFuncValue >= 10 && infoFuncValue < 100){
-				infoFuncValue = infoFuncValue.toString()
+			}else if(funcValue >= 0 && funcValue < 10){
+				funcValue = "0" + funcValue.toString()
+			}else if(funcValue >= 10 && funcValue < 100){
+				funcValue = funcValue.toString()
 			}else{
 				throw new Error('错误，必须输入3位以下整数或字符串')
 			}
-		}else if(typeof infoFuncValue == 'string' && infoFuncValue.length != 2){
+		}else if(typeof funcValue == 'string' && funcValue.length != 2){
 			throw new Error('错误，必须输入3位以下整数或字符串')
 		}
 
@@ -7521,14 +7525,14 @@ module.exports = function(callback){
 
 			for (let t = 0; t < teamplayers.length; t++) {
 				// 以自己在队内的序号来拼接类似z01j02的自定义称号
-				let tmpNick = identifier[t] + infoFuncValue
+				let tmpNick = identifier[t] + funcValue
 				if(teamplayers[t].is_me){
 					if(teamplayers[t].nick != tmpNick){
 						cga.ChangeNickName(tmpNick)
 						console.log("更改nickname:【" + tmpNick + "】")
 					}
 					// 更新自己的实时数据
-					teammate_info[identifier[t]] = isNaN(parseInt(infoFuncValue)) ? infoFuncValue : parseInt(infoFuncValue)
+					teammate_info[identifier[t]] = isNaN(parseInt(funcValue)) ? funcValue : parseInt(funcValue)
 					continue
 				}
 				
@@ -7543,8 +7547,8 @@ module.exports = function(callback){
 						return
 					let v = n.slice(1,3)
 					v = isNaN(parseInt(v)) ? v : parseInt(v)
-					// 这里验证数值的合规性，需要infoFunc(v)返回true才会计入统计
-					let result = infoFunc(v)
+					// 这里验证数值的合规性，需要func(v)返回true才会计入统计
+					let result = func(v)
 					if(result === true){
 						teammate_info[n[0]] = v
 						return
