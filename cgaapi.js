@@ -7505,9 +7505,13 @@ module.exports = function(callback){
 		}else if(typeof funcValue == 'string' && funcValue.length != 2){
 			throw new Error('错误，必须输入3位以下整数或字符串')
 		}
+		// 获取人物原来自定义昵称，函数结束时，需要恢复
+		var playerInfo = cga.GetPlayerInfo()
+		const originNick = playerInfo.nick
 
 		var teammate_info = {};
-		cga.isTeamLeader = (teammates[0].name == cga.GetPlayerInfo().name || teammates.length == 0) ? true : false;
+		cga.isTeamLeader = (teammates[0].name == playerInfo.name || teammates.length == 0) ? true : false;
+
 
 		var check = (cb)=>{
 			var listen = true
@@ -7572,12 +7576,100 @@ module.exports = function(callback){
 				Object.keys(result).forEach(k =>{
 					obj[teamplayers[identifier[k]].name] = result[k]
 				})
+				// 恢复人物原本称号
+				console.log('2.5秒后恢复称号..')
+				setTimeout(()=>{
+					cga.ChangeNickName(originNick)
+				}, 2500);
 				// 本函数出口
 				cb(obj)
 				return false
 			}
 			return true
 		})
+	}
+
+	/**
+	 * UNAecho:人物战斗准备，多数用于BOSS战前调整战斗配置使用，如W站位、读取战斗配置等
+	 * @param {String | Number} map 目标地图，只有处于当前地图名称或index才能进行
+	 * @param {Array} pos 队长或单人坐标，需要走到特定坐标才能执行函数。
+	 * @param {Function} prepareFunc 战斗准备函数，【注意】因为是异步执行且没有等待，请在delayTime的时间内完成。
+	 * @param {*} cb 
+	 * @param {Number} delayTime prepareFunc()执行后的等待时间，超过将调用回调函数cb
+	 * @returns 
+	 */
+	cga.prepareToBattle = (map, pos, prepareFunc, cb, delayTime = 2500) => {
+		let name = cga.GetMapName();
+		let index = cga.GetMapIndex().index3;
+
+		if(typeof map == 'string'){
+			if(map != name){
+				console.log("等待地图:", map)
+				setTimeout(cga.prepareToBattle, 1500, map, pos, prepareFunc, cb);
+				return
+			}
+		}else if(typeof map == 'number'){
+			if(map != index){
+				console.log("等待地图:", map)
+				setTimeout(cga.prepareToBattle, 1500, map, pos, prepareFunc, cb);
+				return
+			}
+		}else{
+			throw new Error('map对象必须为String或Number类型')
+		}
+
+		// 称号相关变量
+		const cipher = "ok"
+		var playerInfo = cga.GetPlayerInfo()
+
+		// 队长判定
+		var teamplayers = cga.getTeamPlayers()
+		cga.isTeamLeader = (teamplayers.length == 0 || teamplayers[0].name == playerInfo.name) ? true : false;
+
+		if(cga.isTeamLeader){
+			cga.walkList([
+				pos,
+			], ()=>{
+				// 如果是单人，跳过称号判断环节，直接进行战斗准备
+				if(teamplayers.length == 0){
+					prepareFunc()
+					console.log('没有队伍，战斗准备完毕，', (delayTime / 1000), '秒后执行回调...')
+					setTimeout(cb, delayTime);
+					return
+				}
+				cga.shareTeammateInfo(null, (r)=>{
+					if(r){
+						if(r === cipher){
+							return true
+						}else{
+							return false
+						}
+					}
+					return cipher
+				}, (r)=>{
+					prepareFunc()
+					console.log('战斗准备完毕，', (delayTime / 1000), '秒后执行回调...')
+					setTimeout(cb, delayTime, r);
+					return
+				})
+			})
+		}else{
+			cga.shareTeammateInfo(null, (r)=>{
+				if(r){
+					if(r === cipher){
+						return true
+					}else{
+						return false
+					}
+				}
+				return cipher
+			}, (r)=>{
+				prepareFunc()
+				console.log('战斗准备完毕，', (delayTime / 1000), '秒后执行回调...')
+				setTimeout(cb, delayTime, r);
+				return
+			})
+		}
 	}
 	
 	//把队友带至posArray指定的位置
