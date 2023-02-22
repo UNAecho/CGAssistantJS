@@ -7717,7 +7717,144 @@ module.exports = function(callback){
 			})
 		})
 	}
-	
+	/**
+	 * UNAecho:一个与NPC打交道的API，持续与NPC交互，直到获取某个道具，或看到NPC某句话
+	 * @param {String | Number} map NPC所处地图，可以是名称也可以是index
+	 * @param {Array} npcPos NPC坐标
+	 * @param {String | Number | Object} obj 目标对象
+	 * 如果传入String或Number时，默认是索取物品String名称或物品Int型id，并且所有选项都选积极选项
+	 * 如果有纯对话需求，或者对话中并非所有选项都是积极选项，请按照以下格式：
+	 * {act : "msg", target: "结束此API的说话切片", neg : "想要选择消极按钮的对话切片"}
+	 * 如果上述对象不传入neg，则依然默认所有对话都选积极选项。
+	 * @param {*} cb 回调函数，调用时会传入队伍全员信息
+	 * @returns 
+	 */
+	cga.askNpcForObj = (map, npcPos, obj, cb) => {
+		/**
+		 * dialog options:
+		 *     0  : 列表选择 cga.ClickNPCDialog(0, 6) 第一个参数应该是被忽略的，第二个参数选择列表序号，从0开始
+		 *     1  : 确定按钮 cga.ClickNPCDialog(1, -1)
+		 *     2  : 取消按钮 cga.ClickNPCDialog(2, -1)
+		 *     3  : 确定取消 cga.ClickNPCDialog(1, -1) 1确定 2取消
+		 *     12 : 是否按钮 cga.ClickNPCDialog(4, -1) 4是 8否
+		 *     32 : 下一步 cga.ClickNPCDialog(32, -1) 32下一步
+		 */
+
+		// 检查输入类型
+		if(typeof map != 'string' && typeof map != 'number'){
+			throw new Error('map必须为String或Number类型')
+		}
+		if(!Array.isArray(npcPos) || npcPos.length != 2){
+			throw new Error('npcPos必须为Int型数组，长度为2')
+		}
+		if(typeof obj == 'string' || typeof obj == 'number'){
+			obj = {act : "item", target : obj}
+		}
+		if(typeof obj != 'object' || !obj.hasOwnProperty("act") || !obj.hasOwnProperty("target")){
+			throw new Error('obj格式有误，见API注释')
+		}
+
+		let repeatFlag = true
+		const dialogHandler = (err, dlg)=>{
+			var actNumber = -1
+			if(dlg && ((dlg.options & 4) == 4 || dlg.options == 12)){
+				actNumber = (obj.hasOwnProperty("neg") && dlg.message.indexOf(obj.neg) != -1) ? 8 : 4
+				cga.ClickNPCDialog(actNumber, 0);
+				if(obj.act == "msg" && dlg.message.indexOf(obj.target) != -1){
+					repeatFlag = false
+					return
+				}
+				cga.AsyncWaitNPCDialog(dialogHandler);
+				return;
+			}
+			else if(dlg && (dlg.options & 32) == 32){
+				cga.ClickNPCDialog(32, 0);
+				cga.AsyncWaitNPCDialog(dialogHandler);
+				return;
+			}
+			else if(dlg && dlg.options == 1){
+				cga.ClickNPCDialog(1, 0);
+				if(obj.act == "msg" && dlg.message.indexOf(obj.target) != -1){
+					repeatFlag = false
+					return
+				}
+				cga.AsyncWaitNPCDialog(dialogHandler);
+				return;
+			}
+			else if(dlg && dlg.options == 3){
+				actNumber = (obj.hasOwnProperty("neg") && dlg.message.indexOf(obj.neg) != -1) ? 2 : 1
+				cga.ClickNPCDialog(actNumber, 0);
+				if(obj.act == "msg" && dlg.message.indexOf(obj.target) != -1){
+					repeatFlag = false
+					return
+				}
+				cga.AsyncWaitNPCDialog(dialogHandler);
+				return;
+			}
+			return
+		}
+		var askAndCheck = ()=>{
+			cga.waitTeammateReady(null, (r)=>{
+				var retry = ()=>{
+					if(!repeatFlag){
+						r("ok")
+						return
+					}
+					if(obj.act == "item" && cga.findItem(obj.target) != -1){
+						repeatFlag = false
+						setTimeout(retry, 1000);
+						return
+					}
+					cga.turnTo(npcPos[0], npcPos[1])
+					cga.AsyncWaitNPCDialog(dialogHandler);
+					setTimeout(retry, 3000);
+					return
+				}
+
+				retry()
+			}, (r)=>{
+				cb(r)
+				return
+			}) 
+		}
+
+		let mapName = cga.GetMapName();
+		let mapIndex = cga.GetMapIndex().index3;
+
+		if(typeof map == 'string'){
+			if(map != mapName){
+				console.log("等待地图:", map)
+				setTimeout(cga.askNpcForObj, 1500, map, npcPos, obj, cb);
+				return
+			}
+		}else if(typeof map == 'number'){
+			if(map != mapIndex){
+				console.log("等待地图:", map)
+				setTimeout(cga.askNpcForObj, 1500, map, npcPos, obj, cb);
+				return
+			}
+		}else{
+			throw new Error('map对象必须为String或Number类型')
+		}
+
+		var playerInfo = cga.GetPlayerInfo();
+		var teamplayers = cga.getTeamPlayers();
+        cga.isTeamLeader = (teamplayers.length == 0 || teamplayers[0].name == playerInfo.name) ? true : false;
+
+		if(cga.isTeamLeader){
+			var tmpPos = cga.get2RandomSpace(npcPos[0],npcPos[1])
+			let tmpArr = [tmpPos[0]]
+			if (teamplayers.length){
+				tmpArr.push(tmpPos[1])
+				tmpArr.push(tmpPos[0])
+				tmpArr.push(tmpPos[1])
+				tmpArr.push(tmpPos[0])
+			}
+			cga.walkList(tmpArr, askAndCheck);
+		}else{
+			cga.waitForLocation({pos : npcPos}, askAndCheck)
+		}
+	}
 
 	/**
 	 * UNAecho:人物战斗准备，多数用于BOSS战前调整战斗配置使用，如W站位、读取战斗配置等
