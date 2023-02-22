@@ -7590,6 +7590,136 @@ module.exports = function(callback){
 	}
 
 	/**
+	 * UNAecho:等待队员自定义动作的API，可用于全队与NPC对话拿任务物品、BOSS前更改战斗配置等自定义动作
+	 * 自定义动作需要返回一个完成任务的标识符，可以是Number也可以是String，使用修改【玩家称号】展示结果。
+	 * 注意玩家自定义的称号有【16字节】长度限制。
+	 * 
+	 * @param {*} teammates String数组。期望队员名称的数组形式，传null视为自动获取当前队员。
+	 * @param {*} func 
+	 * 自定义动作函数，此函数必须被定义为：
+	 * 1、内部动作不限，如跟NPC对话拿物品，修改战斗配置等。但最好在3秒内结束。
+	 * 2、必须调用回调函数，并且传入Ready的标识符，否则逻辑不会继续。
+	 * 3、Ready标识符，格式为Number时，是小于3位的数字；格式位String时，是2位String字符串。
+	 * 4、Ready标识符为字符串的值有限制，只能使用"ok"，"no"，"un"这3种String
+	 * @param {*} cb 回调函数，全员信息收集完毕后制作成object，调用cb并将object传入
+	 * @returns 
+	 */
+	cga.waitTeammateReady = (teammates, func, cb) => {
+		// 如果没传入指定队伍，则自动以队内人员为准。
+		if(!teammates)
+			teammates = cga.getTeamPlayers()
+		if(!teammates.length){
+			console.log('没有队员，退出cga.waitTeammateInfo，回调参数传入null')
+			func((res)=>{
+				setTimeout(cb, 1000, null);
+			})
+			return
+		}
+		// 用英语首字母zjfma代表0、1、2、3、4。其中z是zero首字母，jfma是1234月份首字母
+		const identifier = ["z","j","f","m","a"]
+		// 正则匹配类似z01jok这种字符，每3个一组。
+		// 例：z01就是队长数值为"01"，jok就是第2个队员数值为"ok"
+		const reg = new RegExp(/[zjfma]{1}[oknu\d]{2}/g)
+		// 获取人物原来自定义昵称，函数结束时，需要恢复
+		var playerInfo = cga.GetPlayerInfo()
+		const originNick = playerInfo.nick
+
+		var teammate_info = {};
+		cga.isTeamLeader = (teammates[0].name == playerInfo.name || teammates.length == 0) ? true : false;
+
+
+		var check = (funcValue, cb)=>{
+			var listen = true
+
+			// 注意这里是刷新队内状态，一切以cga.shareTeammateInfo传入的teammates为验证数据的基础。
+			// 因为可能在验证期间，有非teammates的角色（如：其他玩家）错加入队伍。
+			var teamplayers = cga.getTeamPlayers()
+			// 如果人数与预期不符，则等待
+			if(teammates.length != teamplayers.length){
+				console.warn('队内玩家数量与预期玩家数量不符，清空数据记录情况')
+				teammate_info = {}
+				setTimeout(check, 1000, funcValue, cb);
+				return
+			}
+
+			for (let t = 0; t < teamplayers.length; t++) {
+				// 以自己在队内的序号来拼接类似z01j02的自定义称号
+				let tmpNick = identifier[t] + funcValue
+				if(teamplayers[t].is_me){
+					if(teamplayers[t].nick != tmpNick){
+						cga.ChangeNickName(tmpNick)
+						console.log("更改nickname:【" + tmpNick + "】")
+					}
+					// 更新自己的实时数据
+					teammate_info[identifier[t]] = isNaN(parseInt(funcValue)) ? funcValue : parseInt(funcValue)
+					continue
+				}
+				
+				var memberNick = teamplayers[t].nick.match(reg)
+				if(!memberNick){
+					continue
+				}
+
+				memberNick.forEach((n)=>{
+					// 如果解析的3位字符串不以zjfma为开头，则跳过
+					if(identifier.indexOf(n[0]) == -1)
+						return
+					let v = n.slice(1,3)
+					v = isNaN(parseInt(v)) ? v : parseInt(v)
+					teammate_info[n[0]] = v
+				})
+			}
+			// 为true则持续监听
+			listen = cb(teammate_info)
+			if(listen == true)
+				setTimeout(check, 1000, funcValue, cb);
+		}
+
+		func((funcValue)=>{
+			// 数值验证以及格式处理
+			if(typeof funcValue == 'number'){
+				if(parseInt(funcValue, 10) != funcValue){
+					throw new Error('错误，必须输入3位以下整数或字符串')
+				}else if(funcValue >= 0 && funcValue < 10){
+					funcValue = "0" + funcValue.toString()
+				}else if(funcValue >= 10 && funcValue < 100){
+					funcValue = funcValue.toString()
+				}else{
+					throw new Error('错误，必须输入3位以下整数或字符串')
+				}
+			}else if(typeof funcValue == 'string' && funcValue.length != 2){
+				throw new Error('错误，必须输入3位以下整数或字符串')
+			}
+			if(!funcValue.match(new RegExp(/[oknu\d]{2}/g))){
+				throw new Error('错误，必须输入3位以下整数或"ok"，"no"，"un"3种字符串')
+			}
+
+			check(funcValue, (result)=>{
+				// 验证完整性，通过了才能进行回调
+				if(Object.keys(result).length == teammates.length){
+					// 翻译数据，将数字的String转换为int传给cb
+					var obj = {}
+					const identifier = {"z" : 0, "j" : 1, "f" : 2, "m" : 3, "a" : 4}
+					var teamplayers = cga.getTeamPlayers()
+					Object.keys(result).forEach(k =>{
+						obj[teamplayers[identifier[k]].name] = result[k]
+					})
+					// 恢复人物原本称号
+					console.log('2.5秒后恢复称号..')
+					setTimeout(()=>{
+						cga.ChangeNickName(originNick)
+					}, 2500);
+					// 本函数出口
+					cb(obj)
+					return false
+				}
+				return true
+			})
+		})
+	}
+	
+
+	/**
 	 * UNAecho:人物战斗准备，多数用于BOSS战前调整战斗配置使用，如W站位、读取战斗配置等
 	 * @param {String | Number} map 目标地图，只有处于当前地图名称或index才能进行
 	 * @param {Array} pos 队长或单人坐标，需要走到特定坐标才能执行函数。
