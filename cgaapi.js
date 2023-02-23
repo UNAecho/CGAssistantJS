@@ -1856,14 +1856,11 @@ module.exports = function(callback){
 	}
 	
 	cga.travel.falan.toTeleRoomTemplate = (villageName, npcPos, npcPos2, npcPos3, cb)=>{
-		cga.travel.falan.toStone('C', ()=>{
+		var logic = ()=>{
 			var teamplayers = cga.getTeamPlayers();
 			var isTeamLeader = teamplayers.length > 0 && teamplayers[0].is_me == true ? true : false;
 			
-			var list = [
-			[41, 50, '里谢里雅堡 1楼'],
-			[45, 20, '启程之间']
-			];
+			var list = [];
 			
 			if(isTeamLeader){
 				list.push(npcPos);
@@ -1915,13 +1912,22 @@ module.exports = function(callback){
 					go();
 				}
 			});
-		});
+		}
+		
+		let mapindex = cga.GetMapIndex().index3;
+		if(mapindex == 1500 || mapindex == 1520){
+			cga.travel.autopilot('启程之间',logic)
+		}else{
+			cga.travel.falan.toStone('C', ()=>{
+				cga.travel.autopilot('启程之间',logic)
+			});
+		}
 	}
 	
 	//从启程之间传送到指定村落
 	//UNAecho:修改逻辑，在对应传送石房间直接跳过本API，而不是登出重新再执行传送一遍。
 	cga.travel.falan.toTeleRoom = (villageName, cb)=>{
-		var mapindex = cga.GetMapIndex().index3;
+		let mapindex = cga.GetMapIndex().index3;
 		switch(villageName){
 			case '亚留特村':
 				if (mapindex == 2499){
@@ -7839,7 +7845,7 @@ module.exports = function(callback){
 
 		var playerInfo = cga.GetPlayerInfo();
 		var teamplayers = cga.getTeamPlayers();
-        cga.isTeamLeader = (teamplayers.length == 0 || teamplayers[0].name == playerInfo.name) ? true : false;
+        cga.isTeamLeader = ((teamplayers.length && teamplayers[0].name == playerInfo.name) || teamplayers.length == 0) ? true : false;
 
 		if(cga.isTeamLeader){
 			var tmpPos = cga.get2RandomSpace(npcPos[0],npcPos[1])
@@ -7909,7 +7915,7 @@ module.exports = function(callback){
 
 		var playerInfo = cga.GetPlayerInfo();
 		var teamplayers = cga.getTeamPlayers();
-        cga.isTeamLeader = (teamplayers.length == 0 || teamplayers[0].name == playerInfo.name) ? true : false;
+        cga.isTeamLeader = ((teamplayers.length && teamplayers[0].name == playerInfo.name) || teamplayers.length == 0) ? true : false;
 
 		if(cga.isTeamLeader){
 			var tmpPos = cga.get2RandomSpace(bossPos[0],bossPos[1])
