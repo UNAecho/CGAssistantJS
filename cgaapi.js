@@ -7815,7 +7815,7 @@ module.exports = function(callback){
 			}, (r)=>{
 				cb(r)
 				return
-			}) 
+			})
 		}
 
 		let mapName = cga.GetMapName();
@@ -7823,13 +7823,13 @@ module.exports = function(callback){
 
 		if(typeof map == 'string'){
 			if(map != mapName){
-				console.log("等待地图:", map)
+				// console.log("等待地图:", map)
 				setTimeout(cga.askNpcForObj, 1500, map, npcPos, obj, cb);
 				return
 			}
 		}else if(typeof map == 'number'){
 			if(map != mapIndex){
-				console.log("等待地图:", map)
+				// console.log("等待地图:", map)
 				setTimeout(cga.askNpcForObj, 1500, map, npcPos, obj, cb);
 				return
 			}
@@ -7859,83 +7859,70 @@ module.exports = function(callback){
 	/**
 	 * UNAecho:人物战斗准备，多数用于BOSS战前调整战斗配置使用，如W站位、读取战斗配置等
 	 * @param {String | Number} map 目标地图，只有处于当前地图名称或index才能进行
-	 * @param {Array} pos 队长或单人坐标，需要走到特定坐标才能执行函数。
-	 * @param {Function} prepareFunc 战斗准备函数，【注意】因为是异步执行且没有等待，请在delayTime的时间内完成。
+	 * @param {Array} bossPos BOSS坐标
+	 * @param {Function} prepareFunc 战斗准备函数。
+	 * 执行完毕后，必须在外面调用回调函数并传入Ready结束标识符，否则此API逻辑不会继续
+	 * 结束标识符限定为：【ok】【no】【un】均可
 	 * @param {*} cb 
-	 * @param {Number} delayTime prepareFunc()执行后的等待时间，超过将调用回调函数cb
 	 * @returns 
 	 */
-	cga.prepareToBattle = (map, pos, prepareFunc, cb, delayTime = 2500) => {
-		let name = cga.GetMapName();
-		let index = cga.GetMapIndex().index3;
+	cga.prepareToBattle = (map, bossPos, prepareFunc, cb) => {
+		// 检查输入类型
+		if(typeof map != 'string' && typeof map != 'number'){
+			throw new Error('map必须为String或Number类型')
+		}
+		if(!Array.isArray(bossPos) || bossPos.length != 2){
+			throw new Error('bossPos必须为Int型数组，长度为2')
+		}
+
+		var prepare = ()=>{
+			cga.waitTeammateReady(null, (r)=>{
+				prepareFunc(r)
+				return
+			}, (r)=>{
+				console.log('全队准备完毕，等待5秒队员复原称号后执行回调..')
+				setTimeout(() => {
+					cb(r)
+				}, 5000);
+				return
+			})
+		}
+
+		let mapName = cga.GetMapName();
+		let mapIndex = cga.GetMapIndex().index3;
 
 		if(typeof map == 'string'){
-			if(map != name){
-				console.log("等待地图:", map)
-				setTimeout(cga.prepareToBattle, 1500, map, pos, prepareFunc, cb);
+			if(map != mapName){
+				// console.log("等待地图:", map)
+				setTimeout(cga.prepareToBattle, 1500, map, bossPos, prepareFunc, cb);
 				return
 			}
 		}else if(typeof map == 'number'){
-			if(map != index){
-				console.log("等待地图:", map)
-				setTimeout(cga.prepareToBattle, 1500, map, pos, prepareFunc, cb);
+			if(map != mapIndex){
+				// console.log("等待地图:", map)
+				setTimeout(cga.prepareToBattle, 1500, map, bossPos, prepareFunc, cb);
 				return
 			}
 		}else{
 			throw new Error('map对象必须为String或Number类型')
 		}
 
-		// 称号相关变量
-		const cipher = "ok"
-		var playerInfo = cga.GetPlayerInfo()
-
-		// 队长判定
-		var teamplayers = cga.getTeamPlayers()
-		cga.isTeamLeader = (teamplayers.length == 0 || teamplayers[0].name == playerInfo.name) ? true : false;
+		var playerInfo = cga.GetPlayerInfo();
+		var teamplayers = cga.getTeamPlayers();
+        cga.isTeamLeader = (teamplayers.length == 0 || teamplayers[0].name == playerInfo.name) ? true : false;
 
 		if(cga.isTeamLeader){
-			cga.walkList([
-				pos,
-			], ()=>{
-				// 如果是单人，跳过称号判断环节，直接进行战斗准备
-				if(teamplayers.length == 0){
-					prepareFunc()
-					console.log('没有队伍，战斗准备完毕，', (delayTime / 1000), '秒后执行回调...')
-					setTimeout(cb, delayTime);
-					return
-				}
-				cga.shareTeammateInfo(null, (r)=>{
-					if(r){
-						if(r === cipher){
-							return true
-						}else{
-							return false
-						}
-					}
-					return cipher
-				}, (r)=>{
-					prepareFunc()
-					console.log('战斗准备完毕，', (delayTime / 1000), '秒后执行回调...')
-					setTimeout(cb, delayTime, r);
-					return
-				})
-			})
+			var tmpPos = cga.get2RandomSpace(bossPos[0],bossPos[1])
+			let tmpArr = [tmpPos[0]]
+			if (teamplayers.length){
+				tmpArr.push(tmpPos[1])
+				tmpArr.push(tmpPos[0])
+				tmpArr.push(tmpPos[1])
+				tmpArr.push(tmpPos[0])
+			}
+			cga.walkList(tmpArr, prepare);
 		}else{
-			cga.shareTeammateInfo(null, (r)=>{
-				if(r){
-					if(r === cipher){
-						return true
-					}else{
-						return false
-					}
-				}
-				return cipher
-			}, (r)=>{
-				prepareFunc()
-				console.log('战斗准备完毕，', (delayTime / 1000), '秒后执行回调...')
-				setTimeout(cb, delayTime, r);
-				return
-			})
+			cga.waitForLocation({pos : bossPos}, prepare)
 		}
 	}
 	
