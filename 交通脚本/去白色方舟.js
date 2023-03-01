@@ -178,7 +178,7 @@ var cga = require('../cgaapi')(function(){
 				})
 			}else{
 				cga.travel.newisland.toStone('X', ()=>{
-					var sayString = '【UNA脚本】欢迎使用UNA脚本，当前功能为【组2人队去白色方舟】';
+					var sayString = '【UNA脚本】欢迎使用UNAの脚本，当前功能为【组2人队去白色方舟】';
 					cga.sayLongWords(sayString, 0, 3, 1);
 					cga.walkList([
 						[165, 153],

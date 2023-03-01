@@ -1915,7 +1915,9 @@ module.exports = function(callback){
 		}
 		
 		let mapindex = cga.GetMapIndex().index3;
-		if(mapindex == 1500 || mapindex == 1520){
+		if(mapindex == 1522){
+			logic()
+		}else if(mapindex == 1500 || mapindex == 1520){
 			cga.travel.autopilot('启程之间',logic)
 		}else{
 			cga.travel.falan.toStone('C', ()=>{
@@ -2545,7 +2547,7 @@ module.exports = function(callback){
 				// 厨房
 				1502:[[153, 100, 1500],[104, 21, 1502],],
 				// 图书室
-				1504:[[153, 100, 1500],[41, 50, 1520],[74, 19, 1521],[0, 71, 1504],],
+				1504:[[153, 100, 1500],[41, 50, 1520],[74, 19, 1521],[0, 74, 1504],],
 				// 食堂
 				1506:[[153, 100, 1500],[41, 50, 1520],[74, 19, 1521],[95, 71, 1506],],
 				// 客房
@@ -2578,6 +2580,8 @@ module.exports = function(callback){
 				1535:[[153, 100, 1500],[47, 85, 1535],],
 				// 召唤之间(新手房，无法再次进入)
 				1536:[[153, 100, 1500],[47, 85, 1535],],
+				// 召唤之间(新手房，无法再次进入)
+				1537:[[153, 100, 1500],[47, 85, 1535],],
 				// 饲养师之家
 				1810:[[122, 36, 1810],],
 				// 客房
@@ -2750,6 +2754,8 @@ module.exports = function(callback){
 				1535:[[3, 7, 1500],],
 				// 召唤之间
 				1536:[[3, 7, 1500],],
+				// 召唤之间
+				1537:[[3, 7, 1500],],
 				// 饲养师之家
 				1810:[[10, 17, 1000],],
 				// 客房
@@ -7249,7 +7255,7 @@ module.exports = function(callback){
 	cga.waitTeammateSay = (cb)=>{
 		
 		cga.AsyncWaitChatMsg((err, r)=>{
-			
+
 			if(!r){
 				cga.waitTeammateSay(cb);
 				return;
@@ -7596,7 +7602,7 @@ module.exports = function(callback){
 	}
 
 	/**
-	 * UNAecho:等待队员自定义动作的API，可用于全队与NPC对话拿任务物品、BOSS前更改战斗配置等自定义动作
+	 * UNAecho:等待队员自定义动作的API，可用于BOSS前更改战斗配置等自定义动作
 	 * 自定义动作需要返回一个完成任务的标识符，可以是Number也可以是String，使用修改【玩家称号】展示结果。
 	 * 注意玩家自定义的称号有【16字节】长度限制。
 	 * 
@@ -7731,7 +7737,11 @@ module.exports = function(callback){
 	 * 如果传入String或Number时，默认是索取物品String名称或物品Int型id，并且所有选项都选积极选项
 	 * 如果有纯对话需求，或者对话中并非所有选项都是积极选项，请按照以下格式：
 	 * {act : "msg", target: "结束此API的说话切片", neg : "想要选择消极按钮的对话切片"}
-	 * 如果上述对象不传入neg，则依然默认所有对话都选积极选项。
+	 * 特别地，如果目标是道具，而对话中需要点否，请按照以下格式：
+	 * {act : "item", target: "道具名称", neg : "想要选择消极按钮的对话切片"}
+	 * 如果目标是切换地图，请按照以下格式：
+	 * {act : "map", target: "地图名称或者index", neg : "想要选择消极按钮的对话切片"}
+	 * 【注意】如果上述对象不传入neg，则依然默认所有对话都选积极选项。neg只是可选选项
 	 * @param {*} cb 回调函数，调用时会传入队伍全员信息
 	 * @returns 
 	 */
@@ -7807,6 +7817,10 @@ module.exports = function(callback){
 						return
 					}
 					if(obj.act == "item" && cga.findItem(obj.target) != -1){
+						repeatFlag = false
+						setTimeout(retry, 1000);
+						return
+					}else if(obj.act == "map" && (obj.target == cga.GetMapName() || obj.target == cga.GetMapIndex().index3)){
 						repeatFlag = false
 						setTimeout(retry, 1000);
 						return
@@ -9932,6 +9946,20 @@ module.exports = function(callback){
 		return false
 	}
 
+	/**
+	 * UNAecho : 获取时间范围，并精确到服务器时间的分钟级别
+	 * 【注意】游戏中的cga.GetSysTime()时间，虽然；hours是24小时制，秒是60秒制，但mins却不是60分钟制
+	 * 游戏内的1秒比现实的1秒要长一些，但1分钟和1小时比现实短了不少，推测时分秒并不是完全相关的，各自有各自的增长时间
+	 * 根据大量实验记录总结，昼夜交界线平均期望值为：
+	 * 白天转黄昏，hours : 16 , mins : 105
+	 * hours : 16 , mins : 104.2时为白天，hours : 16 , mins : 104.8开始为黄昏，四舍五入到105
+	 * 夜晚转黎明，hours : 4 , mins : 9
+	 * hours : 4 , mins : 8.25时为夜晚，hours : 4 , mins : 8.5开始为黎明，四舍五入到9
+	 * 
+	 * 可使用【交通脚本】中的【测试游戏时间交界.js】自行测试时间，会自动将数据落盘为【游戏内时间切换记录.json】
+	 * 计算结论的方式也在脚本之中，默认不调用
+	 * @returns 
+	 */
     cga.getTimeRange = ()=>{
         var stages = ['黎明','白天','黄昏','夜晚'];
         var sysTime = cga.GetSysTime();
@@ -9941,10 +9969,20 @@ module.exports = function(callback){
         // console.log('当前游戏内时间:'+sysTime.hours+':'+sysTime.mins+':'+sysTime.secs);
         if(sysTime.hours < 4){
             return stages[3];
+        }else if(sysTime.hours == 4){
+			if(sysTime.mins < 9){
+				return stages[3];
+			}
+			return stages[0]
         }else if(sysTime.hours <= 6){
             return stages[0];
         }else if(sysTime.hours < 16){
             return stages[1];
+        }else if(sysTime.hours == 16){
+			if(sysTime.mins < 105){
+				return stages[1]
+			}
+            return stages[2];
         }else if(sysTime.hours <= 18){
             return stages[2];
         }else{

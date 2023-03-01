@@ -247,8 +247,10 @@ var cga = require('./cgaapi')(function () {
 	};
 
 	var map = cga.GetMapName();
+	var mapindex = cga.GetMapIndex().index3
 	loadBattleConfig()
 	if (map == '召唤之间') {
+		console.log('角色出生房间的index : 【', mapindex, '】')
 		cga.walkList([
 			[4, 10],
 		], ()=>{

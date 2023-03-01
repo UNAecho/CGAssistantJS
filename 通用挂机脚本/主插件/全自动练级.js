@@ -558,12 +558,12 @@ var switchArea = (cb)=>{
 	else if(thisobj.minLevel> 72 && thisobj.minLevel <= 80){
 		global.area = '蝎子'
 	}
-	else if(thisobj.minLevel> 80 && thisobj.minLevel <= 100){
+	else if(thisobj.minLevel> 80 && thisobj.minLevel <= 97){
 		global.area = '沙滩'
 	}
 	// TODO 隐秘之洞刷碎片
 	// 蜥蜴石化魔法容易导致团灭，将等级区间后移，增加容错
-	else if(thisobj.minLevel> 100 && thisobj.minLevel <= 105){
+	else if(thisobj.minLevel> 97 && thisobj.minLevel <= 105){
 		global.area = '蜥蜴'
 	}
 	else if(thisobj.minLevel> 105 && thisobj.minLevel <= 120){

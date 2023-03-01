@@ -179,7 +179,7 @@ var configModeArray = [
 		if(!job){
 			throw new Error('请输入角色正确的最终职业名称，或者通过【通用挂机脚本系列】自动调用')
 		}
-		var filename = null
+		var filename = '练级'
 
 		if(job == '格斗士'){
 			filename = '格斗士练级'
@@ -195,10 +195,6 @@ var configModeArray = [
 
 		}else if(job == '教团骑士'){
 
-		}
-		
-		if(!filename){
-			filename = '练级'
 		}
 
 		// 读取战斗配置
