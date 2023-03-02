@@ -3874,7 +3874,7 @@ module.exports = function(callback){
 		}
 
 		if(!targetindex || !info.walkForward[targetindex]){
-			throw new Error('[UNA脚本警告]:targetMap:[' + targetMap +']输入有误，请确认地图中是否有输入的名称地点。')
+			cb(new Error('[UNA脚本警告]:targetMap:[' + targetMap +']输入有误，请确认地图中是否有输入的名称地点。'))
 		}
 		
 		try {
@@ -4136,7 +4136,16 @@ module.exports = function(callback){
 			// TODO 阿凯鲁法
 		] 
 		if (bankList.indexOf(mapindex) == -1){
-			cga.travel.autopilot('银行',()=>{
+			cga.travel.autopilot('银行',(err,reason)=>{
+				if (err && err.message.indexOf('请确认地图中是否有输入的名称地点') != -1){
+					console.log('当前地图区域没有银行，登出..')
+					cga.logBack(()=>{
+						cga.travel.autopilot('银行',(err,reason)=>{
+							cga.travel.toBank(cb)
+						})
+					})
+					return
+				}
 				cga.travel.toBank(cb)
 			})
 			return
