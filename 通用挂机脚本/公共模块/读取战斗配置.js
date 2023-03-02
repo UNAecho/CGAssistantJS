@@ -182,7 +182,7 @@ var configModeArray = [
 		var filename = '练级'
 
 		if(job == '格斗士'){
-			filename = '格斗士练级'
+			filename = '格斗士清怪'
 		}else if(job == '传教士'){
 			filename = '传教士练级'
 		}else if(job == '魔法师'){

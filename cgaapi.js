@@ -7667,12 +7667,12 @@ module.exports = function(callback){
 					continue
 				}
 				
-				var memberNick = teamplayers[t].nick.match(reg)
+				var memberNick = teamplayers[t].nick
 				if(!memberNick){
 					continue
 				}
 
-				memberNick.forEach((n)=>{
+				memberNick.match(reg).forEach((n)=>{
 					// 如果解析的3位字符串不以zjfma为开头，则跳过
 					if(identifier.indexOf(n[0]) == -1)
 						return
@@ -7735,14 +7735,20 @@ module.exports = function(callback){
 	 * @param {Array} npcPos NPC坐标
 	 * @param {String | Number | Object} obj 目标对象
 	 * 如果传入String或Number时，默认是索取物品String名称或物品Int型id，并且所有选项都选积极选项
-	 * 如果有纯对话需求，或者对话中并非所有选项都是积极选项，请按照以下格式：
-	 * {act : "msg", target: "结束此API的说话切片", neg : "想要选择消极按钮的对话切片"}
-	 * 特别地，如果目标是道具，而对话中需要点否，请按照以下格式：
-	 * {act : "item", target: "道具名称", neg : "想要选择消极按钮的对话切片"}
-	 * 如果目标是切换地图，请按照以下格式：
-	 * {act : "map", target: "地图名称或者index", neg : "想要选择消极按钮的对话切片"}
-	 * 【注意】如果上述对象不传入neg，则依然默认所有对话都选积极选项。neg只是可选选项
-	 * @param {*} cb 回调函数，调用时会传入队伍全员信息
+	 * obj格式以及各个key的功能：
+	 * obj.act : 与NPC交互的动作目的。有item，msg，map3种类型可选：
+		item: 找NPC拿道具，物品栏出现此道具则调用cb，函数结束
+		msg: 找NPC对话，直至NPC出现此msg的内容，调用cb，函数结束
+		map: 找NPC对话，直至人物被传送至此地图，调用cb，函数结束
+	 * obj.target : obj.act的目标，根据obj.act的不同，有几种情况：
+		obj.act为item时，obj.target输入item的名称或数字itemid
+		obj.act为msg时，obj.target输入监测NPC说话的内容切片
+		obj.act为map时，obj.target输入地图的名称或index
+	 * [obj.neg] : 可选选项，如果与NPC说话，某句话想要选【否】【取消】等消极选项，obj.neg需要输入那句话的切片。
+		比如，如果想在NPC问【你愿意吗？】的时候回答【否】，那么obj.neg可以输入"愿意"、"你愿意吗"等切片
+	 * [obj.pos] : 可选选项，仅在obj.act = "map"时生效，人物需要等待被NPC传送至pos这个坐标，函数才结束
+	 * [obj.say] : 可选选项，人物会在与NPC交互的时候说话，因为有的NPC是需要说出对应的话才会有反应的
+	 * @param {*} cb 回调函数，在obj.act不为map时，调用时会传入队伍全员信息
 	 * @returns 
 	 */
 	cga.askNpcForObj = (map, npcPos, obj, cb) => {
@@ -7769,8 +7775,16 @@ module.exports = function(callback){
 		if(typeof obj != 'object' || !obj.hasOwnProperty("act") || !obj.hasOwnProperty("target")){
 			throw new Error('obj格式有误，见API注释')
 		}
-
+		if(obj.hasOwnProperty("pos") && (!Array.isArray(obj.pos) || obj.pos.length != 2)){
+			throw new Error('obj.pos格式必须为长度为2的Number数组')
+		}
+		if(obj.hasOwnProperty("say") && (typeof obj.say != 'string' || obj.say.length == 0)){
+			throw new Error('obj.say格式必须为长度大于0的字符串')
+		}
+		// 如果此flag为false，则终止重复和NPC对话
 		let repeatFlag = true
+		// 如果是与npc说话，则turnto只需要一次
+		let turnToFlag = true
 		const dialogHandler = (err, dlg)=>{
 			var actNumber = -1
 			if(dlg && ((dlg.options & 4) == 4 || dlg.options == 12)){
@@ -7809,33 +7823,76 @@ module.exports = function(callback){
 			}
 			return
 		}
+
+		// 为任务物品清理背包中的魔石
+		var dropStoneForMissionItem = (item)=>{
+			// 持续递归，直至背包中存在目标任务物品才结束
+			if(cga.findItem(item) == -1){
+				var inventory = cga.getInventoryItems();
+				var stone = cga.findItem('魔石');
+				if(inventory.length == 20 && stone == -1){
+					throw new Error('错误，请手动清理物品，否则任务无法继续')
+				}
+				if(inventory.length >= 18){
+					console.log('物品大于18个，开始搜索背包中的魔石并丢弃..')
+					if(stone != -1){
+						console.log('丢弃魔石..')
+						cga.DropItem(stone);
+					}
+					setTimeout(dropStoneForMissionItem, 1000);
+				}
+			}
+		}
+
 		var askAndCheck = ()=>{
-			cga.waitTeammateReady(null, (r)=>{
-				var retry = ()=>{
-					if(!repeatFlag){
-						r("ok")
-						return
-					}
-					if(obj.act == "item" && cga.findItem(obj.target) != -1){
-						repeatFlag = false
-						setTimeout(retry, 1000);
-						return
-					}else if(obj.act == "map" && (obj.target == cga.GetMapName() || obj.target == cga.GetMapIndex().index3)){
-						repeatFlag = false
-						setTimeout(retry, 1000);
-						return
-					}
-					cga.turnTo(npcPos[0], npcPos[1])
-					cga.AsyncWaitNPCDialog(dialogHandler);
-					setTimeout(retry, 3000);
+			var retry = (cb)=>{
+				if(!repeatFlag){
+					cb("ok")
+					return
+				}
+				if(obj.act == "item" && cga.findItem(obj.target) != -1){
+					repeatFlag = false
+					setTimeout(retry, 1000, cb);
+					return
+				}else if(obj.act == "map" && (obj.target == cga.GetMapName() || obj.target == cga.GetMapIndex().index3) && (!obj.pos || (cga.GetMapXY().x == obj.pos[0] && cga.GetMapXY().y == obj.pos[1]))){
+					repeatFlag = false
+					setTimeout(retry, 1000, cb);
 					return
 				}
 
-				retry()
-			}, (r)=>{
-				cb(r)
+				// 自定义与NPC交谈的内容
+				if(obj.say){
+					if (turnToFlag){
+						cga.turnTo(npcPos[0], npcPos[1])
+						turnToFlag = false
+					}
+					setTimeout(() => {
+						cga.SayWords(obj.say, 0, 3, 1);
+					}, 500);
+				}else{
+					cga.turnTo(npcPos[0], npcPos[1])
+				}
+				cga.AsyncWaitNPCDialog(dialogHandler);
+				setTimeout(retry, 3500, cb);
 				return
-			})
+			}
+
+			// 如果目标是map，切换地图会导致人物离队，其他队员无法通过称号监测到你的完成情况，故用其他逻辑代替
+			if(obj.act == "map"){
+				// 注意：map模式没有人物队内监测，所以不会有队内消息在cb中被返回。item、msg模式则有
+				retry(cb)
+				return
+			}else{// item、msg等模式不离队，依旧用waitTeammateReady
+				// 为任务物品留位置
+				dropStoneForMissionItem(obj.target)
+
+				cga.waitTeammateReady(null, (r)=>{
+					retry(r)
+				}, (r)=>{
+					cb(r)
+					return
+				})
+			}
 		}
 
 		let mapName = cga.GetMapName();
@@ -9931,6 +9988,20 @@ module.exports = function(callback){
 			count+=1
 		}
 		return temppath
+	}
+
+	/**
+	 * UNAecho:搜索指定称号，返回索引
+	 * 提示：索引的顺序和游戏中称号栏的顺序并不一致，以cga.GetPlayerInfo().titles为准
+	 */
+	cga.findTitle = (title) => {
+		var titles = cga.GetPlayerInfo().titles;
+		for (var i = 0 ; i < titles.length ; i++){
+			if(titles[i] == title){
+				return i
+			}
+		}
+		return -1
 	}
 
 	cga.ismaxbattletitle = ()=>{
