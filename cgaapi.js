@@ -7925,9 +7925,10 @@ module.exports = function(callback){
 
 		var playerInfo = cga.GetPlayerInfo();
 		var teamplayers = cga.getTeamPlayers();
-        cga.isTeamLeader = ((teamplayers.length && teamplayers[0].name == playerInfo.name) || teamplayers.length == 0) ? true : false;
+		var isLeader = false
+        isLeader = ((teamplayers.length && teamplayers[0].name == playerInfo.name) || teamplayers.length == 0) ? true : false;
 
-		if(cga.isTeamLeader){
+		if(isLeader){
 			var tmpPos = cga.get2RandomSpace(npcPos[0],npcPos[1])
 			let tmpArr = [tmpPos[0]]
 			if (teamplayers.length){

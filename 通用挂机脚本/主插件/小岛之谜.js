@@ -45,7 +45,7 @@ for(var i in teams){
 
 var jump = ()=>{
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','全自动练级')
+		updateConfig.update_config('mainPlugin','地狱的回响')
 	},5000)
 }
 
@@ -56,8 +56,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * ◆已经完成过本任务拥有“背叛者”称号时，不可解本任务，无法获得【阿斯提亚锥形水晶】，会获得半山6《地狱的回响》的任务道具【锄头】
 		 */
 		workFunc: function(cb2){
+			var obj = {act : "item", target : "阿斯提亚锥形水晶"}
 			healMode.func(()=>{
-				var obj = {act : "item", target : "阿斯提亚锥形水晶"}
 				cga.travel.falan.toStone('C', (r)=>{
 					cga.travel.autopilot(1504,()=>{
 						cga.askNpcForObj(1504, [27,15],obj,()=>{

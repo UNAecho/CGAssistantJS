@@ -118,6 +118,23 @@ var mineArray = [
 			});
 		}
 	},
+	{// UNAecho:半山8/死神的降临任务【神圣庇护之衣】伐木材料
+		level : 8,
+		name : '古藤',
+		display_name : '古藤',
+		func : (cb)=>{
+			var obj = {act : "map", target : "小岛"}
+			cga.travel.falan.toStone('C', (r)=>{
+				cga.travel.autopilot(1504,()=>{
+					cga.askNpcForObj(1504, [27,15],obj,()=>{
+						cga.walkList([
+							[73, 98],
+						], cb);
+					})
+				})
+			});
+		}
+	},
 	{
 		level : 9,
 		name : '丝柏',

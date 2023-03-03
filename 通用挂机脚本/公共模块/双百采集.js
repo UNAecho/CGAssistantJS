@@ -451,7 +451,7 @@ var thisobj = {
 				return true;
 			});
 		},(cb2)=>{
-			var sayString = '【采集插件】请选择材料采集方式: 0采集技能 1采集其他材料兑换或直接商店购买';
+			var sayString = '【采集插件】请选择材料采集方式: 0技能采集 1采集其他材料兑换或直接商店购买';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val)=>{
 				if(val !== null && val >= 0 && val <= 1){

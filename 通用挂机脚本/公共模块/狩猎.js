@@ -424,6 +424,23 @@
 		});
 	}
 },
+{// UNAecho:半山8/死神的降临任务【神圣庇护之衣】狩猎材料
+	level : 8,
+	name : '闪亮的珍珠',
+	display_name : '闪亮的珍珠',
+	func : (cb)=>{
+		var obj = {act : "map", target : "小岛"}
+		cga.travel.falan.toStone('C', (r)=>{
+			cga.travel.autopilot(1504,()=>{
+				cga.askNpcForObj(1504, [27,15],obj,()=>{
+					cga.walkList([
+						[66, 9],
+					], cb);
+				})
+			})
+		});
+	}
+},
 {
 	level : 9,
 	name : '伊势虾',
@@ -505,6 +522,7 @@
 				cga.logBack(go)
 				return
 			}else{
+				console.log('UNAecho提示:8级以上食材建议定居在哥拉尔，打满之后坐船送回去')
 				cga.travel.goAbroad('艾尔巴尼亚王国', go)
 				return
 			}
@@ -748,7 +766,7 @@ var thisobj = {
 				return true;
 			});
 		}, (cb2)=>{
-			var sayString = '【采集插件】请选择材料采集方式: 0采集技能 1采集其他材料兑换或直接商店购买';
+			var sayString = '【采集插件】请选择材料采集方式: 0技能采集 1采集其他材料兑换或直接商店购买';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val)=>{
 				if(val !== null && val >= 0 && val <= 1){
