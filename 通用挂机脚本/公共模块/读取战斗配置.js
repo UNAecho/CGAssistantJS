@@ -262,7 +262,11 @@ var thisobj = {
 				console.error(err);
 				return;
 			}else{
-				console.log('【战斗配置插件】读取战斗配置成功')
+				if(typeof obj == 'string'){
+					console.log('【战斗配置插件】读取【' + obj + '】成功')
+				}else{
+					console.log('【战斗配置插件】读取自定义战斗配置成功')
+				}
 				return
 			}
 		})
