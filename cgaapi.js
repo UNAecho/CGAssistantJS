@@ -594,6 +594,8 @@ module.exports = function(callback){
 			result = '阿巴尼斯村'
 		}else if(mapindex >= 4400 && mapindex <= 4499){
 			result = '魔法大学'
+		}else if(mapindex >= 27001 && mapindex <= 27999){
+			result = '曙光骑士团营地'
 		}else if(mapindex >= 1000 && mapindex <= 32830){
 			result = '法兰城'
 		}else if(mapindex == 33000){
@@ -1085,6 +1087,11 @@ module.exports = function(callback){
 			}
 			
 			return '圣骑士营地域';
+		}else if(mapname == '芙蕾雅'){// 曙光骑士团营地域
+			if(mapXY.x <=520 && mapXY.x >=420 && mapXY.y <= 315 && mapXY.y >=250)
+			{
+				return '曙光骑士团营地域';
+			}
 		}
 		return null;
 	}
@@ -2762,48 +2769,6 @@ module.exports = function(callback){
 				32830:[[2, 7, 1102]],
 			},
 		},
-		'曙光骑士团营地':{
-			mainName : '曙光骑士团营地',
-			mainindex : 27001,
-			minindex : 27001,
-			maxindex : 27999,
-			mapTranslate:{
-				'主地图' : 27001,
-				'曙光骑士团营地' : 27001,
-				'曙光储备室':27011,
-				'曙光营地医院':27012,
-				'曙光营地医院 2楼':27012,
-				'酒吧':27013,
-				'曙光营地酒吧':27013,
-				'辛希亚探索指挥部':{
-					// 一楼二楼是一个index
-					27014:'一楼',
-					27014:'二楼',
-					27101:'传送石',
-				},
-				// 三个房间都是27015
-				'曙光营地指挥部':27015,
-				'传送石':2399
-			},
-			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
-				// 主地图
-				27001:[],
-				// 曙光储备室
-				27011:[[44, 49, 27011],],
-				// 曙光营地医院
-				27012:[[42, 56, 27012],],
-				// 曙光营地医院 2楼
-				27012:[[42, 56, 27012],[15, 12, 27012],],
-			},
-			walkReverse:{
-				// 曙光储备室
-				27011:[[12, 22, 27001],],
-				// 曙光营地医院
-				27012:[[1, 8, 27001],],
-				// 曙光营地医院 2楼
-				27012:[[97, 12, 27012],],
-			},
-		},
 		'圣拉鲁卡村':{
 			mainName : '圣拉鲁卡村',
 			mainindex : 2300,
@@ -3738,6 +3703,94 @@ module.exports = function(callback){
 				}, null, 4456],],
 			},
 		},
+		'曙光骑士团营地':{
+			mainName : '曙光骑士团营地',
+			mainindex : 27001,
+			minindex : 27001,
+			maxindex : 27999,
+			mapTranslate:{
+				'主地图' : 27001,
+				'曙光骑士团营地' : 27001,
+				'曙光储备室':27011,
+				'曙光营地医院':27012,
+				'医院':27012,
+				'曙光营地医院 2楼':27012,
+				'酒吧':27013,
+				'曙光营地酒吧':27013,
+				'辛希亚探索指挥部':{
+					// 一楼二楼是一个index
+					27014:'一楼',
+					27014:'二楼',
+					27101:'传送石',
+				},
+				// 三个房间都是27015
+				'曙光营地指挥部':27015,
+				'传送石':2399
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				27001:[],
+				// 曙光储备室
+				27011:[[44, 49, 27011],],
+				// 曙光营地医院
+				27012:[[42, 56, 27012],],
+				// 曙光营地医院 2楼
+				27012:[[42, 56, 27012],[15, 12, 27012],],
+			},
+			walkReverse:{
+				// 曙光储备室
+				27011:[[12, 22, 27001],],
+				// 曙光营地医院
+				27012:[[1, 8, 27001],],
+				// 曙光营地医院 2楼
+				27012:[[97, 12, 27012],],
+			},
+		},
+		'圣骑士营地':{
+			mainName : '圣骑士营地',
+			mainindex : 44690,
+			minindex : 44690,
+			maxindex : 44699,
+			mapTranslate:{
+				'主地图' : 44690,
+				'酒吧' : 44691,
+				'医院' : 44692,
+				'工房' : 44693,
+				'总部1楼' : 44694,
+				'银行' : 44698,
+				'商店' : 44699,// 水晶封印卡talkpos14,26，dir0；鉴定talkpos14,16，dir0
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				44690:[],
+				// 酒吧
+				44691:[[116, 55, 44691],],
+				// 医院
+				44692:[[95, 72, 44692],],
+				// 工房
+				44693:[[87, 72, 44693],],
+				// 总部1楼
+				44694:[[116, 69, 44694],],
+				// 银行
+				44698:[[116, 105, 44698],],
+				// 商店
+				44699:[[92, 118, 44699],],
+			},
+			walkReverse:{
+				// 酒吧
+				44691:[[0, 23, 44690],],
+				// 医院
+				44692:[[0, 20, 44690],],
+				// 工房
+				44693:[[30, 37, 44690],],
+				// 总部1楼
+				44694:[[4, 47, 44690],],
+				// 银行
+				44698:[[3, 23, 44690],],
+				// 商店
+				44699:[[0, 14, 44690],],
+			},
+		},
 		'哥拉尔镇':{
 			mainName : '哥拉尔镇',
 			mainindex : 43100,
@@ -4037,6 +4090,9 @@ module.exports = function(callback){
 		}else if(villageName == '魔法大学'){
 			tmplist.push(isPro == true ? [33, 48] : [35, 48])
 			tmpTurnDir = 6
+		}else if(villageName == '曙光骑士团营地'){
+			tmplist.push(isPro == true ? [11, 8] : [7, 4])
+			tmpTurnDir = isPro == true ? 6 : 0
 		}else if(villageName == '法兰城'){
 
 		}else if(villageName == '艾尔莎岛'){
@@ -7224,9 +7280,13 @@ module.exports = function(callback){
 		}
 		
 		cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, true);
-		
-		if(teamplayers.length == teammates.length){
+		// UNAecho: 改为大于等于，用等于会出现无限等待的bug
+		if(teamplayers.length >= teammates.length){
 			for(var i = 0; i < teamplayers.length; ++i){
+				// 自己不能踢自己
+				if (teamplayers[i].is_me){
+					continue
+				}
 				if(!is_array_contain(teammates, teamplayers[i].name)){
 					//Unknown teammates, kick
 					cga.DoRequest(cga.REQUEST_TYPE_KICKTEAM);
@@ -7242,6 +7302,70 @@ module.exports = function(callback){
 							//console.log(match);
 							for(var j = 0; j < match.length; ++j){
 								if(match[j] == teamplayers[i].name){
+									cga.ClickNPCDialog(0, j / 2);
+									break;
+								}
+							}
+						}
+					});
+					cb(false);
+					return;
+				}
+			}
+			
+			setTimeout(cb, 2000, true);
+			return;
+		}else{
+			for (let i = 0; i < teamplayers.length; i++) {
+				// 将已经在队伍的人删除。由于teammates每次都传入，所以不用顾虑刷新问题
+				let index = teammates.indexOf(teamplayers[i].name)
+				// 如果已经就位，则从名单上划掉
+				if(index != -1){
+					teammates.splice(index, 1)
+				}
+				
+			}
+			// 不但返回组队false，并且还要附上迟到名单
+			cb(false, teammates);
+		}
+	}
+	/**
+	 * UNAecho: 带有名称过滤的组队模式
+	 * @param {String | Function} filter 如果是string，踢出名称中不含此string的队员。如果是func，踢掉返回false的队员
+	 * @param {Number} minTeamMemberCount 队伍最小人数
+	 * @param {*} cb 
+	 * @returns 
+	 */
+	cga.waitTeammatesWithFilter = (filter, minTeamMemberCount,cb)=>{
+
+		var teamplayers = cga.getTeamPlayers();
+		
+		cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, true);
+		
+		if(teamplayers.length >= minTeamMemberCount){
+			for(var i = 0; i < teamplayers.length; ++i){
+				if (teamplayers[i].is_me){
+					continue
+				}
+				if(
+					(typeof filter == 'string' && teamplayers[i].name.indexOf(filter) == -1) ||
+					(typeof filter == 'function' && !filter(teamplayers[i].name))
+				){
+					//Unknown teammates, kick
+					cga.DoRequest(cga.REQUEST_TYPE_KICKTEAM);
+					cga.AsyncWaitNPCDialog((err, dlg)=>{
+						var stripper = "你要把谁踢出队伍？";
+						if(dlg && dlg.message && dlg.message.indexOf(stripper) >= 0){
+							var strip = dlg.message.substr(dlg.message.indexOf(stripper) + stripper.length);
+							strip = strip.replace(/\\z/g,"|");
+							strip = strip.replace(/\\n/g,"|");
+							// console.log(strip);
+							var reg = new RegExp(/([^|\n]+)/g)
+							var match = strip.match(reg);
+							// console.log(match);
+							for(var j = 0; j < match.length; ++j){
+								if(match[j] == teamplayers[i].name){
+									console.log('【'+ teamplayers[i].name +'】不符合入队条件，踢出。')
 									cga.ClickNPCDialog(0, j / 2);
 									break;
 								}
