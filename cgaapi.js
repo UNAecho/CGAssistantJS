@@ -7332,6 +7332,7 @@ module.exports = function(callback){
 	/**
 	 * UNAecho: 带有名称过滤的组队模式
 	 * @param {String | Function} filter 如果是string，踢出名称中不含此string的队员。如果是func，踢掉返回false的队员
+	 * 如果输入null或undefined，则退化为只看人数的自由组队
 	 * @param {Number} minTeamMemberCount 队伍最小人数
 	 * @param {*} cb 
 	 * @returns 
@@ -7343,6 +7344,12 @@ module.exports = function(callback){
 		cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, true);
 		
 		if(teamplayers.length >= minTeamMemberCount){
+			// 如果不输入，则退化为自由组队
+			if (!filter){
+				setTimeout(cb, 2000, true);
+				return
+			}
+
 			for(var i = 0; i < teamplayers.length; ++i){
 				if (teamplayers[i].is_me){
 					continue
