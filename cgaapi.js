@@ -6117,7 +6117,7 @@ module.exports = function(callback){
 	cga.findItem = (filter) =>{
 		
 		var items = cga.getInventoryItems();
-		
+
 		if(typeof filter == 'string' && filter.charAt(0) == '#'){
 			var found = items.find((item)=>{
 				return item.itemid == parseInt(filter.substring(1));
@@ -7316,17 +7316,18 @@ module.exports = function(callback){
 			setTimeout(cb, 2000, true);
 			return;
 		}else{
+			let lateList = [].concat(teammates)
 			for (let i = 0; i < teamplayers.length; i++) {
 				// 将已经在队伍的人删除。由于teammates每次都传入，所以不用顾虑刷新问题
-				let index = teammates.indexOf(teamplayers[i].name)
+				let index = lateList.indexOf(teamplayers[i].name)
 				// 如果已经就位，则从名单上划掉
 				if(index != -1){
-					teammates.splice(index, 1)
+					lateList.splice(index, 1)
 				}
 				
 			}
 			// 不但返回组队false，并且还要附上迟到名单
-			cb(false, teammates);
+			cb(false, lateList);
 		}
 	}
 	/**
@@ -7628,117 +7629,229 @@ module.exports = function(callback){
 	 * @param {*} cb 回调函数，全员信息收集完毕后制作成object，调用cb并将object传入
 	 * @returns 
 	 */
-	cga.shareTeammateInfo = (teammates, func, cb)=>{
-		// 如果没传入指定队伍，则自动以队内人员为准。
-		if(!teammates)
-			teammates = cga.getTeamPlayers()
-		if(!teammates.length){
-			console.log('没有队员，退出cga.waitTeammateInfo，回调参数传入null')
-			setTimeout(cb, 1000, null);
+	cga.shareTeammateInfo = (memberCnt, reqSequence, cb)=>{
+
+		var teamplayers = cga.getTeamPlayers();
+		if(!teamplayers.length){
+			console.log('等待队伍..')
+			setTimeout(cga.shareTeammateInfo, 1000, memberCnt, reqSequence, cb);
 			return
 		}
+		var playerInfo = cga.GetPlayerInfo()
+		var isleader = teamplayers[0].name == playerInfo.name ? true : false
+		// 获取人物原来自定义昵称，函数结束时，需要恢复
+		const originNick = playerInfo.nick
+		// 队伍信息缓存，也是本函数最终return的变量
+		var teammate_info = {};
+		// 人物称号缓存，记录每个人的当前称号。用于一些逻辑的性能节约
+		var nickCache = {}
+		// 如果自己已经拿到全队信息，就在所有修改昵称动作时，末尾加上此标记，用来判断全队是否退出cga.shareTeammateInfo
+		// 初始化为空串，在已经收集齐信息后，需要给他赋值。建议使用$符号
+		var allDoneStr = ''
 		// 用英语首字母zjfma代表0、1、2、3、4。其中z是zero首字母，jfma是1234月份首字母
 		const identifier = ["z","j","f","m","a"]
-		// 正则匹配类似z01jok这种字符，每3个一组。
-		// 例：z01就是队长数值为"01"，jok就是第2个队员数值为"ok"
-		const reg = new RegExp(/[zjfma]{1}[oknu\d]{2}/g)
-		// 拼写用于传递信息的玩家自定义称号
-		var funcValue = func()
-		if(typeof funcValue == 'number'){
-			if(parseInt(funcValue, 10) != funcValue){
-				throw new Error('错误，必须输入3位以下整数或字符串')
-			}else if(funcValue >= 0 && funcValue < 10){
-				funcValue = "0" + funcValue.toString()
-			}else if(funcValue >= 10 && funcValue < 100){
-				funcValue = funcValue.toString()
-			}else{
-				throw new Error('错误，必须输入3位以下整数或字符串')
-			}
-		}else if(typeof funcValue == 'string' && funcValue.length != 2){
-			throw new Error('错误，必须输入3位以下整数或字符串')
+		// 类型缩写翻译
+		const translateDict = {
+			"i" : "item",
+			"#" : "item",
+			"t" : "title",
+			"m" : "mission",
 		}
-		// 获取人物原来自定义昵称，函数结束时，需要恢复
-		var playerInfo = cga.GetPlayerInfo()
-		const originNick = playerInfo.nick
+		const reqReg = new RegExp(/([zjfma]{1})([i#tm])([\d\u4e00-\u9fa5]+)/)
+		const resReg = new RegExp(/([i#tm])([\d\u4e00-\u9fa5]+)([zjfma]{1})([\d\u4e00-\u9fa5]+)/)
 
-		var teammate_info = {};
-		cga.isTeamLeader = (teammates[0].name == playerInfo.name || teammates.length == 0) ? true : false;
+		//检查的func集合
+		const reqAct = {
+			"item" : (input)=>{
+				return cga.getItemCount(input,true)
+			},
+			"title" : (input)=>{
+				return cga.findTitle(input) == -1 ? 0 : 1
+			},
+			"mission" : (input)=>{
+				let config = cga.loadPlayerConfig();
+				if(config && config["mission"] && config["mission"][input]){
+					return 1
+				}
+				return 0
+			},
+		}
 
+		const resAct = (regObj, teams)=>{
+			if(!teammate_info[teams[identifier.indexOf(regObj[3])].name]){
+				teammate_info[teams[identifier.indexOf(regObj[3])].name] = {}	
+			}
 
-		var check = (cb)=>{
-			var listen = true
+			Object.keys(reqAct).forEach((k)=>{
+				if(!teammate_info[teams[identifier.indexOf(regObj[3])].name][k]){
+					teammate_info[teams[identifier.indexOf(regObj[3])].name][k] = {}	
+				}
+			})
 
-			// 注意这里是刷新队内状态，一切以cga.shareTeammateInfo传入的teammates为验证数据的基础。
-			// 因为可能在验证期间，有非teammates的角色（如：其他玩家）错加入队伍。
-			var teamplayers = cga.getTeamPlayers()
-			// 如果人数与预期不符，则等待
-			if(teammates.length != teamplayers.length){
-				console.warn('队内玩家数量与预期玩家数量不符，清空数据记录情况')
-				teammate_info = {}
-				setTimeout(check, 1000, cb);
+			if(regObj[1] == "i" || regObj[1] == "#"){
+				teammate_info[teams[identifier.indexOf(regObj[3])].name]["item"][regObj[2]] = regObj[4]
+			}else if(regObj[1] == "t"){
+				teammate_info[teams[identifier.indexOf(regObj[3])].name]["title"][regObj[2]] = regObj[4]
+			}else if(regObj[1] == "m"){
+				teammate_info[teams[identifier.indexOf(regObj[3])].name]["mission"][regObj[2]] = regObj[4]
+			}else{
+				throw new Error('暗号类型错误，请检查')
+			}
+		}
+
+		var listener = (cb) => {
+			console.log('listener..')
+			let curTeamplayers = cga.getTeamPlayers()
+			if(!curTeamplayers.length){
+				cb(false)
 				return
 			}
-
-			for (let t = 0; t < teamplayers.length; t++) {
-				// 以自己在队内的序号来拼接类似z01j02的自定义称号
-				let tmpNick = identifier[t] + funcValue
-				if(teamplayers[t].is_me){
-					if(teamplayers[t].nick != tmpNick){
-						cga.ChangeNickName(tmpNick)
-						console.log("更改nickname:【" + tmpNick + "】")
-					}
-					// 更新自己的实时数据
-					teammate_info[identifier[t]] = isNaN(parseInt(funcValue)) ? funcValue : parseInt(funcValue)
-					continue
-				}
-				
-				memberNick = teamplayers[t].nick.match(reg)
-				if(!memberNick){
-					continue
-				}
-
-				memberNick.forEach((n)=>{
-					// 如果解析的3位字符串不以zjfma为开头，则跳过
-					if(identifier.indexOf(n[0]) == -1)
-						return
-					let v = n.slice(1,3)
-					v = isNaN(parseInt(v)) ? v : parseInt(v)
-					// 这里验证数值的合规性，需要func(v)返回true才会计入统计
-					let result = func(v)
-					if(result === true){
-						teammate_info[n[0]] = v
-						return
-					}
-				})
+			let leaderNick = curTeamplayers[0].nick
+			if(leaderNick.indexOf('restart') != -1){
+				cb(false)
+				return
 			}
-			// 为true则持续监听
-			listen = cb(teammate_info)
-			if(listen == true)
-				setTimeout(check, 1000, cb);
+			if(isleader && curTeamplayers.length != memberCnt){
+				cga.ChangeNickName('z' + 'restart' + allDoneStr)
+				cb(false)
+				return
+			}
+			if(leaderNick.indexOf('check') != -1){
+				cb(true)
+				return
+			}
+			// 先要遍历一次，获取自己在队伍中的序列。
+			let indexStr = null
+			for (let t = 0; t < curTeamplayers.length; t++) {
+				if(curTeamplayers[t].is_me){
+					indexStr = identifier[t]
+				}
+			}
+			// 然后再遍历全队，获取正则匹配值，进行主要逻辑
+			for (let t = 0; t < curTeamplayers.length; t++) {
+				if(nickCache[curTeamplayers[t].name] == curTeamplayers[t].nick){
+					// console.log(curTeamplayers[t].name,'已经缓存，跳过')
+					continue
+				}
+				nickCache[curTeamplayers[t].name] = curTeamplayers[t].nick
+				// reqObj具体结果举例
+				// [
+				// 	'z#720313',
+				// 	'z',
+				// 	'#',
+				// 	'720313',
+				// 	index: 0,
+				// 	input: 'z#720313',
+				// 	groups: undefined
+				//   ]
+				let reqObj = curTeamplayers[t].nick.match(reqReg)
+				// resObj具体结果举例
+				// [
+				// 	'#720313j1',
+				// 	'#',
+				// 	'720313',
+				// 	'j',
+				// 	'1',
+				// 	index: 0,
+				// 	input: '#720313j1',
+				// 	groups: undefined
+				//   ]
+				let resObj = curTeamplayers[t].nick.match(resReg)
+				if(reqObj){
+					let answer = reqAct[translateDict[reqObj[2]]](reqObj[3])
+					setTimeout(() => {
+						cga.ChangeNickName(reqObj[2]+reqObj[3]+indexStr+answer+allDoneStr)
+					}, isleader ? 2000 : 0);
+					continue
+				}
+				if(resObj){
+					resAct(resObj,curTeamplayers)
+					continue
+				}
+			}
+
+			setTimeout(listener, 1000, cb);
+			return
 		}
 
-		
-		check((result)=>{
-			// 验证完整性，通过了才能进行回调
-			if(Object.keys(result).length == teammates.length){
-				// 翻译数据，将数字的String转换为int传给cb
-				var obj = {}
-				const identifier = {"z" : 0, "j" : 1, "f" : 2, "m" : 3, "a" : 4}
-				var teamplayers = cga.getTeamPlayers()
-				Object.keys(result).forEach(k =>{
-					obj[teamplayers[identifier[k]].name] = result[k]
-				})
-				// 恢复人物原本称号
-				console.log('2.5秒后恢复称号..')
-				setTimeout(()=>{
-					cga.ChangeNickName(originNick)
-				}, 2500);
-				// 本函数出口
-				cb(obj)
-				return false
+		var speaker = (reqArr) => {
+			console.log('speaker..')
+
+			let curReqStr = reqArr.shift()
+			if(curReqStr){
+				cga.ChangeNickName("z" + curReqStr+allDoneStr)
+				setTimeout(speaker, 5000, reqArr);
+				return
 			}
-			return true
-		})
+		}
+
+		var check = (flag)=>{
+
+			let delay = 5000
+			if(flag === false){
+				console.log('flag为false，',delay/1000,'秒后重新进入cga.shareTeammateInfo..')
+				setTimeout(cga.shareTeammateInfo, delay, memberCnt, reqSequence, cb);
+				return
+			}else if(flag === true){
+				let checkKey = null
+				let checkValue = null
+				let checkTarget = Object.values(teammate_info)
+				let teams = cga.getTeamPlayers();
+				if(checkTarget.length < teams.length){
+					console.log("🚀 ~ file: cgaapi.js:7804 ~ check ~ teammate_info:", teammate_info)
+					console.log("🚀 ~ file: cgaapi.js:7806 ~ check ~ checkTarget:", checkTarget)
+					console.log('队员信息中，人数统计缺失，',delay/1000,'秒后重新进入cga.shareTeammateInfo..')
+					setTimeout(cga.shareTeammateInfo, delay, memberCnt, reqSequence, cb);
+					return
+				}
+				for (let i = 0; i < reqSequence.length; i++) {
+					checkKey = translateDict[reqSequence[i][0]]
+					checkValue = reqSequence[i].substring(1)
+					for (let k in checkTarget) {
+						let v = checkTarget[k];
+						if(!v || !v[checkKey] || !v[checkKey].hasOwnProperty(checkValue)){
+							console.log("🚀 ~ file: cgaapi.js:7819 ~ check ~ v:", v)
+							console.log("🚀 ~ file: cgaapi.js:7819 ~ check ~ v[checkKey]:", v[checkKey])
+							console.log("🚀 ~ file: cgaapi.js:7819 ~ check ~ checkValue:", checkValue)
+							console.log("🚀 ~ file: cgaapi.js:7819 ~ check ~ v[checkKey].hasOwnProperty(checkValue):", v[checkKey].hasOwnProperty(checkValue))
+							console.log('队员信息中，数据缺失，',delay/1000,'秒后重新进入listener..')
+							setTimeout(mainLogic, delay);
+							return
+						}
+					}
+				}
+				// 如果人数正确，数据收集也齐全，将自己的done标记加在后续的昵称末尾
+				allDoneStr = '$'
+				for (let t = 0; t < teams.length; t++) {
+					if(teams[t].nick.indexOf(allDoneStr) == -1){
+						setTimeout(mainLogic, delay);
+						return
+					}
+				}
+				cb(teammate_info)
+				return
+			}
+		}
+
+		var mainLogic = ()=>{
+
+			if(isleader){
+				// 制作临时请求序列
+				let reqArr = []
+				reqSequence.forEach(str => {
+					reqArr.push(str)
+				});
+				reqArr.push('check')
+
+				speaker(reqArr)
+			}
+			listener((r)=>{
+				check(r)
+			})
+		}
+
+		mainLogic()
+		return
 	}
 
 	/**
@@ -7755,13 +7868,17 @@ module.exports = function(callback){
 	 * 4、Ready标识符为字符串的值有限制，只能使用"ok"，"no"，"un"这3种String
 	 * @param {*} cb 回调函数，全员信息收集完毕后制作成object，调用cb并将object传入
 	 * @returns 
+	 * 
+	 * 【注意】此API有一个不足之处，由于check是递归，每次拿固定的teammates去比较现队伍人数
+	 * teammates仅在API开始的时候定好，所以先加队的队员将无法感知到后加入的队员信息
+	 * 所以尽量用在队员不会改变的情况，如已经组好队，或者事先就传入teammates
 	 */
 	cga.waitTeammateReady = (teammates, func, cb) => {
 		// 如果没传入指定队伍，则自动以队内人员为准。
 		if(!teammates)
 			teammates = cga.getTeamPlayers()
 		if(!teammates.length){
-			console.log('没有队员，退出cga.waitTeammateInfo，回调参数传入null')
+			console.log('没有队员，退出cga.waitTeammateReady，回调参数传入null')
 			func((res)=>{
 				setTimeout(cb, 1000, null);
 			})
@@ -7779,26 +7896,25 @@ module.exports = function(callback){
 		var teammate_info = {};
 		cga.isTeamLeader = (teammates[0].name == playerInfo.name || teammates.length == 0) ? true : false;
 
-
 		var check = (funcValue, cb)=>{
 			var listen = true
 
-			// 注意这里是刷新队内状态，一切以cga.shareTeammateInfo传入的teammates为验证数据的基础。
+			// 注意这里是刷新队内状态，一切以cga.waitTeammateReady传入的teammates为验证数据的基础。
 			// 因为可能在验证期间，有非teammates的角色（如：其他玩家）错加入队伍。
-			var teamplayers = cga.getTeamPlayers()
+			var curTeamplayers = cga.getTeamPlayers()
 			// 如果人数与预期不符，则等待
-			if(teammates.length != teamplayers.length){
+			if(teammates.length != curTeamplayers.length){
 				console.warn('队内玩家数量与预期玩家数量不符，清空数据记录情况')
 				teammate_info = {}
 				setTimeout(check, 1000, funcValue, cb);
 				return
 			}
 
-			for (let t = 0; t < teamplayers.length; t++) {
+			for (let t = 0; t < curTeamplayers.length; t++) {
 				// 以自己在队内的序号来拼接类似z01j02的自定义称号
 				let tmpNick = identifier[t] + funcValue
-				if(teamplayers[t].is_me){
-					if(teamplayers[t].nick != tmpNick){
+				if(curTeamplayers[t].is_me){
+					if(curTeamplayers[t].nick != tmpNick){
 						cga.ChangeNickName(tmpNick)
 						console.log("更改nickname:【" + tmpNick + "】")
 					}
@@ -7807,7 +7923,7 @@ module.exports = function(callback){
 					continue
 				}
 				
-				var memberNick = teamplayers[t].nick
+				var memberNick = curTeamplayers[t].nick
 				if(!memberNick){
 					continue
 				}
