@@ -7663,7 +7663,10 @@ module.exports = function(callback){
 		//检查的func集合
 		const reqAct = {
 			"item" : (input)=>{
-				return cga.getItemCount(input,true)
+				if(isNaN(parseInt(input))){
+					return cga.getItemCount(input,true)
+				}
+				return cga.getItemCount('#' + input,true)
 			},
 			"title" : (input)=>{
 				return cga.findTitle(input) == -1 ? 0 : 1
@@ -7678,6 +7681,10 @@ module.exports = function(callback){
 		}
 
 		const resAct = (regObj, teams)=>{
+			if(!teams[identifier.indexOf(regObj[3])]){
+				console.log('队员',identifier.indexOf(regObj[3]) + 1,'号缺失，猜测是掉线了')
+				return
+			}
 			if(!teammate_info[teams[identifier.indexOf(regObj[3])].name]){
 				teammate_info[teams[identifier.indexOf(regObj[3])].name] = {}	
 			}
@@ -7700,7 +7707,6 @@ module.exports = function(callback){
 		}
 
 		var listener = (cb) => {
-			console.log('listener..')
 			let curTeamplayers = cga.getTeamPlayers()
 			if(!curTeamplayers.length){
 				cb(false)
@@ -7730,7 +7736,6 @@ module.exports = function(callback){
 			// 然后再遍历全队，获取正则匹配值，进行主要逻辑
 			for (let t = 0; t < curTeamplayers.length; t++) {
 				if(nickCache[curTeamplayers[t].name] == curTeamplayers[t].nick){
-					// console.log(curTeamplayers[t].name,'已经缓存，跳过')
 					continue
 				}
 				nickCache[curTeamplayers[t].name] = curTeamplayers[t].nick
@@ -7773,18 +7778,41 @@ module.exports = function(callback){
 			setTimeout(listener, 1000, cb);
 			return
 		}
-
-		var speaker = (reqArr) => {
-			console.log('speaker..')
-
-			let curReqStr = reqArr.shift()
-			if(curReqStr){
-				cga.ChangeNickName("z" + curReqStr+allDoneStr)
-				setTimeout(speaker, 5000, reqArr);
+		// 由于统计不全时，会重新调用speaker()，导致多个speaker()线程同时修改队长称号，现在加入修复逻辑
+		// 如果reqArr中还有未询问完的问题，那么直接return
+		var speaker = () => {
+			
+			if(reqArr.length){
+				// console.log('speaker正在运行中..')
 				return
 			}
+			// console.log('speaker..')
+
+			refreshList()
+
+			// 如果队友allDoneStr为空，则正常按顺序问问题。
+			// 如果全员都有allDoneStr标识，则直接跳过询问问题，队长在称号标记check，全员进入check模式
+			var changeNick = ()=>{
+				let curReqStr = reqArr.shift()
+				if(curReqStr){
+					cga.ChangeNickName("z" + curReqStr+allDoneStr)
+					setTimeout(changeNick, 5000);
+					return
+				}
+			}
+
+			changeNick()
 		}
 
+		// 制作临时请求序列
+		var refreshList = ()=>{
+			reqSequence.forEach(str => {
+				reqArr.push(str)
+			});
+			reqArr.push('check')
+			return reqArr
+		}
+		
 		var check = (flag)=>{
 
 			let delay = 5000
@@ -7798,10 +7826,12 @@ module.exports = function(callback){
 				let checkTarget = Object.values(teammate_info)
 				let teams = cga.getTeamPlayers();
 				if(checkTarget.length < teams.length){
-					console.log("🚀 ~ file: cgaapi.js:7804 ~ check ~ teammate_info:", teammate_info)
-					console.log("🚀 ~ file: cgaapi.js:7806 ~ check ~ checkTarget:", checkTarget)
-					console.log('队员信息中，人数统计缺失，',delay/1000,'秒后重新进入cga.shareTeammateInfo..')
-					setTimeout(cga.shareTeammateInfo, delay, memberCnt, reqSequence, cb);
+					console.log('队员信息中，人数统计缺失，',delay/1000,'秒后重新进入mainLogic..')
+					// 队员缺失，重置统计信息
+					teammate_info = {}
+					// 如果人员缺失，那么信息收集齐全的flag要重置。
+					allDoneStr = ''
+					setTimeout(mainLogic, delay);
 					return
 				}
 				for (let i = 0; i < reqSequence.length; i++) {
@@ -7810,11 +7840,7 @@ module.exports = function(callback){
 					for (let k in checkTarget) {
 						let v = checkTarget[k];
 						if(!v || !v[checkKey] || !v[checkKey].hasOwnProperty(checkValue)){
-							console.log("🚀 ~ file: cgaapi.js:7819 ~ check ~ v:", v)
-							console.log("🚀 ~ file: cgaapi.js:7819 ~ check ~ v[checkKey]:", v[checkKey])
-							console.log("🚀 ~ file: cgaapi.js:7819 ~ check ~ checkValue:", checkValue)
-							console.log("🚀 ~ file: cgaapi.js:7819 ~ check ~ v[checkKey].hasOwnProperty(checkValue):", v[checkKey].hasOwnProperty(checkValue))
-							console.log('队员信息中，数据缺失，',delay/1000,'秒后重新进入listener..')
+							console.log('队员信息中，数据缺失，',delay/1000,'秒后重新进入mainLogic..')
 							setTimeout(mainLogic, delay);
 							return
 						}
@@ -7836,20 +7862,15 @@ module.exports = function(callback){
 		var mainLogic = ()=>{
 
 			if(isleader){
-				// 制作临时请求序列
-				let reqArr = []
-				reqSequence.forEach(str => {
-					reqArr.push(str)
-				});
-				reqArr.push('check')
-
-				speaker(reqArr)
+				speaker()
 			}
 			listener((r)=>{
 				check(r)
 			})
 		}
 
+		// 从这里开始是此API入口
+		var reqArr = []
 		mainLogic()
 		return
 	}
