@@ -124,21 +124,25 @@ var supplyModeArray = [
 					setTimeout(cb, 5000);
 				});
 			} else {// 如果在异常位置，就去飞碟回补
-				console.log('在神域未知地域或其他地图，执行飞碟回补')
+				console.log('在未划定区域的地图，执行飞碟回补')
 				cga.travel.falan.toCastleHospital(() => {
 					setTimeout(cb, 5000);
 				});
 			}
 		},
 		isLogBack: (map, mapindex) => {
-			// 随机迷宫距离营地都较远，且残血走回营地也有机率阵亡。故添加随即迷宫直接登出回补
-			if (map.indexOf('黑龙沼泽') >= 0) {
+			// 回城路程较远的练级地点，都设置登出回补
+			if (mapindex > 59850 && mapindex < 59900){
 				return true
-			} else if (map.indexOf('蜥蜴洞穴') >= 0) {
+			} else if(map == '肯吉罗岛' && cga.travel.camp.getRegion(map, cga.GetMapXY()) == '沙滩域'){
 				return true
 			} else if (map.indexOf('隐秘之洞地下') >= 0) {
 				return true
-			} else if (map.indexOf('小岛') >= 0) {
+			}  else if (map.indexOf('蜥蜴洞穴') >= 0) {
+				return true
+			} else if (map.indexOf('黑龙沼泽') >= 0) {
+				return true
+			}else if (map.indexOf('小岛') >= 0) {
 				return true
 			} else if (map.indexOf('通往山顶的路') >= 0) {
 				return true
@@ -195,55 +199,14 @@ var thisobj = {
 		return thisobj.object.isAvailable(map, mapindex);
 	},
 	translate: (pair) => {
-		// if(pair.field == 'supplyMode'){
-		// 	pair.field = '回补方式';
-		// 	pair.value = supplyModeArray[pair.value].name;
-		// 	pair.translated = true;
-		// 	return true;
-		// }
 		return false;
 	},
 	loadconfig: (obj) => {
-		// for(var i in supplyModeArray){
-		// 	if(i == obj.supplyMode){
-		// 		configTable.supplyMode = i;
-		// 		thisobj.object = supplyModeArray[i];
-		// 		break;
-		// 	}
-		// }
-
-		// if(!thisobj.object){
-		// 	console.error('读取配置：回补方式失败！');
-		// 	return false;
-		// }
-
 		// 智能回补只有1种方式
 		thisobj.object = supplyModeArray[0];
 		return true;
 	},
 	inputcb: (cb) => {
-		// var sayString = '【智能回补】请选择回补方式:';
-		// for(var i in supplyModeArray){
-		// 	if(i != 0)
-		// 		sayString += ', ';
-		// 	sayString += '(' + (parseInt(i) + 1) + ')' + supplyModeArray[i].name;
-		// }
-		// cga.sayLongWords(sayString, 0, 3, 1);
-		// cga.waitForChatInput((msg, index)=>{
-		// 	if(index !== null && index >= 1 && supplyModeArray[index - 1]){
-		// 		configTable.supplyMode = index - 1;
-		// 		thisobj.object = supplyModeArray[index - 1];
-
-		// 		var sayString2 = '当前已选择:[' + thisobj.object.name + ']。';
-		// 		cga.sayLongWords(sayString2, 0, 3, 1);
-
-		// 		cb(null);
-
-		// 		return false;
-		// 	}
-
-		// 	return true;
-		// });
 		cb(null)
 		return
 	}

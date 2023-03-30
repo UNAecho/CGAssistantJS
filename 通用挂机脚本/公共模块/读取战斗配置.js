@@ -286,8 +286,8 @@ var thisobj = {
 	},
 	loadconfig : (obj)=>{
 		if(typeof obj.finalJob == 'number'){
-			configTable.finalJob = professionalArray[obj.finalJob - 1].jobmainname;
-			thisobj.finalJob = professionalArray[obj.finalJob - 1];
+			configTable.finalJob = professionalArray[obj.finalJob].jobmainname;
+			thisobj.finalJob = professionalArray[obj.finalJob];
 		}else{
 			configTable.finalJob = obj.finalJob;
 			thisobj.finalJob = professionalArray.find((p)=>{
@@ -315,7 +315,7 @@ var thisobj = {
 		cga.sayLongWords(sayString, 0, 3, 1);
 		cga.waitForChatInput((msg, index)=>{
 			if(index !== null && index >= 1 && professionalArray[index - 1]){
-				configTable.finalJob = index - 1;
+				configTable.finalJob = professionalArray[index - 1].jobmainname;
 				thisobj.object = professionalArray[index - 1];
 				
 				var sayString2 = '当前已选择:[' + thisobj.object.jobmainname + ']。';

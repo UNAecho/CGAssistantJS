@@ -2,6 +2,11 @@ var cga = global.cga;
 var configTable = global.configTable;
 
 const sellerInfo = {
+	'工房':{
+		pos : [21, 23],
+		outSide : '圣骑士营地门口域',
+		back : [551, 332, '圣骑士营地'],
+	},
 	'矮人城镇':{
 		pos : [122, 110],
 		outSide : '矮人城镇域',
@@ -11,6 +16,11 @@ const sellerInfo = {
 		pos : [30, 77],
 		outSide : null,
 		back : null,
+	},
+	'国民会馆':{
+		pos : [110, 42],
+		outSide : 59801,
+		back : [33, 99, 59552],
 	},
 }
 
@@ -28,7 +38,7 @@ var thisobj = {
 
 		if (region != null){
 			for (const k in sellerInfo) {
-				if (sellerInfo[k].outSide !== null && sellerInfo[k].outSide == region) {
+				if (sellerInfo[k].outSide !== null && (sellerInfo[k].outSide == region || sellerInfo[k].outSide == mapindex)) {
 					if (typeof sellerInfo[k].back == 'function'){
 						sellerInfo[k].back(()=>{
 							thisobj.func(cb)
@@ -68,21 +78,21 @@ var thisobj = {
 				});
 			});
 		}
+		
+		if(map == '圣骑士营地'){
+			cga.travel.autopilot('工房',()=>{
+				thisobj.func(cb)
+			})
+			return
+		}
 
+		console.log('智能卖石，当前地图【' + map + '】')
+		
 		// 其他情况，去里堡执行逻辑
 		if(!sellObj){
 			cga.travel.falan.toStone('C', ()=>{
 				thisobj.func(cb)
 			});
-			return
-		}
-		
-		console.log('智能卖石，当前地图【' + map + '】')
-		
-		if(map == '圣骑士营地'){
-			cga.travel.autopilot('工房',()=>{
-				go(cb)
-			})
 			return
 		}
 

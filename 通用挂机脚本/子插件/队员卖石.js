@@ -46,6 +46,21 @@ var waitArray = [
 		});
 		return true;
 	}
+},
+{
+	mapname:'国民会馆',
+	pos:[110, 42],
+	cb : ()=>{
+		if(cga.isTeamLeaderEx())
+			return false;
+		
+		cga.TurnTo(110, 42);
+		cga.sellStone(function(){
+			cga.SayWords('卖石完毕...', 0, 3, 1);
+			setTimeout(cga.waitForMultipleLocation, 5000, waitArray);
+		});
+		return true;
+	}
 }
 ];
 

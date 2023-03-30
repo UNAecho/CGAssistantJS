@@ -246,6 +246,7 @@ module.exports = function(callback){
 
 	/*  异步登出回城
 		由于2022年1月18日的一次更新之后登出回城有可能失败，故所有脚本中的登出回城操作均推荐更改为异步操作
+		UNAecho : 修改写入逻辑，如果登出后的记录点与个人配置记录中一致，则跳过写入，节约I/O
 	*/
 	cga.logBack = (cb)=>{
 		cga.waitSysMsgTimeout((err, msg)=>{
@@ -262,10 +263,16 @@ module.exports = function(callback){
 
 				if(!config)
 					config = {};
-
-				config.settledCity = cga.GetMapName();
-
-				cga.savePlayerConfig(config, cb);
+				// 如果记录点没有变化，则不写入文件
+				let settledCity = cga.GetMapName()
+				if(config.settledCity == settledCity){
+					console.log('记录点【' + config.settledCity + '】没有变化')
+					setTimeout(cb, 300);
+				}else{
+					config.settledCity = settledCity;
+					cga.savePlayerConfig(config, cb);
+				}
+				
 				return false;
 			}
 
@@ -600,15 +607,15 @@ module.exports = function(callback){
 			result = '法兰城'
 		}else if(mapindex == 33000){
 			result = '米内葛尔岛'
-		}else if(mapindex >= 33100 && mapindex < 33300){
+		}else if(mapindex >= 33100 && mapindex < 33300){// TODO完善范围
 			result = '阿凯鲁法村'
-		}else if(mapindex >= 30000 && mapindex < 40000){
+		}else if(mapindex >= 30000 && mapindex < 40000){// TODO完善范围
 			result = '苏国'
 		}else if(mapindex == 43000){
 			result = '库鲁克斯岛'
-		}else if(mapindex >= 43100 && mapindex < 43300){
+		}else if(mapindex >= 43100 && mapindex < 43300){// TODO完善范围
 			result = '哥拉尔镇'
-		}else if(mapindex >= 40000 && mapindex < 50000){
+		}else if(mapindex >= 40000 && mapindex < 50000){// TODO完善范围
 			result = '艾尔巴尼亚王国'
 		}else if(mapindex == 300 && XY.x < 379){// 索奇亚地图比较规则，大于379都是洪恩大风洞的右侧
 			result = '索奇亚奇利域'
@@ -624,9 +631,11 @@ module.exports = function(callback){
 			result = '莎莲娜杰诺瓦域'
 		}else if(mapindex == 59520 || (mapindex >= 59530 && mapindex <= 59537)){
 			result = '艾尔莎岛'
-		}else if(mapindex >= 59521 || mapindex < 60000){
+		}else if((mapindex > 59800 && mapindex < 59900) || (mapindex == 59522 || mapindex == 59552 || mapindex == 59553)){
+			result = '利夏岛'
+		}else if(mapindex >= 59521 || mapindex < 60000){// TODO完善范围
 			result = '艾夏岛'
-		}else if(mapindex >= 50000 && mapindex < 60000){
+		}else if(mapindex >= 50000 && mapindex < 60000){// TODO完善范围
 			result = '神圣大陆'
 		}else{
 			console.warn('[UNA脚本警告]:未知地图index，请联系作者更新。')
@@ -1065,7 +1074,7 @@ module.exports = function(callback){
 	cga.travel.camp.getRegion = (mapname, mapXY)=>{
 		if(mapname == '肯吉罗岛')
 		{
-			if(mapXY.x <=480 && mapXY.x >=463 && mapXY.y <= 206 && mapXY.y >=195)
+			if(mapXY.x <= 480 && mapXY.x >= 463 && mapXY.y <= 206 && mapXY.y >= 195)
 			{
 				return '沙滩域';
 			}
@@ -3883,6 +3892,87 @@ module.exports = function(callback){
 				59548:[[27, 34, 59521],],
 			},
 		},
+		/**
+		 * UNAecho:将利夏岛与雪拉威森塔整合在一起，变为利夏岛。
+		 * 雪拉威森塔每层的index是有顺序的，不是随机迷宫
+		 * index598开头，第**层就是598**。如：第1层59801，第10层59810，第25层59825。
+		 * 只有1层和每5层有传送石，其他层没有。
+		 * 95层（含）以前无限制95通往96层，需要4转及以上才能通过。
+		 * 96-99层的模式是：96层开始NPC给你一个护身符，双击回到此NPC处，交给下一层NPC，传送至下一层
+		 * 99-100层也是一样，100层是顶层，可以拿王冠、公主头冠、小猫帽
+		 * 相关任务：圣域守护者
+		 * 王冠可以飞辛梅尔，公主头冠飞丘斯特村，小猫帽是人物技能加成
+		 * 支线任务：迷之箱
+		 * 雪拉威森塔96~100楼会随机触发BOSS战
+		 * 击倒奇美拉类BOSS后随机获得【奇美拉的羽毛】
+		 * 击倒海怪类BOSS后随机获得【龙的鳞片】
+		 * 击倒死神随机获得【迷语箱4】，击倒海怪类的BOSS随机获得【谜语箱1】，双击后随机获得奖品
+		 */
+		'利夏岛':{
+			mainName : '利夏岛',
+			mainindex : 59522,
+			minindex : 59801,
+			maxindex : 59553,
+			mapTranslate:{
+				'主地图' : 59522,
+				'国民会馆' : 59552,
+				'竞技场' : 59553,
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 雪拉威森塔各楼层
+				59801:[[90, 99, 59552],[108, 39, 59801],],
+				59810:[[90, 99, 59552],[108, 39, 59801],[76, 58, 59810],],
+				59815:[[90, 99, 59552],[108, 39, 59801],[76, 56, 59815],],
+				59820:[[90, 99, 59552],[108, 39, 59801],[76, 54, 59820],],
+				59825:[[90, 99, 59552],[108, 39, 59801],[76, 52, 59825],],
+				59830:[[90, 99, 59552],[108, 39, 59801],[72, 60, 59830],],
+				59835:[[90, 99, 59552],[108, 39, 59801],[72, 58, 59835],],
+				59840:[[90, 99, 59552],[108, 39, 59801],[72, 56, 59840],],
+				59845:[[90, 99, 59552],[108, 39, 59801],[72, 54, 59845],],
+				59850:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],],
+				59855:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[27, 55, 59855],],
+				59860:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[25, 55, 59860],],
+				59865:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[23, 55, 59865],],
+				59870:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[21, 55, 59870],],
+				59875:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[24, 44, 59875],],
+				59880:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[22, 44, 59880],],
+				59885:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[20, 44, 59885],],
+				59890:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[18, 44, 59890],],
+				59895:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[16, 44, 59895],],
+				// 主地图
+				59522:[],
+				// 国民会馆
+				59552:[[90, 99, 59552],],
+				// 竞技场
+				59553:[[90, 99, 59552],[108, 61, 59553],],
+			},
+			walkReverse:{
+				// 国民会馆
+				59552:[[97, 50, 59522],],
+				// 竞技场
+				59553:[[106, 50, 59552],],
+				// 雪拉威森塔各楼层
+				59801:[[33, 99, 59552],],
+				59810:[[54, 38, 59801],],
+				59815:[[137, 69, 59801],],
+				59820:[[88, 146, 59801],],
+				59825:[[95, 57, 59801],],
+				59830:[[68, 33, 59801],],
+				59835:[[104, 26, 59801],],
+				59840:[[98, 95, 59801],],
+				59845:[[98, 29, 59801],],
+				59850:[[78, 59, 59801],],
+				59855:[[133, 93, 59850],],
+				59860:[[95, 144, 59850],],
+				59865:[[118, 54, 59850],],
+				59870:[[78, 55, 59850],],
+				59875:[[137, 133, 59850],],
+				59880:[[162, 122, 59850],],
+				59885:[[58, 131, 59850],],
+				59890:[[61, 39, 59850],],
+				59895:[[102, 44, 59850],],
+			},
+		},
 	}
 /**
  * UNA: 写了一个全自动导航的API，可以在城镇地图中任意一个地方去另一个任意的地方，无需登出。
@@ -6333,7 +6423,10 @@ module.exports = function(callback){
 					return;
 				}			
 				console.log('个人配置文件保存成功!...');
-				if(cb) cb(null);
+				// 有时候写入文件与玩家登出可能间隔很短，因为登出也会写入个人配置，所以加一个回调延迟，防止同时写入
+				if(cb){
+					setTimeout(cb, 300);
+				}
 			});
 		});		
 	}
@@ -6372,6 +6465,8 @@ module.exports = function(callback){
 /**
  * UNA :写了一个持久化人物任务完成情况的方法，用于离线记录人物的一些数据，便于查询。
  * 请注意，关于任务的称号，我自己也没有做过全部的任务，所以请自行添加需要的任务名称，我只写了一个开启者
+ * 【注意】采集系在3转后自动可以传送至小岛，相当于战斗系做完了半山6/地狱的回响。
+ * 但是如果采集系参与了半山1-5的话，则必须按照战斗系的流程走完。所以建议采集系不要做半山任务。逻辑没空写。
  * 
  * @param {object} missionObj 需要更新的任务对象，
  * key 为 任务string名称，请注意输入的任务名称要全项目统一，不然会出现检测出错的情况。如【树精长老】和【树精】【一转】等会被认为是不同的任务。
@@ -6406,9 +6501,10 @@ module.exports = function(callback){
 		// 护士和医生属于生产系，但晋级需要做战斗系的任务
 		if(['护士', '医生',].indexOf(professionalInfo.jobmainname) != -1){
 			category = '战斗系'
-		}
-		else if(['物理系', '魔法系', '魔物系',].indexOf(category) != -1){
+		}else if(['物理系', '魔法系', '魔物系',].indexOf(category) != -1){
 			category = '战斗系'
+		}else if(['猎人', '樵夫','矿工'].indexOf(professionalInfo.jobmainname) != -1){
+			category = '采集系'
 		}else{
 			category = '生产系'
 		}
@@ -6434,7 +6530,13 @@ module.exports = function(callback){
 				config["mission"][productMission[i]] = false
 			}
 		}
-		// 然后检查称号
+
+		// 采集系3转以后可以直接传送半山练级，将传送flag置为true
+		if(category == '采集系' && jobLevel > 2){
+			config["mission"]["传送小岛"] = true
+		}
+
+		// 检查称号
 		for (var i = 0 ; i < playerInfo.titles.length ; i++){
 			if(playerInfo.titles[i] == '开启者'){
 				config["mission"]['开启者'] = true
@@ -7267,7 +7369,7 @@ module.exports = function(callback){
 			}, 1500);
 		}, 1000);
 	}
-	
+
 	//等待名字在teammates列表中的的玩家组队，并自动踢出不符合teammates列表的陌生人。
 	cga.waitTeammates = (teammates, cb)=>{
 				
@@ -7296,12 +7398,13 @@ module.exports = function(callback){
 							var strip = dlg.message.substr(dlg.message.indexOf(stripper) + stripper.length);
 							strip = strip.replace(/\\z/g,"|");
 							strip = strip.replace(/\\n/g,"|");
-							console.log(strip);
+							// console.log(strip);
 							var reg = new RegExp(/([^|\n]+)/g)
 							var match = strip.match(reg);
 							//console.log(match);
 							for(var j = 0; j < match.length; ++j){
 								if(match[j] == teamplayers[i].name){
+									console.log('【'+ teamplayers[i].name +'】不符合入队条件，踢出。')
 									cga.ClickNPCDialog(0, j / 2);
 									break;
 								}
@@ -7392,6 +7495,89 @@ module.exports = function(callback){
 		cb(false);
 	}
 	
+	/**
+	 * UNAecho : 队长队员通用加队API，可设定超时范围。
+	 * 寻找队伍并加入（双方必须在附近1x1范围），并判断队员是否与预期相符。
+	 * @param {Array} teammates 队伍成员信息，数据结构为String数组，必须为队员名称。
+	 * 【注意】队长的判定是teammates第一个人的名字
+	 * @param {int} timeout 超时时间，以毫秒为单位。如果填0则视为无限等待。
+	 * @param {*} cb 回调函数，所有队员齐全则传入'ok'，如果不满足条件或没有队伍，会等待至超时，调用cb并传入'timeout'
+	 */
+	cga.waitTeammatesReady = (teammates, timeout, cb) => {
+		// 由于cga.waitTeammates判定组队ready延迟2秒return，所以本API需要至少3秒延迟。
+		// 如果延迟为0，则视为无限等待
+		if(timeout > 0 && timeout < 2000){
+			timeout = 3000
+		}
+
+		var playerInfo = cga.GetPlayerInfo();
+		var isLeader = teammates[0] == playerInfo.name ? true : false
+		var start = Date.now()
+		// 两个队伍信息的临时变量
+		var curTeam = null
+		var tmpTeam = null
+
+		// 队员专用，检查其他队员是否与预期成员相符
+		const checkOthers = () => {
+			tmpTeam = cga.getTeamPlayers();
+			if (tmpTeam.length < teammates.length) {
+				console.log('人数不足，checkOthers返回false')
+				return false
+			}
+
+			for (let t = 0; t < tmpTeam.length; t++) {
+				if (teammates.indexOf(tmpTeam[t].name) == -1) {
+					console.log('队员不匹配，checkOthers返回false')
+					return false
+				}
+			}
+			return true
+		}
+
+		var retry = () => {
+			let cost = Date.now() - start
+			console.log('已等待' + cost / 1000 + '秒')
+			if (timeout > 0 && cost >= timeout) {
+				cb('timeout')
+				return
+			}
+
+			if (isLeader) {
+				cga.waitTeammates(teammates, (r, lateList) => {
+					if (r) {
+						cb('ok')
+						return
+					}
+					if(lateList){
+						console.log('迟到队员:',lateList)
+					}
+					setTimeout(retry, 1000);
+					return
+				})
+			} else {
+				curTeam = cga.getTeamPlayers();
+				if (curTeam.length && checkOthers()) {
+					cb('ok')
+					return
+				} else if (!curTeam.length) {
+					cga.addTeammate(teammates[0], (r) => {
+						if (r && checkOthers()) {
+							cb('ok')
+							return
+						}
+						setTimeout(retry, 1000);
+					})
+					return
+				}
+				setTimeout(retry, 1000);
+				return
+			}
+		}
+
+		retry()
+		return
+	}
+
 	//监听队友聊天信息
 	cga.waitTeammateSay = (cb)=>{
 		
@@ -7610,21 +7796,15 @@ module.exports = function(callback){
 	/**
 	 * UNAecho:队员之间共享全队信息。
 	 * 使用修改【玩家称号】作为传递手段。注意玩家自定义的称号有【16字节】长度限制
-	 * @param {*} teammates String数组。期望队员名称的数组形式，传null视为自动获取当前队员。
-	 * @param {*} func 
-	 * 复合功能函数，此函数必须被定义为：
-	 * 1、无参数传递时，执行自定义动作，如喊话、调整战斗配置等。
-	 * 但返回值要返回传递给队员的信息。如【ok】【7】等。
-	 * 【注意】此函数无参数情况下仅执行一次，也就是调用方传入的自定义动作仅执行一次。
-	 * 此函数返回值如果是String类型必须为2字节，int型则最多2位数。
-	 * 2、有参数传递时，判断传入信息是否合规，合规需要返回true，不合规返回false。
-	 * 【注意】有参时，必须遍历所有true和false的情况进行return。
-	 * 例1：如果定义想传递队员手持多少长老之证时
-	 * 比如func()返回7，func(7)进入自定义函数，你需要自己指定返回true或false规则。
-	 * 例2：想看其他队员手中是否有觉醒的文言抄本，
-	 * 如果有，func()返回"ok"，func("ok")进入自定义函数，你需要自己指定返回true或false规则。
-	 * 
-	 * 【注意】func()所使用的String类型字母有限制，只能使用"ok"，"no"，"un"3种
+	 * @param {*} memberCnt 仅队长使用，队内人数满足的时候，开启问题轮询
+	 * @param {Array} reqSequence 轮询内容，有格式限制。必须为String数组，且每个元素必须带有【前置特殊符号】。
+	 * 特殊符号具体为以下几种：
+	 * i:item名称，询问全体队员是否持有某种道具，队员返回道具数量
+	 * #:与i相同，但询问的是道具id，队员返回道具数量
+	 * t:称号持有清空，询问全体队员是否拥有某种称号，队员返回0表示没有，1表示有
+	 * m:任务完成情况，记录在【个人配置中】。队员返回任务完成情况，0表示没完成，1表示已完成
+	 * 例：['i承认之戒','#491677','t地狱的回响','m小岛之谜']
+	 * 表示分别询问队员道具【承认之戒】、道具id【491677】、称号【地狱的回响】持有情况，以及任务【小岛之谜】是否已完成
 	 * 
 	 * @param {*} cb 回调函数，全员信息收集完毕后制作成object，调用cb并将object传入
 	 * @returns 
@@ -7633,14 +7813,14 @@ module.exports = function(callback){
 
 		var teamplayers = cga.getTeamPlayers();
 		if(!teamplayers.length){
-			console.log('等待队伍..')
-			setTimeout(cga.shareTeammateInfo, 1000, memberCnt, reqSequence, cb);
+			console.log('共享信息时失去与队伍的连接，共享API结束，回调函数传入false..')
+			setTimeout(cb, 1000, false);
 			return
 		}
 		var playerInfo = cga.GetPlayerInfo()
 		var isleader = teamplayers[0].name == playerInfo.name ? true : false
 		// 获取人物原来自定义昵称，函数结束时，需要恢复
-		const originNick = playerInfo.nick
+		var originNick = playerInfo.nick ? playerInfo.nick : ''
 		// 队伍信息缓存，也是本函数最终return的变量
 		var teammate_info = {};
 		// 人物称号缓存，记录每个人的当前称号。用于一些逻辑的性能节约
@@ -7686,7 +7866,7 @@ module.exports = function(callback){
 				return
 			}
 			if(!teammate_info[teams[identifier.indexOf(regObj[3])].name]){
-				teammate_info[teams[identifier.indexOf(regObj[3])].name] = {}	
+				teammate_info[teams[identifier.indexOf(regObj[3])].name] = {lv : teams[identifier.indexOf(regObj[3])].level}	
 			}
 
 			Object.keys(reqAct).forEach((k)=>{
@@ -7854,7 +8034,12 @@ module.exports = function(callback){
 						return
 					}
 				}
-				cb(teammate_info)
+				// 此API出口
+				// 复原昵称时，等待2秒，防止其他队员没有读取完毕，这边就改昵称了。
+				setTimeout(() => {
+					cga.ChangeNickName(originNick)
+					cb(teammate_info)
+				}, 2000);
 				return
 			}
 		}
