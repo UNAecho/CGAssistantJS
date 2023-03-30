@@ -1,3 +1,17 @@
+/**
+ * UNAecho开发笔记：
+ * 2023年，为了将所有角色的全自动培养整合成一条龙无人监管流程，特此开发本模块
+ * 【智能练级】【智能回补】【智能组队】【智能卖石】为绑定模块，必须同时使用，其他模块并不兼容
+ * 核心逻辑：
+ * 	1、读取练级
+ * TODO 练级的muster如果运行时就已经在集合地，直接跳过
+ * 
+ * 
+ * 回补逻辑：playerthink中发现ctx.result为supply之后，直接调用智能回补模块，补完后重新进入loop
+ * 卖石逻辑：队长自己使用公共模块【智能卖石】，队员使用子插件【队员卖石】。
+ */
+
+
 var fs = require('fs');
 var Async = require('async');
 var supplyMode = require('../公共模块/智能回补');
@@ -16,10 +30,6 @@ var playerThinkRunning = false;
 
 var cachedEntrance = null;
 var blacklistEntrance = [];
-
-// 新城集合地坐标，用于组队计算去哪里练级
-var leaderWait = [140, 109]
-var teammateWait = [140, 108]
 
 // 注意回补模块顺序，先从泛用性低的开始放入数组
 // 比如在矮人城镇练级，判断当前地图是肯吉罗岛之后，回补模块会直接根据（肯吉罗岛）返回去营地回补了，这是不对的。所以要先放矮人回补在前将后面回补方式短路
@@ -68,369 +78,6 @@ var battleAreaArray = [
 	name : '风洞',
 	range : [300, 450, 150, 300],
 }
-]
-/**
- * UNAecho : 雪拉森威塔10-50层传送石坐标：index598开头，第几层就是0几。
- * 如：第1层59801，第10层59810，第25层59825。
- * 只有1、5、10、15、25、30、35、40、45、50层有传送石，其他层没有。
- * 下面2个，左边是1楼走到其他楼的传送石左边，右边是其他楼走到1楼的传送石坐标。
- * 国民会馆进入1层入口:[108, 39, 59801],
- * 1层回国民会馆:[33, 99, 59552],
- * [76, 58, 59810],[54, 38, 59801],
- * [76, 56, 59815],[137, 69, 59801],
- * [76, 54, 59820],[88, 146, 59801],
- * [76, 52, 59825],[95, 57, 59801],
- * [72, 60, 59830],[68, 33, 59801],
- * [72, 58, 59835],[104, 26, 59801],
- * [72, 56, 59840],[98, 95, 59801],
- * [72, 54, 59845],[98, 29, 59801],
- * [75, 50, 59850],[78, 59, 59801],
- */
-var battleAreaArray = [
-	{
-		name : '艾夏岛门口',
-		muster : (cb)=>{
-			cga.travel.newisland.toStone('X', ()=>{
-				cga.walkList([
-					cga.isTeamLeader ? [144, 106] : [143, 106],
-				], cb);
-			});
-		},
-		walkTo : (cb)=>{
-			cga.travel.newisland.toStone('D', ()=>{
-				cga.walkList([
-					[190, 116, '盖雷布伦森林'],
-					[210, 216],
-				], cb);
-			});
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '盖雷布伦森林');
-		}
-	},
-	{
-		name : '低地鸡',
-		muster : (cb)=>{
-			cga.travel.newisland.toStone('X', ()=>{
-				cga.walkList([
-					cga.isTeamLeader ? [144, 106] : [143, 106],
-				], cb);
-			});
-		},
-		walkTo : (cb)=>{
-			cga.travel.newisland.toStone('D', ()=>{
-				cga.walkList([
-					[190, 116, '盖雷布伦森林'],
-					[221, 228],
-				], cb);
-			});
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '盖雷布伦森林');
-		}
-	},
-	{
-		name : '刀鸡',
-		muster : (cb)=>{
-			cga.travel.newisland.toStone('X', ()=>{
-				cga.walkList([
-					cga.isTeamLeader ? [144, 106] : [143, 106],
-				], cb);
-			});
-		},
-		walkTo : (cb)=>{
-			cga.travel.newisland.toStone('D', ()=>{
-				cga.walkList([
-					[190, 116, '盖雷布伦森林'],
-					[231, 222, '布拉基姆高地'],
-					[34, 188],
-				], cb);
-			});
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '布拉基姆高地');
-		}
-	},
-	{
-		name : '龙骨',
-		muster : (cb)=>{
-			cga.travel.newisland.toStone('X', ()=>{
-				cga.walkList([
-					cga.isTeamLeader ? [144, 106] : [143, 106],
-				], cb);
-			});
-		},
-		walkTo : (cb)=>{
-			cga.travel.newisland.toStone('D', ()=>{
-				cga.walkList([
-					[190, 116, '盖雷布伦森林'],
-					[231, 222, '布拉基姆高地'],
-					[111, 206],
-				], cb);
-			});
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '布拉基姆高地');
-		}
-	},
-	{
-		name : '黄金龙骨',
-		muster : (cb)=>{
-			cga.travel.newisland.toStone('X', ()=>{
-				cga.walkList([
-					cga.isTeamLeader ? [144, 106] : [143, 106],
-				], cb);
-			});
-		},
-		walkTo : (cb)=>{
-			cga.travel.newisland.toStone('D', ()=>{
-				cga.walkList([
-					[190, 116, '盖雷布伦森林'],
-					[231, 222, '布拉基姆高地'],
-					[135, 175],
-				], cb);
-			});
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '布拉基姆高地');
-		}
-	},
-	{
-		name : '银狮',
-		muster : (cb)=>{
-			cga.travel.newisland.toStone('X', ()=>{
-				cga.walkList([
-					cga.isTeamLeader ? [144, 106] : [143, 106],
-				], cb);
-			});
-		},
-		walkTo : (cb)=>{
-			cga.travel.newisland.toStone('D', ()=>{
-				cga.walkList([
-					[190, 116, '盖雷布伦森林'],
-					[231, 222, '布拉基姆高地'],
-					[122, 117],
-					[147, 117],
-				], cb);
-			});
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '布拉基姆高地');
-		}
-	},
-	{
-		name : '回廊',
-		muster : (cb)=>{
-			cga.travel.falan.toStone('C', ()=>{
-				cga.walkList([
-					[52, 72]
-					], ()=>{
-						cga.TurnTo(54, 72);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(32, 0);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(4, 0);
-								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(4, 0);
-									cga.AsyncWaitMovement({map:'过去与现在的回廊', delay:1000, timeout:5000}, ()=>{
-										cga.walkList([
-											cga.isTeamLeader ? [11, 20] : [10, 20],
-										], cb);
-									});
-								});
-							});
-						});
-					});	
-			});
-			return
-		},
-		walkTo : (cb)=>{
-			setTimeout(cb, 500);
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '过去与现在的回廊');
-		}
-	},
-	{
-		name : '营地',
-		muster : (cb)=>{
-			cga.travel.falan.toCamp(()=>{
-				cga.walkList([
-				cga.isTeamLeader ? [96, 86] : [97, 86],
-				], cb);
-			});
-			return
-		},
-		walkTo : (cb)=>{
-			cga.walkList([
-				[36, 87, '肯吉罗岛'],
-				[548, 332],
-			], cb);
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '肯吉罗岛');
-		}
-	},
-	{
-		name : '蝎子',
-		muster : (cb)=>{
-			cga.travel.falan.toCamp(()=>{
-				cga.walkList([
-				cga.isTeamLeader ? [96, 86] : [97, 86],
-				], cb);
-			});
-			return
-		},
-		walkTo : (cb)=>{
-			var map = cga.GetMapName();
-			if(map == '圣骑士营地'){
-				cga.walkList([
-					[36, 87, '肯吉罗岛'],
-					[384, 245, '蜥蜴洞穴'],
-					[12, 2, '肯吉罗岛'],
-					[231, 434, '矮人城镇'],
-				], cb);
-			}else if(map == '矮人城镇'){
-				cga.walkList([
-					[110, 191, '肯吉罗岛'],
-					[233, 439],
-				], cb);
-			}
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '肯吉罗岛' && cga.travel.camp.getRegion(map, mapXY) == '矮人城镇域');
-		}
-	},
-	{
-		name : '沙滩',
-		muster : (cb)=>{
-			cga.travel.falan.toCamp(()=>{
-				cga.walkList([
-				cga.isTeamLeader ? [96, 86] : [97, 86],
-				], cb);
-			});
-			return
-		},
-		walkTo : (cb)=>{
-			cga.walkList([
-				[36, 87, '肯吉罗岛'],
-				[471, 203],
-			], cb);
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '肯吉罗岛' && cga.travel.camp.getRegion(map, mapXY) == '沙滩域');
-		}
-	},
-	{
-		name : '蜥蜴',
-		muster : (cb)=>{
-			cga.travel.falan.toCamp(()=>{
-				cga.walkList([
-				cga.isTeamLeader ? [96, 86] : [97, 86],
-				], cb);
-			});
-			return
-		},
-		walkTo : (cb)=>{
-			cga.walkList([
-				[36, 87, '肯吉罗岛'],
-				[384, 245, '蜥蜴洞穴'],
-				[17, 4, '蜥蜴洞穴上层第1层'],
-			], cb);
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '蜥蜴洞穴上层第1层');
-		}
-	},
-	{
-		name : '黑龙',
-		muster : (cb)=>{
-			cga.travel.falan.toCamp(()=>{
-				cga.walkList([
-				cga.isTeamLeader ? [96, 86] : [97, 86],
-				], cb);
-			});
-			return
-		},
-		walkTo : (cb)=>{
-			cga.walkList([
-				[36, 87, '肯吉罗岛'],
-				[424, 345, '黑龙沼泽1区'],
-			], cb);
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '黑龙沼泽1区');
-		}
-	},
-	{
-		name : '旧日之地',
-		muster : (cb)=>{
-			
-			var getHorn = (cb2)=>{
-				cga.walkList([
-					[116, 69, '总部1楼'],
-					[86, 50],
-					], ()=>{
-						cga.TurnTo(88, 50);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(4, -1);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.walkList([
-								[4, 47, '圣骑士营地'],
-								], ()=>{
-									muster(cb2)
-								});
-							});
-						});
-					});				
-					return;
-				
-			}
-			
-			var muster = (cb2)=>{
-				cga.walkList([
-					[119, 81],
-					], ()=>{
-						cga.TurnTo(121, 81);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(1, -1);
-							cga.AsyncWaitMovement({map:'旧日之地'}, ()=>{
-								cga.walkList([
-								[45, 47],
-								], ()=>{
-									cga.TurnTo(45, 45);
-									cga.AsyncWaitNPCDialog(()=>{
-										cga.ClickNPCDialog(1, -1);
-										cga.AsyncWaitMovement({map:'迷宫入口'}, ()=>{
-											cga.walkList([
-											cga.isTeamLeader ? [6, 5] : [6, 6],
-											], cb2);									
-										});
-									});
-								});
-							});
-						});
-					});
-			}
-
-			cga.travel.falan.toCamp(()=>{
-				if(cga.getItemCount('战斗号角') == 0){
-					getHorn(cb)
-				}else{
-					muster(cb)
-				}
-			});
-			return
-		},
-		walkTo : (cb)=>{
-			cga.walkList([
-				[9, 5, '旧日迷宫第1层'],
-			], cb);
-		},
-		isDesiredMap : (map, mapXY)=>{
-			return (map == '旧日迷宫第1层');
-		}
-	},
 ]
 
 var walkMazeForward = (cb)=>{
@@ -517,94 +164,6 @@ var walkMazeBack = (cb)=>{
 	});
 }
 
-var levelRegion= (cb)=>{
-	if (!teamMode.is_enough_teammates()){
-		// console.log('注意teamMode.is_enough_teammates()并没有满足，推测是队员的队伍信息没有改正，队员的组队信息teammates不止需要填上队长，其他队员的信息也要正确。')
-		setTimeout(levelRegion, 1000, cb);
-		return
-	}
-
-	var teamplayers = cga.getTeamPlayers();
-
-	if(teamplayers.length > 1){
-		thisobj.minLevel = teamplayers[0].level
-		thisobj.maxLevel = teamplayers[0].level
-	}else{
-		thisobj.minLevel = cga.GetPlayerInfo().level
-	}
-	for (i = 0 ; i< teamplayers.length ; i++){
-		thisobj.minLevel = thisobj.minLevel < teamplayers[i].level ? thisobj.minLevel : teamplayers[i].level
-		thisobj.maxLevel = thisobj.maxLevel > teamplayers[i].level ? thisobj.maxLevel : teamplayers[i].level
-	}
-	console.log('队员最低等级 : ' + thisobj.minLevel)
-	console.log('队员最高等级 : ' + thisobj.maxLevel)
-
-	if (cb) cb(null)
-	return
-}
-
-var switchArea = (cb)=>{
-	if(thisobj.minLevel <= 8){
-		global.area = '艾夏岛门口'
-	}
-	else if(thisobj.minLevel> 8 && thisobj.minLevel <= 10){
-		global.area = '低地鸡'
-	}
-	else if(thisobj.minLevel> 10 && thisobj.minLevel <= 27){
-		global.area = '刀鸡'
-	}
-	else if(thisobj.minLevel> 27 && thisobj.minLevel <= 30){
-		global.area = '龙骨'
-	}
-	else if(thisobj.minLevel> 30 && thisobj.minLevel <= 39){
-		global.area = '黄金龙骨'
-	}
-	else if(thisobj.minLevel> 39 && thisobj.minLevel <= 45){
-		global.area = '银狮'
-	}
-	else if(thisobj.minLevel> 45 && thisobj.minLevel <= 60){
-		global.area = '回廊'
-	}
-	else if(thisobj.minLevel> 60 && thisobj.minLevel <= 72){
-		global.area = '营地'
-	}
-	else if(thisobj.minLevel> 72 && thisobj.minLevel <= 80){
-		global.area = '蝎子'
-	}
-	else if(thisobj.minLevel> 80 && thisobj.minLevel <= 97){
-		global.area = '沙滩'
-	}
-	// TODO 隐秘之洞刷碎片
-	// 蜥蜴石化魔法容易导致团灭，将等级区间后移，增加容错
-	else if(thisobj.minLevel> 97 && thisobj.minLevel <= 105){
-		global.area = '蜥蜴'
-	}
-	else if(thisobj.minLevel> 105 && thisobj.minLevel <= 120){
-		global.area = '黑龙'
-	}
-	else if(thisobj.minLevel> 120 && thisobj.minLevel <= 140){
-		global.area = '旧日之地'
-	}
-	// 打印练级场所及层数
-	if(thisobj.layerLevel > 1){
-		console.log('去【' + area +'】【' + thisobj.layerLevel + '】层练级')
-	}else{
-		console.log('去【' + area + '】练级')
-	}
-
-	thisobj.battleAreaObj = battleAreaArray.find((b)=>{
-		return b.name == global.area
-	});
-
-	if(!thisobj.battleAreaObj){
-		throw new Error('错误，未找到合适的练级地点，请检查。')
-	}
-	console.log('自动识别练级地点:' + thisobj.battleAreaObj.name)
-
-	setTimeout(cb, 1000);
-	return
-}
-
 var moveThink = (arg)=>{
 
 	if(moveThinkInterrupt.hasInterrupt())
@@ -626,7 +185,6 @@ var playerThink = ()=>{
 	
 	var playerinfo = cga.GetPlayerInfo();
 	var items = cga.GetItemsInfo();
-	var skills = cga.GetSkillsInfo();
 
 	var ctx = {
 		playerinfo : playerinfo,
@@ -639,13 +197,13 @@ var playerThink = ()=>{
 		equipment : items.filter((item)=>{
 			return item.pos >= 0 && item.pos < 8;
 		}),
-		skills : skills,
 		result : null,
 	}
 
 	teamMode.think(ctx);
 
 	global.callSubPlugins('think', ctx);
+
 	if(cga.isTeamLeaderEx())
 	{
 		var interruptFromMoveThink = false;
@@ -740,31 +298,6 @@ var loop = ()=>{
 	var isleader = cga.isTeamLeaderEx();
 
 	if(isleader && teamMode.is_enough_teammates()){
-		// 如果是单人练级，没有进行组队判定去哪里练级，就根据自身等级判定
-		if(!thisobj.battleAreaObj){
-			levelRegion(()=>{
-				switchArea(()=>{
-					callSubPluginsAsync('prepare', ()=>{
-						thisobj.battleAreaObj.muster(()=>{
-							// playerThink on开始前，先读取战斗配置。
-							configMode.think({skills : cga.GetSkillsInfo()});
-
-							playerThinkInterrupt.hasInterrupt();//restore interrupt state
-							console.log('playerThink on');
-							playerThinkRunning = true;
-							
-							thisobj.battleAreaObj.walkTo(()=>{
-								var xy = cga.GetMapXY();
-								var dir = cga.getRandomSpaceDir(xy.x, xy.y);
-								cga.freqMove(dir);
-							})
-						})
-					});
-
-				})
-			})
-			return
-		}
 		// 矮人城镇逻辑
 		if(map == '肯吉罗岛' && cga.travel.camp.getRegion(map, mapXY) == '矮人城镇域'){
 			cga.walkList([
@@ -787,14 +320,16 @@ var loop = ()=>{
 					console.log('playerThink on');
 					playerThinkRunning = true;
 
-					thisobj.battleAreaObj.walkTo(()=>{
+					teamMode.walkTo(()=>{
 						var xy = cga.GetMapXY();
 						var dir = cga.getRandomSpaceDir(xy.x, xy.y);
 						cga.freqMove(dir);
 					})
 				});
 			}
-
+			// 一般的练级地点都是回补之后到达，矮人城镇则特殊，因为需要从营地走到矮人城镇。
+			// 所以loop进入时，需要回补一次，再出发练级。
+			// 而营地、国民会馆则不同，因为playerthink中，监听到回补时，先进行回补，再执行loop
 			supplyMode.func(()=>{
 				if(thisobj.sellStore == 1){
 					var sellObject = getSellObject(map, mapindex);
@@ -829,6 +364,7 @@ var loop = ()=>{
 			getSupplyObject().func(loop);
 			return;
 		}
+		// 由于playerthink的回补会直接回医院回补，而上面mapindex44692已经涵盖了卖石逻辑，所以圣骑士营地这里不需要判断回补和卖石
 		if(map == '圣骑士营地'){
 			callSubPluginsAsync('prepare', ()=>{
 				if(cga.GetMapName() != '圣骑士营地'){
@@ -843,7 +379,7 @@ var loop = ()=>{
 				console.log('playerThink on');
 				playerThinkRunning = true;
 
-				thisobj.battleAreaObj.walkTo(()=>{
+				teamMode.walkTo(()=>{
 					if(cga.GetMapName() == '矮人城镇'){
 						setTimeout(loop, 1000);
 					}else{
@@ -855,8 +391,38 @@ var loop = ()=>{
 			});
 			return;
 		}
-		// 练级地点逻辑
-		if(thisobj.battleAreaObj.isDesiredMap(map)){
+		if(map == '国民会馆'){
+			var go = ()=>{
+				callSubPluginsAsync('prepare', ()=>{
+					// playerThink on开始前，先读取战斗配置。
+					configMode.think({skills : cga.GetSkillsInfo()});
+
+					playerThinkInterrupt.hasInterrupt();//restore interrupt state
+					console.log('playerThink on');
+					playerThinkRunning = true;
+
+					teamMode.walkTo(()=>{
+						var xy = cga.GetMapXY();
+						var dir = cga.getRandomSpaceDir(xy.x, xy.y);
+						cga.freqMove(dir);
+					})
+				});
+			}
+			// 一般的练级地点都是回补之后到达，矮人城镇则特殊，因为需要从营地走到矮人城镇。
+			// 所以loop进入时，需要回补一次，再出发练级。
+			// 而营地、国民会馆则不同，因为playerthink中，监听到回补时，先进行回补，再执行loop
+			if(thisobj.sellStore == 1){
+				var sellObject = getSellObject(map, mapindex);
+				if(sellObject)
+				{
+					sellObject.func(go);
+					return;
+				}
+			}
+			return;
+		}
+		// 如果已经在练级区域
+		if(teamMode.isDesiredMap(map, mapXY, mapindex)){
 
 			// playerThink on开始前，先读取战斗配置。
 			configMode.think({skills : cga.GetSkillsInfo()});
@@ -875,12 +441,12 @@ var loop = ()=>{
 		// playerThink on开始前，先读取战斗配置。
 		configMode.think({skills : cga.GetSkillsInfo()});
 
-		// 正常在集散地出发
+		// 如果不在练级区域，正常在集散地出发
 		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 		console.log('playerThink on');
 		playerThinkRunning = true;
 
-		thisobj.battleAreaObj.walkTo(()=>{
+		teamMode.walkTo(()=>{
 			var xy = cga.GetMapXY();
 			var dir = cga.getRandomSpaceDir(xy.x, xy.y);
 			cga.freqMove(dir);
@@ -918,57 +484,39 @@ var loop = ()=>{
 		}
 	}
 
-	cga.travel.newisland.toStone('X', ()=>{
-		cga.walkList([
-			cga.isTeamLeader ? leaderWait : teammateWait,
-		], ()=>{
-			teamMode.wait_for_teammates(()=>{
-				levelRegion(()=>{
-					switchArea(()=>{
-						var retry = ()=>{
-							if(cga.getTeamPlayers().length){
-								if(cga.isTeamLeaderEx()){
-									setTimeout(()=>{
-										cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
-									}, 2000);
-									setTimeout(retry, 2500);
-								}else{
-									setTimeout(retry, 1000);
-								}
-								return
-							}else{
-								callSubPluginsAsync('prepare', ()=>{
-									thisobj.battleAreaObj.muster(()=>{
-										teamMode.wait_for_teammates_timeout((r)=>{
-											if(!r){
-												console.log('超时，重新执行loop')
-												loop()
-												return
-											}
-											// 无论是否超时，都要执行loop，因为loop已经包含了逻辑判断。
-											loop()
-											return
-										});
-									})
-								});
-								return
-							}
-						}
-						retry()
-					})
+	if(teamMode.isBuildTeamReady()){
+		callSubPluginsAsync('prepare', ()=>{
+			teamMode.musterWithBuildTeam(()=>{
+				teamMode.wait_for_teammates_timeout((r)=>{
+					if(!r){
+						console.log('需要重新组队，等待解散队伍..')
+						cga.disbandTeam(loop)
+						return
+					}
+					loop()
 				})
-			});
+			})
 		});
-	});
+		return
+	}
+
+	teamMode.muster(()=>{
+		teamMode.wait_for_teammates_filter(()=>{
+			cga.disbandTeam(loop)
+		})
+	})
 }
 
 var thisobj = {
 	getDangerLevel : ()=>{
 		var map = cga.GetMapName();
 		var mapXY = cga.GetMapXY();
-
+		var mapindex = cga.GetMapIndex().index3;
+		// 雪拉威森塔
+		if (mapindex > 59800 && mapindex < 59900)
+			return 2
 		if(map == '盖雷布伦森林' )
-		return 1;
+			return 1;
 
 		if(map == '布拉基姆高地' )
 			return 2;

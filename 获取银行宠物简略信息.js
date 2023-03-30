@@ -1,5 +1,10 @@
 var cga = require('./cgaapi')(function () {
 
+	const waitForPlayer = () => {
+		setTimeout(waitForPlayer, 60000);
+		return
+	}
+
 	cga.travel.newisland.toBank(() => {
 		cga.TurnTo(50, 25);
 		cga.EnableFlags(cga.ENABLE_FLAG_TRADE, true);
@@ -28,12 +33,8 @@ var cga = require('./cgaapi')(function () {
 			}
 			console.log('银行共有宠物：【' + pets.length + '】只\n详情：')
 			console.log(result)
-			
-			cga.gui.LoadScript({
-				autorestart : false,
-			}, (err, result)=>{
-				console.log('脚本结束，关闭自动重启脚本。')
-			})
+			// 无限等待，直到玩家手动操作
+			waitForPlayer()
 		});
 
 	});
