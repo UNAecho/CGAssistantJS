@@ -16,11 +16,11 @@
     "supplyMode": 1,
     "teamMode": 0,
     "teammates": [
+        "UNAの格斗01",
+        "UNAの格斗02",
         "UNAの格斗03",
-        "UNAの格斗04",
-        "UNAの猎人03",
-        "UNAの猎人04",
-        "UNAの猎人05"
+        "UNAの伐木02",
+        "UNAの猎人03"
     ],
     "timeout" : 180000,
     "battleArea": 0,

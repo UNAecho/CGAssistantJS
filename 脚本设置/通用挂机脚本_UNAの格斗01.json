@@ -18,9 +18,9 @@
     "teammates": [
         "UNAの格斗01",
         "UNAの格斗02",
-        "UNAの武器修理工",
-        "UNAの防具修理工",
-        "UNAの医生"
+        "UNAの格斗03",
+        "UNAの伐木02",
+        "UNAの猎人03"
     ],
     "timeout" : 180000,
     "battleArea": 0,

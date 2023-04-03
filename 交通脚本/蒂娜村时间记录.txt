@@ -1,0 +1,9 @@
+发生昼夜切换，【白天】变【夜晚】
+cacheSysTime : hours: 16 mins: 104 secs: 6
+curSysTime : hours: 16 mins: 105 secs: 11
+发生昼夜切换，【白天】变【夜晚】
+cacheSysTime : hours: 16 mins: 104 secs: 4
+curSysTime : hours: 16 mins: 105 secs: 10
+发生昼夜切换，【白天】变【夜晚】
+cacheSysTime : hours: 16 mins: 104 secs: 5
+curSysTime : hours: 16 mins: 105 secs: 11
