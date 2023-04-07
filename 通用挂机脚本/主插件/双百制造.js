@@ -445,7 +445,8 @@ var forgetAndLearn = (cb)=>{
 			cga.turnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
 			var dialogHandler = (err, dialog)=>{
 				if(dialog){
-					var hasSkill = cga.findPlayerSkill(professionalInfo.skill) ? true : false;
+					// 这里需要使用configTable.craftType作为名称，否则会出现configTable.craftType如果填错，直接把自己本职技能给遗忘的严重bug
+					var hasSkill = cga.findPlayerSkill(configTable.craftType) ? true : false;
 					if( hasSkill )
 					{
 						if (dialog.type == 16) {
