@@ -65,6 +65,15 @@ var thisobj = {
 			}, 1000);
 		}
 	},
+	translate : (pair)=>{
+		if(pair.field == 'minLoyality'){
+			pair.field = '宠物最低忠诚度(低于则收宠)';
+			pair.value = pair.value;
+			pair.translated = true;
+			return true;
+		}
+		return false;
+	},
 	loadconfig : (obj, cb)=>{
 		if(obj.minLoyality != undefined)
 		{

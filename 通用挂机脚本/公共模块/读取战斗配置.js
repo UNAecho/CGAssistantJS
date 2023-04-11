@@ -43,11 +43,11 @@ var configModeArray = [
 			}
 			return false;
 		});
+
 		// 此处注意文件的名字，是统称+练级二字，如：格斗士练级
 		if(!skill && accompany.indexOf(thisobj.finalJob.jobmainname) != -1){
 			train = thisobj.finalJob.jobmainname + '练级'
 		}
-
 		setting = JSON.parse(fs.readFileSync(cga.getrootdir() + '\\战斗配置\\' + train + '.json'))
 		// 如果是默认的通用格式，则直接读取，无需其他处理
 		if(train.indexOf('练级') != -1){
@@ -55,10 +55,6 @@ var configModeArray = [
 			thisobj.manualLoad(setting)
 			return
 		}else if(skill){// 如果发现需要烧的技能，则调整技能顺序并选择好默认目标
-			// 如果没烧完则继续
-			if (skill.name == thisobj.training){
-				return
-			}
 			// 制作要修炼技能的的战斗配置
 			var skillObj = skillInfos.getSkillObj(skill.name)
 			var battleObj = 
@@ -109,8 +105,7 @@ var configModeArray = [
 		}
 
 		if(thisobj.manualLoad(setting)){
-			thisobj.training = skill.name
-			console.log('正在训练【' + thisobj.training +'】技能')
+			console.log('正在训练【' + skill.name +'】技能')
 		}
 
 		return
