@@ -215,7 +215,7 @@ io.on('connection', (socket) => {
 			}	
 
 		}
-		console.log(roominfos)
+		// console.log(roominfos)
 	})
 });
 var waitStuffs = (name, materials, cb)=>{
