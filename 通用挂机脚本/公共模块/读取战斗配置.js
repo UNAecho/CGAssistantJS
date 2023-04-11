@@ -15,8 +15,8 @@ var configModeArray = [
 		return
 	},
 	think : (ctx)=>{
-		// 如果ctx没有技能信息，或者被认为只需要读取一次配置时，直接return，防止无限IO
-		if(!ctx.skills || thisobj.once){
+		// 如果ctx没有技能信息
+		if(!ctx.skills){
 			return
 		}
 		
@@ -25,10 +25,7 @@ var configModeArray = [
 
 		if(!thisobj.finalJob || (!thisobj.finalJob.skill && !thisobj.finalJob.trainskills)){
 			console.log('未指定角色修炼技能或指定修炼技能已满，本次使用默认战斗配置')
-			// 没有指定要烧的技能，使用默认配置并且仅读取一次。
-			if(!thisobj.training && thisobj.manualLoad(train)){
-				thisobj.once = true
-			}
+			thisobj.manualLoad(train)
 			return
 		}
 		// 只有战斗系的技能才需要在战斗过程中烧
@@ -53,9 +50,9 @@ var configModeArray = [
 
 		setting = JSON.parse(fs.readFileSync(cga.getrootdir() + '\\战斗配置\\' + train + '.json'))
 		// 如果是默认的通用格式，则直接读取，无需其他处理
-		if(train.indexOf('练级') != -1 && thisobj.manualLoad(setting)){
-			console.log('没有需要修炼的技能，读取通用练级模式或保姆练级模式，并不再改变战斗配置。')
-			thisobj.once = true
+		if(train.indexOf('练级') != -1){
+			console.log('没有需要修炼的技能，读取通用练级模式或保姆练级模式')
+			thisobj.manualLoad(setting)
 			return
 		}else if(skill){// 如果发现需要烧的技能，则调整技能顺序并选择好默认目标
 			// 如果没烧完则继续

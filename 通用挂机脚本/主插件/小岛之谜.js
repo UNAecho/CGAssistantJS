@@ -45,7 +45,7 @@ for(var i in teams){
 
 var jump = ()=>{
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','地狱的回响')
+		updateConfig.update_config('mainPlugin','通用挂机脚本')
 	},5000)
 }
 

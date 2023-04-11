@@ -560,7 +560,7 @@ var cleanUseless = (cb)=>{
 	}
 	console.log('银行已经无法继续存放【' + craft_target.name + '】，去桥头将背包的成品卖掉。')
 	cga.travel.falan.toStone('B2', ()=>{
-		cga.turnTo(155, 122);
+		cga.turnTo(157, 122);
 		var sellarray = cga.findItemArray((item)=>{
 			if ( thisobj.craftItemList.find((craftItem)=>{
 				// 如果是料理和血瓶，count会大于0。如果是装备，count=0
