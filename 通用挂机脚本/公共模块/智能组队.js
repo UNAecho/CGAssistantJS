@@ -359,6 +359,45 @@ var battleAreaArray = [
 		}
 	},
 	{
+		name : '诅咒之迷宫',
+		muster : (cb)=>{
+			cga.travel.newisland.toStone('X', ()=>{
+				cga.walkList([
+					cga.isTeamLeader ? [144, 106] : [143, 106],
+				], cb);
+			});
+		},
+		walkTo : (cb)=>{
+			var map = cga.GetMapName();
+			if(map == '芙蕾雅'){
+				var randomMazeArgs = {
+					table : [[263, 149], [284, 140], [295, 127]],
+					filter : (obj)=>{
+						return obj.cell == 3 && obj.mapx >= 260 && obj.mapx <= 273 && obj.mapy >= 133 && obj.mapy <= 164;
+					},
+					blacklist : [],
+					expectmap : '诅咒之迷宫地下1楼',
+				};
+				cga.getRandomMazeEntrance(randomMazeArgs, ()=>{
+					cga.walkRandomMazeAuto(thisobj.object.area.layer, cb)
+				});
+				return;
+			}else if(map.indexOf('诅咒之迷宫') != -1){
+				cga.walkRandomMazeAuto(thisobj.object.area.layer, cb)
+				return;
+			}else{
+				throw new Error('异常地图，请检查')
+			}
+		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '艾尔莎岛';
+		},
+		isDesiredMap : (map, mapXY)=>{
+			let mazeInfo = cga.mazeInfo['诅咒之迷宫']
+			return map == (mazeInfo.prefix + thisobj.object.area.layer + mazeInfo.suffix) ? true : false
+		}
+	},
+	{
 		name : '龙骨',
 		muster : (cb)=>{
 			cga.travel.newisland.toStone('X', ()=>{
@@ -550,7 +589,7 @@ var battleAreaArray = [
 		}
 	},
 	{
-		name : '蜥蜴',
+		name : '蜥蜴洞穴上层',
 		muster : (cb)=>{
 			cga.travel.falan.toCamp(()=>{
 				cga.walkList([
@@ -560,21 +599,34 @@ var battleAreaArray = [
 			return
 		},
 		walkTo : (cb)=>{
-			cga.walkList([
-				[36, 87, '肯吉罗岛'],
-				[384, 245, '蜥蜴洞穴'],
-				[17, 4, '蜥蜴洞穴上层第1层'],
-			], cb);
+			let mazeInfo = cga.mazeInfo['蜥蜴洞穴上层']
+			var map = cga.GetMapName();
+			if(map == mazeInfo.entryMap){
+				cga.walkList([
+					[mazeInfo.pos[0], mazeInfo.pos[1], mazeInfo.prefix + '1' + mazeInfo.suffix],
+				], cb);
+				return;
+			}else if(map.indexOf(mazeInfo.prefix) != -1){
+				cga.walkRandomMazeAuto(thisobj.object.area.layer, cb)
+				return;
+			}else{
+				cga.walkList([
+					[36, 87, '肯吉罗岛'],
+					[384, 245, '蜥蜴洞穴'],
+					[mazeInfo.pos[0], mazeInfo.pos[1], mazeInfo.prefix + '1' + mazeInfo.suffix],
+				], cb);
+			}
 		},
 		isMusterMap : (map, mapXY)=>{
 			return map == '圣骑士营地';
 		},
 		isDesiredMap : (map, mapXY)=>{
-			return (map == '蜥蜴洞穴上层第1层');
+			let mazeInfo = cga.mazeInfo['蜥蜴洞穴上层']
+			return map == (mazeInfo.prefix + thisobj.object.area.layer + mazeInfo.suffix) ? true : false
 		}
 	},
 	{
-		name : '黑龙',
+		name : '黑龙沼泽',
 		muster : (cb)=>{
 			cga.travel.falan.toCamp(()=>{
 				cga.walkList([
@@ -584,20 +636,33 @@ var battleAreaArray = [
 			return
 		},
 		walkTo : (cb)=>{
-			cga.walkList([
-				[36, 87, '肯吉罗岛'],
-				[424, 345, '黑龙沼泽1区'],
-			], cb);
+			let mazeInfo = cga.mazeInfo['黑龙沼泽']
+			var map = cga.GetMapName();
+			if(map == mazeInfo.entryMap){
+				cga.walkList([
+					[mazeInfo.pos[0], mazeInfo.pos[1], mazeInfo.prefix + '1' + mazeInfo.suffix],
+				], cb);
+				return;
+			}else if(map.indexOf(mazeInfo.prefix) != -1){
+				cga.walkRandomMazeAuto(thisobj.object.area.layer, cb)
+				return;
+			}else{
+				cga.walkList([
+					[36, 87, '肯吉罗岛'],
+					[mazeInfo.pos[0], mazeInfo.pos[1], mazeInfo.prefix + '1' + mazeInfo.suffix],
+				], cb);
+			}
 		},
 		isMusterMap : (map, mapXY)=>{
 			return map == '圣骑士营地';
 		},
 		isDesiredMap : (map, mapXY)=>{
-			return (map == '黑龙沼泽1区');
+			let mazeInfo = cga.mazeInfo['黑龙沼泽']
+			return map == (mazeInfo.prefix + thisobj.object.area.layer + mazeInfo.suffix) ? true : false
 		}
 	},
 	{
-		name : '旧日之地',
+		name : '旧日迷宫',
 		muster : (cb)=>{
 			var getHorn = (cb2)=>{
 				cga.walkList([
@@ -632,19 +697,30 @@ var battleAreaArray = [
 			return
 		},
 		walkTo : (cb)=>{
-			cga.walkList([
-				[9, 5, '旧日迷宫第1层'],
-			], cb);
+			let mazeInfo = cga.mazeInfo['旧日迷宫']
+			var map = cga.GetMapName();
+			if(map == mazeInfo.entryMap){
+				cga.walkList([
+					[mazeInfo.pos[0], mazeInfo.pos[1], mazeInfo.prefix + '1' + mazeInfo.suffix],
+				], cb);
+				return;
+			}else if(map.indexOf(mazeInfo.prefix) != -1){
+				cga.walkRandomMazeAuto(thisobj.object.area.layer, cb)
+				return;
+			}else{
+				throw new Error('异常地图，请检查')
+			}
 		},
 		isMusterMap : (map, mapXY)=>{
 			return map == '迷宫入口';
 		},
 		isDesiredMap : (map, mapXY)=>{
-			return (map == '旧日迷宫第1层');
+			let mazeInfo = cga.mazeInfo['旧日迷宫']
+			return map == (mazeInfo.prefix + thisobj.object.area.layer + mazeInfo.suffix) ? true : false
 		}
 	},
 	{
-		name : '半山腰',
+		name : '通往山顶的路',
 		muster : (cb)=>{
 			cga.travel.falan.toStone('W1', ()=>{
 				cga.walkList([
@@ -665,16 +741,17 @@ var battleAreaArray = [
 			return
 		},
 		walkTo : (cb)=>{
+			let mazeInfo = cga.mazeInfo['通往山顶的路']
 			var map = cga.GetMapName();
-			if(map == '小岛'){
+			if(map == mazeInfo.entryMap){
 				cga.walkList([
-					[64, 45, '通往山顶的路100M'],
-					], ()=>{
-						cga.walkRandomMazeAuto(thisobj.object.area.map, cb)
-					});
+					[mazeInfo.pos[0], mazeInfo.pos[1], mazeInfo.prefix + '100' + mazeInfo.suffix],
+				], ()=>{
+					cga.walkRandomMazeAuto(mazeInfo.exitMap, cb)
+				});
 				return;
-			}else if(map.indexOf('通往山顶的路') != -1){
-				cga.walkRandomMazeAuto(thisobj.object.area.map, cb)
+			}else if(map.indexOf(mazeInfo.prefix) != -1){
+				cga.walkRandomMazeAuto(mazeInfo.exitMap, cb)
 				return;
 			}else{
 				throw new Error('异常地图，请检查')
@@ -791,17 +868,17 @@ const switchArea = (shareInfoObj,teamplayers) => {
 	} else if (camp && minLv > 80 && minLv <= 97) {// 蜥蜴有石化，即便有抗石化依旧容易出现大量阵亡导致宠物忠诚下降，故在沙滩超额练一段时间
 		battleArea = '沙滩'
 	} else if (camp && minLv > 97 && minLv <= 105) {
-		battleArea = '蜥蜴'
+		battleArea = '蜥蜴洞穴上层'
 	} else if (camp && minLv > 105 && minLv <= 115) {
-		battleArea = '黑龙'
+		battleArea = '黑龙沼泽'
 	} else if (camp && minLv > 115) {
-		battleArea = '旧日之地'
+		battleArea = '旧日迷宫'
 	}
 	// 半山判定
 	if(island && minLv > 115 && minLv <= 125) {
 		battleArea = '小岛'
 	} else if(island && minLv > 125) {
-		battleArea = '半山腰'
+		battleArea = '通往山顶的路'
 	}
 
 	// 将所有信息填入返回对象

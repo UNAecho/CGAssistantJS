@@ -9202,9 +9202,10 @@ module.exports = function(callback){
 			maxLayer : 20,
 		},
 		/**
+		 * 出口为半山腰，160级练级处。
 		 * 注意通往山顶的路是没有经验的！但是烧技能却可以，恶心的设定。
 		 */
-		'半山腰' : {
+		'通往山顶的路' : {
 			entryMap : '小岛',
 			exitMap : '半山腰',
 			pos : [64, 45],
@@ -9630,12 +9631,12 @@ module.exports = function(callback){
 			throw new Error('所有区域都已搜索完毕，没有找到迷宫入口！');
 		}
 
-		console.log('前往区域'+(index+1)+'搜索迷宫入口！');
+		console.log('前往区域['+(args.table[index])+']搜索迷宫入口..');
 	
 		cga.walkList([
 			args.table[index]
 		], ()=>{
-			console.log('正在区域'+(index+1)+'搜索迷宫入口...');
+			console.log('正在区域['+(args.table[index])+']搜索迷宫入口...');
 			var entrance = cga.getMapObjects().find((obj)=>{
 	
 				if(args.blacklist && args.blacklist.find((e)=>{
