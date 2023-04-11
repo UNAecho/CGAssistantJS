@@ -79,7 +79,7 @@ var thisobj = {
 			});
 		}
 		
-		if(map == '圣骑士营地'){
+		if(map == '圣骑士营地' || mapindex == 44692){
 			cga.travel.autopilot('工房',()=>{
 				thisobj.func(cb)
 			})

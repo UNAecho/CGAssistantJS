@@ -9,6 +9,7 @@ var teamModeArray = [
 	is_enough_teammates : ()=>{
 		// 如果没有记录练级信息
 		if(!thisobj.object.area){
+			// console.log('找不到thisobj.object.area，is_enough_teammates()返回false')
 			return false
 		}
 		// 如果已经记录了车队成员
@@ -16,6 +17,7 @@ var teamModeArray = [
 		if(teamplayers.length >= thisobj.object.area.teammates.length){
 			for(var i = 0; i < teamplayers.length; ++i){
 				if(!is_array_contain(thisobj.object.area.teammates, teamplayers[i].name)){
+					// console.log('【'+teamplayers[i].name+'】不在预定队员列表内，is_enough_teammates()返回false')
 					return false;
 				}
 			}
@@ -54,10 +56,9 @@ var teamModeArray = [
 										// 关闭组队
 										cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
 										// 计算去哪里练级
-										let areaObj = switchArea(shareInfoObj)
+										let areaObj = switchArea(shareInfoObj, cga.getTeamPlayers())
 										// 缓存练级信息结果
 										thisobj.object.area = areaObj
-										console.log("🚀 ~ file: 智能组队.js:60 ~ share ~ thisobj.object.area:", thisobj.object.area)
 										// 先落盘，再在内存中保存结果
 										update.update_config({area : thisobj.object.area}, true, ()=>{
 											// 获取练级对象
@@ -93,10 +94,9 @@ var teamModeArray = [
 								// 关闭组队
 								cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
 								// 计算去哪里练级
-								let areaObj = switchArea(shareInfoObj)
+								let areaObj = switchArea(shareInfoObj, cga.getTeamPlayers())
 								// 缓存练级信息结果
 								thisobj.object.area = areaObj
-								console.log("🚀 ~ file: 智能组队.js:98 ~ share ~ thisobj.object.area:", thisobj.object.area)
 								// 先落盘，再在内存中保存结果
 								update.update_config({area : thisobj.object.area}, true, ()=>{
 									// 获取练级对象
@@ -141,67 +141,45 @@ var teamModeArray = [
 				})
 			}else if(r && r == 'ok'){
 				cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
-				// 出发前，计算一下当前队伍是否还适合在当前地点练级
-				let areaObj = switchArea()
-				if (areaObj.map != thisobj.object.area.map){
-					console.log('该去【',areaObj.map,'】了')
-					console.log('当前练级地点【' + thisobj.object.area.map +'】已经不适合练级，删除练级信息，重新回到拼车地点，开始进行新一轮判断。')
-					update.delete_config(['area'], true, ()=>{
-						// 练级信息、门票信息都清空
-						thisobj.object.battleAreaObj = null
-						thisobj.object.area = null
-						setTimeout(cb, 3000, false);
-					})
-				}else if(areaObj.layer != thisobj.object.area.layer){
-					console.log('练级层数发生变化，更新脚本配置..')
-					// 缓存练级信息结果
-					thisobj.object.area = areaObj
-					// 先落盘，再在内存中保存结果
-					update.update_config({area : thisobj.object.area}, true, ()=>{
-						cb(true)
-					})
-				}else{
-					cb(true)
-				}
+				cb(true)
 			}else{
 				throw new Error('cga.waitTeammatesReady返回类型错误')
 			}
 		})
 	},
-	// 在新城集合，为了判断练级目的地。
-	// 传送小岛：在里堡2楼图书室问大祭司，看看能否去营地/半山。能去会说【冒险者】【岛上拓荒】，不能去会说【我在等人】
+	/**
+	 * 如果没有离线保存练级信息，则去集散点集合，为了拼车。
+	 * 传送小岛：去西门外阿鲁卡对话检查能否传送小岛，能去小岛会说【飞过去】，不能去会说【陌生人】
+	 */
 	muster : (cb)=>{
 		const key = '传送小岛'
 		const checkTicket = (cb2)=> {
-			cga.travel.falan.toStone('C', ()=>{
-				cga.travel.autopilot(1504,()=>{
-					var ask = ()=>{
-						cga.turnTo(27, 15);
-						cga.AsyncWaitNPCDialog((err, dlg)=>{
-							//try again if timeout
-							if(err && err.message.indexOf('timeout') > 0){
-								setTimeout(ask, 1500);
+			cga.travel.falan.toStone('W1', ()=>{
+				cga.walkList([
+				[22, 88, '芙蕾雅'],
+				[397, 168],
+				], ()=>{
+					cga.TurnTo(399, 168);
+					cga.AsyncWaitNPCDialog((err, dlg)=>{
+						//try again if timeout
+						if(err && err.message.indexOf('timeout') > 0){
+							setTimeout(ask, 1500);
+							return;
+						}
+						if(dlg){
+							if(dlg.message.indexOf('陌生人') >= 0){
+								config['mission'][key] = false
+								cga.savePlayerConfig(config, cb2);
 								return;
 							}
-							if(dlg){
-								if(dlg.message.indexOf('我在等人') >= 0){
-									config['mission'][key] = false
-									cga.savePlayerConfig(config, cb2);
-									return;
-								}
-								if(dlg.message.indexOf('冒险者') >= 0 || dlg.message.indexOf('岛上拓荒') >= 0){
-									config['mission'][key] = true
-									cga.savePlayerConfig(config, cb2);
-									return;
-								}
+							if(dlg.message.indexOf('飞过去') >= 0){
+								config['mission'][key] = true
+								cga.savePlayerConfig(config, cb2);
+								return;
 							}
-						});
-					}
-
-					cga.walkList([
-						[27, 16]
-					], ask);
-				})
+						}
+					});
+				});
 			});
 		}
 
@@ -233,13 +211,9 @@ var teamModeArray = [
 		}
 	},
 	think : (ctx)=>{
-		//单练模式
+		//单练模式 TODO 单练时地点切换
 		if(thisobj.object.area.teammates.length == 0)
 			return;
-		
-		//非危险区域，不用管
-		//if(ctx.dangerlevel == 0)
-		//	return;
 		
 		//队长：人数不足，登出
 		//队员：人都跑光了，登出
@@ -248,6 +222,36 @@ var teamModeArray = [
 			ctx.result = 'logback';
 			ctx.reason = '人数不足，登出';
 			return;
+		}
+		// 间歇性计算一次练级区域，节约性能
+		if(new Date().getSeconds() % 5 == 0){
+			// 更新自己的数据
+			if(ctx.playerinfo.nick != areaChangedFlag){
+				// console.log('playerthink开始计算练级区域..')
+				let area = switchArea(null, ctx.teamplayers)
+				// 如果需要更改练级区域，或者仅改变楼层，那么需要中断当前的playerthink，重新回到loop中去。
+				if (area.map != thisobj.object.area.map || (area.map == thisobj.object.area.map && area.layer != thisobj.object.area.layer)){
+					thisobj.object.area.map = area.map
+					thisobj.object.area.layer = area.layer
+					thisobj.object.battleAreaObj = battleAreaArray.find((b)=>{
+						return b.name == thisobj.object.area.map
+					});
+					update.update_config({area : thisobj.object.area}, true, ()=>{
+						cga.ChangeNickName(areaChangedFlag)
+						console.log('练级信息写入完毕，在昵称中展示已完成..')
+					})
+				}
+			}else{// 自己数据更新完毕的话，等待全员变更完毕。然后ctx.result = logback，交给主插件登出
+				for (let t = 0; t < ctx.teamplayers.length; t++) {
+					if(ctx.teamplayers[t].nick != areaChangedFlag){
+						console.log('还有队友未计算完毕，继续等待..')
+						return
+					}
+				}
+				ctx.result = 'logback';
+				ctx.reason = '练级区域或楼层发生改变，登出重新loop流程';
+				return;
+			}
 		}
 	}
 },
@@ -298,6 +302,9 @@ var battleAreaArray = [
 		walkTo : (cb)=>{
 			cga.travel.autopilot(59800 + thisobj.object.area.layer,cb)
 		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '国民会馆';
+		},
 		isDesiredMap : (map, mapXY, mapindex)=>{
 			return mapindex - 59800 == thisobj.object.area.layer ? true : false;
 		}
@@ -318,6 +325,9 @@ var battleAreaArray = [
 					[221, 228],
 				], cb);
 			});
+		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '艾尔莎岛';
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '盖雷布伦森林');
@@ -341,6 +351,9 @@ var battleAreaArray = [
 				], cb);
 			});
 		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '艾尔莎岛';
+		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '布拉基姆高地');
 		}
@@ -362,6 +375,9 @@ var battleAreaArray = [
 					[111, 206],
 				], cb);
 			});
+		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '艾尔莎岛';
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '布拉基姆高地');
@@ -385,6 +401,9 @@ var battleAreaArray = [
 				], cb);
 			});
 		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '艾尔莎岛';
+		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '布拉基姆高地');
 		}
@@ -407,6 +426,9 @@ var battleAreaArray = [
 					[147, 117],
 				], cb);
 			});
+		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '艾尔莎岛';
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '布拉基姆高地');
@@ -441,6 +463,9 @@ var battleAreaArray = [
 		walkTo : (cb)=>{
 			setTimeout(cb, 500);
 		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '过去与现在的回廊';
+		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '过去与现在的回廊');
 		}
@@ -460,6 +485,9 @@ var battleAreaArray = [
 				[36, 87, '肯吉罗岛'],
 				[548, 332],
 			], cb);
+		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '圣骑士营地';
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '肯吉罗岛');
@@ -491,6 +519,9 @@ var battleAreaArray = [
 				], cb);
 			}
 		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '圣骑士营地';
+		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '肯吉罗岛' && cga.travel.camp.getRegion(map, mapXY) == '矮人城镇域');
 		}
@@ -510,6 +541,9 @@ var battleAreaArray = [
 				[36, 87, '肯吉罗岛'],
 				[471, 203],
 			], cb);
+		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '圣骑士营地';
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '肯吉罗岛' && cga.travel.camp.getRegion(map, mapXY) == '沙滩域');
@@ -532,6 +566,9 @@ var battleAreaArray = [
 				[17, 4, '蜥蜴洞穴上层第1层'],
 			], cb);
 		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '圣骑士营地';
+		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '蜥蜴洞穴上层第1层');
 		}
@@ -551,6 +588,9 @@ var battleAreaArray = [
 				[36, 87, '肯吉罗岛'],
 				[424, 345, '黑龙沼泽1区'],
 			], cb);
+		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '圣骑士营地';
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '黑龙沼泽1区');
@@ -596,8 +636,55 @@ var battleAreaArray = [
 				[9, 5, '旧日迷宫第1层'],
 			], cb);
 		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '迷宫入口';
+		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '旧日迷宫第1层');
+		}
+	},
+	{
+		name : '半山腰',
+		muster : (cb)=>{
+			cga.travel.falan.toStone('W1', ()=>{
+				cga.walkList([
+					[22, 88, '芙蕾雅'],
+					[397, 168],
+					], ()=>{
+						cga.TurnTo(399, 168);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(4, 0);
+							cga.AsyncWaitMovement({map:['小岛'], delay:1000, timeout:10000}, ()=>{
+								cga.walkList([
+								cga.isTeamLeader ? [65, 97] : [65, 98],
+								], cb);
+							});
+						})
+					});
+			});
+			return
+		},
+		walkTo : (cb)=>{
+			var map = cga.GetMapName();
+			if(map == '小岛'){
+				cga.walkList([
+					[64, 45, '通往山顶的路100M'],
+					], ()=>{
+						cga.walkRandomMazeAuto(thisobj.object.area.map, cb)
+					});
+				return;
+			}else if(map.indexOf('通往山顶的路') != -1){
+				cga.walkRandomMazeAuto(thisobj.object.area.map, cb)
+				return;
+			}else{
+				throw new Error('异常地图，请检查')
+			}
+		},
+		isMusterMap : (map, mapXY)=>{
+			return map == '小岛';
+		},
+		isDesiredMap : (map, mapXY)=>{
+			return map == '半山腰';
 		}
 	},
 ]
@@ -605,7 +692,10 @@ var battleAreaArray = [
 var cga = global.cga;
 var configTable = global.configTable;
 var rootdir = cga.getrootdir()
+var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
 var update = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
+// 如果练级地点发生改变，且已经落盘完毕，则将此flag打在人物昵称上
+const areaChangedFlag = 'areaChanged'
 
 // 共享队员信息，智能练级的核心部分
 const share = (cb) => {
@@ -622,7 +712,7 @@ const share = (cb) => {
 	})
 }
 
-const switchArea = (shareInfoObj) => {
+const switchArea = (shareInfoObj,teamplayers) => {
 
 	var minLv = 160
 	var camp = true
@@ -637,26 +727,19 @@ const switchArea = (shareInfoObj) => {
 		camp = thisobj.object.area.camp
 		island = thisobj.object.area.island
 		// 动态刷新一下最低等级
-		var teamplayers = cga.getTeamPlayers()
 		teamplayers.forEach(t => {
 			if (t.level < minLv)
 				minLv = t.level
 		});
 	}else if(shareInfoObj){// 队内没有缓存信息的情况
-		var teamplayers = cga.getTeamPlayers()
-		// 制作固定队员信息，用于接下来的练级，以及落盘记录持久化。
-		var teammates = []
-		teamplayers.forEach(t => {
-			teammates.push(t.name)
-			// 检查队内最低等级
-			if (t.level < minLv)
-				minLv = t.level
-		});
-
-		areaObj.teammates = teammates
+		areaObj.teammates = shareInfoObj.teammates
 
 		// 检查高级练级地点的通行许可
 		for (var p in shareInfoObj) {
+			// 跳过组队信息的key
+			if(p == 'teammates'){
+				continue
+			}
 			if(shareInfoObj[p].item['承认之戒'] == '0'){
 				camp = false
 			}
@@ -678,10 +761,10 @@ const switchArea = (shareInfoObj) => {
 			island = false
 		}
 	}
-	// 由于雪拉威森塔路程近，50层前可回补，将1-50级从传统地图改为雪拉威森塔地图
+	// 由于雪拉威森塔路程近，50层前又可以回补，将1-50级传统练级地点改为雪拉威森塔
 	var battleArea = '雪拉威森塔'
 	var layer = 1
-	if (minLv > 10 && minLv <= 15) {// 不知什么原因，10楼不会遇敌，只能1楼练到10级去15楼
+	if (minLv > 10 && minLv <= 15) {// 10楼不会遇敌，只能1楼练到10级去15楼
 		layer = 15
 	} else if (minLv > 15 && minLv <= 20) {
 		layer = 20
@@ -720,19 +803,19 @@ const switchArea = (shareInfoObj) => {
 	} else if(island && minLv > 125) {
 		battleArea = '半山腰'
 	}
-	// // TODO 去掉
-	// battleArea = '雪拉威森塔' ,layer = 15
 
 	// 将所有信息填入返回对象
 	areaObj.map = battleArea
 	areaObj.layer = layer
 	areaObj.camp = camp
 	areaObj.island = island
-	console.log("🚀 ~ file: 智能组队.js:731 ~ switchArea ~ areaObj:", areaObj)
 	return areaObj
 }
 
 var thisobj = {
+	// 用于计算在某个练级区域的人物经验获取效率以及金币消耗等情况
+	startTime : Date.now(),
+	startPlayerInfo : cga.GetPlayerInfo(),
 	is_enough_teammates : ()=>{
 		return thisobj.object.is_enough_teammates();
 	},
@@ -749,8 +832,20 @@ var thisobj = {
 		return Object.prototype.toString.call(thisobj.object.battleAreaObj) == '[object Object]' ? true : false
 	},
 	musterWithBuildTeam : (cb)=>{
-		console.log('去【' + thisobj.object.battleAreaObj.name  + '】集合处')
-		thisobj.object.battleAreaObj.muster(cb)
+		// 如果有更改队伍的昵称没有清除掉，则清除
+		if(cga.GetPlayerInfo().nick == areaChangedFlag){
+			console.log('有称号标记【' + areaChangedFlag + '】残留，清除掉')
+			cga.ChangeNickName('')
+		}
+
+		// 如果已经在练级集合地，则跳过
+		if(thisobj.object.battleAreaObj.isMusterMap(cga.GetMapName(), cga.GetMapXY())){
+			cb(null)
+		}else{
+			console.log('去【' + thisobj.object.battleAreaObj.name  + '】集合处')
+			configMode.manualLoad('生产赶路')
+			thisobj.object.battleAreaObj.muster(cb)
+		}
 	},
 	isDesiredMap : (map, mapXY, mapindex)=>{
 		return thisobj.object.battleAreaObj.isDesiredMap(map, mapXY, mapindex)
@@ -758,29 +853,100 @@ var thisobj = {
 	walkTo : (cb)=>{
 		thisobj.object.battleAreaObj.walkTo(cb)
 	},
+	getEfficiency : ()=>{// 获取经验获取效率、计算金币消耗情况。注意：因为有移动银行可以取钱，所以金币消耗仅供参考。
+		let costSec = (Date.now() - thisobj.startTime) / 1000
+		let curPlayerInfo = cga.GetPlayerInfo()
+		let getExp = curPlayerInfo.xp - thisobj.startPlayerInfo.xp
+		let costGold = thisobj.startPlayerInfo.gold - curPlayerInfo.gold
+		
+		if(getExp > 0){
+			console.log('效率播报：【'+ thisobj.object.battleAreaObj.name + '】'
+			 + '练级【'+ (costSec / 60).toFixed(2)+ '】分'
+			 + '，获得经验【'+ getExp+ '】'
+			 + '，经验效率【'+ (getExp / costSec).toFixed(2)+ '】/ 秒'
+			 + '，【'+ (getExp / costSec / 60).toFixed(2)+ '】/ 分'
+			 + '，金币消耗【'+ costGold+ '】元'
+			 + '，金币消耗速率【'+ (costGold / costSec).toFixed(2)+ '】/ 秒'
+			 + '，下次升级在【'+ ((curPlayerInfo.maxxp - curPlayerInfo.xp) / (getExp / costSec / 60)).toFixed(2)+ '】/ 分钟后。'
+			 )
+		}
+		return
+		
+	},
 	think : (ctx)=>{
 		thisobj.object.think(ctx);
 	},
 	translate : (pair)=>{
-		if(pair.field == 'teamMode'){
-			pair.field = '组队模式';
-			pair.value = teamModeArray[pair.value].name;
+		if(pair.field == 'leaderFilter'){
+			pair.field = '玩家称号中识别为带队司机的字符';
+			pair.value = pair.value;
 			pair.translated = true;
 			return true;
 		}
-		if(pair.field == 'teammates'){
-			pair.field = '队伍成员';
-			pair.value = '['+pair.value.join(', ')+']';
+		if(pair.field == 'leaderX'){
+			pair.field = '司机等候坐标x';
+			pair.value = pair.value;
+			pair.translated = true;
+			return true;
+		}
+		if(pair.field == 'leaderY'){
+			pair.field = '司机等候坐标y';
+			pair.value = pair.value;
+			pair.translated = true;
+			return true;
+		}
+		if(pair.field == 'memberFilter'){
+			pair.field = '名字中包含允许入队的字符';
+			pair.value = pair.value;
+			pair.translated = true;
+			return true;
+		}
+		if(pair.field == 'area'){
+			pair.field = '练级信息';
+			var str = ''
+			Object.keys(pair.value).forEach((key) => {
+				if(str.length){
+					str += ', '
+				}
+				if(key == 'teammates'){
+					str += '队员信息: ' 
+					str += '['+pair.value[key].join(', ')+']';
+				}
+				if(key == 'map'){
+					str += '练级地图: ' 
+					str += pair.value[key];
+				}
+				if(key == 'layer'){
+					str += '练级地图楼层: ' 
+					str += pair.value[key];
+				}
+				if(key == 'camp'){
+					str += '队伍可否抵达营地: ' 
+					str += pair.value[key] === true ? '可以' : '不可以'
+				}
+				if(key == 'island'){
+					str += '队伍可否抵达小岛: ' 
+					str += pair.value[key] === true ? '可以' : '不可以'
+				}
+			})
+			pair.value = str
+			pair.translated = true;
+			return true;
+		}
+		if(pair.field == 'role'){
+			pair.field = '队内职责';
+			pair.value = (pair.value == 0) ? '队长': '队员';
 			pair.translated = true;
 			return true;
 		}
 		if(pair.field == 'minTeamMemberCount'){
 			pair.field = '队伍最小人数';
+			pair.value = pair.value;
 			pair.translated = true;
 			return true;
 		}
 		if(pair.field == 'timeout'){
-			pair.field = '超时时间(毫秒)';
+			pair.field = '等待队员超时时间(毫秒)';
 			pair.translated = true;
 			return true;
 		}

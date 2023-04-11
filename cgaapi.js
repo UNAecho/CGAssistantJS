@@ -615,6 +615,8 @@ module.exports = function(callback){
 			result = '库鲁克斯岛'
 		}else if(mapindex >= 43100 && mapindex < 43300){// TODO完善范围
 			result = '哥拉尔镇'
+		}else if(mapindex >= 44690 && mapindex < 44700){//
+			result = '圣骑士营地'
 		}else if(mapindex >= 40000 && mapindex < 50000){// TODO完善范围
 			result = '艾尔巴尼亚王国'
 		}else if(mapindex == 300 && XY.x < 379){// 索奇亚地图比较规则，大于379都是洪恩大风洞的右侧
@@ -5729,10 +5731,10 @@ module.exports = function(callback){
 							var curmapindex = cga.GetMapIndex().index3;
 							var curpos = cga.GetMapXY();
 							
-							console.log('战斗回滚');
-							console.log('当前地图 ：' + curmap);
-							console.log('当前地图序号 ：' + curmapindex);
-							console.log('当前坐标：' + curpos.x + ', ' + curpos.y);
+							// console.log('战斗回滚');
+							// console.log('当前地图 ：' + curmap);
+							// console.log('当前地图序号 ：' + curmapindex);
+							// console.log('当前坐标：' + curpos.x + ', ' + curpos.y);
 							
 							if(typeof targetMap == 'string' && curmap == targetMap){
 								
@@ -6531,10 +6533,10 @@ module.exports = function(callback){
 			}
 		}
 
-		// 采集系3转以后可以直接传送半山练级，将传送flag置为true
-		if(category == '采集系' && jobLevel > 2){
-			config["mission"]["传送小岛"] = true
-		}
+		// // 采集系3转以后可以直接传送小岛，将传送flag置为true。注意：此小岛怪物仅60级，和半山5的小岛不是一个地方。
+		// if(category == '采集系' && jobLevel > 2){
+		// 	config["mission"]["传送小岛"] = true
+		// }
 
 		// 检查称号
 		for (var i = 0 ; i < playerInfo.titles.length ; i++){
@@ -7521,7 +7523,7 @@ module.exports = function(callback){
 		const checkOthers = () => {
 			tmpTeam = cga.getTeamPlayers();
 			if (tmpTeam.length < teammates.length) {
-				console.log('人数不足，checkOthers返回false')
+				// console.log('人数不足，checkOthers返回false')
 				return false
 			}
 
@@ -7535,9 +7537,13 @@ module.exports = function(callback){
 		}
 
 		var retry = () => {
-			let cost = Date.now() - start
-			console.log('已等待' + cost / 1000 + '秒')
-			if (timeout > 0 && cost >= timeout) {
+			let currentTime = new Date()
+			// 间隔报时
+			if(currentTime.getSeconds() % 10 == 0){
+				console.log('已等待' + Math.floor((currentTime.getTime() - start) / 1000) + '秒')
+			}
+
+			if (timeout > 0 && (currentTime.getTime() - start) >= timeout) {
 				cb('timeout')
 				return
 			}
@@ -7548,7 +7554,8 @@ module.exports = function(callback){
 						cb('ok')
 						return
 					}
-					if(lateList){
+					// 间隔报迟到队员
+					if(lateList && currentTime.getSeconds() % 10 == 0){
 						console.log('迟到队员:',lateList)
 					}
 					setTimeout(retry, 1000);
@@ -7803,8 +7810,8 @@ module.exports = function(callback){
 	 * #:与i相同，但询问的是道具id，队员返回道具数量
 	 * t:称号持有清空，询问全体队员是否拥有某种称号，队员返回0表示没有，1表示有
 	 * m:任务完成情况，记录在【个人配置中】。队员返回任务完成情况，0表示没完成，1表示已完成
-	 * 例：['i承认之戒','#491677','t地狱的回响','m小岛之谜']
-	 * 表示分别询问队员道具【承认之戒】、道具id【491677】、称号【地狱的回响】持有情况，以及任务【小岛之谜】是否已完成
+	 * 例：['i承认之戒','#491677','t背叛者','m小岛之谜']
+	 * 表示分别询问队员道具【承认之戒】、道具id【491677】、称号【背叛者】持有情况，以及任务【小岛之谜】是否已完成
 	 * 
 	 * @param {*} cb 回调函数，全员信息收集完毕后制作成object，调用cb并将object传入
 	 * @returns 
@@ -7819,6 +7826,13 @@ module.exports = function(callback){
 		}
 		var playerInfo = cga.GetPlayerInfo()
 		var isleader = teamplayers[0].name == playerInfo.name ? true : false
+
+		if(isleader && teamplayers.length < memberCnt){
+			// console.log('等待人齐，还差【',memberCnt - teamplayers.length,'】人')
+			setTimeout(cga.shareTeammateInfo, 3000, memberCnt, reqSequence, cb);
+			return
+		}
+
 		// 获取人物原来自定义昵称，函数结束时，需要恢复
 		var originNick = playerInfo.nick ? playerInfo.nick : ''
 		// 队伍信息缓存，也是本函数最终return的变量
@@ -7958,6 +7972,8 @@ module.exports = function(callback){
 			setTimeout(listener, 1000, cb);
 			return
 		}
+
+		var speakerMeter = null
 		// 由于统计不全时，会重新调用speaker()，导致多个speaker()线程同时修改队长称号，现在加入修复逻辑
 		// 如果reqArr中还有未询问完的问题，那么直接return
 		var speaker = () => {
@@ -7976,7 +7992,7 @@ module.exports = function(callback){
 				let curReqStr = reqArr.shift()
 				if(curReqStr){
 					cga.ChangeNickName("z" + curReqStr+allDoneStr)
-					setTimeout(changeNick, 5000);
+					speakerMeter = setTimeout(changeNick, 5000);
 					return
 				}
 			}
@@ -7997,8 +8013,13 @@ module.exports = function(callback){
 
 			let delay = 5000
 			if(flag === false){
-				console.log('flag为false，',delay/1000,'秒后重新进入cga.shareTeammateInfo..')
-				setTimeout(cga.shareTeammateInfo, delay, memberCnt, reqSequence, cb);
+				clearTimeout(speakerMeter)
+				console.log('check结果为false，恢复原称号，',delay/1000,'秒后重新进入cga.shareTeammateInfo..')
+				setTimeout(()=>{
+					cga.ChangeNickName(originNick)
+					cga.shareTeammateInfo(memberCnt, reqSequence, cb)
+					return
+				}, delay);
 				return
 			}else if(flag === true){
 				let checkKey = null
@@ -8033,6 +8054,14 @@ module.exports = function(callback){
 						setTimeout(mainLogic, delay);
 						return
 					}
+				}
+				// 写入队伍信息，方便外部使用。目的是为了队伍信息的一致性。否则外面再重新获取队伍信息，有可能出现偏差（掉线、解散过快导致没获取到队伍信息等等）
+				if (!teammate_info['teammates']){
+					let teammates = []
+					for(var i in teams){
+						teammates[i] = teams[i].name;
+					}
+					teammate_info['teammates'] = teammates
 				}
 				// 此API出口
 				// 复原昵称时，等待2秒，防止其他队员没有读取完毕，这边就改昵称了。
@@ -8382,6 +8411,7 @@ module.exports = function(callback){
         isLeader = ((teamplayers.length && teamplayers[0].name == playerInfo.name) || teamplayers.length == 0) ? true : false;
 
 		if(isLeader){
+			// TODO如果NPC周围只有1格空闲地形，那么这里会报错，需要写个逻辑避免。但是要考虑本身就是带队，没有2格是无法将5个人都放在1个格子里的
 			var tmpPos = cga.get2RandomSpace(npcPos[0],npcPos[1])
 			let tmpArr = [tmpPos[0]]
 			if (teamplayers.length){
@@ -8862,7 +8892,11 @@ module.exports = function(callback){
 		}
 		return cga.cachedMapTileMatrix;
 	}
-	
+	/**
+	 * UNAecho阅读注释：
+	 * 此API数据来源为cga.GetMapCollisionTableRaw(true)
+	 * 作用为制作cga.GetMapCollisionTableRaw(true)的2维矩阵形式的数据，本质上没有其他的数据处理，数据无变化。
+	 */
 	cga.cachedMapCollisionRawMatrix = null;
 	cga.cachedMapCollisionRawMatrixTime = 0;
 	
@@ -8896,7 +8930,7 @@ module.exports = function(callback){
 	 * exitIsBlocked，为true时，调用cga.GetMapObjectTable来辅助判断。
 	 * cga.GetMapObjectTable()是较为接近raw数据的地图API，其中cell里的某个格子的值需要0xFF后进行判断
 	 * (cell & 0xFF) == 2可能是碰撞（路过碰撞也算）的NPC BOSS。
-	 * (cell & 0xFF) == 3猜测为【目的地并未唯一index】的切换点，例如野外随机迷宫传送石、有昼夜去别的地图入口等。（随机迷宫里的上下楼梯也是3，猜测为迷宫本身的index就是随机的）
+	 * (cell & 0xFF) == 3猜测为【目的地并不是唯一的index】的切换点，例如野外随机迷宫传送石、有昼夜去别的地图入口等。（随机迷宫里的上下楼梯也是3，猜测为迷宫本身的index就是随机的）
 	 * (cell & 0xFF) == 10猜测为和3一样是地图切换口，只不过【目的地唯一】比如法兰城各种门。
 	 * @param {*} exitIsBlocked 
 	 * @returns 
@@ -8992,6 +9026,214 @@ module.exports = function(callback){
 		return found != undefined ? found : null;
 	}
 	
+	/**
+	 * UNAecho: 记录一些常用迷宫的信息
+	 * key选用迷宫名称的一部分，方便调用时使用。寻找迷宫入口可配合cga.getRandomMazeEntrance使用
+	 * 可全文搜索【特定的迷宫】来查看部分楼梯信息
+	 * 
+	 * 【开发注意】使用cga.GetMapCollisionTableRaw()可判断迷宫中的上下楼梯。
+	 * 但要注意几点（以下说明中所有的cell值，仅指cga.GetMapCollisionTableRaw()返回的obj中的cell对象，其他API的cell则不行）：
+	 * 1、迷宫的出入口以及上下楼梯，cell值并不是相同的。
+	 * 2、迷宫的上下楼梯，其实是有方向的，不论外观是向上还是向下，总是其中一种楼梯是楼层+1，另一种楼梯是楼层-1。不要看地图名称中写地上还是地下。
+	 * 3、迷宫的上下楼梯，使楼层+1或-1的cell值，是固定的。比如诅咒的迷宫，楼层+1的cell值总是13997，楼层-1的cell值总是13996
+	 * 4、迷宫的入口，一般是1层的传送水晶。cell值与上下楼梯均不相同，猜测cell值为0
+	 * 5、迷宫的出口，一般是顶层的传送水晶。cell值与上下楼梯均不相同。
+	 * 6、也就是说，迷宫中的传送碰撞点，一共有4种：入口、楼层+1楼梯、楼层-1楼梯、出口。
+	 * 
+	 * 注意，一些有缓步台（中间有固定地图，连接2个随机迷宫的出入口）的大迷宫，比如5转的4属性洞窟、蜥蜴洞穴、半山腰等等，可能是由2个（或多个，我没见过2个以上的）迷宫拼接起来的
+	 * 比如5转任务的4属性迷宫，表面看起来，迷宫是1-9层+10层缓步台+11-19层+BOSS房间。但实际是下面2个独立迷宫拼凑起来的。下面分解：
+	 * 1、第一个独立迷宫：入口为肯吉罗岛水晶，主体为1-9层迷宫，出口为第10层缓步台。出口的缓步台（第10层）为固定index地图；
+	 * 如果迷宫重置，则被传送至迷宫入口肯吉罗岛
+	 * 2、第二个独立迷宫：入口为第10层缓步台固定地图，主体为11-19层迷宫，出口为BOSS房间。BOSS房间为固定index地图；
+	 * 如果迷宫重置，则被传送至迷宫入口第10层。
+	 * 3、这两个迷宫完全独立，拥有自己的刷新时间。只是外观上看起来名字一样。类似的情况还有【半山腰】等地图。
+	 */
+	cga.mazeInfo = {
+		/**
+		 * 出口是个BOSS房间，可以选择跟勇者开战，或者和BOSS阴影开战。可能是个任务。我记得法兰城有两个并排在别墅区站着，让你抓什么东西
+		 */
+		'诅咒之迷宫' : {
+			entryMap : '芙蕾雅',
+			exitMap : '炼金术师的工作室',
+			pos : null,
+			posLower : [260, 140],
+			posUpper : [275, 162],
+			prefix:'诅咒之迷宫地下',
+			suffix:'楼',
+			forwardEntryTile : 13997,
+			backEntryTile : 13996,
+			maxLayer : 8,
+		},
+		'布满青苔的洞窟' : {
+			entryMap : '芙蕾雅',
+			exitMap : '叹息之森林',
+			pos : [380,353],
+			posLower : null,
+			posUpper : null,
+			prefix:'布满青苔的洞窟',
+			suffix:'楼',
+			forwardEntryTile : 17964,
+			backEntryTile : 17965,
+			maxLayer : 8,
+		},
+		/**	
+		 * 蜥蜴洞穴其实是和4转洞窟一样的带有缓步台的迷宫，分为上层迷宫和下层迷宫。
+		 * 不论上层还是下层，都是清一色的石化蜥蜴
+		 * 上层是我们最常使用的90+练级地点。上层的1层大概95怪，顶层5层大概108级怪
+		 * 上层出口的【蜥蜴最下层（index30401）】缓步台房间中，有几个对象：
+		 * 1、传送石：[15, 16]回到刚才上层迷宫5层的传送石
+		 * 2、传送石：[13, 3]前往蜥蜴洞穴下层迷宫第1层（另一个随机迷宫，可能是个任务）
+		 * 3、BOSS：一个士兵的石像NPC（BOSS），对话点确定会进入战斗，是9只100级石化蜥蜴。
+		 * 如果已经持有【士兵的石像#800201 @26】，则对话点确定也不会进入战斗
+		 * 战斗除了对方石化比较猛以外，没有什么难度。
+		 * 战斗胜利后进入【蜥蜴洞穴】（index30402，和入口不是同一张地图），房间中有刚刚对话的NPC。
+		 * 对话点【确定】被传送至肯吉罗岛[384, 254]处（入口洞穴附近）。并获得【士兵的石像#800201 @26】。
+		 * 注意：一个队伍只能一个人点击NPC对话并获得石像。暂时不知道什么用处。
+		 */
+		'蜥蜴洞穴上层' : {
+			entryMap : '蜥蜴洞穴',
+			exitMap : '蜥蜴最下层',// index30401
+			pos : [17,4],
+			posLower : null,
+			posUpper : null,
+			prefix:'蜥蜴洞穴上层第',
+			suffix:'层',
+			forwardEntryTile : 12002,
+			backEntryTile : 12000,
+			maxLayer : 5,
+		},
+		/**
+		 * 不论上层还是下层，都是清一色的石化蜥蜴
+		 * 下层的1层大概110级怪，顶层5层大概119级怪。迷宫比上层大，不适合练级。
+		 * 下层出口的【蜥蜴洞穴最下层（index30403）】BOSS房间中，有几个对象：
+		 * 1、传送石：[26, 4]回到刚才下层迷宫5层的传送石
+		 * 2、石碑ABCD：右键点击没反应，猜测和上层缓步台那个BOSS给的物品【士兵的石像#800201 @26】相关，但无论是否持有，点击都没有反应。
+		 * 会不会是说暗号呢？
+		 * 3、巨型蜥蜴：和石碑ABCD一样，无论说话、点击都没有反应。待研究。
+		 */
+		'蜥蜴洞穴下层' : {
+			entryMap : '蜥蜴最下层',
+			exitMap : '蜥蜴洞穴最下层',// index30403
+			pos : [13, 3],
+			posLower : null,
+			posUpper : null,
+			prefix:'蜥蜴洞穴下层第',
+			suffix:'层',
+			forwardEntryTile : 12002,
+			backEntryTile : 12000,
+			maxLayer : 5,
+		},
+		/**
+		 * 1层大概108级怪，顶层11层大概132级怪
+		 * 出口房间是个看起来真的像房间的地图，还有红地毯。房间名称就叫【黑龙沼泽（index30404）】
+		 * 但是房间前面有白骨哦。。
+		 * NPC:发光的石板，点击对话【颇为显眼】，但点击确定没有任何反应，猜测是任务
+		 * 传送石[11,17]：回到黑龙沼泽11层
+		 * 
+		 * 【注意】总有人在出口传送石附近练级，我怀疑可能有任务道具直接传送至出口房间，然后直接在出口房间传送石回到11层练级。
+		 */
+		'黑龙沼泽' : {
+			entryMap : '肯吉罗岛',
+			exitMap : 30404,// 出口房间名称就叫【黑龙沼泽】，容易混淆，改用index记录
+			pos : [424, 345],
+			posLower : null,
+			posUpper : null,
+			prefix:'黑龙沼泽',
+			suffix:'区',
+			forwardEntryTile : 12002,
+			backEntryTile : 12000,
+			maxLayer : 11,
+		},
+		/**
+		 * 旧日之地很特殊：
+		 * 1、他的入口与出口，全都是楼梯。而且楼梯的colraw值，和上下楼梯一致。TODO 需要调整searchmap的逻辑，与其适配
+		 * 入口的colraw值与往后的楼梯一致，是13274
+		 * 出口的colraw值与往前的楼梯一致，是13275
+		 * 2、和其他随机迷宫一样有重置时间，会【你感到一股不可思议的力量，而迷宫快要消失了】
+		 * 3、每一层怪物的等级都是一样的，1层是120级，2-6层固定121级，7-11层固定122级，没有浮动。后面的层数不计了，太麻烦。20层顶层是124级。
+		 * 
+		 * BOSS房间index44711。
+		 * BOSS：李贝留斯的幻影，pos[12,5],125级。只有BOSS一个人，会吸血魔法，吸血攻击，超强冰冻魔法
+		 * 一直合击就行，没有威胁，很简单，与接下来的旧日之地BOSS法尼迪斯形成天壤之别。
+		 * 战斗胜利后被传送至小房间【旧日之塔入口6, 8, index 44712】
+		 * 房间中[9,5]是进入下一个随机迷宫旧日之塔1层的入口。
+		 * 
+		 */
+		'旧日迷宫' : {
+			entryMap : '迷宫入口',
+			exitMap : 44711,// 出口房间名称就叫【旧日之地】，容易混淆，改用index记录
+			pos : [9, 5],
+			posLower : null,
+			posUpper : null,
+			prefix:'旧日迷宫第',
+			suffix:'层',
+			forwardEntryTile : 13275,
+			backEntryTile : 13274,
+			maxLayer : 20,
+		},
+		/**
+		 * 战胜旧日迷宫BOSS李贝留斯的幻影后，才能抵达这个迷宫的入口
+		 * 入口地图index44712
+		 * 怪物等级1-12层128级，12-20层129级
+		 * 【注意】如果你想抵达旧日之塔出口，你需要走爬完旧日之地20层，再爬旧日之塔20层，平均127+等级怪的40层地图。准备好满包的料理和传教士职业，消耗极大。
+		 * BOSS超级能消耗，请准备【巫师】等非常能消耗的职业。
+		 * 
+		 * BOSS房间index44713
+		 * BOSS：法尼迪斯，pos[45,46]，对话说【凡人是不该到这里来的】，点确定进入战斗
+		 * BOSS只有1人，会单补血、单火、强地、超地魔法、崩击、乾坤一掷、阳炎、连击。
+		 * 对战建议：
+		 * 1、【重点】超级消耗战！！一定保持好血量不要死亡，BOSS会用单火补刀，非常讨厌，尽量不要阵亡，不然拉起来还是被单火崩死
+		 * 2、崩击使用频率较高，尽量不要防御。残血被崩到基本要回家了。
+		 * 3、单补9000左右，非常能消耗。
+		 * 4、折磨你的手段大致是：先通过群攻挠痒痒，然后出其不意地一直乾坤把你打残血，然后疯狂用单火补刀，让你永远无法救活阵亡的角色。
+		 * 5、这样慢慢就因为补给不够而全员阵亡。
+		 * 6、BOSS一般是强、超石磨血，单火打残血补刀。
+		 */
+		'旧日之塔' : {
+			entryMap : '旧日之塔入口',
+			exitMap : '旧日之塔顶层',// index 44713
+			pos : [9, 5],
+			posLower : null,
+			posUpper : null,
+			prefix:'旧日之塔第',
+			suffix:'层',
+			forwardEntryTile : 13996,
+			backEntryTile : 13997,
+			maxLayer : 20,
+		},
+		/**
+		 * 注意通往山顶的路是没有经验的！但是烧技能却可以，恶心的设定。
+		 */
+		'半山腰' : {
+			entryMap : '小岛',
+			exitMap : '半山腰',
+			pos : [64, 45],
+			posLower : null,
+			posUpper : null,
+			prefix:'通往山顶的路',
+			suffix:'M',
+			forwardEntryTile : 13996,
+			backEntryTile : 13997,
+			maxLayer : 10,
+		},
+		/**
+		 * 如果你做完半山6【地狱的回响】，和大祭司对话进入的小岛，最后在破冰面下面进入的地狱入口是这个。
+		 * 非常好走，几乎不会遇敌，单人逃跑即可！
+		 */
+		'地狱入口' : {
+			entryMap : '圣山内部',
+			exitMap : '地狱入口',// index57473
+			pos : [19, 7],
+			posLower : null,
+			posUpper : null,
+			prefix:'通往地狱的道路地下',
+			suffix:'层',
+			forwardEntryTile : 17957,
+			backEntryTile : 17956,
+			maxLayer : 36,
+		},
+	}
+
 	//下载地图的部分区域并等待下载完成
 	cga.downloadMapEx = (xfrom, yfrom, xsize, ysize, cb)=>{
 
@@ -9038,13 +9280,19 @@ module.exports = function(callback){
 		cga.downloadMapEx(0, 0, walls.x_size, walls.y_size, cb);
 	}
 	
-	/*走一层迷宫
+	/**
+	 * 走一层迷宫
 		target_map :  走到目标地图就停止，填null则自动解析地图名中的楼层，填''则允许任何形式的地图作为目标楼层。
 		filter (可选) : {
 			layerNameFilter : 自定义解析地图名的方法
 			entryTileFilter : 自定义解析楼梯的方法
 		}
-	*/
+	 * UNAecho阅读注释：
+	 * 如果想自动上下楼梯，可利用参数中的filter对象。
+	 * 此API会给filter函数传入colraw（识别楼梯是前进还是后退，具体说明可参考cga.mazeInfo的开发笔记），和obj（识别传送石，也就是出入口）
+	 * 可以将这2个配合使用，达成准确辨别切换地图的目的。
+	 * 但如果想分辨是否是迷宫出入口，只能在遍历中加入全局数据，在函数外面重新遍历，具体下面注释有写。（为了不破坏API结构）
+	 */
 	cga.walkMaze = (target_map, cb, filter)=>{
 
 		var objs = cga.getMapObjects();
@@ -9091,6 +9339,9 @@ module.exports = function(callback){
 					tile : tiles.matrix[obj.mapy][obj.mapx],
 					colraw : colraw.matrix[obj.mapy][obj.mapx],
 					obj : obj,
+					// UNAecho:为了不破坏API原有结构，又能在模块外全局识别迷宫出口以及楼梯方向，只能在这个遍历里面消耗一点空间，加入全局数据。
+					objs : objs,
+					colraws : colraw,
 				}) == true &&
 				// UNAecho:如果这里不加上isPathAvailable判断，会出现隔墙看到迷宫出口导致下面calculatePath直接报错的情况
 				cga.isPathAvailable(cga.GetMapXY().x, cga.GetMapXY().y, obj.mapx, obj.mapy)){
@@ -9164,8 +9415,8 @@ module.exports = function(callback){
 			if(cga.walkMazeStartPosition == null)
 			{
 				cga.walkMazeStartPosition = cga.GetMapXY();
-				console.log('开始走随机迷宫...');
-				console.log('起始坐标：('+cga.walkMazeStartPosition.x+', '+cga.walkMazeStartPosition.y+')');
+				// console.log('开始走随机迷宫...');
+				// console.log('起始坐标：('+cga.walkMazeStartPosition.x+', '+cga.walkMazeStartPosition.y+')');
 			}
 			else
 			{
@@ -9173,21 +9424,48 @@ module.exports = function(callback){
 				console.log('起始坐标：('+cga.walkMazeStartPosition.x+', '+cga.walkMazeStartPosition.y+')');
 			}
 			cga.walkMaze(target_map, (err, reason)=>{
-				if(err && err.message == '无法找到迷宫的出口'){					
+				if(err && err.message == '无法找到迷宫的出口'){
 					cga.searchMap(()=>{
-						return cga.getMapObjects().find((obj)=>{
-							
-							// console.log('cga.walkRandomMaze起始坐标:',cga.walkMazeStartPosition);
-							
-							if(cga.walkMazeStartPosition != null && obj.mapx == cga.walkMazeStartPosition.x && obj.mapy == cga.walkMazeStartPosition.y)
-								return false;
-							
-							if(obj.cell == 3){
-								console.log(obj);
-							}
-							// UNAecho:这里必须判断看到的出口是否路径可达，如果路径不可达则一样需要继续探索地图
-							return (obj.cell == 3 && cga.isPathAvailable(cga.GetMapXY().x, cga.GetMapXY().y, obj.mapx, obj.mapy)) ? true : false;
-						}) != undefined ? true : false;
+						/**
+						 * UNAecho: 重写searchmap中的targetFinder逻辑
+						 * 旧逻辑并没有考虑到如果外层cga.walkMaze的filter中，如果包含了自定义filter.entryTileFilter函数逻辑，则对楼梯的识别方式并不是只有cell==3就可以了的。
+						 * 需要在有filter.entryTileFilter的情况下，加一层filter.entryTileFilter判断楼梯是否为意向的楼梯。
+						 * */ 
+						let objs = cga.getMapObjects()
+						let target = undefined
+						// 有filter.entryTileFilter的情况下，对门的判断需要经过filter.entryTileFilter的逻辑
+						if(filter && (typeof filter.entryTileFilter == 'function')){
+							// console.log('存在自定义判断楼梯的逻辑，自动排除视野内不符合预期的楼梯')
+							let colraw = cga.buildMapCollisionRawMatrix();
+							objs.forEach((obj)=>{
+								if(target == null && obj.cell == 3 && obj.mapx < colraw.x_size && obj.mapy < colraw.y_size && filter.entryTileFilter({
+									colraw : colraw.matrix[obj.mapy][obj.mapx],
+									obj : obj,
+									objs : objs,
+									colraws : colraw,
+								}) == true &&
+								// UNAecho:如果这里不加上isPathAvailable判断，会出现隔墙看到迷宫出口导致下面calculatePath直接报错的情况
+								cga.isPathAvailable(cga.GetMapXY().x, cga.GetMapXY().y, obj.mapx, obj.mapy)){
+									target = obj;
+									return false;
+								}
+							});
+						}else {// 没有自定义filter.entryTileFilter的普通情况
+							objs.forEach((obj)=>{
+								if(cga.walkMazeStartPosition != null){
+									if(obj.mapx == cga.walkMazeStartPosition.x && obj.mapy == cga.walkMazeStartPosition.y){
+										return;
+									}
+								}
+								// UNAecho:如果这里不加上isPathAvailable判断，会出现隔墙看到迷宫出口导致下面calculatePath直接报错的情况
+								if(target == null && obj.cell == 3  && cga.isPathAvailable(cga.GetMapXY().x, cga.GetMapXY().y, obj.mapx, obj.mapy)){
+									target = obj;
+									return false;
+								}
+							});
+						}
+						
+						return target != undefined ? true : false;
 					}, (err)=>{
 						if(err && err.message.indexOf('无法找到') >= 0){
 							cga.walkRandomMaze(target_map, cb, filter);
@@ -9203,6 +9481,145 @@ module.exports = function(callback){
 		});
 	}
 	
+	cga.walkRandomMazeAuto = (targetMap, cb) => {
+		// 人物前进方向，true为向楼层增加方向走，false反之。
+		var isForward = null
+		// 获取静态地图数据
+		var mazes = Object.values(cga.mazeInfo)
+		var map = cga.GetMapName();
+		var mazeInfo = mazes.find((m)=>{
+			if(map.indexOf(m.prefix) != -1){
+				return true
+			}
+		})
+
+		const regexLayer = (str)=>{
+			var regex = str.match(/([^\d]*)(\d+)([^\d]*)/);
+			var layerIndex = 0;
+	
+			if(regex && regex.length >= 3){
+				layerIndex = parseInt(regex[2]);
+			}
+			
+			if(layerIndex == 0){
+				throw new Error('无法从地图名中解析出楼层');
+			}
+			
+			// 半山特殊数字处理，因为是以100为单位的。
+			if(map.indexOf('通往山顶的路') != -1){
+				layerIndex = layerIndex / 100
+			}
+
+			return layerIndex
+		}
+		// 对目标地图的解析，以及分析该向前还是向后走
+		// 多个if else不能合并写，因为涉及到文字和数字混合判断地图。
+		var newmap = null
+		if(typeof targetMap == 'string'){
+			newmap = targetMap
+			if (targetMap == mazeInfo.entryMap){
+				isForward = false
+			}else if(targetMap == mazeInfo.exitMap){
+				isForward = true
+			}else if (regexLayer(targetMap) < regexLayer(map)){
+				isForward = false
+			}else if(regexLayer(targetMap) > regexLayer(map)){
+				isForward = true
+			}
+		}else if(typeof targetMap == 'number'){
+			if(targetMap > 0 && targetMap < 100){
+				if(targetMap > mazeInfo.maxLayer){
+					console.log('当前迷宫最多【',mazeInfo.maxLayer,'】层，自动为你更改为迷宫最大层数')
+					// 半山特殊处理
+					if(map.indexOf('通往山顶的路') != -1){
+						newmap = mazeInfo.prefix + mazeInfo.maxLayer * 100 + mazeInfo.suffix
+					}else{
+						newmap = mazeInfo.prefix + mazeInfo.maxLayer + mazeInfo.suffix
+					}
+				}else{
+					newmap = mazeInfo.prefix + targetMap + mazeInfo.suffix
+					// 半山特殊处理
+					if(map.indexOf('通往山顶的路') != -1){
+						newmap = mazeInfo.prefix + targetMap * 100 + mazeInfo.suffix
+					}else{
+						newmap = mazeInfo.prefix + targetMap + mazeInfo.suffix
+					}
+				}
+				if (targetMap < regexLayer(map)){
+					isForward = false
+				}else if(targetMap > regexLayer(map)){
+					isForward = true
+				}
+			}else{
+				newmap = targetMap
+				if (targetMap == mazeInfo.entryMap){
+					isForward = false
+				}else if(targetMap == mazeInfo.exitMap){
+					isForward = true
+				}
+			}
+		}else{
+			throw new Error('targetMap必须为number或string')
+		}
+
+		if(cga.GetMapName() == newmap || cga.GetMapIndex().index3 == newmap){
+			cb('已经在目标地点，退出')
+			return
+		}
+
+		// 异常情况
+		if (isForward === null){
+			throw new Error('isForward必须为true或false，true为往楼层增加的方向走，false反之')
+		}
+
+		// 主逻辑
+		var go = ()=> {
+			// 如果走一半迷宫消失了，则调用回调函数，交给外面逻辑处理
+			if(cga.GetMapName() == mazeInfo.entryMap){
+				cb(false);
+				return;
+			}
+
+			// console.log('目标地图:【',newmap,'】，当前地图【',map,'】，需要往【',isForward ? '前':'后','】走')
+
+			// cga.walkRandomMaze传入''，代表walklist中的空串，也就是walklist切换任何地图都不报异常。
+			cga.walkRandomMaze('',(e)=>{
+				if(cga.GetMapName() == newmap || cga.GetMapIndex().index3 == newmap){
+					cb(true)
+					return
+				}else{
+					go()
+					return
+				}
+			},{
+				entryTileFilter : (e)=>{
+					let objs = e.objs
+					// debug用
+					// console.log("cga.walkRandomMaze e:", e)
+					if(e.colraw == 0){
+						for (let i = 0; i < objs.length; i++) {
+							if(!isForward && objs[i].cell == 3 && e.colraws.matrix[objs[i].mapy][objs[i].mapx] == mazeInfo.forwardEntryTile){
+								console.log('地图中存在前进楼梯，判定传送石为入口')
+								return true
+							}else if(isForward && objs[i].cell == 3 && e.colraws.matrix[objs[i].mapy][objs[i].mapx] == mazeInfo.backEntryTile){
+								console.log('地图中存在后退楼梯，判定传送石为出口')
+								return true
+							}
+							
+						}
+					}else if(isForward && e.colraw == mazeInfo.forwardEntryTile){
+						return true
+					}else if(!isForward && e.colraw == mazeInfo.backEntryTile){
+						return true
+					}
+					return false
+				}
+			})
+		}
+		go()
+
+	}
+
 	cga.getRandomMazeEntrance = (args, cb, index = 0)=>{
 
 		if(index == undefined)

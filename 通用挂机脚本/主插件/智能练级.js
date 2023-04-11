@@ -231,7 +231,7 @@ var playerThink = ()=>{
 			{
 				// 注销掉出迷宫逻辑，原因是所有迷宫都距离营地补给处太远，直接登出回补
 				// walkMazeBack(loop);
-				supplyObject.func(loop)
+				supplyObject.func(loop, ctx)
 				return false;
 			}
 			else
@@ -240,7 +240,7 @@ var playerThink = ()=>{
 					if(cga.isInNormalState()){
 					// 注销掉出迷宫逻辑，原因是所有迷宫都距离营地补给处太远，直接登出回补
 					// walkMazeBack(loop);
-					supplyObject.func(loop)
+					supplyObject.func(loop, ctx)
 						return true;
 					}
 					return false;
@@ -421,6 +421,8 @@ var loop = ()=>{
 			}
 			return;
 		}
+		// 播报练级效率
+		teamMode.getEfficiency()
 		// 如果已经在练级区域
 		if(teamMode.isDesiredMap(map, mapXY, mapindex)){
 
@@ -454,8 +456,17 @@ var loop = ()=>{
 
 		return
 	} else if(!isleader){
+		// 如果脚本运行时，队员已经在队伍中，但未读取到练级信息，则主动离队，重新进入拼车环节
+		if(!teamMode.isBuildTeamReady()){
+			console.log('已经在队伍中，但未读取到练级信息，离队并回到拼车地点重新拼车')
+			cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+			setTimeout(loop, 1000);
+			return
+		}
 		// playerThink on开始前，先读取战斗配置。
 		configMode.think({skills : cga.GetSkillsInfo()});
+		// 播报练级效率
+		teamMode.getEfficiency()
 
 		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 		console.log('playerThink on');
@@ -479,7 +490,7 @@ var loop = ()=>{
 		var supplyObject = getSupplyObject(map, mapindex);
 		if(supplyObject)
 		{
-			supplyObject.func(loop);
+			supplyObject.func(loop, '人物未组队，自行在loop中回补。');
 			return;
 		}
 	}
@@ -508,6 +519,7 @@ var loop = ()=>{
 }
 
 var thisobj = {
+	// 注意：如果新增练级地点，这里的危险等级要添加，否则监听回补那里getDangerLevel为0时，根本不鸟你
 	getDangerLevel : ()=>{
 		var map = cga.GetMapName();
 		var mapXY = cga.GetMapXY();
@@ -542,7 +554,13 @@ var thisobj = {
 			return 2;
 		if(map.indexOf('黑龙沼泽') >= 0)
 			return 2;
-		if(map.indexOf('旧日迷宫第') >= 0)
+		if(map.indexOf('旧日') >= 0)
+			return 2;
+		if(map == '小岛')
+			return 2;
+		if(map.indexOf('通往山顶的路') >= 0)
+			return 2;
+		if(map.indexOf('半山腰') >= 0)
 			return 2;
 
 		return 0;

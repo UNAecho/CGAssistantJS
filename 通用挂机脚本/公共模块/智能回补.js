@@ -11,12 +11,18 @@
 var supplyModeArray = [
 	{
 		name: '智能回补',
-		func: (cb) => {
+		func: (cb, reasonObj) => {
 			var map = cga.GetMapName();
 			var mapindex = cga.GetMapIndex().index3;
 			var mapXY = cga.GetMapXY();
 
 			console.log('智能回补，当前地图【' + map + '】')
+
+			if(typeof reasonObj == 'string'){
+				console.log('回补理由:【' + reasonObj + '】')
+			}else if(typeof reasonObj == 'object' && reasonObj.result && reasonObj.result){
+				console.log('回补原因:【' + reasonObj.result + '】，理由:【' + reasonObj.reason+'】')
+			}
 
 			if (map == '矮人城镇' || cga.travel.camp.getRegion(map, mapXY) == '矮人城镇域') {
 				console.log('在矮人城镇域回补..')
@@ -134,7 +140,9 @@ var supplyModeArray = [
 			// 回城路程较远的练级地点，都设置登出回补
 			if (mapindex > 59850 && mapindex < 59900){
 				return true
-			} else if(map == '肯吉罗岛' && cga.travel.camp.getRegion(map, cga.GetMapXY()) == '沙滩域'){
+			} else if (map.indexOf('过去与现在的回廊') >= 0) {
+				return true
+			}  else if(map == '肯吉罗岛' && cga.travel.camp.getRegion(map, cga.GetMapXY()) == '沙滩域'){
 				return true
 			} else if (map.indexOf('隐秘之洞地下') >= 0) {
 				return true
@@ -154,7 +162,11 @@ var supplyModeArray = [
 		isAvailable: (map, mapindex) => {
 			if (map.indexOf('艾尔莎岛') >= 0) {
 				return true
+			} else if (map.indexOf('法兰城') >= 0) {
+				return true
 			} else if (map.indexOf('里谢里雅堡') >= 0) {
+				return true
+			} else if (map.indexOf('过去与现在的回廊') >= 0) {
 				return true
 			} else if (map.indexOf('肯吉罗岛') >= 0) {
 				return true
@@ -166,7 +178,7 @@ var supplyModeArray = [
 				return true
 			} else if (map.indexOf('蜥蜴洞穴') >= 0) {
 				return true
-			} else if (map.indexOf('隐秘之洞地下') >= 0) {
+			} else if (map.indexOf('旧日') >= 0) {
 				return true
 			} else if (map.indexOf('小岛') >= 0) {
 				return true
@@ -189,8 +201,8 @@ var cga = global.cga;
 var configTable = global.configTable;
 
 var thisobj = {
-	func: (cb) => {
-		thisobj.object.func(cb);
+	func: (cb, reasonObj) => {
+		thisobj.object.func(cb, reasonObj);
 	},
 	isLogBack: (map, mapindex) => {
 		return thisobj.object.isLogBack(map, mapindex);
