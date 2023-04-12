@@ -9063,6 +9063,46 @@ module.exports = function(callback){
 			forwardEntryTile : 13997,
 			backEntryTile : 13996,
 			maxLayer : 8,
+			findAndWalkMaze : (target, cb)=>{
+				let find = (target, cb)=>{
+					let randomMazeArgs = {
+						table : [[263, 149], [284, 140], [295, 127]],
+						filter : (obj)=>{
+							return obj.cell == 3 && obj.mapx >= 260 && obj.mapx <= 273 && obj.mapy >= 133 && obj.mapy <= 164;
+						},
+						blacklist : [],
+						expectmap : '诅咒之迷宫地下1楼',
+					};
+					cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
+						if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
+							console.log('可能迷宫重置并未刷新，重新进行寻找...')
+							setTimeout(find, 3000, target, cb);
+							return;
+						}
+						go(target, cb)
+					});
+				}
+				let go = (target, cb)=>{
+					cga.walkRandomMazeAuto(target, (r)=>{
+						if(!r){
+							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
+							setTimeout(go, 3000);
+							return
+						}
+						cb(null)
+						return
+					})
+				}
+
+				let map = cga.GetMapName();
+				if(map.indexOf('诅咒之迷宫地下') != -1){
+					go(target, cb)
+				}else if(map.indexOf('芙蕾雅') != -1){
+					find(target, cb)
+				}else{
+					throw new Error('未知迷宫地图，请检查')
+				}
+			},
 		},
 		'布满青苔的洞窟' : {
 			entryMap : '芙蕾雅',
@@ -9075,6 +9115,46 @@ module.exports = function(callback){
 			forwardEntryTile : 17964,
 			backEntryTile : 17965,
 			maxLayer : 8,
+			findAndWalkMaze : (target, cb)=>{
+				let find = (target, cb)=>{
+					let randomMazeArgs = {
+						table : [[380,353]],
+						filter : (obj)=>{
+							return obj.cell == 3;
+						},
+						blacklist : [],
+						expectmap : '布满青苔的洞窟1楼',
+					};
+					cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
+						if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
+							console.log('可能迷宫重置并未刷新，重新进行寻找...')
+							setTimeout(find, 3000, target, cb);
+							return;
+						}
+						go(target, cb)
+					});
+				}
+				let go = (target, cb)=>{
+					cga.walkRandomMazeAuto(target, (r)=>{
+						if(!r){
+							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
+							setTimeout(go, 3000);
+							return
+						}
+						cb(null)
+						return
+					})
+				}
+
+				let map = cga.GetMapName();
+				if(map.indexOf('布满青苔的洞窟') != -1){
+					go(target, cb)
+				}else if(map.indexOf('芙蕾雅') != -1){
+					find(target, cb)
+				}else{
+					throw new Error('未知迷宫地图，请检查')
+				}
+			},
 		},
 		/**	
 		 * 蜥蜴洞穴其实是和4转洞窟一样的带有缓步台的迷宫，分为上层迷宫和下层迷宫。
@@ -9101,6 +9181,46 @@ module.exports = function(callback){
 			forwardEntryTile : 12002,
 			backEntryTile : 12000,
 			maxLayer : 5,
+			findAndWalkMaze : (target, cb)=>{
+				let find = (target, cb)=>{
+					let randomMazeArgs = {
+						table : [[17,4]],
+						filter : (obj)=>{
+							return obj.cell == 3;
+						},
+						blacklist : [],
+						expectmap : '蜥蜴洞穴上层第1层',
+					};
+					cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
+						if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
+							console.log('可能迷宫重置并未刷新，重新进行寻找...')
+							setTimeout(find, 3000, target, cb);
+							return;
+						}
+						go(target, cb)
+					});
+				}
+				let go = (target, cb)=>{
+					cga.walkRandomMazeAuto(target, (r)=>{
+						if(!r){
+							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
+							setTimeout(go, 3000);
+							return
+						}
+						cb(null)
+						return
+					})
+				}
+
+				let map = cga.GetMapName();
+				if(map.indexOf('蜥蜴洞穴上层第') != -1){
+					go(target, cb)
+				}else if(map.indexOf('蜥蜴洞穴') != -1){
+					find(target, cb)
+				}else{
+					throw new Error('未知迷宫地图，请检查')
+				}
+			},
 		},
 		/**
 		 * 不论上层还是下层，都是清一色的石化蜥蜴
@@ -9143,6 +9263,46 @@ module.exports = function(callback){
 			forwardEntryTile : 12002,
 			backEntryTile : 12000,
 			maxLayer : 11,
+			findAndWalkMaze : (target, cb)=>{
+				let find = (target, cb)=>{
+					let randomMazeArgs = {
+						table : [[424, 345]],
+						filter : (obj)=>{
+							return obj.cell == 3 && obj.mapx >= 420 && obj.mapx <= 430 && obj.mapy >= 340 && obj.mapy <= 350;
+						},
+						blacklist : [],
+						expectmap : '黑龙沼泽1区',
+					};
+					cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
+						if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
+							console.log('可能迷宫重置并未刷新，重新进行寻找...')
+							setTimeout(find, 3000, target, cb);
+							return;
+						}
+						go(target, cb)
+					});
+				}
+				let go = (target, cb)=>{
+					cga.walkRandomMazeAuto(target, (r)=>{
+						if(!r){
+							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
+							setTimeout(go, 3000);
+							return
+						}
+						cb(null)
+						return
+					})
+				}
+
+				let map = cga.GetMapName();
+				if(map.indexOf('黑龙沼泽') != -1){
+					go(target, cb)
+				}else if(map.indexOf('肯吉罗岛') != -1){
+					find(target, cb)
+				}else{
+					throw new Error('未知迷宫地图，请检查')
+				}
+			},
 		},
 		/**
 		 * 旧日之地很特殊：
@@ -9153,11 +9313,13 @@ module.exports = function(callback){
 		 * 3、每一层怪物的等级都是一样的，1层是120级，2-6层固定121级，7-11层固定122级，没有浮动。后面的层数不计了，太麻烦。20层顶层是124级。
 		 * 
 		 * BOSS房间index44711。
-		 * BOSS：李贝留斯的幻影，pos[12,5],125级。只有BOSS一个人，会吸血魔法，吸血攻击，超强冰冻魔法
+		 * BOSS：李贝留斯的幻影，pos[12,5],125级。只有BOSS一个人
+		 * ◆Lv.125李贝留斯的幻影，血量约25000，邪魔系，属性：全25；技能：攻击、防御、超强冰冻魔法、超强风刃魔法、吸血魔法、吸血攻击、圣盾
 		 * 一直合击就行，没有威胁，很简单，与接下来的旧日之地BOSS法尼迪斯形成天壤之别。
 		 * 战斗胜利后被传送至小房间【旧日之塔入口6, 8, index 44712】
 		 * 房间中[9,5]是进入下一个随机迷宫旧日之塔1层的入口。
 		 * 
+		 * 曙光2/强化丘比特任务相关
 		 */
 		'旧日迷宫' : {
 			entryMap : '迷宫入口',
@@ -9170,6 +9332,46 @@ module.exports = function(callback){
 			forwardEntryTile : 13275,
 			backEntryTile : 13274,
 			maxLayer : 20,
+			findAndWalkMaze : (target, cb)=>{
+				let find = (target, cb)=>{
+					let randomMazeArgs = {
+						table : [[9, 5]],
+						filter : (obj)=>{
+							return obj.cell == 3;
+						},
+						blacklist : [],
+						expectmap : '旧日迷宫第1层',
+					};
+					cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
+						if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
+							console.log('可能迷宫重置并未刷新，重新进行寻找...')
+							setTimeout(find, 3000, target, cb);
+							return;
+						}
+						go(target, cb)
+					});
+				}
+				let go = (target, cb)=>{
+					cga.walkRandomMazeAuto(target, (r)=>{
+						if(!r){
+							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
+							setTimeout(go, 3000);
+							return
+						}
+						cb(null)
+						return
+					})
+				}
+
+				let map = cga.GetMapName();
+				if(map.indexOf('旧日迷宫第') != -1){
+					go(target, cb)
+				}else if(map.indexOf('迷宫入口') != -1){
+					find(target, cb)
+				}else{
+					throw new Error('未知迷宫地图，请检查')
+				}
+			},
 		},
 		/**
 		 * 战胜旧日迷宫BOSS李贝留斯的幻影后，才能抵达这个迷宫的入口
@@ -9180,6 +9382,7 @@ module.exports = function(callback){
 		 * 
 		 * BOSS房间index44713
 		 * BOSS：法尼迪斯，pos[45,46]，对话说【凡人是不该到这里来的】，点确定进入战斗
+		 * ◆Lv.130法尼迪斯，血量约30000，邪魔系，属性：全30；技能：陨石（单、强、超）魔法、火焰魔法、乾坤一掷、阳炎、崩击、连击、补血魔法
 		 * BOSS只有1人，会单补血、单火、强地、超地魔法、崩击、乾坤一掷、阳炎、连击。
 		 * 对战建议：
 		 * 1、【重点】超级消耗战！！一定保持好血量不要死亡，BOSS会用单火补刀，非常讨厌，尽量不要阵亡，不然拉起来还是被单火崩死
@@ -9216,6 +9419,46 @@ module.exports = function(callback){
 			forwardEntryTile : 13996,
 			backEntryTile : 13997,
 			maxLayer : 10,
+			findAndWalkMaze : (target, cb)=>{
+				let find = (target, cb)=>{
+					let randomMazeArgs = {
+						table : [[64, 45]],
+						filter : (obj)=>{
+							return obj.cell == 3 && obj.mapx >= 60 && obj.mapx <= 70 && obj.mapy >= 40 && obj.mapy <= 50;
+						},
+						blacklist : [],
+						expectmap : '通往山顶的路100M',
+					};
+					cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
+						if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
+							console.log('可能迷宫重置并未刷新，重新进行寻找...')
+							setTimeout(find, 3000, target, cb);
+							return;
+						}
+						go(target, cb)
+					});
+				}
+				let go = (target, cb)=>{
+					cga.walkRandomMazeAuto(target, (r)=>{
+						if(!r){
+							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
+							setTimeout(go, 3000);
+							return
+						}
+						cb(null)
+						return
+					})
+				}
+
+				let map = cga.GetMapName();
+				if(map.indexOf('通往山顶的路') != -1){
+					go(target, cb)
+				}else if(map.indexOf('小岛') != -1){
+					find(target, cb)
+				}else{
+					throw new Error('未知迷宫地图，请检查')
+				}
+			},
 		},
 		/**
 		 * 如果你做完半山6【地狱的回响】，和大祭司对话进入的小岛，最后在破冰面下面进入的地狱入口是这个。
@@ -9564,7 +9807,7 @@ module.exports = function(callback){
 		}
 
 		if(cga.GetMapName() == newmap || cga.GetMapIndex().index3 == newmap){
-			cb('已经在目标地点，退出')
+			cb(true)
 			return
 		}
 
@@ -9628,7 +9871,7 @@ module.exports = function(callback){
 
 		if(args.table[index] == undefined)
 		{
-			throw new Error('所有区域都已搜索完毕，没有找到迷宫入口！');
+			cb(new Error('所有区域都已搜索完毕，没有找到迷宫入口！'));
 		}
 
 		console.log('前往区域['+(args.table[index])+']搜索迷宫入口..');

@@ -368,25 +368,18 @@ var battleAreaArray = [
 			});
 		},
 		walkTo : (cb)=>{
-			var map = cga.GetMapName();
-			if(map == '芙蕾雅'){
-				var randomMazeArgs = {
-					table : [[263, 149], [284, 140], [295, 127]],
-					filter : (obj)=>{
-						return obj.cell == 3 && obj.mapx >= 260 && obj.mapx <= 273 && obj.mapy >= 133 && obj.mapy <= 164;
-					},
-					blacklist : [],
-					expectmap : '诅咒之迷宫地下1楼',
-				};
-				cga.getRandomMazeEntrance(randomMazeArgs, ()=>{
-					cga.walkRandomMazeAuto(thisobj.object.area.layer, cb)
-				});
-				return;
-			}else if(map.indexOf('诅咒之迷宫') != -1){
-				cga.walkRandomMazeAuto(thisobj.object.area.layer, cb)
-				return;
+			let mazeInfo = cga.mazeInfo['诅咒之迷宫']
+			let map = cga.GetMapName();
+			if(map == mazeInfo.entryMap || map.indexOf(mazeInfo.prefix) != -1){
+				mazeInfo.findAndWalkMaze(thisobj.object.area.layer,cb)
 			}else{
-				throw new Error('异常地图，请检查')
+				cga.travel.falan.toStone('W1', ()=>{
+					cga.walkList([
+						[22, 88, '芙蕾雅'],
+					], ()=>{
+						mazeInfo.findAndWalkMaze(thisobj.object.area.layer,cb)
+					});
+				});
 			}
 		},
 		isMusterMap : (map, mapXY)=>{
@@ -600,21 +593,16 @@ var battleAreaArray = [
 		},
 		walkTo : (cb)=>{
 			let mazeInfo = cga.mazeInfo['蜥蜴洞穴上层']
-			var map = cga.GetMapName();
-			if(map == mazeInfo.entryMap){
-				cga.walkList([
-					[mazeInfo.pos[0], mazeInfo.pos[1], mazeInfo.prefix + '1' + mazeInfo.suffix],
-				], cb);
-				return;
-			}else if(map.indexOf(mazeInfo.prefix) != -1){
-				cga.walkRandomMazeAuto(thisobj.object.area.layer, cb)
-				return;
+			let map = cga.GetMapName();
+			if(map == mazeInfo.entryMap || map.indexOf(mazeInfo.prefix) != -1){
+				mazeInfo.findAndWalkMaze(thisobj.object.area.layer,cb)
 			}else{
 				cga.walkList([
 					[36, 87, '肯吉罗岛'],
 					[384, 245, '蜥蜴洞穴'],
-					[mazeInfo.pos[0], mazeInfo.pos[1], mazeInfo.prefix + '1' + mazeInfo.suffix],
-				], cb);
+				], ()=>{
+					mazeInfo.findAndWalkMaze(thisobj.object.area.layer,cb)
+				});
 			}
 		},
 		isMusterMap : (map, mapXY)=>{
@@ -637,20 +625,15 @@ var battleAreaArray = [
 		},
 		walkTo : (cb)=>{
 			let mazeInfo = cga.mazeInfo['黑龙沼泽']
-			var map = cga.GetMapName();
-			if(map == mazeInfo.entryMap){
-				cga.walkList([
-					[mazeInfo.pos[0], mazeInfo.pos[1], mazeInfo.prefix + '1' + mazeInfo.suffix],
-				], cb);
-				return;
-			}else if(map.indexOf(mazeInfo.prefix) != -1){
-				cga.walkRandomMazeAuto(thisobj.object.area.layer, cb)
-				return;
+			let map = cga.GetMapName();
+			if(map == mazeInfo.entryMap || map.indexOf(mazeInfo.prefix) != -1){
+				mazeInfo.findAndWalkMaze(thisobj.object.area.layer,cb)
 			}else{
 				cga.walkList([
 					[36, 87, '肯吉罗岛'],
-					[mazeInfo.pos[0], mazeInfo.pos[1], mazeInfo.prefix + '1' + mazeInfo.suffix],
-				], cb);
+				], ()=>{
+					mazeInfo.findAndWalkMaze(thisobj.object.area.layer,cb)
+				});
 			}
 		},
 		isMusterMap : (map, mapXY)=>{
@@ -696,17 +679,11 @@ var battleAreaArray = [
 			});
 			return
 		},
-		walkTo : (cb)=>{
+		walkTo : (cb)=>{// 旧日的muster就在地图入口
 			let mazeInfo = cga.mazeInfo['旧日迷宫']
-			var map = cga.GetMapName();
-			if(map == mazeInfo.entryMap){
-				cga.walkList([
-					[mazeInfo.pos[0], mazeInfo.pos[1], mazeInfo.prefix + '1' + mazeInfo.suffix],
-				], cb);
-				return;
-			}else if(map.indexOf(mazeInfo.prefix) != -1){
-				cga.walkRandomMazeAuto(thisobj.object.area.layer, cb)
-				return;
+			let map = cga.GetMapName();
+			if(map == mazeInfo.entryMap || map.indexOf(mazeInfo.prefix) != -1){
+				mazeInfo.findAndWalkMaze(thisobj.object.area.layer,cb)
 			}else{
 				throw new Error('异常地图，请检查')
 			}
@@ -740,19 +717,11 @@ var battleAreaArray = [
 			});
 			return
 		},
-		walkTo : (cb)=>{
+		walkTo : (cb)=>{// 通往山顶的路的muster已经在迷宫的入口地图了
 			let mazeInfo = cga.mazeInfo['通往山顶的路']
-			var map = cga.GetMapName();
-			if(map == mazeInfo.entryMap){
-				cga.walkList([
-					[mazeInfo.pos[0], mazeInfo.pos[1], mazeInfo.prefix + '100' + mazeInfo.suffix],
-				], ()=>{
-					cga.walkRandomMazeAuto(mazeInfo.exitMap, cb)
-				});
-				return;
-			}else if(map.indexOf(mazeInfo.prefix) != -1){
-				cga.walkRandomMazeAuto(mazeInfo.exitMap, cb)
-				return;
+			let map = cga.GetMapName();
+			if(map == mazeInfo.entryMap || map.indexOf(mazeInfo.prefix) != -1){
+				mazeInfo.findAndWalkMaze(mazeInfo.exitMap,cb)
 			}else{
 				throw new Error('异常地图，请检查')
 			}
