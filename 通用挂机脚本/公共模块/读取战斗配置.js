@@ -20,12 +20,9 @@ var configModeArray = [
 			return
 		}
 		
-		// 默认读取练级.json文件，如果有烧技能需要，则复写为JSON格式的obj
-		var train = '练级'
-
 		if(!thisobj.finalJob || (!thisobj.finalJob.skill && !thisobj.finalJob.trainskills)){
 			console.log('未指定角色修炼技能或指定修炼技能已满，本次使用默认战斗配置')
-			thisobj.manualLoad(train)
+			thisobj.manualLoad('练级')
 			return
 		}
 		// 只有战斗系的技能才需要在战斗过程中烧
@@ -33,36 +30,37 @@ var configModeArray = [
 		var skill = ctx.skills.find((sk)=>{
 			// 优先本职技能
 			if((thisobj.finalJob.skill && thisobj.finalJob.skill.indexOf(sk.name) != -1) && sk.lv < sk.maxlv){
-				train = sk.name
 				return true
 			}
 			// 其次是自定义技能
 			if((thisobj.finalJob.trainskills && thisobj.finalJob.trainskills.indexOf(sk.name) != -1) && sk.lv < sk.maxlv){
-				train = sk.name
 				return true
 			}
 			return false;
 		});
 
-		// 此处注意文件的名字，是统称+练级二字，如：格斗士练级
+		var setting = null
+		// 如果没有可烧的技能，同时还是保姆职业，则直接读取通用保姆练级模式，退出逻辑
 		if(!skill && accompany.indexOf(thisobj.finalJob.jobmainname) != -1){
-			train = thisobj.finalJob.jobmainname + '练级'
-		}
-		setting = JSON.parse(fs.readFileSync(cga.getrootdir() + '\\战斗配置\\' + train + '.json'))
-		// 如果是默认的通用格式，则直接读取，无需其他处理
-		if(train.indexOf('练级') != -1){
+			setting = JSON.parse(fs.readFileSync(cga.getrootdir() + '\\战斗配置\\' + thisobj.finalJob.jobmainname + '练级.json'))
 			console.log('没有需要修炼的技能，读取通用练级模式或保姆练级模式')
 			thisobj.manualLoad(setting)
 			return
-		}else if(skill){// 如果发现需要烧的技能，则调整技能顺序并选择好默认目标
+		}
+		// 如果有可以烧的技能，或者
+		setting = JSON.parse(fs.readFileSync(cga.getrootdir() + '\\战斗配置\\练级.json'))
+		// 如果是默认的通用格式，则直接读取，无需其他处理
+		if(skill){// 如果发现需要烧的技能，则调整技能顺序并选择好默认目标
 			// 制作要修炼技能的的战斗配置
 			var skillObj = skillInfos.getSkillObj(skill.name)
+			// cga.GetSubSkillInfo第2个参数要求填写lv,但没想到lv居然是从0开始的index，唉。注意要-1，不然直接给你返回空对象
+			var skillCost = cga.GetSubSkillInfo(skill.index, skill.lv - 1).cost.toString()
 			var battleObj = 
             {
                 "condition": 1,
                 "condition2": 2,
                 "condition2rel": 0,
-                "condition2val": "25%",
+                "condition2val": skillCost,
                 "conditionrel": 0,
                 "conditionval": "25%",
                 "index": 0,
@@ -96,18 +94,15 @@ var configModeArray = [
 			// 逆序置顶
 			setting.battle.list.unshift(battleObj)
 			setting.battle.list.unshift(attackObj)
-		}
-		
 
-		// 刷新index（顺序），防止乱序
-		for (var i = 0; i < setting.battle.list.length; i++){
-			setting.battle.list[i]["index"] = i
-		}
-
-		if(thisobj.manualLoad(setting)){
+			// 刷新index（顺序），防止乱序
+			for (var i = 0; i < setting.battle.list.length; i++){
+				setting.battle.list[i]["index"] = i
+			}
 			console.log('正在训练【' + skill.name +'】技能')
 		}
 
+		thisobj.manualLoad(setting)
 		return
 	}
 },
