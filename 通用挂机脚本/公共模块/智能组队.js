@@ -303,7 +303,15 @@ var battleAreaArray = [
 			cga.travel.autopilot(59800 + thisobj.object.area.layer,cb)
 		},
 		isMusterMap : (map, mapXY)=>{
-			return map == '国民会馆';
+			if(map != '国民会馆'){
+				return false
+			}
+			if(cga.isTeamLeader && mapXY.x == 108 && mapXY.x == 42){
+				return true
+			}else if(!cga.isTeamLeader && mapXY.x == 108 && mapXY.x == 43){
+				return true
+			}
+			return false;
 		},
 		isDesiredMap : (map, mapXY, mapindex)=>{
 			return mapindex - 59800 == thisobj.object.area.layer ? true : false;
@@ -352,7 +360,15 @@ var battleAreaArray = [
 			});
 		},
 		isMusterMap : (map, mapXY)=>{
-			return map == '艾尔莎岛';
+			if(map != '艾尔莎岛'){
+				return false
+			}
+			if(cga.isTeamLeader && mapXY.x == 144 && mapXY.x == 106){
+				return true
+			}else if(!cga.isTeamLeader && mapXY.x == 143 && mapXY.x == 106){
+				return true
+			}
+			return false;
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '布拉基姆高地');
@@ -383,7 +399,15 @@ var battleAreaArray = [
 			}
 		},
 		isMusterMap : (map, mapXY)=>{
-			return map == '艾尔莎岛';
+			if(map != '艾尔莎岛'){
+				return false
+			}
+			if(cga.isTeamLeader && mapXY.x == 144 && mapXY.x == 106){
+				return true
+			}else if(!cga.isTeamLeader && mapXY.x == 143 && mapXY.x == 106){
+				return true
+			}
+			return false;
 		},
 		isDesiredMap : (map, mapXY)=>{
 			let mazeInfo = cga.mazeInfo['诅咒之迷宫']
@@ -409,7 +433,15 @@ var battleAreaArray = [
 			});
 		},
 		isMusterMap : (map, mapXY)=>{
-			return map == '艾尔莎岛';
+			if(map != '艾尔莎岛'){
+				return false
+			}
+			if(cga.isTeamLeader && mapXY.x == 144 && mapXY.x == 106){
+				return true
+			}else if(!cga.isTeamLeader && mapXY.x == 143 && mapXY.x == 106){
+				return true
+			}
+			return false;
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '布拉基姆高地');
@@ -434,7 +466,15 @@ var battleAreaArray = [
 			});
 		},
 		isMusterMap : (map, mapXY)=>{
-			return map == '艾尔莎岛';
+			if(map != '艾尔莎岛'){
+				return false
+			}
+			if(cga.isTeamLeader && mapXY.x == 144 && mapXY.x == 106){
+				return true
+			}else if(!cga.isTeamLeader && mapXY.x == 143 && mapXY.x == 106){
+				return true
+			}
+			return false;
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '布拉基姆高地');
@@ -460,7 +500,15 @@ var battleAreaArray = [
 			});
 		},
 		isMusterMap : (map, mapXY)=>{
-			return map == '艾尔莎岛';
+			if(map != '艾尔莎岛'){
+				return false
+			}
+			if(cga.isTeamLeader && mapXY.x == 144 && mapXY.x == 106){
+				return true
+			}else if(!cga.isTeamLeader && mapXY.x == 143 && mapXY.x == 106){
+				return true
+			}
+			return false;
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '布拉基姆高地');
@@ -519,7 +567,15 @@ var battleAreaArray = [
 			], cb);
 		},
 		isMusterMap : (map, mapXY)=>{
-			return map == '圣骑士营地';
+			if(map != '圣骑士营地'){
+				return false
+			}
+			if(cga.isTeamLeader && mapXY.x == 96 && mapXY.x == 86){
+				return true
+			}else if(!cga.isTeamLeader && mapXY.x == 97 && mapXY.x == 86){
+				return true
+			}
+			return false;
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '肯吉罗岛');
@@ -552,7 +608,15 @@ var battleAreaArray = [
 			}
 		},
 		isMusterMap : (map, mapXY)=>{
-			return map == '圣骑士营地';
+			if(map != '圣骑士营地'){
+				return false
+			}
+			if(cga.isTeamLeader && mapXY.x == 96 && mapXY.x == 86){
+				return true
+			}else if(!cga.isTeamLeader && mapXY.x == 97 && mapXY.x == 86){
+				return true
+			}
+			return false;
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '肯吉罗岛' && cga.travel.camp.getRegion(map, mapXY) == '矮人城镇域');
@@ -575,7 +639,15 @@ var battleAreaArray = [
 			], cb);
 		},
 		isMusterMap : (map, mapXY)=>{
-			return map == '圣骑士营地';
+			if(map != '圣骑士营地'){
+				return false
+			}
+			if(cga.isTeamLeader && mapXY.x == 96 && mapXY.x == 86){
+				return true
+			}else if(!cga.isTeamLeader && mapXY.x == 97 && mapXY.x == 86){
+				return true
+			}
+			return false;
 		},
 		isDesiredMap : (map, mapXY)=>{
 			return (map == '肯吉罗岛' && cga.travel.camp.getRegion(map, mapXY) == '沙滩域');
@@ -606,7 +678,15 @@ var battleAreaArray = [
 			}
 		},
 		isMusterMap : (map, mapXY)=>{
-			return map == '圣骑士营地';
+			if(map != '圣骑士营地'){
+				return false
+			}
+			if(cga.isTeamLeader && mapXY.x == 96 && mapXY.x == 86){
+				return true
+			}else if(!cga.isTeamLeader && mapXY.x == 97 && mapXY.x == 86){
+				return true
+			}
+			return false;
 		},
 		isDesiredMap : (map, mapXY)=>{
 			let mazeInfo = cga.mazeInfo['蜥蜴洞穴上层']
@@ -637,7 +717,15 @@ var battleAreaArray = [
 			}
 		},
 		isMusterMap : (map, mapXY)=>{
-			return map == '圣骑士营地';
+			if(map != '圣骑士营地'){
+				return false
+			}
+			if(cga.isTeamLeader && mapXY.x == 96 && mapXY.x == 86){
+				return true
+			}else if(!cga.isTeamLeader && mapXY.x == 97 && mapXY.x == 86){
+				return true
+			}
+			return false;
 		},
 		isDesiredMap : (map, mapXY)=>{
 			let mazeInfo = cga.mazeInfo['黑龙沼泽']
@@ -758,7 +846,7 @@ const share = (cb) => {
 	})
 }
 
-const switchArea = (shareInfoObj,teamplayers) => {
+const switchArea = (shareInfoObj, teamplayers) => {
 
 	var minLv = 160
 	var camp = true
@@ -767,7 +855,7 @@ const switchArea = (shareInfoObj,teamplayers) => {
 	var areaObj = {}
 
 	// 缓存中有队内信息情况
-	if(thisobj.object.area){
+	if (thisobj.object.area) {
 		// 队伍和高级地点门票不变
 		areaObj.teammates = thisobj.object.area.teammates
 		camp = thisobj.object.area.camp
@@ -777,39 +865,40 @@ const switchArea = (shareInfoObj,teamplayers) => {
 			if (t.level < minLv)
 				minLv = t.level
 		});
-	}else if(shareInfoObj){// 队内没有缓存信息的情况
+	} else if (shareInfoObj) {// 队内没有缓存信息的情况
 		areaObj.teammates = shareInfoObj.teammates
 
 		// 检查高级练级地点的通行许可
 		for (var p in shareInfoObj) {
 			// 跳过组队信息的key
-			if(p == 'teammates'){
+			if (p == 'teammates') {
 				continue
 			}
-			if(shareInfoObj[p].item['承认之戒'] == '0'){
+			if (shareInfoObj[p].item['承认之戒'] == '0') {
 				camp = false
 			}
-			if(shareInfoObj[p].mission['传送小岛'] == '0'){
+			if (shareInfoObj[p].mission['传送小岛'] == '0') {
 				island = false
 			}
 			// 注意，此for循环不可使用break，因为要遍历最小等级
-			if(shareInfoObj[p].lv < minLv){
+			if (shareInfoObj[p].lv < minLv) {
 				minLv = shareInfoObj[p].lv
 			}
 		}
-	}else{// 无队内信息情况，一般是单人练级才会进入此逻辑
+	} else {// 无队内信息情况，一般是单人练级才会进入此逻辑
+		console.log('无队内信息情况，一般是单人练级才会进入此逻辑')
 		minLv = cga.GetPlayerInfo().level
 		camp = cga.getItemCount('承认之戒', true) > 0 ? true : false
 		var config = cga.loadPlayerConfig();
-		if (config && config['mission'] && config['mission']['传送小岛'] == true){
+		if (config && config['mission'] && config['mission']['传送小岛'] == true) {
 			island = true
-		}else{
+		} else {
 			island = false
 		}
 	}
 	// 由于雪拉威森塔路程近，50层前又可以回补，将1-50级传统练级地点改为雪拉威森塔
 	var battleArea = '雪拉威森塔'
-	var layer = 1
+	var layer = 0
 	if (minLv > 10 && minLv <= 15) {// 10楼不会遇敌，只能1楼练到10级去15楼
 		layer = 15
 	} else if (minLv > 15 && minLv <= 20) {
@@ -828,28 +917,35 @@ const switchArea = (shareInfoObj,teamplayers) => {
 		layer = 50
 	} else if (minLv > 50 && minLv <= 60) {
 		battleArea = '回廊'
-	}
-	// 营地判定
-	if(camp && minLv > 60 && minLv <= 72) {
+	} else if (camp && minLv > 60 && minLv <= 72) {
 		battleArea = '营地'
-	} else if (camp && minLv > 72 && minLv <= 80) {
+	} else if (camp && minLv > 72 && minLv <= 75) {
 		battleArea = '蝎子'
-	} else if (camp && minLv > 80 && minLv <= 97) {// 蜥蜴有石化，即便有抗石化依旧容易出现大量阵亡导致宠物忠诚下降，故在沙滩超额练一段时间
+	} else if (camp && minLv > 75 && minLv <= 80) {
+		battleArea = '雪拉威森塔', layer = 80
+	} else if (camp && minLv > 80 && minLv <= 84) {
 		battleArea = '沙滩'
-	} else if (camp && minLv > 97 && minLv <= 105) {
-		battleArea = '蜥蜴洞穴上层'
-	} else if (camp && minLv > 105 && minLv <= 115) {
-		battleArea = '黑龙沼泽'
-	} else if (camp && minLv > 115) {
-		battleArea = '旧日迷宫'
-	}
-	// 半山判定
-	if(island && minLv > 115 && minLv <= 125) {
-		battleArea = '小岛'
-	} else if(island && minLv > 125) {
+	} else if (camp && minLv > 84 && minLv <= 94) {
+		battleArea = '雪拉威森塔', layer = 89
+	} else if (camp && minLv > 94 && minLv <= 103) {// 蜥蜴有石化，即便有抗石化依旧容易出现大量阵亡导致宠物忠诚下降，故尽量缩短蜥蜴练级范围
+		battleArea = '蜥蜴洞穴上层', layer = 1
+	} else if (camp && minLv > 103 && minLv <= 106) {
+		battleArea = '黑龙沼泽', layer = 1
+	} else if (camp && minLv > 106 && minLv <= 109) {
+		battleArea = '黑龙沼泽', layer = 2
+	} else if (camp && minLv > 109 && minLv <= 112) {
+		battleArea = '黑龙沼泽', layer = 3
+	} else if (camp && minLv > 112 && minLv <= 115) {
+		battleArea = '黑龙沼泽', layer = 4
+	} else if (camp && minLv > 115 && minLv <= 125) {
+		battleArea = '旧日迷宫', layer = 1
+	} else if (camp && minLv > 125 && minLv <= 128) {
+		battleArea = '黑龙沼泽', layer = 10
+	} else if (camp && minLv > 128 && minLv <= 138) {
+		battleArea = '黑龙沼泽', layer = 11
+	} else if (island && minLv > 138) {// 半山判定，由于是去迷宫出口练级，所以layer依然是0
 		battleArea = '通往山顶的路'
 	}
-
 	// 将所有信息填入返回对象
 	areaObj.map = battleArea
 	areaObj.layer = layer
@@ -859,7 +955,7 @@ const switchArea = (shareInfoObj,teamplayers) => {
 }
 
 var thisobj = {
-	// 用于计算在某个练级区域的人物经验获取效率以及金币消耗等情况
+	// 计算在某个练级区域的人物经验获取效率以及金币消耗等情况
 	startTime : Date.now(),
 	startPlayerInfo : cga.GetPlayerInfo(),
 	is_enough_teammates : ()=>{
@@ -910,14 +1006,17 @@ var thisobj = {
 			 + '练级【'+ (costSec / 60).toFixed(2)+ '】分'
 			 + '，获得经验【'+ getExp+ '】'
 			 + '，经验效率【'+ (getExp / costSec).toFixed(2)+ '】/ 秒'
-			 + '，【'+ (getExp / costSec / 60).toFixed(2)+ '】/ 分'
+			 + '，【'+ (getExp / costSec * 60).toFixed(2)+ '】/ 分'
 			 + '，金币消耗【'+ costGold+ '】元'
 			 + '，金币消耗速率【'+ (costGold / costSec).toFixed(2)+ '】/ 秒'
-			 + '，下次升级在【'+ ((curPlayerInfo.maxxp - curPlayerInfo.xp) / (getExp / costSec / 60)).toFixed(2)+ '】/ 分钟后。'
+			 + '，下次升级在【'+ ((curPlayerInfo.maxxp - curPlayerInfo.xp) / (getExp / costSec * 60)).toFixed(2)+ '】/ 分钟后。'
 			 )
 		}
 		return
 		
+	},
+	getArea: ()=>{
+		return thisobj.object.area
 	},
 	think : (ctx)=>{
 		thisobj.object.think(ctx);

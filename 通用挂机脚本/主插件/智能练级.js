@@ -60,25 +60,22 @@ var getSellObject = (map, mapindex)=>{
 		return s.isAvailable(map, mapindex);
 	})
 }
-// 肯吉罗岛元素洞范围备份
-var battleAreaArray = [
-{
-	name : '地洞',
-	range : [450, 600, 200, 320],
-},
-{
-	name : '水洞',
-	range : [300, 400, 500, 550],
-},
-{
-	name : '火洞',
-	range : [400, 450, 400, 450],
-},
-{
-	name : '风洞',
-	range : [300, 450, 150, 300],
+// 如果obj有key则增加数值，如果没有则初始化为value
+var objUtil = (obj, key, value)=>{
+	if(obj.hasOwnProperty(key)){
+		if(typeof value == 'object'){
+			return
+		}else if(typeof value == 'string'){
+			return
+		}else if(typeof value == 'number'){
+			obj[key] += value
+		}else{
+			throw new Error('不允许的数据类型，请检查。')
+		}
+	}else{
+		obj[key] = value
+	}
 }
-]
 
 var walkMazeForward = (cb)=>{
 	var map = cga.GetMapName();
@@ -180,9 +177,16 @@ var moveThink = (arg)=>{
 
 var playerThink = ()=>{
 
-	if(!cga.isInNormalState())
+	if(!cga.isInNormalState()){
+		// 在切换地图时（包括迷宫上下楼），cga.isInNormalState()其实也是false，但这时无需进行战斗统计。所以这里还是要判断是否在战斗中
+		if(cga.isInBattle()){
+			thisobj.statistic()
+		}
 		return true;
-	
+	}
+	// 重置敌人分布统计flag
+	thisobj.hasStat = false
+
 	var playerinfo = cga.GetPlayerInfo();
 	var items = cga.GetItemsInfo();
 
@@ -250,6 +254,9 @@ var playerThink = ()=>{
 		}
 		else if( ctx.result == 'logback' || ctx.result == 'logback_forced' )
 		{
+			if(ctx.reason && ctx.reason.indexOf('发生改变') != -1){
+				cga.SayWords('UNA脚本提醒：当前练级区域已经不适合练级，切换练级区域..', 0, 3, 1);
+			}
 			if(interruptFromMoveThink)
 			{
 				logbackEx.func(loop);
@@ -421,8 +428,9 @@ var loop = ()=>{
 			}
 			return;
 		}
-		// 播报练级效率
+		// 播报练级效率与练级路上的敌人数据分布
 		teamMode.getEfficiency()
+		console.log(thisobj.statInfo)
 		// 如果已经在练级区域
 		if(teamMode.isDesiredMap(map, mapXY, mapindex)){
 
@@ -465,8 +473,9 @@ var loop = ()=>{
 		}
 		// playerThink on开始前，先读取战斗配置。
 		configMode.think({skills : cga.GetSkillsInfo()});
-		// 播报练级效率
+		// 播报练级效率与练级路上的敌人数据分布
 		teamMode.getEfficiency()
+		console.log(thisobj.statInfo)
 
 		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 		console.log('playerThink on');
@@ -519,6 +528,39 @@ var loop = ()=>{
 }
 
 var thisobj = {
+	// 统计每个练级地点出现的敌人数据分布
+	statInfo : {},
+	// 每场战斗仅需统计一次flag
+	hasStat : false,
+	// 统计时的地图名称调整，方便观看
+	mapTranslate : {
+		'通往山顶的路' : '半山腰',
+		'蜥蜴洞穴上层' : '蜥蜴洞穴',
+	},
+	// 统计练级路上的敌人数据分布
+	statistic: () => {
+		if (thisobj.hasStat) {
+			return
+		}
+		var area = teamMode.getArea()
+		var areaName = null
+		if (thisobj.mapTranslate[area.map]) {
+			areaName = thisobj.mapTranslate[area.map]
+		} else {
+			areaName = area.map
+		}
+		if (area.layer > 0) {
+			areaName = areaName + area.layer + '楼'
+		}
+		cga.GetBattleUnits().forEach((u) => {
+			if (u.pos > 9) {
+				objUtil(thisobj.statInfo, areaName, {})
+				objUtil(thisobj.statInfo[areaName], u.name, {})
+				objUtil(thisobj.statInfo[areaName][u.name], u.level, 1)
+			}
+		});
+		thisobj.hasStat = true
+	},
 	// 注意：如果新增练级地点，这里的危险等级要添加，否则监听回补那里getDangerLevel为0时，根本不鸟你
 	getDangerLevel : ()=>{
 		var map = cga.GetMapName();
