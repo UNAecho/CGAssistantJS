@@ -305,6 +305,12 @@ var loop = ()=>{
 	var isleader = cga.isTeamLeaderEx();
 
 	if(isleader && teamMode.is_enough_teammates()){
+		// 出发前，播报练级效率与练级路上的敌人数据分布
+		teamMode.getEfficiency()
+		if(Object.keys(thisobj.statInfo).length > 0){
+			console.log('怪物数据分布:',thisobj.statInfo)
+		}
+
 		// 矮人城镇逻辑
 		if(map == '肯吉罗岛' && cga.travel.camp.getRegion(map, mapXY) == '矮人城镇域'){
 			cga.walkList([
@@ -428,10 +434,7 @@ var loop = ()=>{
 			}
 			return;
 		}
-		// 播报练级效率与练级路上的敌人数据分布
-		teamMode.getEfficiency()
-		if(Object.keys(thisobj.statInfo).length > 0)
-			console.log('怪物数据分布:',thisobj.statInfo)
+
 		// 如果已经在练级区域
 		if(teamMode.isDesiredMap(map, mapXY, mapindex)){
 
@@ -474,10 +477,6 @@ var loop = ()=>{
 		}
 		// playerThink on开始前，先读取战斗配置。
 		configMode.think({skills : cga.GetSkillsInfo()});
-		// 播报练级效率与练级路上的敌人数据分布
-		teamMode.getEfficiency()
-		if(Object.keys(thisobj.statInfo).length > 0)
-			console.log('怪物数据分布:',thisobj.statInfo)
 
 		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 		console.log('playerThink on');
