@@ -1030,7 +1030,7 @@ var thisobj = {
 				+ '，获得经验【' + getExp + '】'
 				+ '，经验效率【' + (getExp / costSec).toFixed(2) + '】/ 秒'
 				+ '，【' + (getExp / costSec * 60).toFixed(2) + '】/ 分'
-				+ '，金币消耗【' + costGold + '】元'
+				+ '，金币' + (costGold > 0 ? '【减少】' : '【增加】') + '【' +Math.abs(costGold) + '】元'
 				+ '，金币消耗速率【' + (costGold / costSec).toFixed(2) + '】/ 秒'
 				+ '，下次升级在【' + ((curPlayerInfo.maxxp - curPlayerInfo.xp) / (getExp / costSec * 60)).toFixed(2) + '】/ 分钟后。'
 			)

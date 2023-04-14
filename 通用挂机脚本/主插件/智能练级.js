@@ -305,7 +305,7 @@ var loop = ()=>{
 	var isleader = cga.isTeamLeaderEx();
 
 	if(isleader && teamMode.is_enough_teammates()){
-		// 出发前，播报练级效率与练级路上的敌人数据分布
+		// 播报练级效率与练级路上的敌人数据分布
 		teamMode.getEfficiency()
 		if(Object.keys(thisobj.statInfo).length > 0){
 			console.log('怪物数据分布:',thisobj.statInfo)
@@ -342,7 +342,7 @@ var loop = ()=>{
 			}
 			// 一般的练级地点都是回补之后到达，矮人城镇则特殊，因为需要从营地走到矮人城镇。
 			// 所以loop进入时，需要回补一次，再出发练级。
-			// 而营地、国民会馆则不同，因为playerthink中，监听到回补时，先进行回补，再执行loop
+			// 而营地、国民会馆则不同，因为playerthink中，监听到回补时，不解散队伍，先进行回补，再执行loop
 			supplyMode.func(()=>{
 				if(thisobj.sellStore == 1){
 					var sellObject = getSellObject(map, mapindex);
@@ -468,6 +468,11 @@ var loop = ()=>{
 
 		return
 	} else if(!isleader){
+		// 播报练级效率与练级路上的敌人数据分布
+		teamMode.getEfficiency()
+		if(Object.keys(thisobj.statInfo).length > 0){
+			console.log('怪物数据分布:',thisobj.statInfo)
+		}
 		// 如果脚本运行时，队员已经在队伍中，但未读取到练级信息，则主动离队，重新进入拼车环节
 		if(!teamMode.isBuildTeamReady()){
 			console.log('已经在队伍中，但未读取到练级信息，离队并回到拼车地点重新拼车')
