@@ -430,7 +430,8 @@ var loop = ()=>{
 		}
 		// 播报练级效率与练级路上的敌人数据分布
 		teamMode.getEfficiency()
-		console.log(thisobj.statInfo)
+		if(Object.keys(thisobj.statInfo).length > 0)
+			console.log('怪物数据分布:',thisobj.statInfo)
 		// 如果已经在练级区域
 		if(teamMode.isDesiredMap(map, mapXY, mapindex)){
 
@@ -475,7 +476,8 @@ var loop = ()=>{
 		configMode.think({skills : cga.GetSkillsInfo()});
 		// 播报练级效率与练级路上的敌人数据分布
 		teamMode.getEfficiency()
-		console.log(thisobj.statInfo)
+		if(Object.keys(thisobj.statInfo).length > 0)
+			console.log('怪物数据分布:',thisobj.statInfo)
 
 		playerThinkInterrupt.hasInterrupt();//restore interrupt state
 		console.log('playerThink on');

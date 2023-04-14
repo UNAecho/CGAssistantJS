@@ -223,9 +223,22 @@ var teamModeArray = [
 			ctx.reason = '人数不足，登出';
 			return;
 		}
-		// 间歇性计算一次练级区域，节约性能
-		if(new Date().getSeconds() % 5 == 0){
-			// 更新自己的数据
+		/**
+		 * UNAecho开发提醒：
+		 * 这里需要更新自己的练级场所数据，但有一个不好发现的bug。
+		 * 在战斗切换期间，cga.getTeamPlayers()会出现bug，会发生只有自己信息正确，其余队员信息全0或者空的情况。
+		 * 究其原因，很大可能性是因为：
+		 * 1、playerthink的进入条件是!cga.isInNormalState()，而战斗画面和平常画面切换期间，!cga.isInNormalState()也是true的。
+		 * 2、此时，由于cga.getTeamPlayers()中获得人物等级信息依赖于cga.GetMapUnits()，而切换期间，无法获取这些信息。
+		 * 3、就导致cga.getTeamPlayers()无法获取到除了自己以外的队员信息，这会导致switchArea判断出错。
+		 * 但cga.isInNormalState() == true时，还是无法分辨是战斗和平时切换，还是真的处于平常阶段。
+		 * 所以目前处理方式只能是遍历ctx.teamplayers，如果有异常数据就不进行练级地点switchArea()判断
+		 * 
+		 * new Date().getSeconds() % 5 == 0这个是为了节能，减少计算量。
+		 */
+		if(new Date().getSeconds() % 5 == 0 && ctx.teamplayers.find((u)=>{
+			return u.maxhp == 0 // 检测异常数据，人物最大血量总不可能是0
+		}) == undefined){
 			if(ctx.playerinfo.nick != areaChangedFlag){
 				// console.log('playerthink开始计算练级区域..')
 				let area = switchArea(null, ctx.teamplayers)
@@ -862,8 +875,9 @@ const switchArea = (shareInfoObj, teamplayers) => {
 		island = thisobj.object.area.island
 		// 动态刷新一下最低等级
 		teamplayers.forEach(t => {
-			if (t.level < minLv)
+			if (t.level < minLv) {
 				minLv = t.level
+			}
 		});
 	} else if (shareInfoObj) {// 队内没有缓存信息的情况
 		areaObj.teammates = shareInfoObj.teammates
@@ -935,10 +949,18 @@ const switchArea = (shareInfoObj, teamplayers) => {
 		battleArea = '黑龙沼泽', layer = 2
 	} else if (camp && minLv > 109 && minLv <= 112) {
 		battleArea = '黑龙沼泽', layer = 3
-	} else if (camp && minLv > 112 && minLv <= 115) {
+	} else if (camp && minLv > 112 && minLv <= 114) {
 		battleArea = '黑龙沼泽', layer = 4
-	} else if (camp && minLv > 115 && minLv <= 125) {
+	} else if (camp && minLv > 114 && minLv <= 115) {
 		battleArea = '旧日迷宫', layer = 1
+	} else if (camp && minLv > 115 && minLv <= 116) {
+		battleArea = '旧日迷宫', layer = 6
+	} else if (camp && minLv > 116 && minLv <= 117) {
+		battleArea = '旧日迷宫', layer = 11
+	} else if (camp && minLv > 117 && minLv <= 118) {
+		battleArea = '旧日迷宫', layer = 16
+	} else if (camp && minLv > 118 && minLv <= 125) {
+		battleArea = '旧日迷宫', layer = 20
 	} else if (camp && minLv > 125 && minLv <= 128) {
 		battleArea = '黑龙沼泽', layer = 10
 	} else if (camp && minLv > 128 && minLv <= 138) {
@@ -995,25 +1017,26 @@ var thisobj = {
 	walkTo : (cb)=>{
 		thisobj.object.battleAreaObj.walkTo(cb)
 	},
-	getEfficiency : ()=>{// 获取经验获取效率、计算金币消耗情况。注意：因为有移动银行可以取钱，所以金币消耗仅供参考。
+	getEfficiency: () => {// 获取经验获取效率、计算金币消耗情况。注意：因为有移动银行可以取钱，所以金币消耗仅供参考。
 		let costSec = (Date.now() - thisobj.startTime) / 1000
 		let curPlayerInfo = cga.GetPlayerInfo()
 		let getExp = curPlayerInfo.xp - thisobj.startPlayerInfo.xp
 		let costGold = thisobj.startPlayerInfo.gold - curPlayerInfo.gold
-		
-		if(getExp > 0){
-			console.log('效率播报：【'+ thisobj.object.battleAreaObj.name + '】'
-			 + '练级【'+ (costSec / 60).toFixed(2)+ '】分'
-			 + '，获得经验【'+ getExp+ '】'
-			 + '，经验效率【'+ (getExp / costSec).toFixed(2)+ '】/ 秒'
-			 + '，【'+ (getExp / costSec * 60).toFixed(2)+ '】/ 分'
-			 + '，金币消耗【'+ costGold+ '】元'
-			 + '，金币消耗速率【'+ (costGold / costSec).toFixed(2)+ '】/ 秒'
-			 + '，下次升级在【'+ ((curPlayerInfo.maxxp - curPlayerInfo.xp) / (getExp / costSec * 60)).toFixed(2)+ '】/ 分钟后。'
-			 )
+
+		if (getExp > 0) {
+			console.log('效率播报：【' + thisobj.object.battleAreaObj.name + '】'
+				+ '，当前等级【' + curPlayerInfo.level + '】'
+				+ '，练级【' + (costSec / 60).toFixed(2) + '】分'
+				+ '，获得经验【' + getExp + '】'
+				+ '，经验效率【' + (getExp / costSec).toFixed(2) + '】/ 秒'
+				+ '，【' + (getExp / costSec * 60).toFixed(2) + '】/ 分'
+				+ '，金币消耗【' + costGold + '】元'
+				+ '，金币消耗速率【' + (costGold / costSec).toFixed(2) + '】/ 秒'
+				+ '，下次升级在【' + ((curPlayerInfo.maxxp - curPlayerInfo.xp) / (getExp / costSec * 60)).toFixed(2) + '】/ 分钟后。'
+			)
 		}
 		return
-		
+
 	},
 	getArea: ()=>{
 		return thisobj.object.area
