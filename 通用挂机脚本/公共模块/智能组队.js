@@ -29,7 +29,7 @@ var teamModeArray = [
 		// 如果是单练，跳过组队统计，直接选择练级地点。TODO与组队同步逻辑
 		if(thisobj.object.minTeamMemberCount <= 1){
 			console.log('单人练级情况123123123123123')
-			let areaObj = switchArea()
+			let areaObj = thisobj.switchArea()
 			thisobj.object.area = areaObj['area']
 			update.update_config(areaObj, true, cb)
 			return;
@@ -56,9 +56,11 @@ var teamModeArray = [
 										// 关闭组队
 										cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
 										// 计算去哪里练级
-										let areaObj = switchArea(shareInfoObj, cga.getTeamPlayers())
+										let areaObj = thisobj.switchArea(shareInfoObj, cga.getTeamPlayers())
 										// 缓存练级信息结果
 										thisobj.object.area = areaObj
+										// 换水晶模块使用
+										global.area = thisobj.object.area
 										// 先落盘，再在内存中保存结果
 										update.update_config({area : thisobj.object.area}, true, ()=>{
 											// 获取练级对象
@@ -94,9 +96,11 @@ var teamModeArray = [
 								// 关闭组队
 								cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
 								// 计算去哪里练级
-								let areaObj = switchArea(shareInfoObj, cga.getTeamPlayers())
+								let areaObj = thisobj.switchArea(shareInfoObj, cga.getTeamPlayers())
 								// 缓存练级信息结果
 								thisobj.object.area = areaObj
+								// 换水晶模块使用
+								global.area = thisobj.object.area
 								// 先落盘，再在内存中保存结果
 								update.update_config({area : thisobj.object.area}, true, ()=>{
 									// 获取练级对象
@@ -235,36 +239,21 @@ var teamModeArray = [
 		 * 所以目前处理方式只能是遍历ctx.teamplayers，如果有异常数据就不进行练级地点switchArea()判断
 		 * 
 		 * new Date().getSeconds() % 5 == 0这个是为了节能，减少计算量。
+		 * 
+		 * 更新：以上作为开发过程的记录，现在以及不在playerthink中计算练级区域，而是改在战斗中计算了。上面的开发记录作为参考保留备用。
+		 * 现在仅监视称号，练级区域是否有变化，有变化则ctx.result = 'logback';
 		 */
-		if(new Date().getSeconds() % 5 == 0 && ctx.teamplayers.find((u)=>{
-			return u.maxhp == 0 // 检测异常数据，人物最大血量总不可能是0
-		}) == undefined){
-			if(ctx.playerinfo.nick != areaChangedFlag){
-				// console.log('playerthink开始计算练级区域..')
-				let area = switchArea(null, ctx.teamplayers)
-				// 如果需要更改练级区域，或者仅改变楼层，那么需要中断当前的playerthink，重新回到loop中去。
-				if (area.map != thisobj.object.area.map || (area.map == thisobj.object.area.map && area.layer != thisobj.object.area.layer)){
-					thisobj.object.area.map = area.map
-					thisobj.object.area.layer = area.layer
-					thisobj.object.battleAreaObj = battleAreaArray.find((b)=>{
-						return b.name == thisobj.object.area.map
-					});
-					update.update_config({area : thisobj.object.area}, true, ()=>{
-						cga.ChangeNickName(areaChangedFlag)
-						console.log('练级信息写入完毕，在昵称中展示已完成..')
-					})
+
+		// 在battleThink()中，如果练级区域并更新了自身的数据，开始等待全员变更。全员完毕后，ctx.result = logback，交给主插件登出
+		if(ctx.playerinfo.nick == areaChangedFlag){
+			for (let t = 0; t < ctx.teamplayers.length; t++) {
+				if(ctx.teamplayers[t].nick != areaChangedFlag){
+					console.log('还有队友未计算完毕，继续等待..')
+					return
 				}
-			}else{// 自己数据更新完毕的话，等待全员变更完毕。然后ctx.result = logback，交给主插件登出
-				for (let t = 0; t < ctx.teamplayers.length; t++) {
-					if(ctx.teamplayers[t].nick != areaChangedFlag){
-						console.log('还有队友未计算完毕，继续等待..')
-						return
-					}
-				}
-				ctx.result = 'logback';
-				ctx.reason = '练级区域或楼层发生改变，登出重新loop流程';
-				return;
 			}
+			ctx.result = 'logback';
+			ctx.reason = '练级区域或楼层发生改变，登出重新loop流程';
 		}
 	}
 },
@@ -859,127 +848,24 @@ const share = (cb) => {
 	})
 }
 
-const switchArea = (shareInfoObj, teamplayers) => {
-
-	var minLv = 160
-	var camp = true
-	var island = true
-
-	var areaObj = {}
-
-	// 缓存中有队内信息情况
-	if (thisobj.object.area) {
-		// 队伍和高级地点门票不变
-		areaObj.teammates = thisobj.object.area.teammates
-		camp = thisobj.object.area.camp
-		island = thisobj.object.area.island
-		// 动态刷新一下最低等级
-		teamplayers.forEach(t => {
-			if (t.level < minLv) {
-				minLv = t.level
-			}
-		});
-	} else if (shareInfoObj) {// 队内没有缓存信息的情况
-		areaObj.teammates = shareInfoObj.teammates
-
-		// 检查高级练级地点的通行许可
-		for (var p in shareInfoObj) {
-			// 跳过组队信息的key
-			if (p == 'teammates') {
-				continue
-			}
-			if (shareInfoObj[p].item['承认之戒'] == '0') {
-				camp = false
-			}
-			if (shareInfoObj[p].mission['传送小岛'] == '0') {
-				island = false
-			}
-			// 注意，此for循环不可使用break，因为要遍历最小等级
-			if (shareInfoObj[p].lv < minLv) {
-				minLv = shareInfoObj[p].lv
-			}
+// 如果obj有key则增加数值，如果没有则初始化为value
+var objUtil = (obj, key, value)=>{
+	if(obj.hasOwnProperty(key)){
+		if(typeof value == 'object'){
+			return
+		}else if(typeof value == 'string'){
+			return
+		}else if(typeof value == 'number'){
+			obj[key] += value
+		}else{
+			throw new Error('不允许的数据类型，请检查。')
 		}
-	} else {// 无队内信息情况，一般是单人练级才会进入此逻辑
-		console.log('无队内信息情况，一般是单人练级才会进入此逻辑')
-		minLv = cga.GetPlayerInfo().level
-		camp = cga.getItemCount('承认之戒', true) > 0 ? true : false
-		var config = cga.loadPlayerConfig();
-		if (config && config['mission'] && config['mission']['传送小岛'] == true) {
-			island = true
-		} else {
-			island = false
-		}
+	}else{
+		obj[key] = value
 	}
-	// 由于雪拉威森塔路程近，50层前又可以回补，将1-50级传统练级地点改为雪拉威森塔
-	var battleArea = '雪拉威森塔'
-	var layer = 0
-	if (minLv > 10 && minLv <= 15) {// 10楼不会遇敌，只能1楼练到10级去15楼
-		layer = 15
-	} else if (minLv > 15 && minLv <= 20) {
-		layer = 20
-	} else if (minLv > 20 && minLv <= 25) {
-		layer = 25
-	} else if (minLv > 25 && minLv <= 30) {
-		layer = 30
-	} else if (minLv > 30 && minLv <= 35) {
-		layer = 35
-	} else if (minLv > 35 && minLv <= 40) {// 注意40楼有睡眠怪
-		layer = 40
-	} else if (minLv > 40 && minLv <= 45) {
-		layer = 45
-	} else if (minLv > 45 && minLv <= 50) {
-		layer = 50
-	} else if (minLv > 50 && minLv <= 60) {
-		battleArea = '回廊'
-	} else if (camp && minLv > 60 && minLv <= 72) {
-		battleArea = '营地'
-	} else if (camp && minLv > 72 && minLv <= 75) {
-		battleArea = '蝎子'
-	} else if (camp && minLv > 75 && minLv <= 80) {
-		battleArea = '雪拉威森塔', layer = 80
-	} else if (camp && minLv > 80 && minLv <= 84) {
-		battleArea = '沙滩'
-	} else if (camp && minLv > 84 && minLv <= 94) {
-		battleArea = '雪拉威森塔', layer = 89
-	} else if (camp && minLv > 94 && minLv <= 103) {// 蜥蜴有石化，即便有抗石化依旧容易出现大量阵亡导致宠物忠诚下降，故尽量缩短蜥蜴练级范围
-		battleArea = '蜥蜴洞穴上层', layer = 1
-	} else if (camp && minLv > 103 && minLv <= 106) {
-		battleArea = '黑龙沼泽', layer = 1
-	} else if (camp && minLv > 106 && minLv <= 109) {
-		battleArea = '黑龙沼泽', layer = 2
-	} else if (camp && minLv > 109 && minLv <= 112) {
-		battleArea = '黑龙沼泽', layer = 3
-	} else if (camp && minLv > 112 && minLv <= 114) {
-		battleArea = '黑龙沼泽', layer = 4
-	} else if (camp && minLv > 114 && minLv <= 115) {
-		battleArea = '旧日迷宫', layer = 1
-	} else if (camp && minLv > 115 && minLv <= 116) {
-		battleArea = '旧日迷宫', layer = 6
-	} else if (camp && minLv > 116 && minLv <= 117) {
-		battleArea = '旧日迷宫', layer = 11
-	} else if (camp && minLv > 117 && minLv <= 118) {
-		battleArea = '旧日迷宫', layer = 16
-	} else if (camp && minLv > 118 && minLv <= 125) {
-		battleArea = '旧日迷宫', layer = 20
-	} else if (camp && minLv > 125 && minLv <= 128) {
-		battleArea = '黑龙沼泽', layer = 10
-	} else if (camp && minLv > 128 && minLv <= 138) {
-		battleArea = '黑龙沼泽', layer = 11
-	} else if (island && minLv > 138) {// 半山判定，由于是去迷宫出口练级，所以layer依然是0
-		battleArea = '通往山顶的路'
-	}
-	// 将所有信息填入返回对象
-	areaObj.map = battleArea
-	areaObj.layer = layer
-	areaObj.camp = camp
-	areaObj.island = island
-	return areaObj
 }
 
 var thisobj = {
-	// 计算在某个练级区域的人物经验获取效率以及金币消耗等情况
-	startTime : Date.now(),
-	startPlayerInfo : cga.GetPlayerInfo(),
 	is_enough_teammates : ()=>{
 		return thisobj.object.is_enough_teammates();
 	},
@@ -1017,6 +903,188 @@ var thisobj = {
 	walkTo : (cb)=>{
 		thisobj.object.battleAreaObj.walkTo(cb)
 	},
+	switchArea : (shareInfoObj, units) =>{
+		var minLv = 160
+		var camp = true
+		var island = true
+	
+		var areaObj = {}
+	
+		// 缓存中有队内信息情况
+		if (thisobj.object.area) {
+			// 队伍和高级地点门票不变
+			areaObj.teammates = thisobj.object.area.teammates
+			camp = thisobj.object.area.camp
+			island = thisobj.object.area.island
+			/**
+			 * 动态刷新一下最低等级，2种方式：
+			 * 1、如果有pos的key，证明units是由cga.GetBattleUnits()制作，是战斗状态计算。
+			 * 此方法可让宠物也加入最低等级判断，并更改对应练级场所。防止宠物在不合适的地方练级。
+			 * pos0-9代表我方10个单位
+			 * 
+			 * 2、如果有xpos的key，证明units是由cga.getTeamPlayers()制作，是平时状态计算
+			 * 此方法无法计算宠物等级，但进入战斗（1的情况）即可覆盖宠物判断。
+			 *  */ 
+			units.forEach(u => {
+				if (u.hasOwnProperty('pos')&& u.pos < 10 && u.level < minLv) {
+					minLv = u.level
+				}else if(u.hasOwnProperty('xpos') && u.level < minLv){
+					minLv = u.level
+				}
+			});
+		} else if (shareInfoObj) {// 队内没有缓存信息的情况
+			areaObj.teammates = shareInfoObj.teammates
+	
+			// 检查高级练级地点的通行许可
+			for (var p in shareInfoObj) {
+				// 跳过组队信息的key
+				if (p == 'teammates') {
+					continue
+				}
+				if (shareInfoObj[p].item['承认之戒'] == '0') {
+					camp = false
+				}
+				if (shareInfoObj[p].mission['传送小岛'] == '0') {
+					island = false
+				}
+				// 注意，此for循环不可使用break，因为要遍历最小等级
+				if (shareInfoObj[p].lv < minLv) {
+					minLv = shareInfoObj[p].lv
+				}
+			}
+		} else {// 无队内信息情况，一般是单人练级才会进入此逻辑
+			console.log('无队内信息情况，一般是单人练级才会进入此逻辑')
+			minLv = cga.GetPlayerInfo().level
+			camp = cga.getItemCount('承认之戒', true) > 0 ? true : false
+			var config = cga.loadPlayerConfig();
+			if (config && config['mission'] && config['mission']['传送小岛'] == true) {
+				island = true
+			} else {
+				island = false
+			}
+		}
+		// 由于雪拉威森塔路程近，50层前又可以回补，将1-50级传统练级地点改为雪拉威森塔
+		var battleArea = '雪拉威森塔'
+		var layer = 0
+		if (minLv > 10 && minLv <= 15) {// 10楼不会遇敌，只能1楼练到10级去15楼
+			layer = 15
+		} else if (minLv > 15 && minLv <= 20) {
+			layer = 20
+		} else if (minLv > 20 && minLv <= 25) {
+			layer = 25
+		} else if (minLv > 25 && minLv <= 30) {
+			layer = 30
+		} else if (minLv > 30 && minLv <= 35) {
+			layer = 35
+		} else if (minLv > 35 && minLv <= 40) {// 注意40楼有睡眠怪
+			layer = 40
+		} else if (minLv > 40 && minLv <= 45) {
+			layer = 45
+		} else if (minLv > 45 && minLv <= 50) {
+			layer = 50
+		} else if (minLv > 50 && minLv <= 60) {
+			battleArea = '回廊'
+		} else if (camp && minLv > 60 && minLv <= 72) {
+			battleArea = '营地'
+		} else if (camp && minLv > 72 && minLv <= 75) {
+			battleArea = '蝎子'
+		} else if (camp && minLv > 75 && minLv <= 80) {
+			battleArea = '雪拉威森塔', layer = 80
+		} else if (camp && minLv > 80 && minLv <= 84) {
+			battleArea = '沙滩'
+		} else if (camp && minLv > 84 && minLv <= 94) {
+			battleArea = '雪拉威森塔', layer = 89
+		} else if (camp && minLv > 94 && minLv <= 103) {// 蜥蜴有石化，即便有抗石化依旧容易出现大量阵亡导致宠物忠诚下降，故尽量缩短蜥蜴练级范围
+			battleArea = '蜥蜴洞穴上层', layer = 1
+		} else if (camp && minLv > 103 && minLv <= 106) {
+			battleArea = '黑龙沼泽', layer = 1
+		} else if (camp && minLv > 106 && minLv <= 109) {
+			battleArea = '黑龙沼泽', layer = 2
+		} else if (camp && minLv > 109 && minLv <= 112) {
+			battleArea = '黑龙沼泽', layer = 3
+		} else if (camp && minLv > 112 && minLv <= 114) {
+			battleArea = '黑龙沼泽', layer = 4
+		} else if (camp && minLv > 114 && minLv <= 115) {
+			battleArea = '旧日迷宫', layer = 1
+		} else if (camp && minLv > 115 && minLv <= 116) {
+			battleArea = '旧日迷宫', layer = 6
+		} else if (camp && minLv > 116 && minLv <= 117) {
+			battleArea = '旧日迷宫', layer = 11
+		} else if (camp && minLv > 117 && minLv <= 118) {
+			battleArea = '旧日迷宫', layer = 16
+		} else if (camp && minLv > 118 && minLv <= 125) {
+			battleArea = '旧日迷宫', layer = 20
+		} else if (camp && minLv > 125 && minLv <= 128) {
+			battleArea = '黑龙沼泽', layer = 10
+		} else if (camp && minLv > 128 && minLv <= 138) {
+			battleArea = '黑龙沼泽', layer = 11
+		} else if (island && minLv > 138) {// 半山判定，由于是去迷宫出口练级，所以layer依然是0
+			battleArea = '通往山顶的路'
+		}
+		// 将所有信息填入返回对象
+		areaObj.map = battleArea
+		areaObj.layer = layer
+		areaObj.camp = camp
+		areaObj.island = island
+		return areaObj
+	},
+	// 统计每个练级地点出现的敌人数据分布
+	statInfo : {},
+	// 每场战斗仅需统计一次flag
+	hasBattleThink : false,
+	// 统计时的地图名称调整，方便观看
+	mapTranslate : {
+		'通往山顶的路' : '半山腰',
+		'蜥蜴洞穴上层' : '蜥蜴洞穴',
+	},
+	// 战斗处理，包括敌人数据统计，以及调整练级地点
+	battleThink: () => {
+		if (thisobj.hasBattleThink) {
+			return
+		}
+		var areaName = null
+		if (thisobj.mapTranslate[thisobj.object.area.map]) {
+			areaName = thisobj.mapTranslate[thisobj.object.area.map]
+		} else {
+			areaName = thisobj.object.area.map
+		}
+		if (thisobj.object.area.layer > 0) {
+			areaName = areaName + thisobj.object.area.layer + '楼'
+		}
+		var units = cga.GetBattleUnits()
+		units.forEach((u) => {
+			if (u.pos > 9) {
+				objUtil(thisobj.statInfo, areaName, {})
+				objUtil(thisobj.statInfo[areaName], u.name, {})
+				objUtil(thisobj.statInfo[areaName][u.name], u.level, 1)
+			}
+		});
+		
+		let area = thisobj.switchArea(null, units)
+		// 如果练级区域或楼层发生变化，则作出调整，并落盘保存
+		if (area.map != thisobj.object.area.map || (area.map == thisobj.object.area.map && area.layer != thisobj.object.area.layer)){
+			thisobj.object.area.map = area.map
+			thisobj.object.area.layer = area.layer
+			thisobj.object.battleAreaObj = battleAreaArray.find((b)=>{
+				return b.name == thisobj.object.area.map
+			});
+			// 换水晶模块使用
+			global.area = thisobj.object.area
+			// 落盘
+			update.update_config({area : thisobj.object.area}, true, ()=>{
+				// 标记已经落盘完毕
+				cga.ChangeNickName(areaChangedFlag)
+				// 由于练级区域改变，重置怪物数据统计
+				thisobj.statInfo = {}
+				console.log('练级信息写入完毕，在昵称中展示已完成..')
+			})
+		}
+		
+		thisobj.hasBattleThink = true
+	},
+	// 计算在某个练级区域的人物经验获取效率以及金币消耗等情况
+	startTime : Date.now(),
+	startPlayerInfo : cga.GetPlayerInfo(),
 	getEfficiency: () => {// 获取经验获取效率、计算金币消耗情况。注意：因为有移动银行可以取钱，所以金币消耗仅供参考。
 		let costSec = (Date.now() - thisobj.startTime) / 1000
 		let curPlayerInfo = cga.GetPlayerInfo()
@@ -1037,9 +1105,6 @@ var thisobj = {
 		}
 		return
 
-	},
-	getArea: ()=>{
-		return thisobj.object.area
 	},
 	think : (ctx)=>{
 		thisobj.object.think(ctx);
@@ -1133,6 +1198,8 @@ var thisobj = {
 			thisobj.object.battleAreaObj = battleAreaArray.find((b)=>{
 				return b.name == thisobj.object.area.map
 			});
+			// 换水晶模块使用
+			global.area = thisobj.object.area
 		}
 
 		if(typeof obj.role != 'number'){

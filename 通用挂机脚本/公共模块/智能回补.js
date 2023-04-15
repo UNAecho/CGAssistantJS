@@ -92,7 +92,9 @@ var supplyModeArray = [
 
 				cga.walkList(path, () => {
 					cga.TurnTo(9, 4);// 资深cga.TurnTo(11, 6);
-					setTimeout(cb, 5000);
+					setTimeout(()=>{
+						cga.travel.autopilot('主地图',cb)
+					}, 5000);
 				});
 			} else if (map == '国民会馆' || (mapindex >= 59801 && mapindex <= 59850)) {
 				var layer = mapindex - 59800
