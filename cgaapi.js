@@ -7850,9 +7850,10 @@ module.exports = function(callback){
 			"#" : "item",
 			"t" : "title",
 			"m" : "mission",
+			"r" : "role",
 		}
-		const reqReg = new RegExp(/([zjfma]{1})([i#tm])([\d\u4e00-\u9fa5]+)/)
-		const resReg = new RegExp(/([i#tm])([\d\u4e00-\u9fa5]+)([zjfma]{1})([\d\u4e00-\u9fa5]+)/)
+		const reqReg = new RegExp(/([zjfma]{1})([i#tmr])([\d\u4e00-\u9fa5]+)/)
+		const resReg = new RegExp(/([i#tmr])([\d\u4e00-\u9fa5]+)([zjfma]{1})([\d\u4e00-\u9fa5]+)/)
 
 		//检查的func集合
 		const reqAct = {
@@ -7871,6 +7872,32 @@ module.exports = function(callback){
 					return 1
 				}
 				return 0
+			},
+			"role" : (input)=>{
+				// 定义9为异常值
+				var res = 9
+				var json = null
+				try
+				{
+					var rootdir = cga.getrootdir()
+					var configPath = rootdir+'\\脚本设置';
+					var configName = configPath+'\\通用挂机脚本_'+cga.FileNameEscape(cga.GetPlayerInfo().name)+'.json';
+					var json = fs.readFileSync(configName, 'utf8');
+					
+					if(typeof json != 'string' || !json.length)
+						throw new Error('配置文件格式错误');
+				}catch(e){
+					if(e.code != 'ENOENT'){
+						console.log('role error:' + e)
+					}
+				}
+
+				var obj = JSON.parse(json)
+
+				if(obj && obj.hasOwnProperty('role')){
+					res = parseInt(obj['role'])
+				}
+				return isNaN(parseInt(res)) ? 9 : parseInt(res)
 			},
 		}
 
@@ -7895,6 +7922,8 @@ module.exports = function(callback){
 				teammate_info[teams[identifier.indexOf(regObj[3])].name]["title"][regObj[2]] = regObj[4]
 			}else if(regObj[1] == "m"){
 				teammate_info[teams[identifier.indexOf(regObj[3])].name]["mission"][regObj[2]] = regObj[4]
+			}else if(regObj[1] == "r"){
+				teammate_info[teams[identifier.indexOf(regObj[3])].name]["role"][regObj[2]] = regObj[4]
 			}else{
 				throw new Error('暗号类型错误，请检查')
 			}
@@ -8024,9 +8053,9 @@ module.exports = function(callback){
 			}else if(flag === true){
 				let checkKey = null
 				let checkValue = null
-				let checkTarget = Object.values(teammate_info)
+				let checkKeys = Object.keys(teammate_info)
 				let teams = cga.getTeamPlayers();
-				if(checkTarget.length < teams.length){
+				if(checkKeys.length < teams.length){
 					console.log('队员信息中，人数统计缺失，',delay/1000,'秒后重新进入mainLogic..')
 					// 队员缺失，重置统计信息
 					teammate_info = {}
@@ -8038,10 +8067,11 @@ module.exports = function(callback){
 				for (let i = 0; i < reqSequence.length; i++) {
 					checkKey = translateDict[reqSequence[i][0]]
 					checkValue = reqSequence[i].substring(1)
-					for (let k in checkTarget) {
-						let v = checkTarget[k];
+					for (let k in checkKeys) {
+						let v = teammate_info[checkKeys[k]];
 						if(!v || !v[checkKey] || !v[checkKey].hasOwnProperty(checkValue)){
-							console.log('队员信息中，数据缺失，',delay/1000,'秒后重新进入mainLogic..')
+							console.log('队员信息中【' + checkKeys[k] + '】数据缺失，删除其数据，',delay/1000,'秒后重新进入mainLogic..')
+							delete teammate_info[checkKeys[k]]
 							setTimeout(mainLogic, delay);
 							return
 						}

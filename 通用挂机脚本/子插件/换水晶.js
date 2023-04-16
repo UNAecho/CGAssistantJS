@@ -7,7 +7,7 @@ var buyArray = [
 	{
 		name : '地水的水晶（5：5）',
 		type : 0,
-		area : ['旧日之地','砍龙'],//砍龙为任意水晶
+		area : ['雪拉威森塔79楼','旧日之地','砍龙'],//砍龙为任意水晶
 	},
 	{
 		name : '水火的水晶（5：5）',
@@ -17,19 +17,19 @@ var buyArray = [
 	{
 		name : '火风的水晶（5：5）',
 		type : 2,
-		area : ['雪拉威森塔1楼','低地鸡','刀鸡','龙骨','黄金龙骨','诅咒','蜥蜴','半山'],//诅咒为任意水晶
+		area : ['雪拉威森塔1楼','低地鸡','刀鸡','龙骨','黄金龙骨','诅咒','雪拉威森塔85楼','雪拉威森塔89楼','蜥蜴','半山'],//诅咒为任意水晶
 	},
 	{
 		name : '风地的水晶（5：5）',
 		type : 3,
-		area : ['沙滩','地洞'],//地洞为任意水晶，沿用前一个练级地点（沙滩）的水晶
+		area : ['雪拉威森塔45楼','沙滩','地洞','柯村'],//地洞为任意水晶，沿用前一个练级地点（沙滩）的水晶
 	},
 ]
 // 这里加入了自动练级的自动换水晶功能
 const repairFilter = (eq) => {
 	if (eq.type == 22) {
 		const durability = cga.getEquipEndurance(eq);
-		if (global.area == undefined){
+		if (!global.area){
 			console.log('global.area为undefined,使用离线静态方式换水晶')
 			if (durability && durability[0] < 150){
 				console.log('水晶耐久不足，更换')
@@ -37,12 +37,11 @@ const repairFilter = (eq) => {
 			}
 			return false
 		}
+
+		var areaName = global.area.map + (global.area.layer > 0 ? (global.area.layer + '楼') : '')
 		for(var i in buyArray){
-			// console.log('buyArray[i].name='+buyArray[i].name)
-			// console.log('buyArray[i].area='+buyArray[i].area)
-			// console.log('global.area='+global.area)
-			if(buyArray[i].area.indexOf(global.area) !=-1){
-				// console.log('提示：thisobj.buyCrystal即将被复写为'+buyArray[i].name)
+			if(buyArray[i].area.indexOf(areaName) !=-1){
+				console.log('当前练级区域【' +areaName +'】需要【'+buyArray[i].name + '】水晶')
 				thisobj.buyCrystal = buyArray[i];
 				break;
 			}

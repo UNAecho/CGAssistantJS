@@ -34,53 +34,111 @@ var teamModeArray = [
 			update.update_config(areaObj, true, cb)
 			return;
 		}
+		// 全员通用操作
+		var afterShare = (shareInfoObj, cb)=>{
+			// 关闭组队
+			cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
+			// 计算去哪里练级
+			let areaObj = thisobj.switchArea(shareInfoObj, cga.getTeamPlayers())
+			// 缓存练级信息结果
+			thisobj.object.area = areaObj
+			// 换水晶模块使用
+			global.area = thisobj.object.area
+			// 先落盘，再在内存中保存结果
+			update.update_config({area : thisobj.object.area}, true, ()=>{
+				// 获取练级对象
+				thisobj.object.battleAreaObj = battleAreaArray.find((b)=>{
+					return b.name == thisobj.object.area.map
+				});
+				cb(true)
+			})
+		}
 
 		// 队员逻辑
 		if(!cga.isTeamLeader){
-			var retry = (cb)=>{
-				var leader = cga.findPlayerUnit((u)=>{
-					if((u.xpos == thisobj.object.leaderX && u.ypos == thisobj.object.leaderY) && (!thisobj.object.leaderFilter || u.nick_name.indexOf(thisobj.object.leaderFilter) != -1)){
-						return true;
+			var listenLeader =(shareInfoObj, retryFunc, cb)=>{
+				console.log('监听队长称号..')
+				let teamplayers = cga.getTeamPlayers();
+				// 如果共享信息成功后，队长突然掉线
+				if(!teamplayers.length){
+					setTimeout(retryFunc, 1000, cb);
+					return
+				}
+				
+				if(teamplayers[0].nick == 'rebuild'){
+					if(thisobj.object.role == 2){
+						console.log('队长要求小号离队，因为打手不足')
+						// 退出时，加入时间戳
+						blacklist[teamplayers[0].name] = Date.now()
+						cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+						setTimeout(retryFunc, 2000,cb);
+						return
+
 					}
-					return false
-				});
-				if(leader && cga.getTeamPlayers().length == 0){
-					var target = cga.getRandomSpace(leader.xpos,leader.ypos);
-					cga.walkList([
-					target
-					], ()=>{
-						cga.addTeammate(leader.unit_name, (r)=>{
-							if(r){
-								share((shareInfoObj)=>{
-									if(typeof shareInfoObj == 'object'){// 共享信息成功，计算去哪里练级
-										// 关闭组队
-										cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
-										// 计算去哪里练级
-										let areaObj = thisobj.switchArea(shareInfoObj, cga.getTeamPlayers())
-										// 缓存练级信息结果
-										thisobj.object.area = areaObj
-										// 换水晶模块使用
-										global.area = thisobj.object.area
-										// 先落盘，再在内存中保存结果
-										update.update_config({area : thisobj.object.area}, true, ()=>{
-											// 获取练级对象
-											thisobj.object.battleAreaObj = battleAreaArray.find((b)=>{
-												return b.name == thisobj.object.area.map
-											});
-											cb(true)
-										})
-									}else if(typeof shareInfoObj == 'boolean' && shareInfoObj === false){// 共享信息过程中有人离队
-										setTimeout(retry, 1000, cb);
-									}
-									return
-								})
-								return;
-							}
+					share((shareInfoObj)=>{
+						// 如果共享信息时有人离队
+						if(shareInfoObj === false){
+							setTimeout(retryFunc, 2000,cb);
+							return
+						}
+						listenLeader(shareInfoObj, retryFunc, cb)
+						return
+					})
+					return
+				}
+
+				if(teamplayers[0].nick == 'ok'){
+					console.log('拼车成功，开始落盘..')
+					afterShare(shareInfoObj,cb)
+					return
+				}
+				setTimeout(listenLeader, 1000, shareInfoObj, retryFunc, cb);
+				return
+			}
+
+			var retry = (cb)=>{
+				let teamplayers = cga.getTeamPlayers();
+				if(teamplayers.length){
+					share((shareInfoObj)=>{
+						// 如果共享信息时有人离队
+						if(shareInfoObj === false){
 							setTimeout(retry, 1000, cb);
-						});
+							return
+						}
+						listenLeader(shareInfoObj, retry, cb)
+						return
+					})
+					return
+				}else{
+					let curTime = Date.now()
+					var leader = cga.findPlayerUnit((u)=>{
+						if(blacklist.hasOwnProperty(u.unit_name)){
+							console.log('出现小号挤兑现象，暂时离队。' + (blacklistTimeout - (curTime - blacklist[u.unit_name])) / 1000 + '秒内不能加入【', u.unit_name ,'】队伍')
+						}
+						if(
+							(u.xpos == thisobj.object.leaderX && u.ypos == thisobj.object.leaderY)
+							&& (!thisobj.object.leaderFilter || u.nick_name.indexOf(thisobj.object.leaderFilter) != -1)
+							&& ((!blacklist.hasOwnProperty(u.unit_name) || (curTime - blacklist[u.unit_name] > blacklistTimeout)))
+							){
+							delete blacklist[u.unit_name]
+							return true;
+						}
+						return false
 					});
-				} else {
-					setTimeout(retry, 1500,cb);
+					if(leader){
+						var target = cga.getRandomSpace(leader.xpos,leader.ypos);
+						cga.walkList([
+						target
+						], ()=>{
+							cga.addTeammate(leader.unit_name, ()=>{
+								setTimeout(retry, 1000, cb);
+								return
+							});
+						});
+					} else {
+						setTimeout(retry, 1000,cb);
+						return
+					}
 				}
 			}
 
@@ -88,31 +146,59 @@ var teamModeArray = [
 			return
 		}
 		else {// 队长逻辑
+			var checkRole = (shareInfoObj, cb)=>{
+				// 检查队内打手数量，如果打手不足，则无法正常练级，回调rebuild
+				var bodyguardCnt = 0
+				for (var p in shareInfoObj) {
+					// 跳过组队信息的key
+					if (p == 'teammates') {
+						continue
+					}
+					if (shareInfoObj[p].role['职责'] == '1') {
+						bodyguardCnt += 1
+					}
+				}
+				
+				if(bodyguardCnt < thisobj.object.minBodyguard){
+					console.log('队内打手人数不足，队长重新等待队员加入，小号自己离队，并在规定时间内不再加入此队伍。')
+					cb('rebuild')
+					return
+				}
+				
+				console.log('打手【',bodyguardCnt,'】人','大于最少要求【',thisobj.object.minBodyguard,'】人，出发')
+				cb('ok')
+				return
+			}
+
 			var wait = ()=>{
 				cga.waitTeammatesWithFilter(thisobj.object.memberFilter, thisobj.object.minTeamMemberCount,(r)=>{
 					if(r){
 						share((shareInfoObj)=>{
-							if(typeof shareInfoObj == 'object'){// 共享信息成功，计算去哪里练级
-								// 关闭组队
-								cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
-								// 计算去哪里练级
-								let areaObj = thisobj.switchArea(shareInfoObj, cga.getTeamPlayers())
-								// 缓存练级信息结果
-								thisobj.object.area = areaObj
-								// 换水晶模块使用
-								global.area = thisobj.object.area
-								// 先落盘，再在内存中保存结果
-								update.update_config({area : thisobj.object.area}, true, ()=>{
-									// 获取练级对象
-									thisobj.object.battleAreaObj = battleAreaArray.find((b)=>{
-										return b.name == thisobj.object.area.map
-									});
-									cb(true)
-								})
-							}else if(typeof shareInfoObj == 'boolean' && shareInfoObj === false){// 共享信息过程中有人离队
+							// 如果共享信息时有人离队
+							if(shareInfoObj === false){
 								setTimeout(wait, 1000);
+								return
 							}
-							return
+							checkRole(shareInfoObj, (r)=>{
+								if(r == 'ok'){
+									setTimeout(()=>{
+										cga.ChangeNickName('ok')
+									}, 1500);
+									
+									setTimeout(()=>{
+										afterShare(shareInfoObj,cb)
+									}, 5000);
+								}else if(r == 'rebuild'){
+									setTimeout(()=>{
+										cga.ChangeNickName('rebuild')
+									}, 1500);
+									// 给小号对rebuild充分时间调整，然后挂上标记，进入wait
+									setTimeout(()=>{
+										cga.ChangeNickName(thisobj.object.leaderFilter)
+										wait()
+									}, 5000);
+								}
+							})
 						})
 						return;
 					}
@@ -832,10 +918,14 @@ var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战�
 var update = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 // 如果练级地点发生改变，且已经落盘完毕，则将此flag打在人物昵称上
 const areaChangedFlag = 'areaChanged'
+// 当队内打手不足时，小号需要退队给打手让位，此时需要暂时将队长加入黑名单，并在超时时间之内不再加入此队，防止挤兑。
+var blacklist = {}
+// 小号退出给打手让位的超时时间。超过则可以再次加入刚才退出的队伍。
+const blacklistTimeout = 5000
 
 // 共享队员信息，智能练级的核心部分
 const share = (cb) => {
-	cga.shareTeammateInfo(thisobj.object.minTeamMemberCount,['i承认之戒','m传送小岛'],(r)=>{
+	cga.shareTeammateInfo(thisobj.object.minTeamMemberCount,['i承认之戒','m传送小岛','r职责'],(r)=>{
 		if(typeof r == 'object'){
 			cb(r)
 		}else if(typeof r == 'boolean' && r === false){
@@ -1090,6 +1180,7 @@ var thisobj = {
 		let curPlayerInfo = cga.GetPlayerInfo()
 		let getExp = curPlayerInfo.xp - thisobj.startPlayerInfo.xp
 		let costGold = thisobj.startPlayerInfo.gold - curPlayerInfo.gold
+		let costType = costGold > 0 ? '【减少】' : '【增加】'
 
 		if (getExp > 0) {
 			console.log('效率播报：【' + thisobj.object.battleAreaObj.name + '】'
@@ -1098,8 +1189,8 @@ var thisobj = {
 				+ '，获得经验【' + getExp + '】'
 				+ '，经验效率【' + (getExp / costSec).toFixed(2) + '】/ 秒'
 				+ '，【' + (getExp / costSec * 60).toFixed(2) + '】/ 分'
-				+ '，金币' + (costGold > 0 ? '【减少】' : '【增加】') + '【' +Math.abs(costGold) + '】元'
-				+ '，金币消耗速率【' + (costGold / costSec).toFixed(2) + '】/ 秒'
+				+ '，金币' + costType + '【' + Math.abs(costGold) + '】元'
+				+ '，金币' + costType + '速率【' + Math.abs(costGold / costSec).toFixed(2) + '】/ 秒'
 				+ '，下次升级在【' + ((curPlayerInfo.maxxp - curPlayerInfo.xp) / (getExp / costSec * 60)).toFixed(2) + '】/ 分钟后。'
 			)
 		}
@@ -1228,6 +1319,15 @@ var thisobj = {
 		}
 
 		if (cga.isTeamLeader){
+			configTable.minBodyguard = obj.minBodyguard;
+			thisobj.object.minBodyguard = obj.minBodyguard;
+			if(!(thisobj.object.minBodyguard >= 0)){
+				console.error('读取配置：队伍最小打手数失败！');
+				return false;
+			}
+		}
+
+		if (cga.isTeamLeader){
 			configTable.memberFilter = obj.memberFilter;
 			thisobj.object.memberFilter = obj.memberFilter;
 		}
@@ -1290,15 +1390,15 @@ var thisobj = {
 			// 智能模式暂定只有1种模式
 			thisobj.object = teamModeArray[0]
 
-			var sayString = '【智能组队】队长设置，输入你是否是队长，0队长1队员:';
+			var sayString = '【智能组队】队内职责，输入你在队内的职责，0队长1打手2小号。队长负责带队，可以是输出也可以是小号。打手是非队长的清怪主力。建议队长有清怪能力时，打手2人。队长是小号时，打手3人。';
 
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, index)=>{
-				if(index !== null && (index == 0 || index == 1)){
+				if(index !== null && (index == 0 || index == 1 || index == 2)){
 					configTable.role = index;
 					thisobj.object.role = index;
 					
-					var sayString2 = '当前已选择: 你是[' + (thisobj.object.role == 0 ? '队长' : '队员') + ']';
+					var sayString2 = '当前已选择: 你是[' + ['队长','打手','小号'] + ']';
 					cga.sayLongWords(sayString2, 0, 3, 1);
 					setTimeout(cb2, 500);
 					return false;
@@ -1381,7 +1481,7 @@ var thisobj = {
 					var sayString2 = '当前已选择: 队伍最小人数[' + thisobj.object.minTeamMemberCount + ']人。';
 					cga.sayLongWords(sayString2, 0, 3, 1);
 					
-					setTimeout(cb2, 500);
+					setTimeout(stage4, 500, cb2);
 					return false;
 				}
 				
@@ -1390,6 +1490,26 @@ var thisobj = {
 		}
 
 		var stage4 = (cb2)=>{
+			var sayString = '【智能组队】请输入自由拼车的最小打手人数(0~4):';
+
+			cga.sayLongWords(sayString, 0, 3, 1);
+			cga.waitForChatInput((msg, index)=>{
+				if(index !== null && index >= 0 && index <= 4){
+					configTable.minBodyguard = index;
+					thisobj.object.minBodyguard = index;
+					
+					var sayString2 = '当前已选择: 队伍最小打手人数[' + thisobj.object.minBodyguard + ']人。';
+					cga.sayLongWords(sayString2, 0, 3, 1);
+					
+					setTimeout(cb2, 500);
+					return false;
+				}
+				
+				return true;
+			});
+		}
+
+		var stage5 = (cb2)=>{
 			var sayString = '【智能组队】请输入队长站位x坐标(0~999):';
 
 			cga.sayLongWords(sayString, 0, 3, 1);
@@ -1406,7 +1526,7 @@ var thisobj = {
 			});
 		}
 
-		var stage5 = (cb2)=>{
+		var stage6 = (cb2)=>{
 			var sayString = '【智能组队】请输入队长站位y坐标(0~999):';
 
 			cga.sayLongWords(sayString, 0, 3, 1);
@@ -1423,7 +1543,7 @@ var thisobj = {
 			});
 		}
 
-		var stage6 = (cb2)=>{
+		var stage7 = (cb2)=>{
 			var sayString = '【智能组队】超时设置，如果固定组队超时，则全员回退至自由组队阶段。请输入组队等待超时时间(毫秒):';
 
 			cga.sayLongWords(sayString, 0, 3, 1);
@@ -1443,8 +1563,8 @@ var thisobj = {
 				return true;
 			});
 		}
-		// stage2和3仅队长需要执行，所以在stage1中判断是否执行
-		Async.series([stage0, stage1, stage4, stage5, stage6], cb);
+		// stage2-4仅队长需要执行，所以在stage1中判断是否执行
+		Async.series([stage0, stage1, stage5, stage6, stage7], cb);
 	}	
 }
 
