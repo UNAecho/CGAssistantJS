@@ -9085,108 +9085,29 @@ module.exports = function(callback){
 		'诅咒之迷宫' : {
 			entryMap : '芙蕾雅',
 			exitMap : '炼金术师的工作室',
-			pos : null,
-			posLower : [260, 140],
-			posUpper : [275, 162],
+			posList : [[263, 149], [284, 140], [295, 127]],
+			xLimit : [260, 273],
+			yLimit : [133, 164],
 			prefix:'诅咒之迷宫地下',
 			suffix:'楼',
 			forwardEntryTile : 13997,
 			backEntryTile : 13996,
-			maxLayer : 8,
-			findAndWalkMaze : (target, cb)=>{
-				let find = (target, cb)=>{
-					let randomMazeArgs = {
-						table : [[263, 149], [284, 140], [295, 127]],
-						filter : (obj)=>{
-							return obj.cell == 3 && obj.mapx >= 260 && obj.mapx <= 273 && obj.mapy >= 133 && obj.mapy <= 164;
-						},
-						blacklist : [],
-						expectmap : '诅咒之迷宫地下1楼',
-					};
-					cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
-						if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
-							console.log('可能迷宫重置并未刷新，重新进行寻找...')
-							setTimeout(find, 3000, target, cb);
-							return;
-						}
-						go(target, cb)
-					});
-				}
-				let go = (target, cb)=>{
-					cga.walkRandomMazeAuto(target, (r)=>{
-						if(!r){
-							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
-							setTimeout(go, 3000);
-							return
-						}
-						cb(null)
-						return
-					})
-				}
-
-				let map = cga.GetMapName();
-				if(map.indexOf('诅咒之迷宫地下') != -1){
-					go(target, cb)
-				}else if(map.indexOf('芙蕾雅') != -1){
-					find(target, cb)
-				}else{
-					throw new Error('未知迷宫地图，请检查')
-				}
-			},
+			backTopPosList : [[99, 191,'']],
 		},
 		'布满青苔的洞窟' : {
 			entryMap : '芙蕾雅',
 			exitMap : '叹息之森林',
-			pos : [380,353],
-			posLower : null,
-			posUpper : null,
+			posList : [[380,353]],
+			xLimit : [380,380],
+			yLimit : [353,353],
 			prefix:'布满青苔的洞窟',
 			suffix:'楼',
 			forwardEntryTile : 17964,
 			backEntryTile : 17965,
-			maxLayer : 8,
-			findAndWalkMaze : (target, cb)=>{
-				let find = (target, cb)=>{
-					let randomMazeArgs = {
-						table : [[380,353]],
-						filter : (obj)=>{
-							return obj.cell == 3;
-						},
-						blacklist : [],
-						expectmap : '布满青苔的洞窟1楼',
-					};
-					cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
-						if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
-							console.log('可能迷宫重置并未刷新，重新进行寻找...')
-							setTimeout(find, 3000, target, cb);
-							return;
-						}
-						go(target, cb)
-					});
-				}
-				let go = (target, cb)=>{
-					cga.walkRandomMazeAuto(target, (r)=>{
-						if(!r){
-							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
-							setTimeout(go, 3000);
-							return
-						}
-						cb(null)
-						return
-					})
-				}
-
-				let map = cga.GetMapName();
-				if(map.indexOf('布满青苔的洞窟') != -1){
-					go(target, cb)
-				}else if(map.indexOf('芙蕾雅') != -1){
-					find(target, cb)
-				}else{
-					throw new Error('未知迷宫地图，请检查')
-				}
-			},
+			backTopPosList : [[99, 191,'']],// TODO坐标不对，确认坐标
 		},
 		/**	
+		 * 共5层
 		 * 蜥蜴洞穴其实是和4转洞窟一样的带有缓步台的迷宫，分为上层迷宫和下层迷宫。
 		 * 不论上层还是下层，都是清一色的石化蜥蜴
 		 * 上层是我们最常使用的90+练级地点。上层的1层大概95怪，顶层5层大概108级怪
@@ -9203,56 +9124,17 @@ module.exports = function(callback){
 		'蜥蜴洞穴上层' : {
 			entryMap : '蜥蜴洞穴',
 			exitMap : '蜥蜴最下层',// index30401
-			pos : [17,4],
-			posLower : null,
-			posUpper : null,
+			posList : [[17,4]],
+			xLimit : [17,17],
+			yLimit : [4,4],
 			prefix:'蜥蜴洞穴上层第',
 			suffix:'层',
 			forwardEntryTile : 12002,
 			backEntryTile : 12000,
-			maxLayer : 5,
-			findAndWalkMaze : (target, cb)=>{
-				let find = (target, cb)=>{
-					let randomMazeArgs = {
-						table : [[17,4]],
-						filter : (obj)=>{
-							return obj.cell == 3;
-						},
-						blacklist : [],
-						expectmap : '蜥蜴洞穴上层第1层',
-					};
-					cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
-						if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
-							console.log('可能迷宫重置并未刷新，重新进行寻找...')
-							setTimeout(find, 3000, target, cb);
-							return;
-						}
-						go(target, cb)
-					});
-				}
-				let go = (target, cb)=>{
-					cga.walkRandomMazeAuto(target, (r)=>{
-						if(!r){
-							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
-							setTimeout(go, 3000);
-							return
-						}
-						cb(null)
-						return
-					})
-				}
-
-				let map = cga.GetMapName();
-				if(map.indexOf('蜥蜴洞穴上层第') != -1){
-					go(target, cb)
-				}else if(map.indexOf('蜥蜴洞穴') != -1){
-					find(target, cb)
-				}else{
-					throw new Error('未知迷宫地图，请检查')
-				}
-			},
+			backTopPosList : [[15, 16,'']],
 		},
 		/**
+		 * 共5层
 		 * 不论上层还是下层，都是清一色的石化蜥蜴
 		 * 下层的1层大概110级怪，顶层5层大概119级怪。迷宫比上层大，不适合练级。
 		 * 下层出口的【蜥蜴洞穴最下层（index30403）】BOSS房间中，有几个对象：
@@ -9264,75 +9146,37 @@ module.exports = function(callback){
 		'蜥蜴洞穴下层' : {
 			entryMap : '蜥蜴最下层',
 			exitMap : '蜥蜴洞穴最下层',// index30403
-			pos : [13, 3],
-			posLower : null,
-			posUpper : null,
+			posList : [[13,3]],
+			xLimit : [13,13],
+			yLimit : [3,3],
 			prefix:'蜥蜴洞穴下层第',
 			suffix:'层',
 			forwardEntryTile : 12002,
 			backEntryTile : 12000,
-			maxLayer : 5,
+			backTopPosList : [[26, 4,'']],
 		},
 		/**
+		 * 层数不定，9-11层均出现过顶层
 		 * 1层大概108级怪，顶层11层大概132级怪
 		 * 出口房间是个看起来真的像房间的地图，还有红地毯。房间名称就叫【黑龙沼泽（index30404）】
 		 * 但是房间前面有白骨哦。。
 		 * NPC:发光的石板，点击对话【颇为显眼】，但点击确定没有任何反应，猜测是任务
 		 * 传送石[11,17]：回到黑龙沼泽11层
 		 * 
-		 * 【注意】总有人在出口传送石附近练级，我怀疑可能有任务道具直接传送至出口房间，然后直接在出口房间传送石回到11层练级。
+		 * 【注意】总有人在出口传送石附近练级，我怀疑可能有任务道具直接传送至出口房间，然后直接在出口房间传送石回到顶层练级。
+		 * 另一种想法是，如果顶层数字并不确定，可能许多脚本的逻辑是走到顶层再走回来，这也可能是大家都在出口出练级的原因
 		 */
 		'黑龙沼泽' : {
 			entryMap : '肯吉罗岛',
 			exitMap : 30404,// 出口房间名称就叫【黑龙沼泽】，容易混淆，改用index记录
-			pos : [424, 345],
-			posLower : null,
-			posUpper : null,
+			posList : [[424,345]],
+			xLimit : [420,430],
+			yLimit : [340,350],
 			prefix:'黑龙沼泽',
 			suffix:'区',
 			forwardEntryTile : 12002,
 			backEntryTile : 12000,
-			maxLayer : 11,
-			findAndWalkMaze : (target, cb)=>{
-				let find = (target, cb)=>{
-					let randomMazeArgs = {
-						table : [[424, 345]],
-						filter : (obj)=>{
-							return obj.cell == 3 && obj.mapx >= 420 && obj.mapx <= 430 && obj.mapy >= 340 && obj.mapy <= 350;
-						},
-						blacklist : [],
-						expectmap : '黑龙沼泽1区',
-					};
-					cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
-						if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
-							console.log('可能迷宫重置并未刷新，重新进行寻找...')
-							setTimeout(find, 3000, target, cb);
-							return;
-						}
-						go(target, cb)
-					});
-				}
-				let go = (target, cb)=>{
-					cga.walkRandomMazeAuto(target, (r)=>{
-						if(!r){
-							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
-							setTimeout(go, 3000);
-							return
-						}
-						cb(null)
-						return
-					})
-				}
-
-				let map = cga.GetMapName();
-				if(map.indexOf('黑龙沼泽') != -1){
-					go(target, cb)
-				}else if(map.indexOf('肯吉罗岛') != -1){
-					find(target, cb)
-				}else{
-					throw new Error('未知迷宫地图，请检查')
-				}
-			},
+			backTopPosList : [[11, 17,'']],
 		},
 		/**
 		 * 旧日之地很特殊：
@@ -9354,54 +9198,14 @@ module.exports = function(callback){
 		'旧日迷宫' : {
 			entryMap : '迷宫入口',
 			exitMap : 44711,// 出口房间名称就叫【旧日之地】，容易混淆，改用index记录
-			pos : [9, 5],
-			posLower : null,
-			posUpper : null,
+			posList : [[9,5]],
+			xLimit : [9,9],
+			yLimit : [5,5],
 			prefix:'旧日迷宫第',
 			suffix:'层',
 			forwardEntryTile : 13275,
 			backEntryTile : 13274,
-			maxLayer : 20,
-			findAndWalkMaze : (target, cb)=>{
-				let find = (target, cb)=>{
-					let randomMazeArgs = {
-						table : [[9, 5]],
-						filter : (obj)=>{
-							return obj.cell == 3;
-						},
-						blacklist : [],
-						expectmap : '旧日迷宫第1层',
-					};
-					cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
-						if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
-							console.log('可能迷宫重置并未刷新，重新进行寻找...')
-							setTimeout(find, 3000, target, cb);
-							return;
-						}
-						go(target, cb)
-					});
-				}
-				let go = (target, cb)=>{
-					cga.walkRandomMazeAuto(target, (r)=>{
-						if(!r){
-							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
-							setTimeout(go, 3000);
-							return
-						}
-						cb(null)
-						return
-					})
-				}
-
-				let map = cga.GetMapName();
-				if(map.indexOf('旧日迷宫第') != -1){
-					go(target, cb)
-				}else if(map.indexOf('迷宫入口') != -1){
-					find(target, cb)
-				}else{
-					throw new Error('未知迷宫地图，请检查')
-				}
-			},
+			backTopPosList : [[11, 17,'']],// TODO坐标不对，确认坐标
 		},
 		/**
 		 * 战胜旧日迷宫BOSS李贝留斯的幻影后，才能抵达这个迷宫的入口
@@ -9425,14 +9229,14 @@ module.exports = function(callback){
 		'旧日之塔' : {
 			entryMap : '旧日之塔入口',
 			exitMap : '旧日之塔顶层',// index 44713
-			pos : [9, 5],
-			posLower : null,
-			posUpper : null,
+			posList : [[9,5]],
+			xLimit : [9,9],
+			yLimit : [5,5],
 			prefix:'旧日之塔第',
 			suffix:'层',
 			forwardEntryTile : 13996,
 			backEntryTile : 13997,
-			maxLayer : 20,
+			backTopPosList : [[11, 17,'']],// TODO坐标不对，确认坐标
 		},
 		/**
 		 * 出口为半山腰，160级练级处。
@@ -9441,54 +9245,14 @@ module.exports = function(callback){
 		'通往山顶的路' : {
 			entryMap : '小岛',
 			exitMap : '半山腰',
-			pos : [64, 45],
-			posLower : null,
-			posUpper : null,
+			posList : [[64,45]],
+			xLimit : [64,64],
+			yLimit : [45,45],
 			prefix:'通往山顶的路',
-			suffix:'M',
+			suffix:'00M',
 			forwardEntryTile : 13996,
 			backEntryTile : 13997,
-			maxLayer : 10,
-			findAndWalkMaze : (target, cb)=>{
-				let find = (target, cb)=>{
-					let randomMazeArgs = {
-						table : [[64, 45]],
-						filter : (obj)=>{
-							return obj.cell == 3 && obj.mapx >= 60 && obj.mapx <= 70 && obj.mapy >= 40 && obj.mapy <= 50;
-						},
-						blacklist : [],
-						expectmap : '通往山顶的路100M',
-					};
-					cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
-						if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
-							console.log('可能迷宫重置并未刷新，重新进行寻找...')
-							setTimeout(find, 3000, target, cb);
-							return;
-						}
-						go(target, cb)
-					});
-				}
-				let go = (target, cb)=>{
-					cga.walkRandomMazeAuto(target, (r)=>{
-						if(!r){
-							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
-							setTimeout(go, 3000);
-							return
-						}
-						cb(null)
-						return
-					})
-				}
-
-				let map = cga.GetMapName();
-				if(map.indexOf('通往山顶的路') != -1){
-					go(target, cb)
-				}else if(map.indexOf('小岛') != -1){
-					find(target, cb)
-				}else{
-					throw new Error('未知迷宫地图，请检查')
-				}
-			},
+			backTopPosList : [[11, 17,'']],// TODO坐标不对，确认坐标
 		},
 		/**
 		 * 如果你做完半山6【地狱的回响】，和大祭司对话进入的小岛，最后在破冰面下面进入的地狱入口是这个。
@@ -9497,14 +9261,14 @@ module.exports = function(callback){
 		'地狱入口' : {
 			entryMap : '圣山内部',
 			exitMap : '地狱入口',// index57473
-			pos : [19, 7],
-			posLower : null,
-			posUpper : null,
+			posList : [[19,7]],
+			xLimit : [19,19],
+			yLimit : [7,7],
 			prefix:'通往地狱的道路地下',
 			suffix:'层',
 			forwardEntryTile : 17957,
 			backEntryTile : 17956,
-			maxLayer : 36,
+			backTopPosList : [[11, 17,'']],// TODO坐标不对，确认坐标
 		},
 	}
 
@@ -9802,23 +9566,7 @@ module.exports = function(callback){
 			}
 		}else if(typeof targetMap == 'number'){
 			if(targetMap > 0 && targetMap < 100){
-				if(targetMap > mazeInfo.maxLayer){
-					console.log('当前迷宫最多【',mazeInfo.maxLayer,'】层，自动为你更改为迷宫最大层数')
-					// 半山特殊处理
-					if(map.indexOf('通往山顶的路') != -1){
-						newmap = mazeInfo.prefix + mazeInfo.maxLayer * 100 + mazeInfo.suffix
-					}else{
-						newmap = mazeInfo.prefix + mazeInfo.maxLayer + mazeInfo.suffix
-					}
-				}else{
-					newmap = mazeInfo.prefix + targetMap + mazeInfo.suffix
-					// 半山特殊处理
-					if(map.indexOf('通往山顶的路') != -1){
-						newmap = mazeInfo.prefix + targetMap * 100 + mazeInfo.suffix
-					}else{
-						newmap = mazeInfo.prefix + targetMap + mazeInfo.suffix
-					}
-				}
+				newmap = mazeInfo.prefix + targetMap + mazeInfo.suffix
 				if (targetMap < regexLayer(map)){
 					isForward = false
 				}else if(targetMap > regexLayer(map)){
@@ -9837,7 +9585,7 @@ module.exports = function(callback){
 		}
 
 		if(cga.GetMapName() == newmap || cga.GetMapIndex().index3 == newmap){
-			cb(true)
+			cb('ok')
 			return
 		}
 
@@ -9848,18 +9596,24 @@ module.exports = function(callback){
 
 		// 主逻辑
 		var go = ()=> {
+			let curmap = cga.GetMapName()
+			let curmapIndex = cga.GetMapIndex().index3
 			// 如果走一半迷宫消失了，则调用回调函数，交给外面逻辑处理
-			if(cga.GetMapName() == mazeInfo.entryMap){
-				cb(false);
+			if(curmap == mazeInfo.entryMap || curmapIndex == mazeInfo.entryMap){
+				cb('entryMap');
+				return;
+			}else if(curmap == mazeInfo.exitMap || curmapIndex == mazeInfo.exitMap){
+				console.log('进入楼梯时意外走出迷宫，推测输入的楼层数比迷宫最深处还多。')
+				cb('exitMap');
 				return;
 			}
 
 			// console.log('目标地图:【',newmap,'】，当前地图【',map,'】，需要往【',isForward ? '前':'后','】走')
 
 			// cga.walkRandomMaze传入''，代表walklist中的空串，也就是walklist切换任何地图都不报异常。
-			cga.walkRandomMaze('',(e)=>{
+			cga.walkRandomMaze('',(err,reason)=>{
 				if(cga.GetMapName() == newmap || cga.GetMapIndex().index3 == newmap){
-					cb(true)
+					cb('ok')
 					return
 				}else{
 					go()
@@ -9891,7 +9645,87 @@ module.exports = function(callback){
 			})
 		}
 		go()
+		return
+	}
 
+	cga.findAndWalkMaze = (mazeName, targetMap, cb) => {
+		let find = (targetMap, cb)=>{
+			let randomMazeArgs = {
+				table : mazeInfo.posList,
+				filter : (obj)=>{
+					return obj.cell == 3 && obj.mapx >= mazeInfo.xLimit[0] && obj.mapx <= mazeInfo.xLimit[1] && obj.mapy >= mazeInfo.yLimit[0] && obj.mapy <= mazeInfo.yLimit[1];
+				},
+				blacklist : [],
+				expectmap : mazeInfo.prefix + '1' + mazeInfo.suffix,
+			};
+			cga.getRandomMazeEntrance(randomMazeArgs, (err)=>{
+				if(err && err.message && err.message.indexOf('没有找到迷宫入口') >= 0){
+					console.log('可能迷宫重置并未刷新，重新进行寻找...')
+					setTimeout(find, 3000, targetMap, cb);
+					return;
+				}
+				go(targetMap, cb)
+			});
+		}
+
+		let back = (cb)=>{
+			cga.walkList(mazeInfo.backTopPosList, (err, reason)=>{
+				if(err == null){
+					cga.waitUntilMapLoaded(()=>{
+						console.log('输入楼层大于迷宫最深层，已返回迷宫最深层，API结束。')
+						cb(err, reason);
+					});
+					return;
+				}
+				cb(err, reason);
+				return;
+			});
+		}
+
+		let go = (targetMap, cb)=>{
+			cga.walkRandomMazeAuto(targetMap, (r)=>{
+				if(r){
+					cga.waitUntilMapLoaded(()=>{
+						if(r == 'ok'){
+							console.log('抵达预期地图，API结束。')
+							setTimeout(cb, 1500);
+							return
+						}else if(r == 'entryMap'){
+							console.log('走迷宫失败，可能由于迷宫重置被传送至入口。重新进入迷宫...')
+							setTimeout(find, 3000,targetMap, cb);
+							return
+						}else if(r == 'exitMap'){
+							console.log('非预期的走出迷宫')
+							setTimeout(back, 1500, cb);
+							return
+						}
+						throw new Error('非预期的回调，请检查r:',r)
+					});
+				}else{
+					throw new Error('非预期的回调，请检查r:',r)
+				}
+			})
+		}
+
+		let map = cga.GetMapName();
+		let mapIndex = cga.GetMapIndex().index3
+		let mazeInfo = cga.mazeInfo[mazeName]
+		
+		if(map == targetMap || mapIndex == targetMap){
+			console.log('已经在目标地图中，API结束。')
+			setTimeout(cb, 1500);
+			return
+		}
+		if(map.indexOf(mazeInfo.prefix) != -1 && map.indexOf(mazeInfo.suffix) != -1){
+			go(targetMap, cb)
+		}else if(map == mazeInfo.entryMap || mapIndex == mazeInfo.entryMap){
+			find(targetMap, cb)
+		}else if(map == mazeInfo.exitMap || mapIndex == mazeInfo.exitMap){
+			back(cb)
+		}else{
+			throw new Error('未知迷宫地图，请检查。map:', map)
+		}
+		return
 	}
 
 	cga.getRandomMazeEntrance = (args, cb, index = 0)=>{
