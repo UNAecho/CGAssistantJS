@@ -9518,7 +9518,17 @@ module.exports = function(callback){
 			}, filter);
 		});
 	}
-	
+	/**
+	 * UNAecho:开发一个走迷宫API的封装
+	 * 只需要输入你的目标楼层(1-99)或者目标地图名称(如黑龙沼泽9区)，或者迷宫的出口(如半山腰)，即可在迷宫中自动解析楼梯，以及行进方向。
+	 * @param {string|number} targetMap 目标地点，可输入2种类型数值，string或者number。具体举例如下：
+	 * 1、string：可输入楼层名称，或者入口、出口名称，如：'黑龙沼泽9区'，或者'半山腰'，或者'小岛'。可自动从迷宫中前进或后退至迷宫的入口/指定楼层/出口。
+	 * 2、number：可输入楼层数字(1-99)、mapindex3数字(仅限出入口这种index固定的地图)。可自动从迷宫中前进或后退至迷宫的入口/指定楼层/出口。
+	 * 
+	 * 【注意】此API只能在迷宫中运行，入口、出口均直接调用回调函数。如需迷宫的入口寻找、自动走迷宫等功能，请使用cga.findAndWalkMaze()
+	 * @param {*} cb 
+	 * @returns 
+	 */
 	cga.walkRandomMazeAuto = (targetMap, cb) => {
 		// 人物前进方向，true为向楼层增加方向走，false反之。
 		var isForward = null
@@ -9647,7 +9657,17 @@ module.exports = function(callback){
 		go()
 		return
 	}
-
+	/**
+	 * UNAecho:开发一个对cga各个迷宫API的全方位封装。功能为自动寻找迷宫、自动重新进入迷宫、自动探索迷宫、自动走迷宫至目标地图。
+	 * 只需要输入迷宫名称、你的目标楼层(1-99)或者目标地图名称(如黑龙沼泽9区)，或者迷宫的出口(如半山腰)，即可在迷宫中自动解析楼梯，以及行进方向。
+	 * @param {string} mazeName 迷宫名称，只能输入特定string。具体数值参考cga.mazeInfo中的各个key值。
+	 * @param {string|number} targetMap 目标地点，可输入2种类型数值，string或者number。具体举例如下：
+	 * 1、string：可输入楼层名称，或者入口、出口名称，如：'黑龙沼泽9区'，或者'半山腰'，或者'小岛'。可自动从迷宫中前进或后退至迷宫的入口/指定楼层/出口。
+	 * 2、number：可输入楼层数字(1-99)、mapindex3数字(仅限出入口这种index固定的地图)。可自动从迷宫中前进或后退至迷宫的入口/指定楼层/出口。
+	 * 
+	 * @param {*} cb 
+	 * @returns 
+	 */
 	cga.findAndWalkMaze = (mazeName, targetMap, cb) => {
 		let find = (targetMap, cb)=>{
 			let randomMazeArgs = {
