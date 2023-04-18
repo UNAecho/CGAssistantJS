@@ -7,17 +7,17 @@ var buyArray = [
 	{
 		name : '地水的水晶（5：5）',
 		type : 0,
-		area : ['雪拉威森塔79楼','旧日之地','砍龙'],//砍龙为任意水晶
+		area : ['雪拉威森塔79楼','旧日迷宫','砍龙'],//砍龙为任意水晶
 	},
 	{
 		name : '水火的水晶（5：5）',
 		type : 1,
-		area : ['银狮','回廊','营地','蝎子','黑龙'],//营地为任意水晶，沿用前一个练级地点（回廊）的水晶
+		area : ['银狮','回廊','营地','蝎子','黑龙沼泽'],//营地为任意水晶，沿用前一个练级地点（回廊）的水晶
 	},
 	{
 		name : '火风的水晶（5：5）',
 		type : 2,
-		area : ['雪拉威森塔1楼','低地鸡','刀鸡','龙骨','黄金龙骨','诅咒','雪拉威森塔85楼','雪拉威森塔89楼','蜥蜴','半山'],//诅咒为任意水晶
+		area : ['雪拉威森塔1楼','低地鸡','刀鸡','龙骨','黄金龙骨','诅咒之迷宫','雪拉威森塔85楼','雪拉威森塔89楼','蜥蜴洞穴上层','通往山顶的路'],// 诅咒水晶为任意
 	},
 	{
 		name : '风地的水晶（5：5）',
@@ -31,14 +31,19 @@ const repairFilter = (eq) => {
 		const durability = cga.getEquipEndurance(eq);
 		if (!global.area){
 			console.log('global.area为undefined,使用离线静态方式换水晶')
-			if (durability && durability[0] < 150){
+			if (durability && durability[0] < 50){
 				console.log('水晶耐久不足，更换')
 				return true
 			}
 			return false
 		}
+		
+		var areaName = global.area.map
+		// 雪拉威森塔，每层需要的水晶不一样，特殊处理
+		if(global.area.map == '雪拉威森塔'){
+			areaName = global.area.layer + '楼'
+		}
 
-		var areaName = global.area.map + (global.area.layer > 0 ? (global.area.layer + '楼') : '')
 		for(var i in buyArray){
 			if(buyArray[i].area.indexOf(areaName) !=-1){
 				console.log('当前练级区域【' +areaName +'】需要【'+buyArray[i].name + '】水晶')
@@ -46,7 +51,7 @@ const repairFilter = (eq) => {
 				break;
 			}
 		}
-		if (durability && durability[0] < 150){
+		if (durability && durability[0] < 50){
 			console.log('水晶耐久不足，更换')
 			return true
 		}else if (eq.name != thisobj.buyCrystal.name){
@@ -63,11 +68,11 @@ const hasFilter = (eq) => {
 	}
 	return false;
 }
-// 为了节约，改为150耐即视为可用
+// 为了节约，改为50耐即视为可用
 const hasrepairedFilter = (eq) => {
 	if (eq.type == 22) {
 		const durability = cga.getEquipEndurance(eq);
-		return (durability && durability[0] > 150);
+		return (durability && durability[0] > 50);
 	}
 	return false;
 }
@@ -75,15 +80,21 @@ const hasrepairedFilter = (eq) => {
 const putdownEquipments = (cb)=>{
 	var items = cga.getEquipItems().filter(repairFilter);
 	if(items.length){
-		/*var emptyslot = cga.findInventoryEmptySlot();
-		if(emptyslot == -1){
-			cb(new Error('物品栏没有空位'));
+		let durability = cga.getEquipEndurance(items[0]);
+		if(durability && durability[0] > 50){
+			console.log('虽然属性不符，但耐久【' + durability[0] + '】还可以用，放到背包里保留下次使用。')
+			var emptyslot = cga.findInventoryEmptySlot();
+			if(emptyslot == -1){
+				cb(new Error('物品栏没有空位'));
+				return;
+			}
+			cga.MoveItem(items[0].pos, emptyslot, -1)
+		}else{
+			console.log('水晶属性低于50，直接丢弃。')
+			cga.DropItem(items[0].pos);
+			setTimeout(putdownEquipments, 1000, cb);
 			return;
 		}
-		cga.MoveItem(items[0].pos, emptyslot, -1)*/
-		cga.DropItem(items[0].pos);
-		setTimeout(putdownEquipments, 1000, cb);
-		return;
 	}
 	cb(null)
 	return false;

@@ -988,7 +988,7 @@ var thisobj = {
 			cb(null)
 		}else{
 			console.log('去【' + thisobj.object.battleAreaObj.name  + '】集合处' + (thisobj.object.area.layer > 0 ? '，准备去:【' + thisobj.object.area.layer + '】楼练级。': ''))
-			configMode.manualLoad('生产赶路')
+			configMode.manualLoad('战斗赶路')
 			thisobj.object.battleAreaObj.muster(cb)
 		}
 	},
