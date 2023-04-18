@@ -18,10 +18,10 @@ var supplyModeArray = [
 
 			console.log('智能回补，当前地图【' + map + '】')
 
-			if(typeof reasonObj == 'string'){
+			if (typeof reasonObj == 'string') {
 				console.log('回补理由:【' + reasonObj + '】')
-			}else if(typeof reasonObj == 'object' && reasonObj.result && reasonObj.result){
-				console.log('回补原因:【' + reasonObj.result + '】，理由:【' + reasonObj.reason+'】')
+			} else if (typeof reasonObj == 'object' && reasonObj.result && reasonObj.result) {
+				console.log('回补原因:【' + reasonObj.result + '】，理由:【' + reasonObj.reason + '】')
 			}
 
 			if (map == '矮人城镇' || cga.travel.camp.getRegion(map, mapXY) == '矮人城镇域') {
@@ -38,7 +38,7 @@ var supplyModeArray = [
 					cga.turnDir(0);// 资深也是0方向
 					setTimeout(cb, 5000);
 				});
-			} else if (map == '圣骑士营地'  || (cga.travel.camp.getRegion(map, mapXY) == '圣骑士营地门口域') || mapindex == 44692) {
+			} else if (map == '圣骑士营地' || (cga.travel.camp.getRegion(map, mapXY) == '圣骑士营地门口域') || mapindex == 44692) {
 				// 资深的情况
 				// var path = [
 				// 	[9, 11],
@@ -92,8 +92,8 @@ var supplyModeArray = [
 
 				cga.walkList(path, () => {
 					cga.TurnTo(9, 4);// 资深cga.TurnTo(11, 6);
-					setTimeout(()=>{
-						cga.travel.autopilot('主地图',cb)
+					setTimeout(() => {
+						cga.travel.autopilot('主地图', cb)
 					}, 5000);
 				});
 			} else if (map == '国民会馆' || (mapindex >= 59801 && mapindex <= 59850)) {
@@ -140,19 +140,19 @@ var supplyModeArray = [
 		},
 		isLogBack: (map, mapindex) => {
 			// 回城路程较远的练级地点，都设置登出回补
-			if (mapindex > 59850 && mapindex < 59900){
+			if (mapindex > 59850 && mapindex < 59900) {
 				return true
 			} else if (map.indexOf('过去与现在的回廊') >= 0) {
 				return true
-			}  else if(map == '肯吉罗岛' && cga.travel.camp.getRegion(map, cga.GetMapXY()) == '沙滩域'){
+			} else if (map == '肯吉罗岛' && cga.travel.camp.getRegion(map, cga.GetMapXY()) == '沙滩域') {
 				return true
 			} else if (map.indexOf('隐秘之洞地下') >= 0) {
 				return true
-			}  else if (map.indexOf('蜥蜴洞穴') >= 0) {
+			} else if (map.indexOf('蜥蜴洞穴') >= 0) {
 				return true
 			} else if (map.indexOf('黑龙沼泽') >= 0) {
 				return true
-			}else if (map.indexOf('小岛') >= 0) {
+			} else if (map.indexOf('小岛') >= 0) {
 				return true
 			} else if (map.indexOf('通往山顶的路') >= 0) {
 				return true
@@ -188,7 +188,7 @@ var supplyModeArray = [
 				return true
 			} else if (map.indexOf('半山腰') >= 0) {
 				return true
-			} else if (map == '国民会馆' || (mapindex >= 59801 && mapindex <= 59850)){
+			} else if (map == '国民会馆' || (mapindex >= 59801 && mapindex <= 59850)) {
 				return true
 			} else if (map == '曙光骑士团营地' || cga.travel.camp.getRegion(map, cga.GetMapXY()) == '曙光骑士团营地域') {
 				return true
