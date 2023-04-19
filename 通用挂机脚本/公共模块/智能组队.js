@@ -925,7 +925,7 @@ const areaChangedFlag = 'areaChanged'
 // 当队内打手不足时，小号需要退队给打手让位，此时需要暂时将队长加入黑名单，并在超时时间之内不再加入此队，防止挤兑。
 var blacklist = {}
 // 小号退出给打手让位的超时时间。超过则可以再次加入刚才退出的队伍。
-const blacklistTimeout = 5000
+const blacklistTimeout = 10000
 
 // 共享队员信息，智能练级的核心部分
 const share = (cb) => {
