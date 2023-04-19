@@ -81,16 +81,12 @@ const putdownEquipments = (cb)=>{
 	var items = cga.getEquipItems().filter(repairFilter);
 	if(items.length){
 		let durability = cga.getEquipEndurance(items[0]);
-		if(durability && durability[0] > 50){
+		var emptyslot = cga.findInventoryEmptySlot();
+		if(durability && durability[0] > 50 && emptyslot != -1){
 			console.log('虽然属性不符，但耐久【' + durability[0] + '】还可以用，放到背包里保留下次使用。')
-			var emptyslot = cga.findInventoryEmptySlot();
-			if(emptyslot == -1){
-				cb(new Error('物品栏没有空位'));
-				return;
-			}
 			cga.MoveItem(items[0].pos, emptyslot, -1)
 		}else{
-			console.log('水晶属性低于50，直接丢弃。')
+			console.log('水晶已经不能用或道具栏没有空位，直接丢弃旧水晶。')
 			cga.DropItem(items[0].pos);
 			setTimeout(putdownEquipments, 1000, cb);
 			return;

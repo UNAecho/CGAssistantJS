@@ -986,7 +986,7 @@ var thisobj = {
 		if (thisobj.object.battleAreaObj.isMusterMap(cga.GetMapName(), cga.GetMapXY())) {
 			cb(null)
 		} else {
-			console.log('去【' + thisobj.object.battleAreaObj.name + '】集合处' + (thisobj.object.area.layer > 0 ? '，准备去:【' + thisobj.object.area.layer + '】楼练级。' : ''))
+			console.log('去【' + thisobj.object.battleAreaObj.name + '】集合处' + (thisobj.object.area.layer > 0 ? '，计划去【' + thisobj.object.area.layer + '】楼练级。' : ''))
 			configMode.manualLoad('战斗赶路')
 			thisobj.object.battleAreaObj.muster(cb)
 		}
@@ -1108,9 +1108,7 @@ var thisobj = {
 			battleArea = '旧日迷宫', layer = 16
 		} else if (camp && minLv > 118 && minLv <= 125) {
 			battleArea = '旧日迷宫', layer = 20
-		} else if (camp && minLv > 125 && minLv <= 128) {
-			battleArea = '黑龙沼泽', layer = 10
-		} else if (camp && minLv > 128 && minLv <= 138) {
+		} else if (camp && minLv > 125 && minLv <= 138) {// 10楼最大127级，众数126级。所以直接去顶层划算。
 			battleArea = '黑龙沼泽', layer = 11
 		} else if (island && minLv > 138) {// 半山判定，由于是去迷宫出口练级，所以layer依然是0
 			battleArea = '通往山顶的路'
