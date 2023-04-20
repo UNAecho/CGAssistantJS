@@ -4086,8 +4086,9 @@ module.exports = function(callback){
 					cga.travel.autopilot(targetMap,cb)
 				});
 		} catch (error) {
-			console.log('[UNA脚本警告]:可能由于【输入不存在的地图index/名称】【地图未读取完毕】，导致错误，error:')
-			console.error(error)
+			console.log('[UNA脚本警告]:可能由于【输入不存在的地图index/名称】【地图未读取完毕】，导致错误。')
+			console.error('targetMap:',targetMap)
+			console.error('error:',error)
 		}
 		return
 	}
@@ -8021,7 +8022,7 @@ module.exports = function(callback){
 				let curReqStr = reqArr.shift()
 				if(curReqStr){
 					cga.ChangeNickName("z" + curReqStr+allDoneStr)
-					speakerMeter = setTimeout(changeNick, 5000);
+					speakerMeter = setTimeout(changeNick, 7000);
 					return
 				}
 			}

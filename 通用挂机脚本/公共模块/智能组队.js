@@ -66,8 +66,8 @@ var teamModeArray = [
 					}
 
 					if (teamplayers[0].nick == 'rebuild') {
-						if (thisobj.object.role == 2) {
-							console.log('队长要求小号离队，因为打手不足')
+						if (thisobj.object.role > 0) {
+							console.log('队长要求队员离队，因为打手数量不匹配，退出重新寻找其他队伍拼车')
 							// 退出时，加入时间戳
 							blacklist[teamplayers[0].name] = Date.now()
 							cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
@@ -159,18 +159,44 @@ var teamModeArray = [
 						}
 					}
 
-					if (bodyguardCnt < thisobj.object.minBodyguard) {
-						console.log('队内打手人数不足，队长重新等待队员加入，小号自己离队，并在规定时间内不再加入此队伍。')
+					if (bodyguardCnt != thisobj.object.bodyguardCount) {
+						console.log('队内打手人数不匹配，队员自动退出并将当前队长加入黑名单。一段时间过后，黑名单自动解除。防止同样的不合格队员挤兑')
 						cb('rebuild')
 						return
 					}
 
-					console.log('打手【', bodyguardCnt, '】人', '大于最少要求【', thisobj.object.minBodyguard, '】人，出发')
+					console.log('打手【', bodyguardCnt, '】人', '符合数量要求【', thisobj.object.bodyguardCount, '】人，出发')
 					cb('ok')
 					return
 				}
 
 				var wait = () => {
+					// 同一时间只能有一个队长允许队员上车，其他队长通过控制昵称，暂时不允许小号进入队伍。防止多个车队进入死锁。
+					var leader = cga.findPlayerUnit((u) => {
+						if ((u.xpos == thisobj.object.leaderX && u.ypos == thisobj.object.leaderY)
+							&& (!thisobj.object.leaderFilter || u.nick_name.indexOf(thisobj.object.leaderFilter) != -1)
+						) {
+							return true;
+						}
+						return false
+					});
+					// 如果已经有其他队长允许上车，则自己先进入休眠。
+					if (leader) {
+						console.log('检测到有其他司机【' + leader.unit_name + '】在等待拼车，暂时停止招人，10秒后重新判断..')
+						// 挂上标记，队员才能识别队长
+						if (cga.GetPlayerInfo().nick == thisobj.object.leaderFilter) {
+							console.log('去掉leaderFilter，防止队员进入')
+							cga.ChangeNickName('')
+						}
+						setTimeout(wait, 10000);
+						return
+					}
+					
+					// 挂上标记，队员才能识别队长
+					if (cga.GetPlayerInfo().nick != thisobj.object.leaderFilter) {
+						cga.ChangeNickName(thisobj.object.leaderFilter)
+					}
+
 					cga.waitTeammatesWithFilter(thisobj.object.memberFilter, thisobj.object.minTeamMemberCount, (r) => {
 						if (r) {
 							share((shareInfoObj) => {
@@ -192,9 +218,9 @@ var teamModeArray = [
 										setTimeout(() => {
 											cga.ChangeNickName('rebuild')
 										}, 1500);
-										// 给小号对rebuild充分时间调整，然后挂上标记，进入wait
+										// 给小号对rebuild充分时间调整，清空昵称，重新进入wait
 										setTimeout(() => {
-											cga.ChangeNickName(thisobj.object.leaderFilter)
+											cga.ChangeNickName('')
 											wait()
 										}, 5000);
 									}
@@ -203,12 +229,12 @@ var teamModeArray = [
 							return;
 						}
 						setTimeout(wait, 5000);
+						return
 					})
 				}
 
 				cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, true);
-				// 挂上标记，队员才能识别队长
-				cga.ChangeNickName(thisobj.object.leaderFilter)
+
 				wait();
 			}
 		},
@@ -925,7 +951,7 @@ const areaChangedFlag = 'areaChanged'
 // 当队内打手不足时，小号需要退队给打手让位，此时需要暂时将队长加入黑名单，并在超时时间之内不再加入此队，防止挤兑。
 var blacklist = {}
 // 小号退出给打手让位的超时时间。超过则可以再次加入刚才退出的队伍。
-const blacklistTimeout = 10000
+const blacklistTimeout = Math.floor(Math.random()*(10000-5000+1)+5000);
 
 // 共享队员信息，智能练级的核心部分
 const share = (cb) => {
@@ -1060,7 +1086,9 @@ var thisobj = {
 		// 由于雪拉威森塔路程近，50层前又可以回补，将1-50级传统练级地点改为雪拉威森塔
 		var battleArea = '雪拉威森塔'
 		var layer = 0
-		if (minLv > 10 && minLv <= 15) {// 10楼不会遇敌，只能1楼练到10级去15楼
+		if (minLv > 0 && minLv <= 10) {// 10楼不会遇敌，只能1楼练到10级去15楼
+			layer = 1
+		} else if (minLv > 10 && minLv <= 15) {
 			layer = 15
 		} else if (minLv > 15 && minLv <= 20) {
 			layer = 20
@@ -1321,9 +1349,9 @@ var thisobj = {
 		}
 
 		if (cga.isTeamLeader) {
-			configTable.minBodyguard = obj.minBodyguard;
-			thisobj.object.minBodyguard = obj.minBodyguard;
-			if (!(thisobj.object.minBodyguard >= 0)) {
+			configTable.bodyguardCount = obj.bodyguardCount;
+			thisobj.object.bodyguardCount = obj.bodyguardCount;
+			if (!(thisobj.object.bodyguardCount >= 0)) {
 				console.error('读取配置：队伍最小打手数失败！');
 				return false;
 			}
@@ -1497,10 +1525,10 @@ var thisobj = {
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, index) => {
 				if (index !== null && index >= 0 && index <= 4) {
-					configTable.minBodyguard = index;
-					thisobj.object.minBodyguard = index;
+					configTable.bodyguardCount = index;
+					thisobj.object.bodyguardCount = index;
 
-					var sayString2 = '当前已选择: 队伍最小打手人数[' + thisobj.object.minBodyguard + ']人。';
+					var sayString2 = '当前已选择: 队伍最小打手人数[' + thisobj.object.bodyguardCount + ']人。';
 					cga.sayLongWords(sayString2, 0, 3, 1);
 
 					setTimeout(cb2, 500);
