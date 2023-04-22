@@ -506,6 +506,8 @@ var thisobj = {
 			return 2
 		if (map == '盖雷布伦森林')
 			return 1;
+		if (map == '梅布尔隘地')
+			return 1;
 
 		if (map == '布拉基姆高地')
 			return 2;

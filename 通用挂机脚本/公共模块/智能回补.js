@@ -142,6 +142,10 @@ var supplyModeArray = [
 			// 回城路程较远的练级地点，都设置登出回补
 			if (mapindex > 59850 && mapindex < 59900) {
 				return true
+			} else if (map.indexOf('梅布尔隘地') >= 0) {
+				return true
+			} else if (map.indexOf('诅咒之迷宫') >= 0) {
+				return true
 			} else if (map.indexOf('过去与现在的回廊') >= 0) {
 				return true
 			} else if (map == '肯吉罗岛' && cga.travel.camp.getRegion(map, cga.GetMapXY()) == '沙滩域') {
@@ -167,6 +171,12 @@ var supplyModeArray = [
 			} else if (map.indexOf('法兰城') >= 0) {
 				return true
 			} else if (map.indexOf('里谢里雅堡') >= 0) {
+				return true
+			} else if (map.indexOf('盖雷布伦森林') >= 0) {
+				return true
+			} else if (map.indexOf('梅布尔隘地') >= 0) {
+				return true
+			} else if (map.indexOf('诅咒之迷宫') >= 0) {
 				return true
 			} else if (map.indexOf('过去与现在的回廊') >= 0) {
 				return true

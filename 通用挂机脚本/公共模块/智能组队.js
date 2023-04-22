@@ -191,7 +191,7 @@ var teamModeArray = [
 						setTimeout(wait, 10000);
 						return
 					}
-					
+
 					// 挂上标记，队员才能识别队长
 					if (cga.GetPlayerInfo().nick != thisobj.object.leaderFilter) {
 						cga.ChangeNickName(thisobj.object.leaderFilter)
@@ -485,6 +485,30 @@ var battleAreaArray = [
 		},
 		isDesiredMap: (map, mapXY) => {
 			return (map == '布拉基姆高地');
+		}
+	},
+	{
+		name: '梅布尔隘地',
+		muster: (cb) => {
+			cga.travel.newisland.toStone('X', () => {
+				var obj = { act: "map", target: "梅布尔隘地", neg: "梅布尔隘地" }
+				cga.askNpcForObj("艾尔莎岛", [165, 154], obj, () => {
+					cga.walkList([
+						cga.isTeamLeader ? [198, 49] : [198, 48],
+					], cb);
+				})
+			});
+		},
+		walkTo: (cb) => {
+			cga.walkList([
+				[193, 62],
+			], cb);
+		},
+		isMusterMap: (map, mapXY) => {
+			return map == '梅布尔隘地';
+		},
+		isDesiredMap: (map, mapXY) => {
+			return (map == '梅布尔隘地');
 		}
 	},
 	{
@@ -951,7 +975,7 @@ const areaChangedFlag = 'areaChanged'
 // 当队内打手不足时，小号需要退队给打手让位，此时需要暂时将队长加入黑名单，并在超时时间之内不再加入此队，防止挤兑。
 var blacklist = {}
 // 小号退出给打手让位的超时时间。超过则可以再次加入刚才退出的队伍。
-const blacklistTimeout = Math.floor(Math.random()*(10000-5000+1)+5000);
+const blacklistTimeout = Math.floor(Math.random() * (10000 - 5000 + 1) + 5000);
 
 // 共享队员信息，智能练级的核心部分
 const share = (cb) => {
@@ -1086,8 +1110,10 @@ var thisobj = {
 		// 由于雪拉威森塔路程近，50层前又可以回补，将1-50级传统练级地点改为雪拉威森塔
 		var battleArea = '雪拉威森塔'
 		var layer = 0
-		if (minLv > 0 && minLv <= 10) {// 10楼不会遇敌，只能1楼练到10级去15楼
+		if (minLv > 0 && minLv <= 5) {
 			layer = 1
+		} else if (minLv > 5 && minLv <= 10) {
+			battleArea = '梅布尔隘地'
 		} else if (minLv > 10 && minLv <= 15) {
 			layer = 15
 		} else if (minLv > 15 && minLv <= 20) {
