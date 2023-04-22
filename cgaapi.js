@@ -8262,7 +8262,7 @@ module.exports = function(callback){
 		})
 	}
 	/**
-	 * UNAecho:一个与NPC打交道的API，持续与NPC交互，直到获取某个道具，或看到NPC某句话
+	 * UNAecho:一个与NPC打交道的API，持续与NPC交互，直到获取某个东西，或看到NPC某句话
 	 * @param {String | Number} map NPC所处地图，可以是名称也可以是index
 	 * @param {Array} npcPos NPC坐标
 	 * @param {String | Number | Object} obj 目标对象
@@ -8274,16 +8274,23 @@ module.exports = function(callback){
 		map: 找NPC对话，直至人物被传送至此地图，调用cb，函数结束
 		skill: 找NPC对话，直至人物学习完技能或学习失败，调用cb，函数结束
 		forget: 找NPC对话，直至人物忘记技能，调用cb，函数结束
+		job: 找NPC对话，直至人物就职或转职，调用cb，函数结束
+		promote: 找NPC对话，直至人物职业晋级，调用cb，函数结束
 	 * obj.target : obj.act的目标，根据obj.act的不同，有几种情况：
 		obj.act为item时，obj.target输入item的名称或数字itemid
 		obj.act为msg时，obj.target输入监测NPC说话的内容切片
 		obj.act为map时，obj.target输入地图的名称或index
+		obj.act为skill时，obj.target输入想学的技能名称
+		obj.act为forget时，obj.target输入想忘记的技能名称
+		obj.act为job时，obj.target输入想就职的职业称号，可以输入任意职业阶级的称号，如【见习弓箭手】【王宫弓箭手】均指代【弓箭手】这一职业。
+		obj.act为promote时，obj.target输入目标阶级数字。0：0转，见习。1：1转，正阶。2：2转，王宫。3：3转，师范。4：4转，大师。5：5转，最终阶段。
 	 * [obj.neg] : 可选选项，如果与NPC说话，某句话想要选【否】【取消】等消极选项，obj.neg需要输入那句话的切片。
 		比如，如果想在NPC问【你愿意吗？】的时候回答【否】，那么obj.neg可以输入"愿意"、"你愿意吗"等切片
 	 * [obj.pos] : 可选选项，仅在obj.act = "map"时生效，人物需要等待被NPC传送至pos这个坐标，函数才结束
 	 * [obj.say] : 可选选项，人物会在与NPC交互的时候说话，因为有的NPC是需要说出对应的话才会有反应的
 	 * 
 	 * 【开发提醒】由于宠物学习技能时的【是】【否】界面属于特殊弹窗，cga.AsyncWaitNPCDialog无法捕获，故这里没有宠物相关功能的实现。
+	 * 更新，有空可以参考cga.parsePetSkillStoreMsg制作
 	 * @param {*} cb 回调函数，在obj.act不为map时，调用时会传入队伍全员信息
 	 * @returns 
 	 */
@@ -8324,13 +8331,22 @@ module.exports = function(callback){
 		const dialogHandler = (err, dlg)=>{
 			var actNumber = -1
 			if(dlg && dlg.options == 0){
+				// 转职确认画面，5000金币，需要点击【好的】(cga.ClickNPCDialog(0, 0))，【算了】cga.ClickNPCDialog(0, 1)
+				if(dlg.type == 2){
+					actNumber = 0
+					cga.ClickNPCDialog(0, actNumber);
+					cga.AsyncWaitNPCDialog(dialogHandler);
+					return;
+				}else if(dlg.type == 999){// TODO晋级时options是0，那么type是多少
+					
+				}
 				/**
 				 * 列表对话，多数用于学技能NPC的第一句话：
 				 * 1、想学习技能
 				 * 2、想遗忘技能
 				 * 3、不用了
 				 */
-				if(dlg.type == 16){
+				else if(dlg.type == 16){
 					if(obj.act == 'skill'){
 						console.log('进入' + obj.act)
 						actNumber = 0
@@ -8368,8 +8384,39 @@ module.exports = function(callback){
 				return;
 			}
 			else if(dlg && dlg.options == 2){
+				// 职业导师对话列表，就职、专职、晋级
+				if(dlg.type == 2){
+					// 就职
+					if(obj.act == 'job'){
+						let curJobObj = cga.job.getJob()
+						if(curJobObj.curJob == '游民'){
+							actNumber = 0
+							cga.ClickNPCDialog(0, actNumber);
+							cga.AsyncWaitNPCDialog(dialogHandler);
+							return;
+						}else{
+							actNumber = 1
+							cga.ClickNPCDialog(0, actNumber);
+							cga.AsyncWaitNPCDialog(dialogHandler);
+							return;
+						}
+					}
+					else if(obj.act == 'promote'){
+						actNumber = 2
+						cga.ClickNPCDialog(0, actNumber);
+						cga.AsyncWaitNPCDialog(dialogHandler);
+						return;
+					}
+					else if(obj.act == 'forget'){
+						console.log('进入' + obj.act)
+						actNumber = 1
+						cga.ClickNPCDialog(0, actNumber);
+						cga.AsyncWaitNPCDialog(dialogHandler);
+						return;
+					}
+				}
 				// 从dlg.options == 0 && dlg.type == 16跳转进来。学习技能的详细栏，cga.ClickNPCDialog(0, 0)直接学习，cga.ClickNPCDialog(-1, 0)取消
-				if(dlg.type == 17){
+				else if(dlg.type == 17){
 					actNumber = 0
 					cga.ClickNPCDialog(actNumber, 0);
 					cga.AsyncWaitNPCDialog(dialogHandler);
@@ -8446,6 +8493,14 @@ module.exports = function(callback){
 					repeatFlag = false
 					setTimeout(retry, 1000, cb);
 					return
+				}else if(obj.act == "job" && cga.job.getJob(obj.target).job == cga.job.getJob().job){
+					repeatFlag = false
+					setTimeout(retry, 1000, cb);
+					return
+				}else if(obj.act == "promote" && cga.job.getJob().jobLv >= obj.target){
+					repeatFlag = false
+					setTimeout(retry, 1000, cb);
+					return
 				}
 
 				// 自定义与NPC交谈的内容
@@ -8467,7 +8522,7 @@ module.exports = function(callback){
 
 			// 如果目标是map，切换地图会导致人物离队，其他队员无法通过称号监测到你的完成情况，故用其他逻辑代替
 			// 如果目标是技能相关，则无需组队，可单人完成逻辑
-			if(obj.act == "map" || obj.act == "skill" || obj.act == "forget"){
+			if(obj.act == "map" || obj.act == "skill" || obj.act == "forget" || obj.act == "job" || obj.act == "promote"){
 				// 注意：map模式没有人物队内监测，所以不会有队内消息在cb中被返回。item、msg模式则有
 				retry(cb)
 				return
@@ -11192,7 +11247,12 @@ module.exports = function(callback){
 		const reputationInfos = require('./常用数据/reputation.js');
 		return reputationInfos
 	}
-
+	/**
+	 * UNAecho:获取职业数据，如果输入职业名称，获取对应职业数据。如果不输入，则获取当前职业数据。
+	 * 可输入任意职业称号来代表对应职业。如【见习弓箭手】【王宫弓箭手】都是一个效果。
+	 * @param {*} input 
+	 * @returns 
+	 */
 	cga.job.getJob = (input) =>{
 		var jobObj = null
 		var data = cga.job.loadJobData().Professions
@@ -11259,6 +11319,37 @@ module.exports = function(callback){
 		}
 
 		return jobObj
+	}
+
+	// UNAecho:添加关于技能信息的API
+	cga.skill = {}
+
+	// 获取本地职业数据。
+	cga.skill.loadSkillData = () => {
+		const skills = require('./常用数据/skills.js').skillInfos;
+		return skills
+	}
+
+	cga.skill.getSkill = (input) =>{
+		var data = cga.skill.loadSkillData()
+
+		if(!input || typeof input != 'string'){
+			throw new Error('错误，必须输入String类型的技能名称。input:', input)
+		}
+
+		var skillObj = data.find((s) => {
+			if(s.name == input){
+				return true
+			}
+			return false
+		});
+
+		if(!skillObj){
+			throw new Error('错误，技能数据库中暂无【' + input + '】职业信息，请添加')
+		}
+
+
+		return skillObj
 	}
 
 	return cga;
