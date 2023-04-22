@@ -2176,6 +2176,8 @@ module.exports = function(callback){
 				'强哥杂货店':1051,
 				'银行':1121,
 				'葛利玛的家':1150,
+				'冒险者旅馆':1154,
+				'冒险者旅馆 2楼':1164,
 				'流行商店':1162,
 				'安其摩酒吧':1170,
 				'弓箭手公会':1181,
@@ -2267,8 +2269,12 @@ module.exports = function(callback){
 				1121:[[238, 111, 1121],],
 				// 葛利玛的家
 				1150:[[216, 43, 1150],],
+				// 冒险者旅馆
+				1154:[[238, 64, 1154],],
 				// 流行商店
 				1162:[[117, 112, 1162],],
+				// 冒险者旅馆 2楼
+				1164:[[238, 64, 1154],[33, 27, 1164],],
 				// 安其摩酒吧
 				1170:[[102, 131, 1170],],
 				// 弓箭手公会
@@ -2634,8 +2640,12 @@ module.exports = function(callback){
 				1121:[[2, 13, 1000],],
 				// 葛利玛的家
 				1150:[[2, 9, 1000],],
+				// 冒险者旅馆
+				1154:[[7, 29, 1000],],
 				// 流行商店
 				1162:[[0, 9, 1000],],
+				// 冒险者旅馆 2楼
+				1164:[[20, 24, 1154],],
 				// 安其摩酒吧
 				1170:[[16, 23, 1000],],
 				// 弓箭手公会
@@ -8262,6 +8272,8 @@ module.exports = function(callback){
 		item: 找NPC拿道具，物品栏出现此道具则调用cb，函数结束
 		msg: 找NPC对话，直至NPC出现此msg的内容，调用cb，函数结束
 		map: 找NPC对话，直至人物被传送至此地图，调用cb，函数结束
+		skill: 找NPC对话，直至人物学习完技能或学习失败，调用cb，函数结束
+		forget: 找NPC对话，直至人物忘记技能，调用cb，函数结束
 	 * obj.target : obj.act的目标，根据obj.act的不同，有几种情况：
 		obj.act为item时，obj.target输入item的名称或数字itemid
 		obj.act为msg时，obj.target输入监测NPC说话的内容切片
@@ -8270,6 +8282,8 @@ module.exports = function(callback){
 		比如，如果想在NPC问【你愿意吗？】的时候回答【否】，那么obj.neg可以输入"愿意"、"你愿意吗"等切片
 	 * [obj.pos] : 可选选项，仅在obj.act = "map"时生效，人物需要等待被NPC传送至pos这个坐标，函数才结束
 	 * [obj.say] : 可选选项，人物会在与NPC交互的时候说话，因为有的NPC是需要说出对应的话才会有反应的
+	 * 
+	 * 【开发提醒】由于宠物学习技能时的【是】【否】界面属于特殊弹窗，cga.AsyncWaitNPCDialog无法捕获，故这里没有宠物相关功能的实现。
 	 * @param {*} cb 回调函数，在obj.act不为map时，调用时会传入队伍全员信息
 	 * @returns 
 	 */
@@ -8309,7 +8323,70 @@ module.exports = function(callback){
 		let turnToFlag = true
 		const dialogHandler = (err, dlg)=>{
 			var actNumber = -1
-			if(dlg && ((dlg.options & 4) == 4 || dlg.options == 12)){
+			if(dlg && dlg.options == 0){
+				/**
+				 * 列表对话，多数用于学技能NPC的第一句话：
+				 * 1、想学习技能
+				 * 2、想遗忘技能
+				 * 3、不用了
+				 */
+				if(dlg.type == 16){
+					if(obj.act == 'skill'){
+						console.log('进入' + obj.act)
+						actNumber = 0
+						cga.ClickNPCDialog(0, actNumber);
+						cga.AsyncWaitNPCDialog(dialogHandler);
+						return;
+					}else if(obj.act == 'forget'){
+						console.log('进入' + obj.act)
+						actNumber = 1
+						cga.ClickNPCDialog(0, actNumber);
+						cga.AsyncWaitNPCDialog(dialogHandler);
+						return;
+					}
+				}else if(dlg.type == 18){// 从dlg.options == 0 && dlg.type == 16跳转进来。遗忘技能的详细栏，选择index直接进入确定界面
+					var skillIndex = cga.GetSkillsInfo().sort((a,b) => a.pos - b.pos).findIndex(s => s.name == obj.target);
+					actNumber = skillIndex
+					cga.ClickNPCDialog(0, actNumber);
+					cga.AsyncWaitNPCDialog(dialogHandler);
+					return;
+				}
+			}
+			else if(dlg && dlg.options == 1){
+				cga.ClickNPCDialog(1, 0);
+				if(obj.act == "msg" && dlg.message.indexOf(obj.target) != -1){
+					repeatFlag = false
+					return
+				}else if(obj.act == "skill" && cga.findPlayerSkill(obj.target)){
+					repeatFlag = false
+					return
+				}else if(obj.act == "forget" && !cga.findPlayerSkill(obj.target)){
+					repeatFlag = false
+					return
+				}
+				cga.AsyncWaitNPCDialog(dialogHandler);
+				return;
+			}
+			else if(dlg && dlg.options == 2){
+				// 从dlg.options == 0 && dlg.type == 16跳转进来。学习技能的详细栏，cga.ClickNPCDialog(0, 0)直接学习，cga.ClickNPCDialog(-1, 0)取消
+				if(dlg.type == 17){
+					actNumber = 0
+					cga.ClickNPCDialog(actNumber, 0);
+					cga.AsyncWaitNPCDialog(dialogHandler);
+					return;
+				}
+			}
+			else if(dlg && dlg.options == 3){
+				actNumber = (obj.hasOwnProperty("neg") && dlg.message.indexOf(obj.neg) != -1) ? 2 : 1
+				cga.ClickNPCDialog(actNumber, 0);
+				if(obj.act == "msg" && dlg.message.indexOf(obj.target) != -1){
+					repeatFlag = false
+					return
+				}
+				cga.AsyncWaitNPCDialog(dialogHandler);
+				return;
+			}
+			else if(dlg && ((dlg.options & 4) == 4 || dlg.options == 12)){
 				actNumber = (obj.hasOwnProperty("neg") && dlg.message.indexOf(obj.neg) != -1) ? 8 : 4
 				cga.ClickNPCDialog(actNumber, 0);
 				if(obj.act == "msg" && dlg.message.indexOf(obj.target) != -1){
@@ -8321,25 +8398,6 @@ module.exports = function(callback){
 			}
 			else if(dlg && (dlg.options & 32) == 32){
 				cga.ClickNPCDialog(32, 0);
-				cga.AsyncWaitNPCDialog(dialogHandler);
-				return;
-			}
-			else if(dlg && dlg.options == 1){
-				cga.ClickNPCDialog(1, 0);
-				if(obj.act == "msg" && dlg.message.indexOf(obj.target) != -1){
-					repeatFlag = false
-					return
-				}
-				cga.AsyncWaitNPCDialog(dialogHandler);
-				return;
-			}
-			else if(dlg && dlg.options == 3){
-				actNumber = (obj.hasOwnProperty("neg") && dlg.message.indexOf(obj.neg) != -1) ? 2 : 1
-				cga.ClickNPCDialog(actNumber, 0);
-				if(obj.act == "msg" && dlg.message.indexOf(obj.target) != -1){
-					repeatFlag = false
-					return
-				}
 				cga.AsyncWaitNPCDialog(dialogHandler);
 				return;
 			}
@@ -8380,6 +8438,14 @@ module.exports = function(callback){
 					repeatFlag = false
 					setTimeout(retry, 1000, cb);
 					return
+				}else if(obj.act == "skill" && (cga.findPlayerSkill(obj.target))){
+					repeatFlag = false
+					setTimeout(retry, 1000, cb);
+					return
+				}else if(obj.act == "forget" && (!cga.findPlayerSkill(obj.target))){
+					repeatFlag = false
+					setTimeout(retry, 1000, cb);
+					return
 				}
 
 				// 自定义与NPC交谈的内容
@@ -8400,7 +8466,8 @@ module.exports = function(callback){
 			}
 
 			// 如果目标是map，切换地图会导致人物离队，其他队员无法通过称号监测到你的完成情况，故用其他逻辑代替
-			if(obj.act == "map"){
+			// 如果目标是技能相关，则无需组队，可单人完成逻辑
+			if(obj.act == "map" || obj.act == "skill" || obj.act == "forget"){
 				// 注意：map模式没有人物队内监测，所以不会有队内消息在cb中被返回。item、msg模式则有
 				retry(cb)
 				return
@@ -8625,6 +8692,47 @@ module.exports = function(callback){
 		}
 		
 		setTimeout(cga.disbandTeam, 1000, cb);
+	}
+
+	/**
+	 * UNAecho: cga.AsyncWaitNPCDialog的简单封装。
+	 * 与NPC无限对话，只选积极选项(是、确定、下一页等)，较为常用。
+	 * 有自己的超时时间，不需要对其递归进行处理。
+	 * 
+	 * @param {*} err 
+	 * @param {*} dlg 
+	 * @returns 
+	 */
+	cga.dialogHandler = ()=>{
+		var dialogHandler = (err, dlg)=>{
+			if(dlg){
+				if((dlg.options & 4) == 4){
+					cga.ClickNPCDialog(4, 0);
+					cga.AsyncWaitNPCDialog(dialogHandler);
+					return;
+				}else if((dlg.options & 32) == 32){
+					cga.ClickNPCDialog(32, 0);
+					cga.AsyncWaitNPCDialog(dialogHandler);
+					return;
+				}else if(dlg.options == 1){
+					cga.ClickNPCDialog(1, 0);
+					cga.AsyncWaitNPCDialog(dialogHandler);
+					return;
+				}else if(dlg.options == 3){
+					cga.ClickNPCDialog(1, 0);
+					cga.AsyncWaitNPCDialog(dialogHandler);
+					return;
+				}else if(dlg.options == 12){
+					cga.ClickNPCDialog(4, -1);
+					cga.AsyncWaitNPCDialog(dialogHandler);
+					return;
+				}
+			}
+			return
+		}
+
+		cga.AsyncWaitNPCDialog(dialogHandler);
+		return
 	}
 
 	//监听自己聊天输入（只支持数字）
@@ -11085,16 +11193,28 @@ module.exports = function(callback){
 		return reputationInfos
 	}
 
-	cga.job.getJob = () =>{
+	cga.job.getJob = (input) =>{
 		var jobObj = null
 		var data = cga.job.loadJobData().Professions
 		var playerInfo = cga.GetPlayerInfo()
+		var searchJobName = null
+
+		if(!input || typeof input != 'string'){
+			searchJobName = playerInfo.job
+		}else{
+			searchJobName = input
+		}
 
 		for (var i in data){
 			for(var j in data[i].titles){
-				if(playerInfo.job == data[i].titles[j]){
+				if(searchJobName == data[i].titles[j]){
 					jobObj = data[i]
 					jobObj.job = data[i].jobmainname
+					if(['物理系', '魔法系', '魔物系'].indexOf(data[i].category)!=-1){
+						jobObj.jobType = '战斗系'
+					}else{
+						jobObj.jobType = '生产系'
+					}
 					jobObj.jobLv = j
 					jobObj.curJob = playerInfo.job
 					break
@@ -11102,13 +11222,13 @@ module.exports = function(callback){
 			}
 		}
 		if(!jobObj){
-			throw new Error('错误，职业数据库中暂无职业信息，请添加')
+			throw new Error('错误，职业数据库中暂无【' + searchJobName + '】职业信息，请添加')
 		}
 
 		var reputationData = cga.job.loadReputationData()
 		var category = jobObj.category
 		var titles = playerInfo.titles
-		if(category == '物理系' || category == '魔法系' || category == '魔物系' ){
+		if(jobObj.jobType == '战斗系'){
 			reputationData = reputationData.reputationList
 			for (let i = 0; i < 15; i++) {
 				for(var t in titles){
@@ -11116,7 +11236,6 @@ module.exports = function(callback){
 						continue
 					}
 					if(titles[t] == reputationData[i].reputation){
-						jobObj.jobType = '战斗系'
 						jobObj.reputation = titles[t]
 						jobObj.reputationLv = i
 						break
@@ -11131,7 +11250,6 @@ module.exports = function(callback){
 						continue
 					}
 					if(titles[t] == reputationData[i].reputation){
-						jobObj.jobType = '生产系'
 						jobObj.reputation = titles[t]
 						jobObj.reputationLv = i
 						break
