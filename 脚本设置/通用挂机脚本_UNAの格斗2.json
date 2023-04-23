@@ -17,7 +17,7 @@
     "leaderFilter": "bus",
     "memberFilter": "UNA",
     "minTeamMemberCount": 5,
-    "minBodyguard": 1,
+    "bodyguardCount": 1,
     "leaderX": 143,
     "leaderY": 109,
     "timeout": 180000,
