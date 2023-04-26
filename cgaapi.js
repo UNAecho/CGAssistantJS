@@ -6475,20 +6475,20 @@ module.exports = function(callback){
 		
 		return null;
 	}
-/**
- * UNA :写了一个持久化人物任务完成情况的方法，用于离线记录人物的一些数据，便于查询。
- * 请注意，关于任务的称号，我自己也没有做过全部的任务，所以请自行添加需要的任务名称，我只写了一个开启者
- * 【注意】采集系在3转后自动可以传送至小岛，相当于战斗系做完了半山6/地狱的回响。
- * 但是如果采集系参与了半山1-5的话，则必须按照战斗系的流程走完。所以建议采集系不要做半山任务。逻辑没空写。
- * 
- * @param {object} missionObj 需要更新的任务对象，
- * key 为 任务string名称，请注意输入的任务名称要全项目统一，不然会出现检测出错的情况。如【树精长老】和【树精】【一转】等会被认为是不同的任务。
- * value 为任务状态，类型任意。true为已完成，false为未完成。int为任务完成的步骤标记，或者string自定义，你自己认识就好。
- * example : missionObj = {"树精长老的末日" : true ,"挑战神兽" : true ,"神之召唤" : 2 ,"洛伊夫的净化" : "收集徽记" ,}
- * @param {*} cb 回调
- * @returns 
- * 
- */
+	/**
+	 * UNA :写了一个持久化人物任务完成情况的方法，用于离线记录人物的一些数据，便于查询。
+	 * 请注意，关于任务的称号，我自己也没有做过全部的任务，所以请自行添加需要的任务名称，我只写了一个开启者
+	 * 【注意】采集系在3转后自动可以传送至小岛，相当于战斗系做完了半山6/地狱的回响。
+	 * 但是如果采集系参与了半山1-5的话，则必须按照战斗系的流程走完。所以建议采集系不要做半山任务。逻辑没空写。
+	 * 
+	 * @param {object} missionObj 需要更新的任务对象，
+	 * key 为 任务string名称，请注意输入的任务名称要全项目统一，不然会出现检测出错的情况。如【树精长老】和【树精】【一转】等会被认为是不同的任务。
+	 * value 为任务状态，类型任意。true为已完成，false为未完成。int为任务完成的步骤标记，或者string自定义，你自己认识就好。
+	 * example : missionObj = {"树精长老的末日" : true ,"挑战神兽" : true ,"神之召唤" : 2 ,"洛伊夫的净化" : "收集徽记" ,}
+	 * @param {*} cb 回调
+	 * @returns 
+	 * 
+	 */
 	cga.refreshMissonStatus = (missionObj, cb) => {
 		var rootdir = cga.getrootdir()
 		var playerInfo = cga.GetPlayerInfo();
@@ -6566,6 +6566,22 @@ module.exports = function(callback){
 		}
 		// 写入状态并调用callback，函数结束。
 		cga.savePlayerConfig(config, cb);
+		return
+	}
+
+	/**
+	 * UNAecho:获取读取战斗信息等CGA全部配置的模块，由于十分常用，现在加入cgaapi中
+	 */
+	cga.getCGAconfigMode = () => {
+		return configMode = require(cga.getrootdir() + '/通用挂机脚本/公共模块/读取战斗配置');
+	}
+
+	/**
+	 * UNAecho:读取指定文件名的战斗配置的封装API，由于十分常用，现在加入cgaapi中
+	 */
+	cga.loadBattleConfig = (filename) => {
+		let configMode = cga.getCGAconfigMode()
+		configMode.manualLoad(filename)
 		return
 	}
 
@@ -8081,8 +8097,21 @@ module.exports = function(callback){
 					for (let k in checkKeys) {
 						let v = teammate_info[checkKeys[k]];
 						if(!v || !v[checkKey] || !v[checkKey].hasOwnProperty(checkValue)){
-							console.log('队员信息中【' + checkKeys[k] + '】数据缺失，删除其数据，',delay/1000,'秒后重新进入mainLogic..')
-							delete teammate_info[checkKeys[k]]
+							let isInTeam = false
+							for (let t = 0; t < teams.length; t++) {
+								if(teams[t].name == checkKeys[k]){
+									isInTeam = true
+									break
+								}
+							}
+							// 如果缺失的队员不在队伍中，则删除其数据。（可能是队伍成员构成不满足条件，不能拼成合格的发车队伍）
+							// 如果在队伍中，则保留其其它数据，方便下次迭代补全。
+							if(!isInTeam){
+								console.log('队员信息中【' + checkKeys[k] + '】数据缺失，且该名队员已经离队。删除其数据，',delay/1000,'秒后重新进入mainLogic..')
+								delete teammate_info[checkKeys[k]]
+							}else{
+								console.log('队员信息中【' + checkKeys[k] + '】数据缺失，但该名队员还在队伍中，保留其其它数据，',delay/1000,'秒后重新进入mainLogic..')
+							}
 							setTimeout(mainLogic, delay);
 							return
 						}
