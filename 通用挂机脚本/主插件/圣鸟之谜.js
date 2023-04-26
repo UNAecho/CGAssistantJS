@@ -49,7 +49,7 @@ for(var i in teams){
 
 var jump = ()=>{
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','小岛之谜')
+		updateConfig.update_config({'mainPlugin' : '小岛之谜'})
 	},5000)
 }
 

@@ -14,7 +14,7 @@ const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.j
 
 var jump = ()=>{
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','全自动练级')
+		updateConfig.update_config({'mainPlugin' : '智能练级'})
 	},5000)
 }
 

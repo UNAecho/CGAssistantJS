@@ -58,7 +58,7 @@ var waitTime = ()=>{
 
 var jump = ()=>{
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','双百制造')
+		updateConfig.update_config({'mainPlugin' : '双百制造'})
 	},5000)
 }
 

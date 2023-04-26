@@ -45,7 +45,7 @@ for(var i in teams){
 
 var jump = ()=>{
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','通用挂机脚本')
+		updateConfig.update_config({'mainPlugin' : '智能练级'})
 	},5000)
 }
 

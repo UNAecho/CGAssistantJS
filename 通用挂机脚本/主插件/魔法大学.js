@@ -240,7 +240,7 @@ var jump = ()=>{
 		mainPluginName = '采集冲技能'
 	}
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin',mainPluginName)
+		updateConfig.update_config({'mainPlugin' : mainPluginName})
 	},5000)
 }
 // 通用，前往魔法大学考官面前

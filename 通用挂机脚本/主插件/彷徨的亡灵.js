@@ -45,7 +45,7 @@ for(var i in teams){
 
 var jump = ()=>{
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','亡者之镇')
+		updateConfig.update_config({'mainPlugin' : '亡者之镇'})
 	},5000)
 }
 

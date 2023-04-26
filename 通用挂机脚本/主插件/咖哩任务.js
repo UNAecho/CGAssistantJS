@@ -16,7 +16,7 @@ var healObject = require(rootdir + '/通用挂机脚本/公共模块/治疗自�
 
 var jump = ()=>{
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','双百制造')
+		updateConfig.update_config({'mainPlugin' : '双百制造'})
 	},5000)
 }
 

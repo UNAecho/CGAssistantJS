@@ -380,7 +380,7 @@ var jump = ()=>{
 	cga.ChangePetState(cga.findbattlepet(), cga.PET_STATE_BATTLE);
 
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','转职保证书')
+		updateConfig.update_config({'mainPlugin' : '转职保证书'})
 	},5000)
 }
 

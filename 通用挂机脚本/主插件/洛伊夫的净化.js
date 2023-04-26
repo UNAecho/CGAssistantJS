@@ -21,7 +21,7 @@ const reputationInfos = require(rootdir + '/常用数据/reputation.js');
 
 var jump = ()=>{
 	// setTimeout(()=>{
-	// 	updateConfig.update_config('mainPlugin','传咒驯互转')
+	// 	updateConfig.update_config({'mainPlugin' : '传咒驯互转'})
 	// },5000)
 }
 

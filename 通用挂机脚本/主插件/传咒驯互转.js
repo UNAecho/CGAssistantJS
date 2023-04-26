@@ -32,7 +32,7 @@ const reputationInfos = require('../../常用数据/reputation.js');
 
 var jump = ()=>{
 	setTimeout(()=>{
-		updateConfig.update_config('mainPlugin','烧声望')
+		updateConfig.update_config({'mainPlugin' : '烧声望'})
 	},5000)
 }
 

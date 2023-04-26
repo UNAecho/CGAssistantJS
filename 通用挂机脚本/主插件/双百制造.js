@@ -701,7 +701,7 @@ var loop = ()=>{
 						jump('职业晋级')
 					}else{
 						setTimeout(()=>{
-							updateConfig.update_config('mainPlugin','魔法大学')
+							updateConfig.update_config({'mainPlugin' : '魔法大学'})
 						},2000)
 					}
 					return
@@ -710,7 +710,7 @@ var loop = ()=>{
 						jump('职业晋级')
 					}else{
 						setTimeout(()=>{
-							updateConfig.update_config('mainPlugin','起司的任务')
+							updateConfig.update_config({'mainPlugin' : '起司的任务'})
 						},2000)
 					}
 					return
@@ -719,7 +719,7 @@ var loop = ()=>{
 						jump('职业晋级')
 					}else{
 						setTimeout(()=>{
-							updateConfig.update_config('mainPlugin','咖哩任务')
+							updateConfig.update_config({'mainPlugin' : '咖哩任务'})
 						},2000)
 					}
 					return
