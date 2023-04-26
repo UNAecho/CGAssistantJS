@@ -272,17 +272,17 @@ var thisobj = {
 		return false;
 	},
 	loadconfig : (obj)=>{
+		// 如果其他模块已经读取了目标职业，则直接使用
+		if(configTable.finalJob){
+			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
+			return
+		}
 		if(typeof obj.finalJob == 'number'){
 			configTable.finalJob = professionalArray[obj.finalJob].jobmainname;
-			thisobj.finalJob = professionalArray[obj.finalJob];
+			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
 		}else{
 			configTable.finalJob = obj.finalJob;
-			thisobj.finalJob = professionalArray.find((p)=>{
-				if(obj.finalJob == p.jobmainname){
-					return true
-				}
-				return false
-			})
+			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
 		}
 		if(!thisobj.finalJob){
 			console.error('读取配置：自动读取战斗配置失败！必须手动指定当前角色的培养意向（当前账号最终要练什么）职业。注意需要填写职业的统称，不需要附带职业称号。如【王宫弓箭手】，就填【弓箭手】');
@@ -292,6 +292,11 @@ var thisobj = {
 		return true;
 	},
 	inputcb : (cb)=>{
+		// 如果其他模块已经读取了目标职业，则直接使用
+		if(configTable.finalJob){
+			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
+			return true
+		}
 		
 		var sayString = '【战斗配置插件】请选择角色的最终要练什么职业:';
 		for(var i in professionalArray){
@@ -303,9 +308,9 @@ var thisobj = {
 		cga.waitForChatInput((msg, index)=>{
 			if(index !== null && index >= 1 && professionalArray[index - 1]){
 				configTable.finalJob = professionalArray[index - 1].jobmainname;
-				thisobj.object = professionalArray[index - 1];
+				thisobj.finalJob = professionalArray[index - 1];
 				
-				var sayString2 = '当前已选择:[' + thisobj.object.jobmainname + ']。';
+				var sayString2 = '当前已选择:[' + thisobj.finalJob.job + ']。';
 				cga.sayLongWords(sayString2, 0, 3, 1);
 
 				cb(null);
