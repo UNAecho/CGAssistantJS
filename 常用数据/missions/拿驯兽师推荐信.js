@@ -159,7 +159,7 @@ var thisobj = {
 		},
 		],
 	taskRequirements: [//任务阶段是否完成
-		function(){//小刀
+		function(){//检查可否直接去拿止痛药
 			var job = cga.GetPlayerInfo().job;
 			if(job == '游民' && cga.getItemCount((item)=>{
 				return item.type == 5 && item.pos < 8;

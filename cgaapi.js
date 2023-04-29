@@ -3892,14 +3892,19 @@ module.exports = function(callback){
 			mapTranslate:{
 				'主地图' : 59521,
 				'银行' : 59548,
+				'冒险者旅馆' : 59538,
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
 				59521:[],
+				// 冒险者旅馆
+				59538:[[102, 115, 59538],],
 				// 银行
 				59548:[[114, 104, 59548],],
 			},
 			walkReverse:{
+				// 冒险者旅馆
+				59538:[[38, 48, 59521],],
 				// 银行
 				59548:[[27, 34, 59521],],
 			},
@@ -4027,9 +4032,29 @@ module.exports = function(callback){
 		}else{
 			cb(new Error('[UNA脚本警告]:targetMap[' + targetMap +']输入有误，必须输入目标地图名称或mapindex来索引'));
 		}
-
+		// 如果没找到地图，多数原因为主地图不同导致，比如在法兰城中搜索奇利村的mapindex。
 		if(!targetindex || !info.walkForward[targetindex]){
-			cb(new Error('[UNA脚本警告]:targetMap:[' + targetMap +']输入有误，请确认地图中是否有输入的名称地点。'))
+			// 如果输入是number类型的地图，因为具有唯一性，这里进行全部地图信息遍历搜索，然后特殊处理。
+			if(typeof targetindex == 'number'){
+				let villages = Object.keys(cga.travel.info)
+				for (let i = 0; i < villages.length; i++) {
+					if(cga.travel.info[villages[i]].walkForward.hasOwnProperty(targetindex)){
+						// 特殊切换，直接写成静态逻辑
+						if((villageName == '艾尔莎岛' || villageName == '艾夏岛')&& villages[i] == '法兰城'){
+							console.log('你输入的目标index并不存在于当前大地图区域，为你搜索到你的目的地为:【' + villages[i]+ '】')
+							cga.travel.autopilot('主地图',()=>{
+								cga.travel.falan.toStone('C', (r)=>{
+									cga.travel.autopilot(targetMap,cb)
+								});
+							})
+							return
+						}
+
+					}
+				}
+			}
+			// 其他情况则抛异常
+			throw new Error('[UNA脚本警告]:targetMap:[' + targetMap +']输入有误，请确认地图中是否有输入的名称地点。')
 		}
 		
 		try {
@@ -8391,13 +8416,11 @@ module.exports = function(callback){
 				 */
 				else if(dlg.type == 16){
 					if(obj.act == 'skill'){
-						console.log('进入' + obj.act)
 						actNumber = 0
 						cga.ClickNPCDialog(0, actNumber);
 						cga.AsyncWaitNPCDialog(dialogHandler);
 						return;
 					}else if(obj.act == 'forget'){
-						console.log('进入' + obj.act)
 						actNumber = 1
 						cga.ClickNPCDialog(0, actNumber);
 						cga.AsyncWaitNPCDialog(dialogHandler);
