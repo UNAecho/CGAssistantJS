@@ -6,18 +6,26 @@
         "回补提醒",
         "换水晶",
         "掉魂自动招魂",
+        "智能培养角色",
         "监听回补",
         "监听宠物忠诚度",
         "自动加点",
         "自动存取魔币",
-        "队员卖石","智能培养角色"
+        "队员卖石"
     ],
     "finalJob": "格斗士",
-    "role": 0,
+    "roleObj": {
+        "part": "队长",
+        "role": 1
+    },
     "leaderFilter": "bus",
     "memberFilter": "UNA",
     "minTeamMemberCount": 5,
-    "bodyguardCount": 1,
+    "roleMaxCount": {
+        "输出": 2,
+        "治疗": 1,
+        "小号": 3
+    },
     "leaderX": 143,
     "leaderY": 109,
     "timeout": 180000,

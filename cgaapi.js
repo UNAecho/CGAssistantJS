@@ -7920,9 +7920,9 @@ module.exports = function(callback){
 				}
 
 				var obj = JSON.parse(json)
-
-				if(obj && obj.hasOwnProperty('role')){
-					res = parseInt(obj['role'])
+				// roleObj对象的结构大致为{part : "队长", role: "2"}
+				if(obj && obj.hasOwnProperty('roleObj') && obj.roleObj.hasOwnProperty('role')){
+					res = parseInt(obj.roleObj.role)
 				}
 				return isNaN(parseInt(res)) ? 9 : parseInt(res)
 			},
@@ -7983,12 +7983,26 @@ module.exports = function(callback){
 					indexStr = identifier[t]
 				}
 			}
+			// 统计队内有几人已经完全收集队内信息，如果全员均收集，则中断队长的speaker
+			let doneCnt = 0
 			// 然后再遍历全队，获取正则匹配值，进行主要逻辑
 			for (let t = 0; t < curTeamplayers.length; t++) {
 				if(nickCache[curTeamplayers[t].name] == curTeamplayers[t].nick){
 					continue
 				}
 				nickCache[curTeamplayers[t].name] = curTeamplayers[t].nick
+				// 累加此队员是否已经完全收集全队信息
+				if(curTeamplayers[t].nick.indexOf('$') != -1){
+					doneCnt +=1
+				}
+				if(isleader && doneCnt == curTeamplayers.length && doneCnt == Object.keys(teammate_info).length){
+					console.log('全队员已经收集队内所有信息，中断speaker')
+					clearTimeout(speakerMeter)
+					setTimeout(() => {
+						cga.ChangeNickName("z" + "check"+allDoneStr)
+					}, 1000);
+					return
+				}
 				// reqObj具体结果举例
 				// [
 				// 	'z#720313',
@@ -8105,12 +8119,12 @@ module.exports = function(callback){
 								}
 							}
 							// 如果缺失的队员不在队伍中，则删除其数据。（可能是队伍成员构成不满足条件，不能拼成合格的发车队伍）
-							// 如果在队伍中，则保留其其它数据，方便下次迭代补全。
+							// 如果在队伍中，则保留其数据，方便下次迭代补全。
 							if(!isInTeam){
 								console.log('队员信息中【' + checkKeys[k] + '】数据缺失，且该名队员已经离队。删除其数据，',delay/1000,'秒后重新进入mainLogic..')
 								delete teammate_info[checkKeys[k]]
 							}else{
-								console.log('队员信息中【' + checkKeys[k] + '】数据缺失，但该名队员还在队伍中，保留其其它数据，',delay/1000,'秒后重新进入mainLogic..')
+								console.log('队员信息中【' + checkKeys[k] + '】数据缺失，但该名队员还在队伍中，保留其数据，',delay/1000,'秒后重新进入mainLogic..')
 							}
 							setTimeout(mainLogic, delay);
 							return
@@ -11359,6 +11373,11 @@ module.exports = function(callback){
 		return skills
 	}
 
+	/**
+	 * UNAecho:获取指定技能的静态信息
+	 * @param {*} input 
+	 * @returns 
+	 */
 	cga.skill.getSkill = (input) =>{
 		var data = cga.skill.loadSkillData()
 
@@ -11379,6 +11398,27 @@ module.exports = function(callback){
 
 
 		return skillObj
+	}
+
+	/**
+	 * UNAecho:获取人物技能当前的总栏位数，多数用于估量能否学习新技能。
+	 * @returns 
+	 */
+	cga.skill.getSlotSum =()=>{
+		let sum = 0
+		let skills = cga.GetSkillsInfo();
+		skills.forEach(s=>{
+			sum += s.slotsize
+		})
+		return sum
+	}
+
+	/**
+	 * UNAecho:获取人物技能当前剩余栏位数
+	 * @returns 
+	 */
+	cga.skill.getSlotRemain =()=>{
+		return cga.GetPlayerInfo().slot - cga.skill.getSlotSum()
 	}
 
 	return cga;

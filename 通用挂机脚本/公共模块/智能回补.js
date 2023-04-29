@@ -231,6 +231,8 @@ var thisobj = {
 		return true;
 	},
 	inputcb: (cb) => {
+		// 智能回补只有1种方式
+		thisobj.object = supplyModeArray[0];
 		cb(null)
 		return
 	}

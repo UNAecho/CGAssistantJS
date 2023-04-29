@@ -64,27 +64,30 @@ var teamModeArray = [
 						setTimeout(retryFunc, 1000, cb);
 						return
 					}
-
-					if (teamplayers[0].nick == 'rebuild') {
-						if (thisobj.object.role > 0) {
-							console.log('队长要求队员离队，因为打手数量不匹配，退出重新寻找其他队伍拼车')
-							// 退出时，加入时间戳
+					// 如果teamIndexReg匹配成功，regObj[2]就是我们需要的队员序号
+					let regObj = teamplayers[0].nick.match(teamIndexReg)
+					// 如果成员构成没通过要求
+					if (regObj) {
+						// 如果队长要求自己离队
+						if (shareInfoObj.teammates[regObj[2]] == cga.GetPlayerInfo().name) {
+							console.log('队长要求自己离队，退出重新寻找其他队伍拼车')
+							// 退出时，将队长加入黑名单，数值为时间戳
 							blacklist[teamplayers[0].name] = Date.now()
 							cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
 							setTimeout(retryFunc, 2000, cb);
 							return
-
-						}
-						share((shareInfoObj) => {
-							// 如果共享信息时有人离队
-							if (shareInfoObj === false) {
-								setTimeout(retryFunc, 2000, cb);
+						} else {// 如果被指名不是自己，重新进入shareinfo
+							share((shareInfoObj) => {
+								// 如果共享信息时有人离队
+								if (shareInfoObj === false) {
+									setTimeout(retryFunc, 2000, cb);
+									return
+								}
+								listenLeader(shareInfoObj, retryFunc, cb)
 								return
-							}
-							listenLeader(shareInfoObj, retryFunc, cb)
+							})
 							return
-						})
-						return
+						}
 					}
 
 					if (teamplayers[0].nick == 'ok') {
@@ -113,7 +116,7 @@ var teamModeArray = [
 						let curTime = Date.now()
 						var leader = cga.findPlayerUnit((u) => {
 							if (blacklist.hasOwnProperty(u.unit_name)) {
-								console.log('出现小号挤兑现象，暂时离队。' + (blacklistTimeout - (curTime - blacklist[u.unit_name])) / 1000 + '秒内不能加入【', u.unit_name, '】队伍')
+								console.log('由于不满足队长【'+ u.unit_name+'】的队伍配置要求，暂时离队。' + (blacklistTimeout - (curTime - blacklist[u.unit_name])) / 1000 + '秒内不能加入【', u.unit_name, '】队伍')
 							}
 							if (
 								(u.xpos == thisobj.object.leaderX && u.ypos == thisobj.object.leaderY)
@@ -146,32 +149,39 @@ var teamModeArray = [
 				return
 			}
 			else {// 队长逻辑
-				var checkRole = (shareInfoObj, cb) => {
-					// 检查队内打手数量，如果打手不足，则无法正常练级，回调rebuild
-					var bodyguardCnt = 0
-					for (var p in shareInfoObj) {
-						// 跳过组队信息的key
-						if (p == 'teammates') {
-							continue
-						}
-						if (shareInfoObj[p].role['职责'] == '1') {
-							bodyguardCnt += 1
+				var checkRole = (shareInfoObj, checkObj, cb) => {
+					// 当职责超出规定数字时，被指名离队队员的队内index。0为队长，那么设默认为1。
+					let leaveIndex = 1
+					// 统计队内人员配置数量
+					let cntObj = {}
+					for (var i in shareInfoObj.teammates) {
+						let name = shareInfoObj.teammates[i]
+						if (shareInfoObj[name].hasOwnProperty('role')) {
+							let roleIndex = parseInt(shareInfoObj[name].role['职责']) - 1 // 因为输入的时候从1开始
+							if (cntObj[roleArr[roleIndex]]) {
+								cntObj[roleArr[roleIndex]] += 1
+							} else {
+								cntObj[roleArr[roleIndex]] = 1
+							}
+
+							if (checkObj.hasOwnProperty(roleArr[roleIndex]) && cntObj[roleArr[roleIndex]] > checkObj[roleArr[roleIndex]]) {
+								leaveIndex = shareInfoObj.teammates.indexOf(name)
+								console.log('当前队内职责【', roleArr[roleIndex], '】有【' + cntObj[roleArr[roleIndex]] + '】人，队内限定【' + checkObj[roleArr[roleIndex]] + '】人，开始指名退队。')
+								console.log('队员【'+name+'】职责【' + roleArr[roleIndex] +'】需要退队')
+								cb('rebuild' + '#' + leaveIndex)
+								return
+							}
+
+							console.log('统计:队员【' + name +'】职责【', roleArr[roleIndex], '】')
 						}
 					}
 
-					if (bodyguardCnt != thisobj.object.bodyguardCount) {
-						console.log('队内打手人数不匹配，队员自动退出并将当前队长加入黑名单。一段时间过后，黑名单自动解除。防止同样的不合格队员挤兑')
-						cb('rebuild')
-						return
-					}
-
-					console.log('打手【', bodyguardCnt, '】人', '符合数量要求【', thisobj.object.bodyguardCount, '】人，出发')
 					cb('ok')
 					return
 				}
 
 				var wait = () => {
-					// 同一时间只能有一个队长允许队员上车，其他队长通过控制昵称，暂时不允许小号进入队伍。防止多个车队进入死锁。
+					// 同一时间只能有一个队长允许队员上车，其他队长通过控制昵称，暂时不允许其他人进入队伍。防止多个车队进入死锁。
 					var leader = cga.findPlayerUnit((u) => {
 						if ((u.xpos == thisobj.object.leaderX && u.ypos == thisobj.object.leaderY)
 							&& (!thisobj.object.leaderFilter || u.nick_name.indexOf(thisobj.object.leaderFilter) != -1)
@@ -205,20 +215,20 @@ var teamModeArray = [
 									setTimeout(wait, 1000);
 									return
 								}
-								checkRole(shareInfoObj, (r) => {
+								checkRole(shareInfoObj, thisobj.object.roleMaxCount, (r) => {
 									if (r == 'ok') {
 										setTimeout(() => {
-											cga.ChangeNickName('ok')
+											cga.ChangeNickName(r)
 										}, 1500);
 
 										setTimeout(() => {
 											afterShare(shareInfoObj, cb)
 										}, 5000);
-									} else if (r == 'rebuild') {
+									} else if (r.indexOf('rebuild') != -1) {
 										setTimeout(() => {
-											cga.ChangeNickName('rebuild')
+											cga.ChangeNickName(r)
 										}, 1500);
-										// 给小号对rebuild充分时间调整，清空昵称，重新进入wait
+										// 给队员对rebuild充分时间调整，清空昵称，重新进入wait
 										setTimeout(() => {
 											cga.ChangeNickName('')
 											wait()
@@ -455,6 +465,30 @@ var battleAreaArray = [
 		}
 	},
 	{
+		name: '梅布尔隘地',
+		muster: (cb) => {
+			cga.travel.newisland.toStone('X', () => {
+				var obj = { act: "map", target: "梅布尔隘地", neg: "梅布尔隘地" }
+				cga.askNpcForObj("艾尔莎岛", [165, 154], obj, () => {
+					cga.walkList([
+						cga.isTeamLeader ? [198, 49] : [198, 48],
+					], cb);
+				})
+			});
+		},
+		walkTo: (cb) => {
+			cga.walkList([
+				[193, 62],
+			], cb);
+		},
+		isMusterMap: (map, mapXY) => {
+			return map == '梅布尔隘地';
+		},
+		isDesiredMap: (map, mapXY) => {
+			return (map == '梅布尔隘地' && mapXY.y > 60);
+		}
+	},
+	{
 		name: '刀鸡',
 		muster: (cb) => {
 			cga.travel.newisland.toStone('X', () => {
@@ -485,30 +519,6 @@ var battleAreaArray = [
 		},
 		isDesiredMap: (map, mapXY) => {
 			return (map == '布拉基姆高地');
-		}
-	},
-	{
-		name: '梅布尔隘地',
-		muster: (cb) => {
-			cga.travel.newisland.toStone('X', () => {
-				var obj = { act: "map", target: "梅布尔隘地", neg: "梅布尔隘地" }
-				cga.askNpcForObj("艾尔莎岛", [165, 154], obj, () => {
-					cga.walkList([
-						cga.isTeamLeader ? [198, 49] : [198, 48],
-					], cb);
-				})
-			});
-		},
-		walkTo: (cb) => {
-			cga.walkList([
-				[193, 62],
-			], cb);
-		},
-		isMusterMap: (map, mapXY) => {
-			return map == '梅布尔隘地';
-		},
-		isDesiredMap: (map, mapXY) => {
-			return (map == '梅布尔隘地');
 		}
 	},
 	{
@@ -972,10 +982,14 @@ var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战�
 var update = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 // 如果练级地点发生改变，且已经落盘完毕，则将此flag打在人物昵称上
 const areaChangedFlag = 'areaChanged'
-// 当队内打手不足时，小号需要退队给打手让位，此时需要暂时将队长加入黑名单，并在超时时间之内不再加入此队，防止挤兑。
+// 当队内人员配置不满足条件时，队长需要指名某位队员离队。此队员需要离队，并暂时将队长加入黑名单，在超时时间之内不再加入此队，防止挤兑。
 var blacklist = {}
-// 小号退出给打手让位的超时时间。超过则可以再次加入刚才退出的队伍。
-const blacklistTimeout = Math.floor(Math.random() * (10000 - 5000 + 1) + 5000);
+// 被指名离队的超时时间。超过则可以再次加入刚才退出的队伍。
+const blacklistTimeout = Math.floor(Math.random() * (180000 - 5000 + 1) + 5000);
+// 队内职责
+const roleArr = ['输出', '治疗', '小号']
+// 小号识别队长指名退队是否是自己的正则表达式
+const teamIndexReg = new RegExp(/(rebuild#)([1-4])/)
 
 // 共享队员信息，智能练级的核心部分
 const share = (cb) => {
@@ -1313,9 +1327,39 @@ var thisobj = {
 			pair.translated = true;
 			return true;
 		}
-		if (pair.field == 'role') {
-			pair.field = '队内职责';
-			pair.value = (pair.value == 0) ? '队长' : '队员';
+		if (pair.field == 'roleObj') {
+			pair.field = '队内结构';
+			var str = ''
+			Object.keys(pair.value).forEach((key) => {
+				if (str.length) {
+					str += ', '
+				}
+				if (key == 'part') {
+					str += '职责: '
+					str += pair.value[key];
+				}
+				if (key == 'role') {
+					str += '队内分工: '
+					str += pair.value[key];
+				}
+			})
+			pair.value = str
+			pair.translated = true;
+			return true;
+		}
+		if (pair.field == 'roleMaxCount') {
+			pair.field = '队内各任务分工最大人数';
+			var str = ''
+			Object.keys(pair.value).forEach((key) => {
+				if (str.length) {
+					str += ', '
+				}
+				if(roleArr.indexOf(key) != -1){
+					str += (key + ': ')
+					str += pair.value[key];
+				}
+			})
+			pair.value = str
 			pair.translated = true;
 			return true;
 		}
@@ -1349,21 +1393,19 @@ var thisobj = {
 			global.area = thisobj.object.area
 		}
 
-		if (typeof obj.role != 'number') {
-			let toInt = parseInt(obj.role)
-			if (typeof obj.role == 'string' && !isNaN(toInt)) {
-				configTable.role = toInt;
-				thisobj.object.role = toInt;
-			} else {
-				console.error('读取配置：队伍职责失败！只能输入0代表队长，1代表队员');
-				return false;
+		if (typeof obj.roleObj == 'object') {
+			if (!obj.roleObj.hasOwnProperty('part') || !obj.roleObj.hasOwnProperty('role')) {
+				console.error('读取配置：队伍职责失败！');
+				return false
 			}
+			configTable.roleObj = obj.roleObj;
+			thisobj.object.roleObj = obj.roleObj;
 		} else {
-			configTable.role = obj.role;
-			thisobj.object.role = obj.role;
+			console.error('读取配置：队伍职责失败！');
+			return false
 		}
 
-		cga.isTeamLeader = thisobj.object.role == 0 ? true : false
+		cga.isTeamLeader = thisobj.object.roleObj.part == '队长' ? true : false
 
 		if (cga.isTeamLeader) {
 			configTable.minTeamMemberCount = obj.minTeamMemberCount;
@@ -1375,11 +1417,16 @@ var thisobj = {
 		}
 
 		if (cga.isTeamLeader) {
-			configTable.bodyguardCount = obj.bodyguardCount;
-			thisobj.object.bodyguardCount = obj.bodyguardCount;
-			if (!(thisobj.object.bodyguardCount >= 0)) {
-				console.error('读取配置：队伍最小打手数失败！');
-				return false;
+			if (typeof obj.roleMaxCount == 'object') {
+				if (!obj.roleMaxCount.hasOwnProperty('输出') || !obj.roleMaxCount.hasOwnProperty('治疗') || !obj.roleMaxCount.hasOwnProperty('小号')) {
+					console.error('读取配置：队伍角色失败！');
+					return false
+				}
+				configTable.roleMaxCount = obj.roleMaxCount;
+				thisobj.object.roleMaxCount = obj.roleMaxCount;
+			} else {
+				console.error('读取配置：队伍角色失败！');
+				return false
 			}
 		}
 
@@ -1390,7 +1437,7 @@ var thisobj = {
 
 		configTable.leaderFilter = obj.leaderFilter;
 		thisobj.object.leaderFilter = obj.leaderFilter;
-		if (!(thisobj.object.leaderFilter)) {
+		if (typeof thisobj.object.leaderFilter != 'string') {
 			console.error('读取配置：队长昵称过滤失败！');
 			return false;
 		}
@@ -1445,18 +1492,37 @@ var thisobj = {
 		var stage0 = (cb2) => {
 			// 智能模式暂定只有1种模式
 			thisobj.object = teamModeArray[0]
-
-			var sayString = '【智能组队】队内职责，输入你在队内的职责，0队长1打手2小号。队长负责带队，可以是输出也可以是小号。打手是非队长的清怪主力。建议队长有清怪能力时，打手2人。队长是小号时，打手3人。';
+			// 职责需要制作一个obj来保存，因为1维数据无法同时且清晰直观地描述队内头衔以及战斗职责2维信息。
+			var roleObj = {}
+			var sayString = '【智能组队】请输入你是队长还是队员，0队长1队员。';
 
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, index) => {
-				if (index !== null && (index == 0 || index == 1 || index == 2)) {
-					configTable.role = index;
-					thisobj.object.role = index;
+				if (index !== null && (index == 0 || index == 1)) {
+					roleObj.part = index == 0 ? '队长' : '队员'
 
-					var sayString2 = '当前已选择: 你是[' + ['队长', '打手', '小号'] + ']';
-					cga.sayLongWords(sayString2, 0, 3, 1);
-					setTimeout(cb2, 500);
+					sayString = '当前已选择: 你是[' + roleObj.part + ']';
+					cga.sayLongWords(sayString, 0, 3, 1);
+					setTimeout(() => {
+						sayString = '【智能组队】请输入你在队内的职责，1输出2治疗3小号。';
+
+						cga.sayLongWords(sayString, 0, 3, 1);
+						cga.waitForChatInput((msg, index) => {
+							if (index !== null && (index == 1 || index == 2 || index == 3)) {
+								roleObj.role = index
+
+								configTable.roleObj = roleObj
+								thisobj.object.roleObj = roleObj
+
+								sayString = '当前已选择: 你是[' + roleArr[thisobj.object.roleObj.role - 1] + ']';
+								cga.sayLongWords(sayString, 0, 3, 1);
+								setTimeout(cb2, 500);
+								return false;
+							}
+
+							return true;
+						});
+					}, 1000);
 					return false;
 				}
 
@@ -1471,8 +1537,8 @@ var thisobj = {
 			cga.waitForChatInput((msg, index) => {
 				if (msg !== null && msg.length > 0 && msg.indexOf(':') == -1) {
 					if (msg == 'ok') {
-						configTable.leaderFilter = null;
-						thisobj.object.leaderFilter = null;
+						configTable.leaderFilter = '';
+						thisobj.object.leaderFilter = '';
 					} else if (msg == '$ok') {
 						configTable.leaderFilter = 'ok';
 						thisobj.object.leaderFilter = 'ok';
@@ -1484,7 +1550,7 @@ var thisobj = {
 					var sayString2 = '当前已选择:[' + thisobj.object.leaderFilter + ']。为' + filterAttribute + '过滤内容';
 					cga.sayLongWords(sayString2, 0, 3, 1);
 
-					if (thisobj.object.role == 0) {
+					if (thisobj.object.roleObj.part == '队长') {
 						stage2(cb2)
 					} else {
 						setTimeout(cb2, 500);
@@ -1504,8 +1570,8 @@ var thisobj = {
 			cga.waitForChatInput((msg, index) => {
 				if (msg !== null && msg.length > 0 && msg.indexOf(':') == -1) {
 					if (msg == 'ok') {
-						configTable.memberFilter = null;
-						thisobj.object.memberFilter = null;
+						configTable.memberFilter = '';
+						thisobj.object.memberFilter = '';
 					} else if (msg == '$ok') {
 						configTable.memberFilter = 'ok';
 						thisobj.object.memberFilter = 'ok';
@@ -1546,23 +1612,38 @@ var thisobj = {
 		}
 
 		var stage4 = (cb2) => {
-			var sayString = '【智能组队】请输入自由拼车的最小打手人数(0~4):';
+			var remain = thisobj.object.minTeamMemberCount
+			var roleMaxCount = {}
+			var keys = ['输出','治疗','小号']
 
-			cga.sayLongWords(sayString, 0, 3, 1);
-			cga.waitForChatInput((msg, index) => {
-				if (index !== null && index >= 0 && index <= 4) {
-					configTable.bodyguardCount = index;
-					thisobj.object.bodyguardCount = index;
+			var sayAndSave = (cb)=>{
+				let roleName = keys.shift()
+				if(roleName){
+					cga.sayLongWords('【智能组队】请输入队内【' + roleName +'】职责的最大人数(0~' + remain + '):', 0, 3, 1);
+					cga.waitForChatInput((msg, value) => {
+						if (value !== null && value >= 0 && value <= remain) {
+							remain = remain - value
+							roleMaxCount[roleName] = value
 
-					var sayString2 = '当前已选择: 队伍最小打手人数[' + thisobj.object.bodyguardCount + ']人。';
-					cga.sayLongWords(sayString2, 0, 3, 1);
+							configTable.roleMaxCount = roleMaxCount;
+							thisobj.object.roleMaxCount = roleMaxCount;
 
-					setTimeout(cb2, 500);
-					return false;
+							cga.sayLongWords('当前已选择【' + roleName + '】最大【' + roleMaxCount[roleName] + '】人', 0, 3, 1);
+							setTimeout(() => {
+								sayAndSave(cb)
+							}, 1000);
+							return false;
+						}
+						return true;
+					});
+					return
 				}
+				cb(null)
+				return
+			}
 
-				return true;
-			});
+			sayAndSave(cb2)
+			return
 		}
 
 		var stage5 = (cb2) => {

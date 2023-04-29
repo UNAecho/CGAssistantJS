@@ -297,26 +297,21 @@ var thisobj = {
 			var sayString = '【UNA人物自动加点插件】请选择【'+name+'】加点目标数值:';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val)=>{
-				if (msg.length>0){
-					var val = parseInt(msg);
-					if(val !== NaN && val >= 0 && val <= 333)
-					{
-						configTable['max'+varName] = val;
-						thisobj['max'+varName] = val;
-						var sayString2 = '已选择:['+name+']加到[' + configTable['max'+varName] + ']点为止。【警告】该插件会监听出战宠物，如调整出战宠物请一并调整本插件，防止加错点数！';
-						cga.sayLongWords(sayString2, 0, 3, 1);
-						
-						cb2(null);
-						return false;
-					}else if (val !== NaN && val > 333){
-						cga.sayLongWords("错误:异常范围数据，人物单一属性最高加到333点", 0, 3, 1);
-					}else if (val !== NaN && val < 0){
-						cga.sayLongWords("错误:异常范围数据，反向加点不可取", 0, 3, 1);
-					}else{
-						console.log("错误:仅可输入数值型数据，如你打算给保姆弓加100点血，输入100");
-					}
-					return true
+				if(val != null && val >= 0 && val <= 333)
+				{
+					configTable['max'+varName] = val;
+					thisobj['max'+varName] = val;
+					var sayString2 = '已选择:['+name+']加到[' + configTable['max'+varName] + ']点为止。【警告】该插件会监听出战宠物，如调整出战宠物请一并调整本插件，防止加错点数！';
+					cga.sayLongWords(sayString2, 0, 3, 1);
+					
+					cb2(null);
+					return false;
+				}else if (val != null && val > 333){
+					cga.sayLongWords("错误:异常范围数据，人物单一属性最高加到333点", 0, 3, 1);
+				}else if (val != null && val < 0){
+					cga.sayLongWords("错误:异常范围数据，反向加点不可取", 0, 3, 1);
 				}
+				return true
 
 			});
 		}
@@ -324,44 +319,39 @@ var thisobj = {
 			var sayString = '【UNA人物自动加点插件】请输入出战宠物加点方案(仅输入数字,不加则输入0),1体力2力量3防御4敏捷5魔法:';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val)=>{
-				if (msg.length>0){
-					var val = parseInt(msg);
-					if(val !== NaN && val >= 0 && val <6)
-					{
-						configTable['petpoint'] = val;
-						thisobj['petpoint'] = val;
-						switch (val) {
-							case 0:
-								cga.sayLongWords('已选择[跳过宠物加点方案],请手动处理', 0, 3, 1);
-								break
-							case 1:
-								cga.sayLongWords('已选择出战宠物升级时加[体力]', 0, 3, 1);
-								break
-							case 2:
-								cga.sayLongWords('已选择出战宠物升级时加[力量]', 0, 3, 1);
-								break
-							case 3:
-								cga.sayLongWords('已选择出战宠物升级时加[防御]', 0, 3, 1);
-								break
-							case 4:
-								cga.sayLongWords('已选择出战宠物升级时加[敏捷]', 0, 3, 1);
-								break
-							case 5:
-								cga.sayLongWords('已选择出战宠物升级时加[魔法]', 0, 3, 1);
-								break
-							default:
-								cga.sayLongWords('异常数字,请检查', 0, 3, 1);
-								break
-						}
-						cb2(null);
-						return false;
-					}else if (val !== NaN && val < 0){
-						cga.sayLongWords("错误:异常范围数据,你是想反向加点吗", 0, 3, 1);
-					}else{
-						console.log("错误:仅可输入数值型数据,如你打算加纯血,输入1");
+				if(val != null && val >= 0 && val <6)
+				{
+					configTable['petpoint'] = val;
+					thisobj['petpoint'] = val;
+					switch (val) {
+						case 0:
+							cga.sayLongWords('已选择[跳过宠物加点方案],请手动处理', 0, 3, 1);
+							break
+						case 1:
+							cga.sayLongWords('已选择出战宠物升级时加[体力]', 0, 3, 1);
+							break
+						case 2:
+							cga.sayLongWords('已选择出战宠物升级时加[力量]', 0, 3, 1);
+							break
+						case 3:
+							cga.sayLongWords('已选择出战宠物升级时加[防御]', 0, 3, 1);
+							break
+						case 4:
+							cga.sayLongWords('已选择出战宠物升级时加[敏捷]', 0, 3, 1);
+							break
+						case 5:
+							cga.sayLongWords('已选择出战宠物升级时加[魔法]', 0, 3, 1);
+							break
+						default:
+							cga.sayLongWords('异常数字,请检查', 0, 3, 1);
+							break
 					}
-					return true
+					cb2(null);
+					return false;
+				}else if (val != null && val < 0){
+					cga.sayLongWords("错误:异常范围数据,你是想反向加点吗", 0, 3, 1);
 				}
+				return true
 			});
 		}
 		ask(()=>{

@@ -32,11 +32,11 @@ var thisobj = {
 					missionName = '拿驯兽师推荐信'
 				}
 			}else{
-				if(thisobj.finalJob == '猎人'){
+				if(thisobj.finalJob.job == '猎人'){
 					missionName = '就职猎人'
-				}else if(thisobj.finalJob == '樵夫'){
+				}else if(thisobj.finalJob.job == '樵夫'){
 					missionName = '就职樵夫'
-				}else if(thisobj.finalJob == '矿工'){
+				}else if(thisobj.finalJob.job == '矿工'){
 					missionName = '就职矿工'
 				}
 			}
@@ -90,7 +90,7 @@ var thisobj = {
 	inputcb : (cb)=>{
 
 		if(configTable.finalJob){
-			console.log('其他模块已经定义了目标职业，这里直接跳过输入')
+			console.log('【智能培养角色】其他模块已经定义了目标职业，这里直接跳过输入')
 			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
 			cb(null)
 			return

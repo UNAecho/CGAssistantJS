@@ -310,7 +310,7 @@ var thisobj = {
 				configTable.finalJob = professionalArray[index - 1].jobmainname;
 				thisobj.finalJob = professionalArray[index - 1];
 				
-				var sayString2 = '当前已选择:[' + thisobj.finalJob.job + ']。';
+				var sayString2 = '当前已选择:[' + thisobj.finalJob.jobmainname + ']。';
 				cga.sayLongWords(sayString2, 0, 3, 1);
 
 				cb(null);
