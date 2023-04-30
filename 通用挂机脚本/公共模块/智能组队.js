@@ -116,7 +116,7 @@ var teamModeArray = [
 						let curTime = Date.now()
 						var leader = cga.findPlayerUnit((u) => {
 							if (blacklist.hasOwnProperty(u.unit_name)) {
-								console.log('由于不满足队长【'+ u.unit_name+'】的队伍配置要求，暂时离队。' + (blacklistTimeout - (curTime - blacklist[u.unit_name])) / 1000 + '秒内不能加入【', u.unit_name, '】队伍')
+								console.log('由于不满足队长【' + u.unit_name + '】的队伍配置要求，暂时离队。' + (blacklistTimeout - (curTime - blacklist[u.unit_name])) / 1000 + '秒内不能加入【', u.unit_name, '】队伍')
 							}
 							if (
 								(u.xpos == thisobj.object.leaderX && u.ypos == thisobj.object.leaderY)
@@ -167,12 +167,12 @@ var teamModeArray = [
 							if (checkObj.hasOwnProperty(roleArr[roleIndex]) && cntObj[roleArr[roleIndex]] > checkObj[roleArr[roleIndex]]) {
 								leaveIndex = shareInfoObj.teammates.indexOf(name)
 								console.log('当前队内职责【', roleArr[roleIndex], '】有【' + cntObj[roleArr[roleIndex]] + '】人，队内限定【' + checkObj[roleArr[roleIndex]] + '】人，开始指名退队。')
-								console.log('队员【'+name+'】职责【' + roleArr[roleIndex] +'】需要退队')
+								console.log('队员【' + name + '】职责【' + roleArr[roleIndex] + '】需要退队')
 								cb('rebuild' + '#' + leaveIndex)
 								return
 							}
 
-							console.log('统计:队员【' + name +'】职责【', roleArr[roleIndex], '】')
+							console.log('统计:队员【' + name + '】职责【', roleArr[roleIndex], '】')
 						}
 					}
 
@@ -202,9 +202,11 @@ var teamModeArray = [
 						return
 					}
 
-					// 挂上标记，队员才能识别队长
+					// 挂上标记，队员才能识别队长。设置延迟，防止其他称号覆盖
 					if (cga.GetPlayerInfo().nick != thisobj.object.leaderFilter) {
-						cga.ChangeNickName(thisobj.object.leaderFilter)
+						setTimeout(() => {
+							cga.ChangeNickName(thisobj.object.leaderFilter)
+						}, 2000);
 					}
 
 					cga.waitTeammatesWithFilter(thisobj.object.memberFilter, thisobj.object.minTeamMemberCount, (r) => {
@@ -1121,7 +1123,7 @@ var thisobj = {
 				island = false
 			}
 		}
-		// 由于雪拉威森塔路程近，50层前又可以回补，将1-50级传统练级地点改为雪拉威森塔
+		// 由于雪拉威森塔路程近，50层前又可以回补，将1-50级部分传统练级地点改为雪拉威森塔
 		var battleArea = '雪拉威森塔'
 		var layer = 0
 		if (minLv > 0 && minLv <= 5) {
@@ -1130,10 +1132,12 @@ var thisobj = {
 			battleArea = '梅布尔隘地'
 		} else if (minLv > 10 && minLv <= 15) {
 			layer = 15
-		} else if (minLv > 15 && minLv <= 20) {
+		} else if (minLv > 15 && minLv <= 17) {
 			layer = 20
-		} else if (minLv > 20 && minLv <= 25) {
+		} else if (minLv > 17 && minLv <= 21) {
 			battleArea = '诅咒之迷宫', layer = 1
+		} else if (minLv > 21 && minLv <= 25) {
+			battleArea = '诅咒之迷宫', layer = 2
 		} else if (minLv > 25 && minLv <= 30) {
 			battleArea = '诅咒之迷宫', layer = 3
 		} else if (minLv > 30 && minLv <= 35) {
@@ -1253,7 +1257,7 @@ var thisobj = {
 		let costType = costGold > 0 ? '【减少】' : '【增加】'
 
 		if (getExp > 0) {
-			console.log('效率播报：【' + thisobj.object.battleAreaObj.name + '】'
+			console.log('效率播报：【' + thisobj.object.area.map + '】' + '【' + thisobj.object.area.layer + '】层'
 				+ '，当前等级【' + curPlayerInfo.level + '】'
 				+ '，练级【' + (costSec / 60).toFixed(2) + '】分'
 				+ '，获得经验【' + getExp + '】'
@@ -1354,7 +1358,7 @@ var thisobj = {
 				if (str.length) {
 					str += ', '
 				}
-				if(roleArr.indexOf(key) != -1){
+				if (roleArr.indexOf(key) != -1) {
 					str += (key + ': ')
 					str += pair.value[key];
 				}
@@ -1614,12 +1618,12 @@ var thisobj = {
 		var stage4 = (cb2) => {
 			var remain = thisobj.object.minTeamMemberCount
 			var roleMaxCount = {}
-			var keys = ['输出','治疗','小号']
+			var keys = ['输出', '治疗', '小号']
 
-			var sayAndSave = (cb)=>{
+			var sayAndSave = (cb) => {
 				let roleName = keys.shift()
-				if(roleName){
-					cga.sayLongWords('【智能组队】请输入队内【' + roleName +'】职责的最大人数(0~' + remain + '):', 0, 3, 1);
+				if (roleName) {
+					cga.sayLongWords('【智能组队】请输入队内【' + roleName + '】职责的最大人数(0~' + remain + '):', 0, 3, 1);
 					cga.waitForChatInput((msg, value) => {
 						if (value !== null && value >= 0 && value <= remain) {
 							remain = remain - value

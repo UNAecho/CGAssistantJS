@@ -2163,8 +2163,8 @@ module.exports = function(callback){
 				'拿潘食品店' : 1062,
 				'职业公会' : 1092,
 				'酒吧':{
-					1101:'科特利亚酒吧',
-					1170:'安其摩酒吧',
+					1101:'科特利亚酒吧',// 调教技能学习地
+					1170:'安其摩酒吧',// 铜钥匙购买地
 				},
 				'医院':{
 					1111:'西门医院',
@@ -4449,6 +4449,9 @@ module.exports = function(callback){
 			})
 		}
 
+		// 如果需要赶路，先读取单人战斗配置
+		cga.loadBattleConfig('生产赶路')
+
 		if(config[villageName]){
 			console.log('你已经开过【' + villageName + '】传送，直接使用传送石抵达。')
 			if(mainMapName == villageName){
@@ -4461,7 +4464,6 @@ module.exports = function(callback){
 			return
 		}else if(villageName != '魔法大学'){
 			console.log('你没有开启【' + villageName + '】传送权限，开始计算最优步行模式...')
-
 		}
 		// 用于判断角色的过关资格
 		var playerInfo = cga.GetPlayerInfo()
@@ -5870,7 +5872,7 @@ module.exports = function(callback){
 		walkCb();
 	}
 			
-	//查找玩家技能，返回技能index，找不到返回-1
+	//查找玩家技能，返回技能对象，找不到返回null
 	//参数1：技能名
 	//参数2：完全匹配
 	cga.findPlayerSkill = function(name){
@@ -8630,14 +8632,32 @@ module.exports = function(callback){
         isLeader = ((teamplayers.length && teamplayers[0].name == playerInfo.name) || teamplayers.length == 0) ? true : false;
 
 		if(isLeader){
-			// TODO如果NPC周围只有1格空闲地形，那么这里会报错，需要写个逻辑避免。但是要考虑本身就是带队，没有2格是无法将5个人都放在1个格子里的
-			var tmpPos = cga.get2RandomSpace(npcPos[0],npcPos[1])
-			let tmpArr = [tmpPos[0]]
-			if (teamplayers.length){
-				tmpArr.push(tmpPos[1])
-				tmpArr.push(tmpPos[0])
-				tmpArr.push(tmpPos[1])
-				tmpArr.push(tmpPos[0])
+			// 如果NPC周围只有1格空闲地形，改用cga.getRandomSpace
+			var spaceList = null
+			let tmpArr = []
+			try {
+				spaceList = cga.get2RandomSpace(npcPos[0],npcPos[1])
+				// 最终站位
+				tmpArr.push(spaceList[0])
+				// 如果是组队，把队员都拉到NPC周围
+				if (teamplayers.length){
+					tmpArr.push(spaceList[1])
+					tmpArr.push(spaceList[0])
+					tmpArr.push(spaceList[1])
+					tmpArr.push(spaceList[0])
+				}
+			} catch (error) {
+				if(error.message.indexOf('只有一格') != -1){
+					// TODO 队员自行离队对话
+					console.log('NPC周围只有1格，改为cga.getRandomSpace来计算。【注意】，由于NPC周围只有1格，部分队员无法在不离队的情况下原地与NPC对话，请修改逻辑')
+					spaceList = cga.getRandomSpace(npcPos[0],npcPos[1])
+					// TODO 如果在柜台后面，想办法处理
+					if(spaceList == null){
+						throw new Error('NPC周围1格站位也没有，猜测在柜台后面，或数据有误，请手动处理。')
+					}
+					// cga.getRandomSpace返回是1维数组，cga.get2RandomSpace返回是2维数组
+					tmpArr.push(spaceList)
+				}
 			}
 			cga.walkList(tmpArr, askAndCheck);
 		}else{
@@ -11398,7 +11418,7 @@ module.exports = function(callback){
 
 	/**
 	 * UNAecho:获取指定技能的静态信息
-	 * @param {*} input 
+	 * @param {*} input 技能全称
 	 * @returns 
 	 */
 	cga.skill.getSkill = (input) =>{
@@ -11421,6 +11441,100 @@ module.exports = function(callback){
 
 
 		return skillObj
+	}
+
+	/**
+	 * UNAecho:通用学技能API
+	 * 除了制造系，粗略统计了一下技能导师所在的主地图数量分布:
+	 * {
+		'法兰城': 44,
+		'艾尔莎岛': 8,
+		'伊尔村': 2,
+		'乌克兰村': 1,
+		'其他': 27,
+		'？？？': 1,
+		'圣拉鲁卡村': 4,
+		'奇利村': 2,
+		'亚留特村': 3,
+		'曙光骑士团营地': 3,
+		'加纳村': 5,
+		'返回仙人的家的途中': 1,
+		'汉克的房间': 1,
+		'哥拉尔': 1
+		}
+	 * @param {*} skName 要学习的技能全称
+	 * @param {*} cb 
+	 */
+	cga.skill.learn = (skName, cb) => {
+		let skillObj = cga.skill.getSkill(skName)
+		// 计算栏位是否足够
+		let slotRemain = cga.skill.getSlotRemain()
+		if (slotRemain < skillObj.fieldCost) {
+			throw new Error('错误，人物剩余栏位:【' + slotRemain + '】，所需栏位:【' + skillObj.fieldCost + '】，不足以学习新技能。')
+		}
+
+		let villageName = cga.travel.switchMainMap()
+		// 常用的可传送村镇
+		const teleVillages = ['圣拉鲁卡村', '伊尔村', '亚留特村', '维诺亚村', '奇利村', '加纳村', '杰诺瓦镇', '阿巴尼斯村', '蒂娜村']
+
+		let go = (cb2) => {
+			cga.travel.autopilot(skillObj.teacherMap, () => {
+				learn(cb2)
+			})
+			return
+		}
+
+		let learn = (cb3) =>{
+			let obj = { act: 'skill', target: skillObj.name }
+			cga.askNpcForObj(skillObj.teacherMap, skillObj.teacherPos, obj, cb3)
+			return
+		}
+
+		// 计算技能所需金币
+		let gold = cga.GetPlayerInfo().gold
+		let costSum = skillObj.cost
+		if (teleVillages.indexOf(skillObj.teacherMainMap) != -1) {
+			costSum += cga.travel.teleCost[skillObj.teacherMainMap]
+		}
+		if (gold < costSum) {
+			throw new Error('学习技能:【' + skillObj.name + '】，需要:【' + costSum + '】(可能包含传送费)，你的钱:【' + gold + '】不够')
+		}
+
+		// 主逻辑开始
+		if (skillObj.teacherMainMap == '法兰城') {
+			cga.travel.falan.toStone('C', () => {
+				if(skillObj.teacherMap == 15009 || skillObj.teacherMap == 15010){
+					cga.walkList([
+						[17, 53, '法兰城'],
+						[22, 88, '芙蕾雅'],
+					], ()=>{
+						cga.askNpcForObj('芙蕾雅', [201, 165], { act: 'map', target: 15000 }, ()=>{
+							cga.walkList([
+								[20, 8, '莎莲娜海底洞窟 地下2楼'],
+							], () => {
+								cga.askNpcForObj('莎莲娜海底洞窟 地下2楼', [31, 22], { act: 'map', target: 15006 , say : '咒术'}, ()=>{
+									cga.walkList([
+										[38, 37, '咒术师的秘密住处'],
+										[10, 0, 15008],
+										skillObj.teacherMap == 15010 ? [1, 10, 15010] : [19, 10, 15009],
+									], () => {
+										learn(cb)
+									});
+								})
+							});
+						})
+					})
+				}else{
+					go(cb)
+				}
+			});
+		} else if (teleVillages.indexOf(skillObj.teacherMainMap) != -1) {
+			cga.travel.toVillage(skillObj.teacherMainMap,()=>{
+				go(cb)
+			})
+		} else {
+			throw new Error('未知领域，请回到常用主城市再调用此API')
+		}
 	}
 
 	/**

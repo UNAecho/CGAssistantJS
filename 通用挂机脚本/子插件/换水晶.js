@@ -68,9 +68,9 @@ const hasFilter = (eq) => {
 	}
 	return false;
 }
-// 为了节约，改为50耐即视为可用
+// 为了节约，改为50耐并且属性正确，即视为可用
 const hasrepairedFilter = (eq) => {
-	if (eq.type == 22) {
+	if (eq.type == 22 && eq.name == thisobj.buyCrystal.name) {
 		const durability = cga.getEquipEndurance(eq);
 		return (durability && durability[0] > 50);
 	}
