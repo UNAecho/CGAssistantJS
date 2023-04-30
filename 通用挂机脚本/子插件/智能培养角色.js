@@ -45,9 +45,9 @@ var thisobj = {
 
 		// 检查技能情况
 		let needLearn = learnSkillMission.func.needLearn(thisobj.finalJob.job)
-		if (needLearn != null) {
+		if (needLearn != null && cga.skill.ableToLearn(needLearn) == 'able to learn') {
 			targetObj.missionName = '学习必要技能'
-			param.job = thisobj.finalJob.job
+			targetObj.param.job = thisobj.finalJob.job
 		}
 
 		// 任务制作

@@ -11443,6 +11443,32 @@ module.exports = function(callback){
 		return skillObj
 	}
 
+	cga.skill.ableToLearn = (skName) => {
+		let result = 'able to learn'
+		let skillObj = cga.skill.getSkill(skName)
+		// 计算栏位是否足够
+		let slotRemain = cga.skill.getSlotRemain()
+		if (slotRemain < skillObj.fieldCost) {
+			result = 'lack of slot'
+		}
+
+		// 常用的可传送村镇
+		const teleVillages = ['圣拉鲁卡村', '伊尔村', '亚留特村', '维诺亚村', '奇利村', '加纳村', '杰诺瓦镇', '阿巴尼斯村', '蒂娜村']
+
+		// 计算技能所需金币
+		let gold = cga.GetPlayerInfo().gold
+		let costSum = skillObj.cost
+		if (teleVillages.indexOf(skillObj.teacherMainMap) != -1) {
+			costSum += cga.travel.teleCost[skillObj.teacherMainMap]
+		}
+		if (gold < costSum) {
+			console.log('学习技能:【' + skillObj.name + '】，需要:【' + costSum + '】(可能包含传送费)，你的钱:【' + gold + '】不够')
+			result = 'lack of gold'
+		}
+
+		return result
+	}
+
 	/**
 	 * UNAecho:通用学技能API
 	 * 除了制造系，粗略统计了一下技能导师所在的主地图数量分布:
@@ -11467,39 +11493,16 @@ module.exports = function(callback){
 	 */
 	cga.skill.learn = (skName, cb) => {
 		let skillObj = cga.skill.getSkill(skName)
-		// 计算栏位是否足够
-		let slotRemain = cga.skill.getSlotRemain()
-		if (slotRemain < skillObj.fieldCost) {
-			throw new Error('错误，人物剩余栏位:【' + slotRemain + '】，所需栏位:【' + skillObj.fieldCost + '】，不足以学习新技能。')
+		
+		let reason = cga.skill.ableToLearn(skName)
+
+		if(reason.indexOf('lack')){
+			cb(reason)
+			return
 		}
 
-		let villageName = cga.travel.switchMainMap()
 		// 常用的可传送村镇
 		const teleVillages = ['圣拉鲁卡村', '伊尔村', '亚留特村', '维诺亚村', '奇利村', '加纳村', '杰诺瓦镇', '阿巴尼斯村', '蒂娜村']
-
-		let go = (cb2) => {
-			cga.travel.autopilot(skillObj.teacherMap, () => {
-				learn(cb2)
-			})
-			return
-		}
-
-		let learn = (cb3) =>{
-			let obj = { act: 'skill', target: skillObj.name }
-			cga.askNpcForObj(skillObj.teacherMap, skillObj.teacherPos, obj, cb3)
-			return
-		}
-
-		// 计算技能所需金币
-		let gold = cga.GetPlayerInfo().gold
-		let costSum = skillObj.cost
-		if (teleVillages.indexOf(skillObj.teacherMainMap) != -1) {
-			costSum += cga.travel.teleCost[skillObj.teacherMainMap]
-		}
-		if (gold < costSum) {
-			throw new Error('学习技能:【' + skillObj.name + '】，需要:【' + costSum + '】(可能包含传送费)，你的钱:【' + gold + '】不够')
-		}
-
 		// 主逻辑开始
 		if (skillObj.teacherMainMap == '法兰城') {
 			cga.travel.falan.toStone('C', () => {
@@ -11555,7 +11558,7 @@ module.exports = function(callback){
 	 * @returns 
 	 */
 	cga.skill.getSlotRemain =()=>{
-		return cga.GetPlayerInfo().slot - cga.skill.getSlotSum()
+		return cga.GetPlayerInfo().skillslots - cga.skill.getSlotSum()
 	}
 
 	return cga;

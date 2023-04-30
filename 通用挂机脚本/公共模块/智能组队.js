@@ -192,13 +192,14 @@ var teamModeArray = [
 					});
 					// 如果已经有其他队长允许上车，则自己先进入休眠。
 					if (leader) {
-						console.log('检测到有其他司机【' + leader.unit_name + '】在等待拼车，暂时停止招人，10秒后重新判断..')
+						let randomTime = Math.floor(Math.random() * (10000 - 3000 + 1))
+						console.log('检测到有其他司机【' + leader.unit_name + '】在等待拼车，暂时停止招人，' + randomTime + '秒后重新判断..')
 						// 挂上标记，队员才能识别队长
 						if (cga.GetPlayerInfo().nick == thisobj.object.leaderFilter) {
 							console.log('去掉leaderFilter，防止队员进入')
 							cga.ChangeNickName('')
 						}
-						setTimeout(wait, 10000);
+						setTimeout(wait, randomTime);
 						return
 					}
 
