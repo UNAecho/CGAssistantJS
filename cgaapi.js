@@ -3954,6 +3954,7 @@ module.exports = function(callback){
 				59875:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[24, 44, 59875],],
 				59880:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[22, 44, 59880],],
 				59885:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[20, 44, 59885],],
+				59889:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[18, 44, 59890],[59, 50, 59889],],
 				59890:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[18, 44, 59890],],
 				59895:[[90, 99, 59552],[108, 39, 59801],[75, 50, 59850],[16, 44, 59895],],
 				// 主地图
@@ -3986,6 +3987,7 @@ module.exports = function(callback){
 				59875:[[137, 133, 59850],],
 				59880:[[162, 122, 59850],],
 				59885:[[58, 131, 59850],],
+				59889:[[162, 93, 59890],],
 				59890:[[61, 39, 59850],],
 				59895:[[102, 44, 59850],],
 			},
@@ -6372,7 +6374,8 @@ module.exports = function(callback){
 		var pattern = /(.+)的卡片/;
 		var sellArray = []
 		cga.getInventoryItems().forEach((item)=>{
-			if(item.name == '魔石' || item.name == '卡片？' || pattern.exec(item.name) ){
+			// UNAecho:有时候会不小心捡到未鉴定的封印卡，其名称也是【卡片？】如果不作判断，会直接卡在商店处一直无法动弹。
+			if(item.name == '魔石' || (item.name == '卡片？' && item.type != 40) || pattern.exec(item.name) ){
 				sellArray.push({
 					itempos : item.pos,
 					itemid : item.itemid,
@@ -11493,29 +11496,57 @@ module.exports = function(callback){
 	 */
 	cga.skill.learn = (skName, cb) => {
 		let skillObj = cga.skill.getSkill(skName)
-		
 		let reason = cga.skill.ableToLearn(skName)
-
-		if(reason.indexOf('lack')){
+		if (reason.indexOf('lack') != -1) {
 			cb(reason)
+			return
+		}
+
+		let go = (cb2) => {
+			cga.travel.autopilot(skillObj.teacherMap, () => {
+				learn(cb2)
+			})
+			return
+		}
+
+		let learn = (cb3) => {
+			let obj = { act: 'skill', target: skillObj.name }
+			cga.askNpcForObj(skillObj.teacherMap, skillObj.teacherPos, obj, cb3)
 			return
 		}
 
 		// 常用的可传送村镇
 		const teleVillages = ['圣拉鲁卡村', '伊尔村', '亚留特村', '维诺亚村', '奇利村', '加纳村', '杰诺瓦镇', '阿巴尼斯村', '蒂娜村']
+		// 赶路所需
+		cga.loadBattleConfig('生产赶路')
+
 		// 主逻辑开始
+		var map = cga.GetMapName();
+		var mapindex = cga.GetMapIndex().index3;
+		// 如果已经在技能导师房间，则无需回补直接学习
+		if (map == skillObj.teacherMap || mapindex == skillObj.teacherMap) {
+			learn(cb)
+			return
+		}
+		// 如果需要走路至导师房间，则需要补状态再出发
+		if (cga.needSupplyInitial({})) {
+			cga.travel.toHospital(() => {
+				setTimeout(cga.skill.learn, 3000, skName, cb);
+			})
+			return
+		}
 		if (skillObj.teacherMainMap == '法兰城') {
 			cga.travel.falan.toStone('C', () => {
-				if(skillObj.teacherMap == 15009 || skillObj.teacherMap == 15010){
+				if (skillObj.teacherMap == 15009 || skillObj.teacherMap == 15010) {
 					cga.walkList([
 						[17, 53, '法兰城'],
 						[22, 88, '芙蕾雅'],
-					], ()=>{
-						cga.askNpcForObj('芙蕾雅', [201, 165], { act: 'map', target: 15000 }, ()=>{
+					], () => {
+						cga.askNpcForObj('芙蕾雅', [201, 165], { act: 'map', target: 15000 }, () => {
 							cga.walkList([
 								[20, 8, '莎莲娜海底洞窟 地下2楼'],
 							], () => {
-								cga.askNpcForObj('莎莲娜海底洞窟 地下2楼', [31, 22], { act: 'map', target: 15006 , say : '咒术'}, ()=>{
+								cga.askNpcForObj('莎莲娜海底洞窟 地下2楼', [31, 22], { act: 'map', target: 15006, say: '咒术' }, () => {
 									cga.walkList([
 										[38, 37, '咒术师的秘密住处'],
 										[10, 0, 15008],
@@ -11527,12 +11558,12 @@ module.exports = function(callback){
 							});
 						})
 					})
-				}else{
+				} else {
 					go(cb)
 				}
 			});
 		} else if (teleVillages.indexOf(skillObj.teacherMainMap) != -1) {
-			cga.travel.toVillage(skillObj.teacherMainMap,()=>{
+			cga.travel.toVillage(skillObj.teacherMainMap, () => {
 				go(cb)
 			})
 		} else {

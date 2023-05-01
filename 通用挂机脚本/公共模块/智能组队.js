@@ -191,9 +191,9 @@ var teamModeArray = [
 						return false
 					});
 					// 如果已经有其他队长允许上车，则自己先进入休眠。
-					if (leader) {
-						let randomTime = Math.floor(Math.random() * (10000 - 3000 + 1))
-						console.log('检测到有其他司机【' + leader.unit_name + '】在等待拼车，暂时停止招人，' + randomTime + '秒后重新判断..')
+					if (leader && cga.getTeamPlayers().length != thisobj.object.minTeamMemberCount) {
+						let randomTime = Math.floor(Math.random() * (10000 - 3000) + 3000)
+						console.log('检测到有其他司机【' + leader.unit_name + '】在等待拼车，暂时停止招人，' + randomTime /1000 + '秒后重新判断..')
 						// 挂上标记，队员才能识别队长
 						if (cga.GetPlayerInfo().nick == thisobj.object.leaderFilter) {
 							console.log('去掉leaderFilter，防止队员进入')
@@ -1141,9 +1141,9 @@ var thisobj = {
 			battleArea = '诅咒之迷宫', layer = 2
 		} else if (minLv > 25 && minLv <= 30) {
 			battleArea = '诅咒之迷宫', layer = 3
-		} else if (minLv > 30 && minLv <= 35) {
+		} else if (minLv > 30 && minLv <= 36) {
 			layer = 35
-		} else if (minLv > 35 && minLv <= 40) {// 雪拉威森塔40楼有睡眠怪，改为去诅咒练级
+		} else if (minLv > 36 && minLv <= 40) {// 雪拉威森塔40楼有睡眠怪，改为去诅咒练级。诅咒6层大概35-41级怪
 			battleArea = '诅咒之迷宫', layer = 6
 		} else if (minLv > 40 && minLv <= 45) {
 			layer = 45
