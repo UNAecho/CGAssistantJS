@@ -107,6 +107,13 @@ var thisobj = {
 	func :{// 任务自定义函数
 
 	},
+	doTask: (param, cb) => {
+		// 接受外部传入的参数
+		thisobj.param = param
+		var task = cga.task.Task(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements)
+		task.doTask(cb)
+		return
+	},
 };
 
 module.exports = thisobj;

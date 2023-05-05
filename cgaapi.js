@@ -8031,6 +8031,7 @@ module.exports = function(callback){
 					setTimeout(() => {
 						cga.ChangeNickName("z" + "check"+allDoneStr)
 					}, 1000);
+					setTimeout(listener, 2000, cb);
 					return
 				}
 				// reqObj具体结果举例
