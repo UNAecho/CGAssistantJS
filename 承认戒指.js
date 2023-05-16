@@ -1,15 +1,8 @@
 /**
- * TODOlist
- * 大号扔多余的承认戒指和神之金
- * 战斗配置里，练级选项第一个逃跑容易出现20级以下练不了级的情况，一直逃跑
- * 手动BOSS分为高速战斗和不高速战斗2个版本
- * 打手需要自动攻击，打最低级的怪
- * BOSS处重新组队，传教队长，2个打手分别是2、3号位。小号最后加入，方便大号W站位和放强力回复魔法
- * 如果可以，做一个自动W站位和收宠的模式
- * 有时候第三步无法结束，导致boss那里没有读取战斗配置。通常发生在队伍第3个人身上（3.前往辛希亚探索指挥部（55.47），通过楼梯下楼抵达辛希亚探索指挥部。5.与教团骑士克罗米（40.22）对话，交出【团长的证明】并通过栅栏，通过黄色传送石（44.22）抵达废墟。）
- * 小号进入遗迹的时候改为BOSS防御
- * 神之金:#35256@29
- * 怪物碎片#720311@26
+ * UNAecho:
+ * 此模块已被智能练级中的自动承认之戒上位替代，目前仅作临时手动使用，不再更新
+ * 更优化的体验请使用主插件的【智能练级】功能
+
  *  */ 
 
 var fs = require('fs');
@@ -25,10 +18,10 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	var teams = [
 		[
 			"UNAの传教士",
+			"UNAの格斗1",
 			"UNAの格斗2",
 			"UNAの格斗3",
-			"UNAの造袍",
-			"UNAの裁缝",
+			"UNAの战斧3",
 		],[
 			"UNAの传教士2",
 			"UNAの格斗01",
@@ -50,40 +43,6 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		}
 	}
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
-
-	var loadBattleConfig = ()=>{
-		var index = cga.GetMapIndex().index3
-		var jobObj = cga.job.getJob()
-		var filename = null
-		
-		if(jobObj.job == '传教士'){
-			if(index == 44707){
-				filename = '手动BOSS'
-			}else if(index == 27101){
-				filename = 'BOSS传教'
-			}else{
-				filename = '生产赶路'
-			}
-		}else if(jobObj.job == '格斗士'){
-			if(index == 44707){
-				filename = '手动BOSS'
-			}else if(index == 27101){
-				filename = '格斗士练级'
-			}else{
-				filename = '生产赶路'
-			}
-		}else{
-			if(index == 44707){
-				filename = 'BOSS防御'
-			}else if(index == 27101){
-				filename = 'BOSS防御'
-			}else{
-				filename = '生产赶路'
-			}
-		}
-		configMode.manualLoad(filename)
-		return
-	}
 
 	var dialogHandler = (err, dlg)=>{
 
@@ -219,8 +178,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 			// 走随机迷宫
 			var go_2 = ()=>{
-				// 通用读取战斗配置逻辑
-				loadBattleConfig()
+				// 节能模式，节约蓝量赶路
+				configMode.func('节能模式')
 				// 队长逻辑
 				if (cga.isTeamLeader){
 					// 如果中途在迷宫中脚本停止，重新运行会用到下面if逻辑
@@ -324,10 +283,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			// 	});
 			// });
 			cga.SayWords('请手动战斗，战斗胜利后脚本继续' , 0, 3, 1);
-			setTimeout(loadBattleConfig, 1000);
 			cga.waitForLocation({mapindex : 44708},()=>{
 				// 后续没有困难战斗了，改为逃跑
-				setTimeout(loadBattleConfig, 1000);
+				configMode.manualLoad('生产赶路')
 				cb2(true);
 			});
 		}
@@ -465,7 +423,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		},
 	]
 	);
-	loadBattleConfig()
+	configMode.manualLoad('战斗赶路')
 	task.anyStepDone = false;
 
 	task.doTask(()=>{

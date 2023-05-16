@@ -567,6 +567,30 @@ module.exports = function(callback){
 		return null;
 	}
 
+	/**
+	 * UNAecho:获取身上所有物品的详细信息(包括装备)
+	 * 目前仅加入了耐久度、耐久度最大值以及耐久度百分比的信息，后续陆续加入其它信息
+	 * 
+	 * 关于耐久百分比，49/100耐久度返回0.49，保留2位小数，四舍五入
+	 * 
+	 * 返回的数据格式，参照cga.GetItemsInfo()
+	 * @returns Array
+	 */
+	cga.getItemsInfoDetail = ()=>{
+		let items = cga.GetItemsInfo()
+		items.forEach((item)=>{
+			if(item.attr){
+				var regex = item.attr.match(/\$4耐久 (\d+)\/(\d+)/);
+				if(regex && regex.length >= 3){
+					item.durability = parseInt(regex[1])
+					item.durabilityMax = parseInt(regex[2])
+					item.durabilityPer = parseFloat((item.durability / item.durabilityMax).toFixed(2))
+				}
+			}
+		});
+		return items
+	}
+
 	cga.travel = {};
 /**
  * UNAecho:一个定义自己在哪个领域内的API
@@ -3735,7 +3759,8 @@ module.exports = function(callback){
 				'曙光储备室':27011,
 				'曙光营地医院':27012,
 				'医院':27012,
-				'曙光营地医院 2楼':27012,
+				// mapindex是唯一索引，TODO寻找同一index不同pos的索引方法
+				// '曙光营地医院 2楼':27012,
 				'酒吧':27013,
 				'曙光营地酒吧':27013,
 				'辛希亚探索指挥部':{
@@ -3755,16 +3780,49 @@ module.exports = function(callback){
 				27011:[[44, 49, 27011],],
 				// 曙光营地医院
 				27012:[[42, 56, 27012],],
-				// 曙光营地医院 2楼
-				27012:[[42, 56, 27012],[15, 12, 27012],],
+				// // 曙光营地医院 2楼
+				// 27012:[[42, 56, 27012],[15, 12, 27012],],
+				// 曙光营地酒吧
+				27013:[[55, 58, 27012]],
+				// 曙光营地指挥部
+				27015:[[52, 67, 27015]],
+				// 传送石
+				27101:[[55, 47, '辛希亚探索指挥部'],[7,4, '辛希亚探索指挥部', 91, 6],[95,9, 27101],],
 			},
 			walkReverse:{
 				// 曙光储备室
 				27011:[[12, 22, 27001],],
 				// 曙光营地医院
 				27012:[[1, 8, 27001],],
-				// 曙光营地医院 2楼
-				27012:[[97, 12, 27012],],
+				// 曙光营地酒吧
+				27013:[[4, 19, 27001],],
+				// 辛希亚探索指挥部
+				27014:[[(cb)=>{
+					var XY = cga.GetMapXY();
+					if(XY.x > 50){
+						cga.walkList([[91, 6, '辛希亚探索指挥部',7, 4],], cb);
+						return
+					}else{
+						cga.walkList([[1, 10, 27001],], cb);
+						return
+					}
+				}, null, 27001],],
+				// 曙光营地指挥部
+				27015:[[(cb)=>{
+					var XY = cga.GetMapXY();
+					if(XY.x > 80){
+						cga.walkList([[85, 2, '曙光营地指挥部',69, 69],], cb);
+						return
+					}else if(XY.x > 40){
+						cga.walkList([[53, 80, 27001],], cb);
+						return
+					}else{// TODO x<40还有一个房间，暂时没去过
+						cga.walkList([[85, 2, '曙光营地指挥部',69, 69],], cb);
+						return
+					}
+				}, null, 27001],],
+				// 传送石
+				27101:[[19, 28, 27014],],
 			},
 		},
 		'圣骑士营地':{
@@ -4373,7 +4431,7 @@ module.exports = function(callback){
 	}
 
 	cga.travel.isInVillage = () => {
-		var villageArr = ['圣拉鲁卡村', '伊尔村', '亚留特村', '维诺亚村', '奇利村', '加纳村', '杰诺瓦镇','魔法大学','阿巴尼斯村','蒂娜村'] 
+		var villageArr = ['圣拉鲁卡村', '伊尔村', '亚留特村', '维诺亚村', '奇利村', '加纳村', '杰诺瓦镇','魔法大学','阿巴尼斯村','蒂娜村','曙光骑士团营地'] 
 		var mainMapName = cga.travel.switchMainMap()
 		if(villageArr.indexOf(mainMapName) != -1){
 			return true
@@ -7428,6 +7486,47 @@ module.exports = function(callback){
 			}, 1500);
 		}, 1000);
 	}
+	
+	/**
+	 * UNAecho:简易踢人API
+	 * @param {*} kickArr 被踢者列表，例:['UNAの小号1','UNAの小号2']
+	 * @param {*} cb 
+	 */
+	cga.kickPlayer = (kickArr, cb)=>{
+		let name = kickArr.shift()
+		// 如果列表中还有没踢完的人
+		if(name){
+			cga.waitSysMsg((r)=>{
+				if(r.indexOf('被你请出队伍') != -1){
+					setTimeout(cga.kickPlayer, 1000, kickArr, cb);
+					return false
+				}
+				return true
+			})
+			console.log('开始踢人..')
+			cga.DoRequest(cga.REQUEST_TYPE_KICKTEAM);
+			cga.AsyncWaitNPCDialog((err, dlg)=>{
+				var stripper = "你要把谁踢出队伍？";
+				if(dlg && dlg.message && dlg.message.indexOf(stripper) >= 0){
+					var strip = dlg.message.substr(dlg.message.indexOf(stripper) + stripper.length);
+					strip = strip.replace(/\\z/g,"|");
+					strip = strip.replace(/\\n/g,"|");
+					var reg = new RegExp(/([^|\n]+)/g)
+					var match = strip.match(reg);
+					for(var j = 0; j < match.length; ++j){
+						if(match[j] == name){
+							console.log('【'+ match[j] +'】不符合入队条件，踢出。')
+							cga.ClickNPCDialog(0, j / 2);
+							break;
+						}
+					}
+				}
+			});
+		}else{// 列表已经没有被踢的人
+			cb(null)
+			return
+		}
+	}
 
 	//等待名字在teammates列表中的的玩家组队，并自动踢出不符合teammates列表的陌生人。
 	cga.waitTeammates = (teammates, cb)=>{
@@ -7492,6 +7591,89 @@ module.exports = function(callback){
 			cb(false, lateList);
 		}
 	}
+	/**
+	 * UNAecho: 固定组队的封装API，包含了队长和队员的逻辑，调用时，仅需传入固定的队伍名单与队长坐标即可
+	 * 此API逻辑与cga.waitTeammatesReady一致，唯一区别在于cga.waitTeammatesReady有超时的选项
+	 * @param {Array} teammates 
+	 * @param {Array} pos 组队时，队长所处坐标
+	 * @param {*} cb 
+	 */
+	cga.buildTeam = (teammates,pos,cb)=>{
+		if(!teammates instanceof Array || !pos instanceof Array){
+			throw new Error('teammates和pos必须均为Array')
+		}
+		if(!teammates.length){
+			console.log('传入的数组为空，退出cga.buildTeam')
+			cb(null)
+			return
+		}
+		if(pos.length != 2){
+			throw new Error('pos必须为2维int型数组')
+		}
+		var playerInfo = cga.GetPlayerInfo();
+		var teamplayers = cga.getTeamPlayers();
+		var isleader = teammates[0] == playerInfo.name ? true : false
+		var mapXY = cga.GetMapXY();
+
+		if(isleader){
+			var waitFor = ()=>{
+				cga.waitTeammates(teammates, (r)=>{
+					if(r){
+						cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
+						cb(true);
+						return;
+					}
+					setTimeout(waitFor, 1000);
+				});
+			}
+			if(mapXY.x == pos[0] && mapXY.y == pos[1]){
+				waitFor()
+			}else{
+				cga.walkList([
+					pos
+				], () => {
+					waitFor()
+				});
+			}
+		}else {
+			var waitAdd = ()=>{
+				cga.addTeammate(teammates[0], (r)=>{
+					if(r){
+						cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
+						cb(true);
+						return;
+					}
+					setTimeout(waitAdd, 1000);
+				});
+			}
+
+			// 如果在队伍中，先判断是不是在指定队伍中
+			if(teamplayers.length){
+				if(teamplayers[0].name == teammates[0]){
+					console.log('已经在指定队伍中，cga.buildTeam执行完毕')
+					cb(true)
+					return
+				}else{
+					cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+					setTimeout(cb,1000)
+					return
+				}
+			}else{// 如果不在队伍里，再执行正常逻辑
+				var memberPos = cga.getRandomSpace(pos[0], pos[1]);
+				if(mapXY.x == memberPos[0] && mapXY.y == memberPos[1]){
+					waitAdd()
+				}else{
+					cga.walkList([
+						memberPos
+					], () => {
+						waitAdd()
+					});
+				}
+
+			}
+		}
+	}
+
 	/**
 	 * UNAecho: 带有名称过滤的组队模式
 	 * @param {String | Function} filter 如果是string，踢出名称中不含此string的队员。如果是func，踢掉返回false的队员
@@ -7560,17 +7742,26 @@ module.exports = function(callback){
 	 * @param {Array} teammates 队伍成员信息，数据结构为String数组，必须为队员名称。
 	 * 【注意】队长的判定是teammates第一个人的名字
 	 * @param {int} timeout 超时时间，以毫秒为单位。如果填0则视为无限等待。
+	 * @param {Array} pos 可选，队长站立坐标，如果传入，则全队会先走至合适的位置，再进行组队逻辑
 	 * @param {*} cb 回调函数，所有队员齐全则传入'ok'，如果不满足条件或没有队伍，会等待至超时，调用cb并传入'timeout'
 	 */
-	cga.waitTeammatesReady = (teammates, timeout, cb) => {
+	cga.waitTeammatesReady = (teammates, timeout, pos, cb) => {
 		// 由于cga.waitTeammates判定组队ready延迟2秒return，所以本API需要至少3秒延迟。
 		// 如果延迟为0，则视为无限等待
-		if(timeout > 0 && timeout < 2000){
+		if (timeout > 0 && timeout < 2000) {
 			timeout = 3000
+		}
+
+		if (!pos instanceof Array) {
+			throw new Error('pos如果传入，类型必须为Array')
+		}
+		if (pos.length != 2) {
+			throw new Error('pos如果传入，则必须是长度为2的int型Array')
 		}
 
 		var playerInfo = cga.GetPlayerInfo();
 		var isLeader = teammates[0] == playerInfo.name ? true : false
+		var mapXY = cga.GetMapXY();
 		var start = Date.now()
 		// 两个队伍信息的临时变量
 		var curTeam = null
@@ -7585,8 +7776,13 @@ module.exports = function(callback){
 			}
 
 			for (let t = 0; t < tmpTeam.length; t++) {
-				if (teammates.indexOf(tmpTeam[t].name) == -1) {
-					console.log('队员不匹配，checkOthers返回false')
+				/**
+				 * UNAecho开发提醒:
+				 * cga.getTeamPlayers()是根据地图上的单位获取信息的，游戏出现BUG时(看不到附近的玩家、NPC等)会导致cga.getTeamPlayers()出现返回队员的信息是全0的情况
+				 * 也就是hp、maxhp等信息全0，导致逻辑无法进行。所以这里遇到异常数据（以maxhp==0为异常判断，maxhp > 0是正常数据）时，直接跳过，防止逻辑异常
+				 */
+				if (tmpTeam[t].maxhp > 0 && teammates.indexOf(tmpTeam[t].name) == -1) {
+					console.log('队员:',tmpTeam[t].name,'与预期队伍:', teammates ,'不匹配，checkOthers返回false')
 					return false
 				}
 			}
@@ -7596,7 +7792,7 @@ module.exports = function(callback){
 		var retry = () => {
 			let currentTime = new Date()
 			// 间隔报时
-			if(currentTime.getSeconds() % 10 == 0){
+			if (currentTime.getSeconds() % 10 == 0) {
 				console.log('已等待' + Math.floor((currentTime.getTime() - start) / 1000) + '秒')
 			}
 
@@ -7612,8 +7808,8 @@ module.exports = function(callback){
 						return
 					}
 					// 间隔报迟到队员
-					if(lateList && currentTime.getSeconds() % 10 == 0){
-						console.log('迟到队员:',lateList)
+					if (lateList && currentTime.getSeconds() % 10 == 0) {
+						console.log('迟到队员:', lateList)
 					}
 					setTimeout(retry, 1000);
 					return
@@ -7638,7 +7834,33 @@ module.exports = function(callback){
 			}
 		}
 
-		retry()
+		if(isLeader){
+			if(mapXY.x == pos[0] && mapXY.y == pos[1]){
+				retry()
+			}else{
+				cga.walkList([
+					pos
+				], () => {
+					retry()
+				});
+			}
+		}else{
+			// 如果已经在队伍中，直接进入retry
+			if(cga.getTeamPlayers().length){
+				retry()
+				return
+			}
+			var memberPos = cga.getRandomSpace(pos[0], pos[1]);
+			if(mapXY.x == memberPos[0] && mapXY.y == memberPos[1]){
+				retry()
+			}else{
+				cga.walkList([
+					memberPos
+				], () => {
+					retry()
+				});
+			}
+		}
 		return
 	}
 
@@ -7931,8 +8153,13 @@ module.exports = function(callback){
 				return 0
 			},
 			"role" : (input)=>{
-				// 定义9为异常值
-				var res = 9
+				var res = cga.role.battleRoleArr.indexOf(input)
+				if(res == -1){
+					// 定义0为异常值
+					console.error('错误:cga.role.battleRoleArr中没有设定你输入的【'+ input + '】职责')
+					return 0
+				}
+
 				var json = null
 				try
 				{
@@ -7950,17 +8177,28 @@ module.exports = function(callback){
 				}
 
 				var obj = JSON.parse(json)
-				// roleObj对象的结构大致为{part : "队长", role: "2"}
+				// roleObj对象的结构大致为{part : "队长", role: "输出"}，role的值参考cga.role.battleRoleArr
 				if(obj && obj.hasOwnProperty('roleObj') && obj.roleObj.hasOwnProperty('role')){
-					res = parseInt(obj.roleObj.role)
+					let index = cga.role.battleRoleArr.indexOf(obj.roleObj.role)
+					if(index == -1){
+						console.error('脚本设置中的role值【'+ obj.roleObj.role + '】有误，具体数值请参考cga.role.battleRoleArr')
+						return 0
+					}
+					if(input == obj.roleObj.role){
+						res = 1
+					}else{
+						res = 0
+					}
+				}else{
+					throw new Error('错误:脚本设置文件夹下的数据格式有误，没有检查到roleObj对象。请检查')
 				}
-				return isNaN(parseInt(res)) ? 9 : parseInt(res)
+				return res
 			},
 		}
 
 		const resAct = (regObj, teams)=>{
 			if(!teams[identifier.indexOf(regObj[3])]){
-				console.log('队员',identifier.indexOf(regObj[3]) + 1,'号缺失，猜测是掉线了')
+				console.log('队员',identifier.indexOf(regObj[3]) + 1,'号缺失，猜测是被踢或掉线了')
 				return
 			}
 			if(!teammate_info[teams[identifier.indexOf(regObj[3])].name]){
@@ -8203,6 +8441,388 @@ module.exports = function(callback){
 		mainLogic()
 		return
 	}
+	/**
+	 * UNAecho:开发一个自动组建自定义队伍的API
+	 * 统计的方式是使用cga.shareTeammateInfo，具体可以统计的数据类型，参照cga.shareTeammateInfo。
+	 * 本API的主要功能是实现类似SQL中的group功能，可以统计cga.shareTeammateInfo中的各个信息的聚合结果。
+	 * 聚合功能有3种：
+	 * 1、sum：全队持有某信息的家和。比如全队持有承认之戒的总和、长老之证的总和等等。
+	 * 2、min：全队人均最低持有数量，比如每人至少拥有1个承认之戒，或者地龙的鳞片等等。
+	 * 3、max：与2逻辑一致，只不过是最多持有数量，不常用。一般不会对道具做最大持有数判断。
+	 * 
+	 * 实现此3个功能的判断，需要在cusObj.check中写入。
+	 * 举例：
+	 * 1、如果要求全队最少每人有1个承认之戒，可以将cusObj.check = { 'i承认之戒': { min: 1 }}
+	 * 2、如果要求全队最少每人都做过犹大任务，可以将cusObj.check = { 't开启者': { min: 1 }}
+	 * 
+	 * 还有个实用的功能，就是根据职责组队
+	 * 举例：
+	 * 1、我想组建一个5人队伍来练级或者做任务，队伍中必须包含3位输出，1位治疗，和1个小号，那么cusObj.check = { 'r输出': { sum: 3 }, 'r治疗': { sum: 1 }, 'r小号': { sum: 1 } }
+	 * 【注意】职责不可以使用min为最小统计，因为min是以每人为单位，必须使用sum才能以队伍为单位统计
+	 * 关于职责的设定，以及cusObj.check中的奇怪参数前缀i、t、r等等，请参考cga.shareTeammateInfo代码，日后可能会更改读取位置以及方式。
+	 * 
+	 * @param {*} cusObj 自定义的obj对象，数据结构举例
+	 * cusObj = {
+		'check': { 'i承认之戒': { min: 0 }, 'r输出': { sum: 3 }, 'r治疗': { sum: 1 }, 'r小号': { sum: 1 } },
+		'part': thisobj.autoRing.part,
+		'leaderPos': [thisobj.autoRing.leaderX, thisobj.autoRing.leaderY],
+		'leaderFilter': thisobj.autoRing.leaderFilter,
+		'dangerLevel': 0,
+		'doneNick': doneNick,
+		}
+	 * @param {*} cb 
+	 * @returns 
+	 */
+	cga.buildCustomerTeam = (cusObj,cb)=>{
+		// 检查数据完整度，定义通用方法
+		let checkInputData = (obj,key,typeStr)=>{
+			if(!obj.hasOwnProperty(key)){
+				throw new Error('key【'+key+'】不存在，请检查')
+			}
+			if(typeStr == 'array' && !obj[key] instanceof Array){
+				throw new Error('key:'+key+'的value:'+obj[key]+'与预期类型:'+typeStr+'不符，请检查')
+			}else if(typeStr != 'array' && typeof obj[key] != typeStr){
+				throw new Error('key:'+key+'的value:'+obj[key]+'与预期类型:'+typeStr+'不符，请检查')
+			}
+		}
+		
+		// 组队站位，但并不是队员寻找队长的逻辑，只是单纯赶去队长的站立地点，方便组队。队员寻找队长逻辑在下面昵称过滤部分。
+		let muster = (isLeader ,leaderPos, cb)=>{
+			if(dangerLevel > 0){
+				cga.loadBattleConfig('生产赶路')
+			}
+			let XY = cga.GetMapXY()
+			if (isLeader){
+				if(XY.x == leaderPos[0] && XY.y == leaderPos[1]){
+					cb(null)
+					return
+				}
+				cga.walkList([leaderPos], cb);
+				return
+			}else{
+				// 由于cga.getRandomSpace不是真随机，所以对于同一个坐标，每次计算结果都是一样的
+				let targetPos = cga.getRandomSpace(leaderPos[0], leaderPos[1]);
+				if(XY.x == targetPos[0] && XY.y == targetPos[1]){
+					cb(null)
+					return
+				}
+				cga.walkList([targetPos], cb);
+				return
+			}
+		}
+		// 共享队员信息
+		var share = (memberCnt, shareArr,cb) => {
+			cga.shareTeammateInfo(memberCnt, shareArr, (r) => {
+				if (typeof r == 'object') {
+					cb(r)
+				} else if (typeof r == 'boolean' && r === false) {
+					console.log('cga.shareTeammateInfo失败，执行回调函数..')
+					cb(false)
+				} else {
+					throw new Error('cga.shareTeammateInfo返回参数类型异常，请检查')
+				}
+				return
+			})
+		}
+		if(typeof cusObj != 'object'){
+			throw new Error('cusObj类型必须为object')
+		}
+
+		// 必须全员判定的属性
+		// 检查对象，此核心数据
+		checkInputData(cusObj,'check','object')
+		// 队长队员
+		checkInputData(cusObj,'part','string')
+		let isLeader = cusObj.part == '队长'? true : false
+
+		// 队长站立坐标
+		checkInputData(cusObj,'leaderPos','array')
+		if(isLeader){
+			// 人数大于等于此数字，开始共享信息
+			checkInputData(cusObj,'memberCnt','number')
+		}
+		// 队长昵称暗号
+		checkInputData(cusObj,'leaderFilter','string')
+		// 组队地点的危险等级，如果有危险，在走到队长这段过程需要改变战斗配置（逃跑），防止组队前暴毙
+		checkInputData(cusObj,'dangerLevel','number')
+		// 此API成功时的称号，队长和队员在完成逻辑后，均会将称号置为此值。
+		checkInputData(cusObj,'doneNick','string')
+
+		// API输入数据
+		let checkObj = cusObj.check
+		let leaderPos = cusObj.leaderPos
+		let leaderFilter = cusObj.leaderFilter
+		let dangerLevel = cusObj.dangerLevel
+		let doneNick = cusObj.doneNick
+
+		if(doneNick.length > 16){
+			throw new Error('doneNick长度不得大于16')
+		}
+
+		// 队长专用数据
+		let memberCnt= cusObj.memberCnt
+		// 如果不输入，则默认允许任何人进队
+		let nameFilter= cusObj.nameFilter
+		var blacklist = {}
+		var blacklistTimeout = Math.floor(Math.random() * (180000 - 5000 + 1) + 5000);
+		// 队员监听队长是否踢自己
+		const leaderReg = new RegExp(/你被队长“(.+)”请出队伍/)
+		// 监听队长踢自己的超时时间，超过就判断队伍是否合格
+		const leaerKickMeTimeout = 10000
+		let mainLogic = ()=>{
+			if(isLeader){
+				var check = (shareInfoObj, cusObj) => {
+					// 统计对象
+					let statObj = {}
+					// 不满足check条件的原因
+					let reason = null
+					for (let k in cusObj.check) {
+						// cusObj.check中的key数据，开头有前缀，所以要从index1开始截断。
+						// 例如i代表item，m代表mission。'i承认之戒'.substring(1)就取到了【承认之戒】这个值
+						let key = k.substring(1)
+						for (let i of shareInfoObj.teammates) {
+							// 找到检查key的flag，如果遍历之后依旧没找到，则直接返回此人不合格
+							let hasFoundKey = false
+							for(let j in shareInfoObj[i]){
+								// 部分key的value不是object，比如lv是number。
+								if(Object.prototype.toString.call(shareInfoObj[i][j]) == '[object Object]'){
+									if(shareInfoObj[i][j].hasOwnProperty(key)){
+										hasFoundKey = true
+										let value = parseInt(shareInfoObj[i][j][key])
+										if(statObj.hasOwnProperty(key)){
+											// 如果对某信息不设限，则sum处写-1，这里就不会判断是否超过阈值
+											if (cusObj.check[k].sum != -1 && statObj[key].sum + value > cusObj.check[k].sum){
+												reason = '当前key【' + key + '】总和【' + statObj[key].sum +'】由于队员【' + i +'】的value【' +value +'】加入，已超出全队总和阈值【' +cusObj.check[k].sum + '】，将此队员加入黑名单'
+												console.log(reason)
+												blacklist[i] = Date.now()
+												continue
+											}else{
+												statObj[key].sum += value
+											}
+
+											if(value < statObj[key].min){
+												statObj[key].min = value
+											}
+											if (value < cusObj.check[k].min){
+												reason = '队员【' +i+ '】key【' + key + '】value【' +value +'】低于每人最低值【' +cusObj.check[k].min + '】加入黑名单'
+												console.log(reason)
+												blacklist[i] = Date.now()
+												continue
+			
+											}
+											if(value > statObj[key].max){
+												statObj[key].max = value
+												
+											}
+											if (value > cusObj.check[k].max){
+												reason = '队员【' +i+ '】key【' + key + '】value【' +value +'】高于每人最高值【' +cusObj.check[k].max + '】加入黑名单'
+												console.log(reason)
+												blacklist[i] = Date.now()
+												continue
+											}
+										}else{
+											// 初始化，sum为全队持有总和，min为每人最低持有数量，max为每人最高持有数量
+											// 先检查数值是否合格
+											if(cusObj.check[k].sum != -1 && value > cusObj.check[k].sum){
+												reason = '当前key【' + key + '】总和【' + statObj[key].sum +'】由于队员【' + i +'】的value【' +value +'】加入，已超出全队总和阈值【' +cusObj.check[k].sum + '】，将此队员加入黑名单'
+												console.log(reason)
+												blacklist[i] = Date.now()
+												continue
+											}
+											if (value < cusObj.check[k].min){
+												reason = '队员【' +i+ '】key【' + key + '】value【' +value +'】低于每人最低值【' +cusObj.check[k].min + '】加入黑名单'
+												console.log(reason)
+												blacklist[i] = Date.now()
+												continue
+			
+											}
+											if (value > cusObj.check[k].max){
+												reason = '队员【' +i+ '】key【' + key + '】value【' +value +'】高于每人最高值【' +cusObj.check[k].max + '】加入黑名单'
+												console.log(reason)
+												blacklist[i] = Date.now()
+												continue
+											}
+											// 都合格就初始化
+											statObj[key] = {
+												sum : value,
+												min : value,
+												max : value,
+											}
+										}
+									}
+								}
+							}
+							if(!hasFoundKey){
+								reason = '队员【' +i+ '】统计信息【' + j +'】不包含key【' + key + '】'
+								console.log(reason)
+								blacklist[i] = Date.now()
+								continue
+							}
+						}
+
+					}
+					return
+				}
+
+				var wait = () => {
+					// 同一时间只能有一个队长允许队员上车，其他队长通过控制昵称，暂时不允许其他人进入队伍。防止多个车队进入死锁。
+					var leader = cga.findPlayerUnit((u) => {
+						if ((u.xpos == leaderPos[0] && u.ypos == leaderPos[1])
+							&& (!leaderFilter || u.nick_name.indexOf(leaderFilter) != -1)
+						) {
+							return true;
+						}
+						return false
+					});
+					// 如果已经有其他队长允许上车，则自己先进入休眠。
+					if (leader && cga.getTeamPlayers().length != memberCnt) {
+						let randomTime = Math.floor(Math.random() * (10000 - 3000) + 3000)
+						console.log('检测到有其他司机【' + leader.unit_name + '】在等待拼车，暂时停止招人，' + randomTime /1000 + '秒后重新判断..')
+						// 挂上标记，队员才能识别队长
+						if (cga.GetPlayerInfo().nick == leaderFilter) {
+							console.log('去掉leaderFilter，防止队员进入')
+							cga.ChangeNickName('')
+						}
+						setTimeout(wait, randomTime);
+						return
+					}
+
+					// 挂上标记，队员才能识别队长。设置延迟，防止其他称号覆盖
+					if (cga.GetPlayerInfo().nick != leaderFilter) {
+						setTimeout(() => {
+							cga.ChangeNickName(leaderFilter)
+						}, 2000);
+					}
+
+					cga.waitTeammatesWithFilter(nameFilter, memberCnt, (r) => {
+						if (r) {
+							share(memberCnt,Object.keys(checkObj),(shareInfoObj) => {
+								// 如果共享信息时有人离队
+								if (shareInfoObj === false) {
+									setTimeout(wait, 1000);
+									return
+								}
+								// 检查完之后，黑名单会有所更新
+								check(shareInfoObj, cusObj)
+								let kickArr = Object.keys(blacklist)
+								// 提取黑名单中的玩家名称，交给踢人API
+								if(kickArr.length){
+									setTimeout(() => {
+										cga.kickPlayer(kickArr, wait)
+									}, 1000);
+									return
+								}else{// 如果都合格，则退出此API
+									// 防止shareinfo的speaker又把称号刷掉
+									setTimeout(cga.ChangeNickName,2000,doneNick)
+									// 防止小号还没有检测队长是否done，队长那边已经把队伍解散了
+									setTimeout(cb,leaerKickMeTimeout + 2000,shareInfoObj)
+									return
+								}
+							})
+							return;
+						}
+						setTimeout(wait, 5000);
+						return
+					})
+				}
+
+				cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, true);
+
+				wait();
+				return
+			}else{
+				var retry = (cb) => {
+					let teamplayers = cga.getTeamPlayers();
+					if (teamplayers.length) {
+						share(memberCnt,Object.keys(checkObj),(shareInfoObj) => {
+							// 如果共享信息时有人离队
+							if (shareInfoObj === false) {
+								setTimeout(retry, 1000, cb);
+								return
+							}
+							console.log('共享信息结束，等待队长判断，如果被踢，则一段时间内不会再加入到此队之中，防止同职责挤兑。比如小号全挤在一个队伍之中')
+							// 持续监控队长是否踢人
+							// 【UNAecho开发提醒】：cga.waitSysMsg类API监测所有屏幕出现的对话，包括玩家。
+							// 虽然此类API判断了unitid!= -1(即非系统消息)则递归自己，但可能有潜在bug
+							// 猜测：当玩家说话过于频繁，特别是脚本密集的新城记录点，可能会遗漏队长踢人的信息。
+							// 建议将地点选在玩家说话少的地方运行。
+							cga.waitSysMsgTimeout((err,sysMsg)=>{
+								if(err && !sysMsg){
+									console.log('队长没有踢自己，判断队伍是否合格..')
+									let teamplayers = cga.getTeamPlayers();
+									// 队伍合格
+									if (teamplayers.length && teamplayers[0].nick == doneNick) {
+										console.log('队长判定队伍合格，将称号置为和队长一致，并调用cb，结束此API。')
+										cga.ChangeNickName(doneNick)
+										cb(shareInfoObj)
+									}else{// 队伍不合格，重新进入retry
+										console.log('队伍不合格，重新进入retry')
+										setTimeout(retry, 1000, cb);
+									}
+									return false
+								}
+								
+								let matchObj = sysMsg.match(leaderReg)
+								// match数据格式
+								// [
+								// 	'你被队长“UNAの格斗1”请出队伍',
+								// 	'UNAの格斗1',
+								// 	index: 0,
+								// 	input: '你被队长“UNAの格斗1”请出队伍！',
+								// 	groups: undefined
+								// ]
+								if(matchObj != null){
+									blacklist[matchObj[1]] = Date.now()
+									console.log('队长【' + matchObj[1] +'】将自己踢出，' + blacklistTimeout / 1000 + '秒之内不再加入其队伍')
+									setTimeout(retry, 1000, cb);
+									return false
+								}
+								return true
+							},leaerKickMeTimeout)// 监控队长是否踢自己，如果被踢则将队长加入黑名单，一段时间之内不再加入其队伍
+							return
+						})
+						return
+					} else {
+						let curTime = Date.now()
+						var leader = cga.findPlayerUnit((u) => {
+							if (blacklist.hasOwnProperty(u.unit_name)) {
+								console.log('由于不满足队长【' + u.unit_name + '】的队伍配置要求，暂时离队。' + (blacklistTimeout - (curTime - blacklist[u.unit_name])) / 1000 + '秒内不能加入【', u.unit_name, '】队伍')
+							}
+							if (
+								(u.xpos == leaderPos[0] && u.ypos == leaderPos[1])
+								&& (!leaderFilter || u.nick_name.indexOf(leaderFilter) != -1)
+								&& ((!blacklist.hasOwnProperty(u.unit_name) || (curTime - blacklist[u.unit_name] > blacklistTimeout)))
+							) {
+								delete blacklist[u.unit_name]
+								return true;
+							}
+							return false
+						});
+						if (leader) {
+							var target = cga.getRandomSpace(leader.xpos, leader.ypos);
+							cga.walkList([
+								target
+							], () => {
+								cga.addTeammate(leader.unit_name, () => {
+									setTimeout(retry, 1000, cb);
+									return
+								});
+							});
+						} else {
+							setTimeout(retry, 1000, cb);
+							return
+						}
+					}
+				}
+
+				retry(cb);
+				return
+			}
+		}
+		// 集合，并进入主逻辑
+		muster(isLeader,leaderPos, mainLogic)
+		return
+	}
 
 	/**
 	 * UNAecho:等待队员自定义动作的API，可用于BOSS前更改战斗配置等自定义动作
@@ -8228,7 +8848,7 @@ module.exports = function(callback){
 		if(!teammates)
 			teammates = cga.getTeamPlayers()
 		if(!teammates.length){
-			console.log('没有队员，退出cga.waitTeammateReady，回调参数传入null')
+			// console.log('没有队员，退出cga.waitTeammateReady，回调参数传入null')
 			func((res)=>{
 				setTimeout(cb, 1000, null);
 			})
@@ -8360,8 +8980,8 @@ module.exports = function(callback){
 		obj.act为promote时，obj.target输入目标阶级数字。0：0转，见习。1：1转，正阶。2：2转，王宫。3：3转，师范。4：4转，大师。5：5转，最终阶段。
 	 * [obj.neg] : 可选选项，如果与NPC说话，某句话想要选【否】【取消】等消极选项，obj.neg需要输入那句话的切片。
 		比如，如果想在NPC问【你愿意吗？】的时候回答【否】，那么obj.neg可以输入"愿意"、"你愿意吗"等切片
-	 * [obj.pos] : 可选选项，仅在obj.act = "map"时生效，人物需要等待被NPC传送至pos这个坐标，函数才结束
-	 * [obj.say] : 可选选项，人物会在与NPC交互的时候说话，因为有的NPC是需要说出对应的话才会有反应的
+	 * [obj.pos] : 可选选项，2维int型数组。仅在obj.act = "map"时生效，人物需要等待被NPC传送至pos这个坐标，函数才结束
+	 * [obj.say] : 可选选项，string类型。人物会在与NPC交互的时候说话，因为有的NPC是需要说出对应的话才会有反应的
 	 * 
 	 * 【开发提醒】由于宠物学习技能时的【是】【否】界面属于特殊弹窗，cga.AsyncWaitNPCDialog无法捕获，故这里没有宠物相关功能的实现。
 	 * 更新，有空可以参考cga.parsePetSkillStoreMsg制作
@@ -8823,6 +9443,25 @@ module.exports = function(callback){
 		walk();
 	}
 
+	// UNAecho:通用检查队伍是否已经ready的简单逻辑，持续等待，直至全员都持有某称号
+	cga.checkTeamAllDone = (doneNick, cb) => {
+		var teamplayers = cga.getTeamPlayers()
+		if(!teamplayers.length){
+			console.log('队伍已经解散，退出cga.checkTeamAllDone..')
+			setTimeout(cb, 1000);
+			return
+		}
+		for (let i = 0; i < teamplayers.length; i++) {
+			if(teamplayers[i].nick != doneNick){
+				setTimeout(cga.checkTeamAllDone, 1000, doneNick, cb);
+				return
+			}
+		}
+		console.log('所有队员称号均为【' + doneNick + '】，cga.checkTeamAllDone结束。')
+		setTimeout(cb, 1000);
+		return
+	}
+
 	// UNAecho:通用离队逻辑，队长主动解散队伍，队员被动等待队伍解散。
 	// 循环上述逻辑，直至不在队伍中，执行callback
 	cga.disbandTeam = (cb) => {
@@ -8920,7 +9559,7 @@ module.exports = function(callback){
 		cga.AsyncWaitChatMsg((err, r)=>{
 
 			if(err){
-
+				console.log('cga.waitSysMsgTimeout超时，如果cb(err)不为true，则结束监听。')
 				listen = cb(err);
 
 				if(listen == true)
@@ -9348,6 +9987,18 @@ module.exports = function(callback){
 			backEntryTile : 13996,
 			backTopPosList : [[99, 191,'']],
 		},
+		'废墟' : {
+			entryMap : 27101,
+			exitMap : 44707,
+			posList : [[44,22]],
+			xLimit : [44,44],
+			yLimit : [22,22],
+			prefix:'废墟地下',
+			suffix:'层',
+			forwardEntryTile : 17955,
+			backEntryTile : 17954,
+			backTopPosList : [[15, 16,'']],
+		},
 		'布满青苔的洞窟' : {
 			entryMap : '芙蕾雅',
 			exitMap : '叹息之森林',
@@ -9664,7 +10315,7 @@ module.exports = function(callback){
 			return;
 		}
 
-		console.log('迷宫出口：('+target.mapx+', '+target.mapy+')');
+		console.log('迷宫楼层:【'+ cga.GetMapName() + '】，本层迷宫出口:('+target.mapx+', '+target.mapy+')');
 
 		var pos = cga.GetMapXY();
 		// UNAecho:这里计算迷宫出口路径，如果上面没有验证迷宫出口是否路径可达，就会报错。
@@ -10266,7 +10917,7 @@ module.exports = function(callback){
 							cacheBlacklistWalls[point[1]][point[0]]
 							go(collisionMatrix, next, cb);
 						}else{
-							console.log('视野有变化，重新进入getTarget...')
+							// console.log('视野有变化，重新进入getTarget...')
 							cacheBlacklistWalls[point[1]][point[0]]
 							getTarget(() => toNextPoint(cb))	
 						}
@@ -11589,8 +12240,56 @@ module.exports = function(callback){
 	 * UNAecho:获取人物技能当前剩余栏位数
 	 * @returns 
 	 */
-	cga.skill.getSlotRemain =()=>{
+	cga.skill.getSlotRemain = () => {
 		return cga.GetPlayerInfo().skillslots - cga.skill.getSlotSum()
+	}
+
+	/**
+	 * UNAecho:定义一个职责对象，方便全局管理一些玩家自定义职责
+	 */
+	cga.role = {}
+
+	/**
+	 * UNAecho:
+	 * 玩家自定义的【战斗】职责，用于在智能练级战斗、任务战斗上划定分工。在这里定义，方便全局数据统一
+	 * 输出：具备清怪或者打BOSS能力
+	 * 治疗：顾名思义，具备回复能力
+	 * 小号：被其它职业拖着走的拖油瓶，对战斗没有贡献
+	 */
+	cga.role.battleRoleArr = ['输出', '治疗', '小号']
+	/**
+	 * UNAecho:
+	 * 玩家自定义的任务职责，用于在任务上划定是无限陪打任务，还是正常做任务。在这里定义，方便全局数据统一
+	 * 一次性：正常一次性过任务
+	 * 无限循环：已经完成过一次任务，开始无限重做任务
+	 */
+	cga.role.taskRoleArr = ['一次性', '无限循环']
+
+	/**
+	 * UNAecho:定义一个战斗对象，方便开发使用
+	 */
+	cga.battle = {}
+
+	// 等待BOSS战结束，一般以房间号变动为基准
+	cga.battle.waitBossBattle = (roomIndex , cb) => {
+		if (cga.isInBattle()) {
+			cga.waitForLocation({ mapindex: roomIndex }, () => {
+				// 虽然战斗胜利一瞬间index就切换到战斗胜利房间，但有时候战斗动画和切屏并未结束
+				// 所以要等到cga.isInNormalState()为true才能退出此API
+				let waitNormal = ()=>{
+					if (cga.isInNormalState()) {
+						cb(true)
+						return;
+					}
+					setTimeout(waitNormal, 1500);
+				}
+				waitNormal()
+			});
+			return;
+		}
+
+		setTimeout(cga.battle.waitBossBattle, 1500, roomIndex , cb);
+		return
 	}
 
 	return cga;

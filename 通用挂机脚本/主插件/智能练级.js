@@ -18,6 +18,7 @@ var supplyMode = require('../公共模块/智能回补');
 var sellMode = require('../公共模块/智能卖石');
 var teamMode = require('../公共模块/智能组队');
 var configMode = require('../公共模块/读取战斗配置');
+var update = require('../公共模块//修改配置文件');
 
 var cga = global.cga;
 var configTable = global.configTable;
@@ -27,9 +28,6 @@ var interrupt = require('../公共模块/interrupt');
 var moveThinkInterrupt = new interrupt();
 var playerThinkInterrupt = new interrupt();
 var playerThinkRunning = false;
-
-var cachedEntrance = null;
-var blacklistEntrance = [];
 
 // 注意回补模块顺序，先从泛用性低的开始放入数组
 // 比如在矮人城镇练级，判断当前地图是肯吉罗岛之后，回补模块会直接根据（肯吉罗岛）返回去营地回补了，这是不对的。所以要先放矮人回补在前将后面回补方式短路
@@ -59,6 +57,339 @@ var getSellObject = (map, mapindex) => {
 	return sellArray.find((s) => {
 		return s.isAvailable(map, mapindex);
 	})
+}
+
+// 自动做承认之戒任务，方便批量练小号时使用
+// 曙光营地酒吧有卖冰镇番茄汁料理，回复100魔力，150魔币
+var autoRing = (cb) => {
+	var map = cga.GetMapName();
+	var mapindex = cga.GetMapIndex().index3
+
+	/**
+	 * 无论是陪打还是正常做任务，最多保留1个承认之戒即可，多了占位置。
+	 * 丢弃逻辑（包含装备栏）：
+	 * 1个以上：直接无差别丢弃至只剩1个戒指。
+	 * 1个：判断是否满耐，不满耐则丢弃。满耐则丢弃任务道具，中断任务
+	 * 注意这个方法只适用于丢弃即消失的道具，否则地面可能会被占满，造成无限等待。
+	 */
+	var dropUseless = (cb2) => {
+		let dropItems = cga.getItemsInfoDetail().filter(item => {
+			if (item.name == '承认之戒') {
+				return true
+			}
+			return false
+		});
+
+		if (dropItems.length > 1) {
+			console.log('承认之戒大于1个，丢弃至仅剩1个')
+			cga.DropItem(dropItems[0].pos);
+			setTimeout(dropUseless, 2000, cb2);
+		} else if (dropItems.length == 1) {
+			if (dropItems[0].durabilityPer < 1) {
+				console.log('承认之戒耐久不满，丢弃去领新的')
+				cga.DropItem(dropItems[0].pos);
+				setTimeout(dropUseless, 2000, cb2);
+			} else {
+				console.log('承认之戒是满耐久状态，丢弃怪物碎片，任务完毕')
+				let drop = cga.findItem('怪物碎片');
+				if (drop != -1) {
+					cga.DropItem(drop);
+				}
+				setTimeout(autoRing, 2000, cb);
+			}
+		} else {
+			setTimeout(cb2, 2000);
+			return
+		}
+	}
+
+	// 回滚因为特殊任务而被修改的诸多配置
+	var rollBack = (cb2) => {
+		// 任务下面的流程将不再需要大号带，并且单人进行，删除队伍组成
+		delete thisobj.autoRing.teammates
+		update.update_config({ autoRing: thisobj.autoRing }, true, () => {
+			teamMode = require('../公共模块/智能组队');
+			thisobj.workType = 'train'
+
+			// 改为逃跑
+			configMode.manualLoad('战斗赶路')
+
+			setTimeout(cb2, 1000)
+		})
+		return
+	}
+
+	// 任务特殊组队模式，在执行任务期间，覆盖掉teamMode，达到playerThink的定制化修改目的
+	// 这么做是因为想复用playerThink，而playerThink中的组队模式，和此任务的队伍组成有所不同。
+	var taskTeamMode = {
+		// 智能组队在战斗中计算练级地点，这里也暂时给短路掉
+		battleThink: () => {
+			return
+		},
+		think: (ctx) => {
+			if (!thisobj.autoRing.teammates) {
+				console.log('thisobj.autoRing.teammates无数据，跳过think阶段')
+				return
+			}
+			if ((ctx.teamplayers.length < thisobj.autoRing.teammates.length && thisobj.autoRing.part == '队长') || ctx.teamplayers.length == 0) {
+				ctx.result = 'logback';
+				ctx.reason = '人数不足，登出';
+				return;
+			}
+		}
+	}
+
+	if (thisobj.autoRing.aim != '无限循环' && cga.getItemCount('承认之戒', true) >= 1) {
+		console.log('角色没有无限循环的任务，结束。')
+		setTimeout(cb, 1000);
+		return
+	}
+
+	if (cga.getItemCount('信') >= 1) {
+		cga.travel.falan.toStone('C', (r) => {
+			cga.travel.autopilot('谒见之间', () => {
+				var obj = { act: "item", target: "承认之戒" }
+				cga.askNpcForObj('谒见之间', [5, 3], obj, () => {
+					setTimeout(autoRing, 1000, cb);
+				})
+			})
+		})
+		return
+	}
+
+	if (cga.getItemCount('怪物碎片') >= 1) {
+		if (cga.needSupplyInitial({})) {
+			supplyMode.func(() => {
+				autoRing(cb)
+			});
+			return;
+		}
+		// 先处理旧的承认之戒
+		dropUseless(() => {
+			cga.travel.falan.toCamp(() => {
+				cga.walkList([
+					[52, 68, '曙光营地指挥部'],
+					[69, 69, '曙光营地指挥部', 85, 2],
+				], () => {
+					var obj = { act: "item", target: "信" }
+					cga.askNpcForObj('曙光营地指挥部', [95, 7], obj, () => {
+						setTimeout(autoRing, 1000, cb);
+					})
+				});
+			}, true)
+		})
+		return
+	}
+
+	// BOSS战斗胜利后房间
+	if (mapindex == 44708) {
+		// 重置任务数据，因为接下来没有战斗，也没有组队了
+		rollBack(() => {
+			cga.disbandTeam(() => {
+				// 异常情况可能有：背包满了。魔石以及神之金需要自动丢弃，这部分功能在战斗配置中设置。
+				var obj = { act: "item", target: "怪物碎片" }
+				cga.askNpcForObj(44708, [14, 14], obj, () => {
+					setTimeout(autoRing, 1000, cb);
+				})
+			})
+		})
+
+		return
+	}
+	// BOSS战斗胜利之前的任何环节都需要判断队伍情况，如果被清空，则回到城里重新执行任务
+	if (thisobj.autoRing && !thisobj.autoRing.teammates) {
+		let doneNick = 'done'
+		// 队伍中必须有一个人是没有承认之戒的，否则变成全员陪打，无法接任务
+		// 为了任务效率以及稳定性，固定人数为5人，3输出1治疗1小号。
+		let cusObj = {
+			'check': { 'i承认之戒': { min: 0 }, 'r输出': { sum: 3 }, 'r治疗': { sum: 1 }, 'r小号': { sum: 1 } },
+			'part': thisobj.autoRing.part,
+			'leaderPos': [thisobj.autoRing.leaderX, thisobj.autoRing.leaderY],
+			'leaderFilter': thisobj.autoRing.leaderFilter,
+			'dangerLevel': 0,
+			'doneNick': doneNick,
+		}
+		// 队长额外所需数据
+		if (thisobj.autoRing.part == '队长') {
+			cusObj.memberCnt = 5
+		}
+		cga.travel.falan.toStone('C', (r) => {
+			cga.buildCustomerTeam(cusObj, (r) => {
+				// 队员监听队长，需要等到超时，才判断队长是否通过队伍的人员构成，所以需要等待全员done
+				cga.checkTeamAllDone(doneNick, () => {
+					// 记录本次任务的队伍
+					thisobj.autoRing.teammates = r.teammates
+					update.update_config({ autoRing: thisobj.autoRing }, true, () => {
+						cga.disbandTeam(() => {
+							setTimeout(autoRing, 1000, cb);
+						})
+					})
+				})
+			})
+		});
+		return
+	}
+
+	// BOSS房间
+	if (mapindex == 44707) {
+		console.log('抵达BOSS房间')
+		if (thisobj.autoRing.part == '队长') {
+			cga.walkList([
+				[13, 14]
+			], () => {
+				cga.TurnTo(14, 14);
+				cga.AsyncWaitNPCDialog(() => {
+					cga.ClickNPCDialog(1, 0);
+					setTimeout(() => {
+						cga.battle.waitBossBattle(44708, (r) => {
+							setTimeout(autoRing, 1000, cb);
+						})
+					}, 1500);
+				});
+			});
+
+		} else {
+			cga.battle.waitBossBattle(44708, () => {
+				setTimeout(autoRing, 1000, cb);
+			})
+		}
+
+		return
+	}
+
+	if (map.indexOf('废墟地下') >= 0) {
+		// 覆盖智能组队的teamMode，为了修改playerThink中的teamMode.think逻辑。在任务结束后，记得还原
+		teamMode = taskTeamMode
+		// 修改ctx传给回补提醒的思考方式
+		thisobj.workType = 'task'
+		// playerThink on开始前，先读取战斗配置。
+		configMode.func('节能模式');
+
+		playerThinkInterrupt.hasInterrupt();//restore interrupt state
+		console.log('playerThink on');
+		playerThinkRunning = true;
+
+		if (thisobj.autoRing.part == '队长') {
+			cga.walkRandomMazeAuto(44707, (r) => {
+				setTimeout(autoRing, 1000, cb);
+			})
+		} else {
+			cga.waitForLocation({ mapname: '遗迹' }, () => {
+				setTimeout(autoRing, 1000, cb);
+			});
+		}
+		return
+	}
+
+	if (cga.needSupplyInitial({})) {
+		supplyMode.func(() => {
+			autoRing(cb)
+		});
+		return;
+	}
+
+	if (cga.travel.switchMainMap() == '曙光骑士团营地') {
+
+		let getIntoMaze = (cb2) => {
+			// 队长稍微等一会再进入地图，防止部分队员的cga.askNpcForObj还没有回调，造成流程上的误判(比如出现进入迷宫后playerthink不能开启，因为流程还停在进入水晶前)
+			if (thisobj.autoRing.part == '队长') {
+				setTimeout(() => {
+					cga.walkList([
+						[44, 22, '废墟地下1层']
+					], () => {
+						setTimeout(autoRing, 1000, cb);
+					});
+				}, 3000);
+			} else {
+				cga.waitForLocation({ mapname: '废墟地下1层' }, () => {
+					setTimeout(autoRing, 1000, cb2);
+				});
+			}
+			return
+		}
+		// 此任务有bug，拿团长的证明时，信笺不一定被收走，这里丢弃一下
+		var letter = cga.findItem('信笺');
+		if (letter != -1) {
+			cga.DropItem(letter);
+		}
+
+		if (mapindex == 27101) {
+			var XY = cga.GetMapXY();
+			// 过了栅栏，可以进入随机迷宫了
+			if (XY.x > 40) {
+				getIntoMaze(cb)
+				return
+			} else {
+				// 任务超时时间稍微设置长点，5分钟
+				cga.waitTeammatesReady(thisobj.autoRing.teammates, 300000, [39, 22], (r) => {
+					if (r && r == 'ok') {
+						// 在本任务cga.buildCustomerTeam中，已经规定了必须有1人是没有承认之戒的。
+						// 也就是仅有且必有1人会拿到团长证明。
+						// 全队与NPC对话，持有【团长的证明】的人会自动将全队带入栅栏(指定坐标)，所以不需要判断各自的【团长的证明】持有情况
+						var obj = { act: "map", target: 27101, pos: [42, 22] }
+						cga.askNpcForObj(27101, [40, 22], obj, () => {
+							setTimeout(autoRing, 1000, cb);
+						})
+						return
+					} else if (r && r == 'timeout') {// 如果超时，则重置任务相关数据，回去重新组队
+						rollBack(autoRing)
+						return
+					} else {
+						throw new Error('cga.waitTeammatesReady返回类型错误')
+					}
+
+				})
+			}
+			return
+		} else {
+			cga.travel.autopilot(27101, () => {
+				setTimeout(autoRing, 1000, cb);
+			})
+		}
+		return
+	}
+
+	if (cga.getItemCount('团长的证明') >= 1) {
+		cga.travel.falan.toCamp(() => {
+			cga.travel.autopilot(27101, () => {
+				setTimeout(autoRing, 1000, cb);
+			})
+		}, true)
+		return
+	}
+
+	if (cga.getItemCount('信笺') >= 1) {
+		cga.travel.falan.toCamp(() => {
+			cga.walkList([
+				[52, 68, '曙光营地指挥部'],
+				[69, 69, '曙光营地指挥部', 85, 2],
+			], () => {
+				var obj = { act: "item", target: "团长的证明" }
+				cga.askNpcForObj(27015, [95, 7], obj, () => {
+					setTimeout(autoRing, 1000, cb);
+				})
+			});
+		}, true)
+		return
+	}
+
+	// 正常做任务的号去接任务
+	if (cga.getItemCount('承认之戒', true) == 0) {
+		cga.travel.falan.toStone('C', (r) => {
+			cga.travel.autopilot('谒见之间', () => {
+				var obj = { act: "item", target: "信笺" }
+				cga.askNpcForObj('谒见之间', [5, 3], obj, () => {
+					setTimeout(autoRing, 1000, cb);
+				})
+			})
+		});
+		return
+	} else {// 陪打队员直接去曙光骑士团营地
+		cga.travel.falan.toCamp(() => {
+			setTimeout(autoRing, 1000, cb);
+		}, true)
+	}
+	return
 }
 
 var walkMazeForward = (cb) => {
@@ -163,6 +494,12 @@ var playerThink = () => {
 		}
 		return true;
 	}
+	// 承认之戒任务，若抵达BOSS房间，则中断playerthink，防止BOSS战受伤后，进入BOSS胜利房间的一瞬间触发回补登出。
+	if(cga.GetMapIndex().index3 == 44707){
+		console.log('抵达遗迹BOSS房间，playerThink终止')
+		return false
+	}
+	
 	// 重置战斗思考flag
 	teamMode.hasBattleThink = false
 
@@ -181,6 +518,7 @@ var playerThink = () => {
 			return item.pos >= 0 && item.pos < 8;
 		}),
 		result: null,
+		workType: thisobj.workType,
 	}
 
 	teamMode.think(ctx);
@@ -266,6 +604,23 @@ var playerThinkTimer = () => {
 }
 
 var loop = () => {
+
+	// loop主逻辑之前，检查自己是否有做任务的职责，如果有，先去完成任务
+	if (thisobj.autoRing.flag) {
+		if (thisobj.autoRing.aim == '无限循环') {
+			console.log('人物处于无限循环的陪打状态，进入承认之戒任务..')
+			callSubPluginsAsync('prepare', () => {
+				setTimeout(autoRing, 1000, loop);
+			});
+			return
+		} else if (thisobj.autoRing.aim == '一次性' && cga.getItemCount('承认之戒', true) == 0) {
+			console.log('监测到你需要承认之戒，但身上没有。进入承认之戒任务..')
+			callSubPluginsAsync('prepare', () => {
+				setTimeout(autoRing, 1000, loop);
+			});
+			return
+		}
+	}
 
 	var map = cga.GetMapName();
 	var mapindex = cga.GetMapIndex().index3;
@@ -496,6 +851,8 @@ var loop = () => {
 }
 
 var thisobj = {
+	// 当前正在进行的功能，目前支持train练级和task任务2种模式
+	workType: 'train',
 	// 注意：如果新增练级地点，这里的危险等级要添加，否则监听回补那里getDangerLevel为0时，根本不鸟你
 	getDangerLevel: () => {
 		var map = cga.GetMapName();
@@ -541,7 +898,9 @@ var thisobj = {
 			return 2;
 		if (map.indexOf('半山腰') >= 0)
 			return 2;
-
+		if (map.indexOf('废墟地下') >= 0) {// 承认之戒迷宫
+			return 2
+		}
 		return 0;
 	},
 	translate: (pair) => {
@@ -549,6 +908,13 @@ var thisobj = {
 		if (pair.field == 'sellStore') {
 			pair.field = '是否卖石';
 			pair.value = pair.value == 1 ? '卖石' : '不卖石';
+			pair.translated = true;
+			return true;
+		}
+
+		if (pair.field == 'autoRing') {
+			pair.field = '是否自动做承认之戒';
+			pair.value = pair.value.flag ? '做' : '不做';
 			pair.translated = true;
 			return true;
 		}
@@ -583,10 +949,32 @@ var thisobj = {
 			return false;
 		}
 
+		if (typeof obj.autoRing == 'object') {
+			if (typeof obj.autoRing.flag != 'boolean') {
+				console.error('读取配置：承认之戒任务数据失败！智能练级会自动帮做承认之戒任务，请明确输入相关设定。');
+				return false
+			}
+
+			if (typeof obj.autoRing.part != 'string') {
+				console.error('读取配置：承认之戒任务数据失败！智能练级会自动帮做承认之戒任务，请明确输入相关设定。');
+				return false
+			}
+
+			if (typeof obj.autoRing.aim != 'string') {
+				console.error('读取配置：承认之戒任务数据失败！智能练级会自动帮做承认之戒任务，请明确输入相关设定。');
+				return false
+			}
+			configTable.autoRing = obj.autoRing
+			thisobj.autoRing = obj.autoRing;
+		} else {
+			console.error('读取配置：承认之戒任务数据失败！智能练级会自动帮做承认之戒任务，请明确输入相关设定。');
+			return false
+		}
+
 		return true;
 	},
 	inputcb: (cb) => {
-		Async.series([configMode.inputcb, supplyMode.inputcb, teamMode.inputcb, (cb2) => {
+		var stage0 = (cb2) => {
 			var sayString = '【全自动练级插件】请选择是否卖石: 0不卖石 1卖石';
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val) => {
@@ -604,7 +992,146 @@ var thisobj = {
 
 				return true;
 			});
-		},
+		}
+
+		var stage1 = (cb2) => {
+			var saveObj = {}
+
+			var stage1_1 = (cb3) => {
+				var sayString = '【全自动练级插件】【承认之戒】请输入此任务你是队长还是队员，0队长1队员:';
+
+				cga.sayLongWords(sayString, 0, 3, 1);
+				cga.waitForChatInput((msg, value) => {
+					if (value !== null && (value == 0 || value == 1)) {
+						saveObj.part = value == 0 ? '队长' : '队员'
+
+						sayString = '当前已选择: 你是【' + saveObj.part + '】';
+						cga.sayLongWords(sayString, 0, 3, 1);
+
+						setTimeout(stage1_2, 500, cb3);
+						return false;
+					}
+
+					return true;
+				});
+			}
+
+			var stage1_2 = (cb3) => {
+				var sayString = '【全自动练级插件】【承认之戒】请输入你做此任务的目的，';
+				for (var i in cga.role.taskRoleArr) {
+					sayString += i + cga.role.taskRoleArr[i]
+				}
+				cga.sayLongWords(sayString, 0, 3, 1);
+				cga.waitForChatInput((msg, value) => {
+					if (value !== null && value < cga.role.taskRoleArr.length) {
+						saveObj.aim = cga.role.taskRoleArr[value]
+
+						sayString = '当前已选择: 【' + saveObj.aim + '】';
+						cga.sayLongWords(sayString, 0, 3, 1);
+
+						setTimeout(stage1_3, 500, cb3);
+						return false;
+					}
+
+					return true;
+				});
+			}
+
+
+			var stage1_3 = (cb3) => {
+				var sayString = '【全自动练级插件】【承认之戒】请输入任务队长在里谢里雅堡的X坐标:';
+
+				cga.sayLongWords(sayString, 0, 3, 1);
+				cga.waitForChatInput((msg, value) => {
+					if (value !== null && value >= 0 && value <= 999) {
+						saveObj.leaderX = value;
+
+						setTimeout(stage1_4, 500, cb3);
+						return false;
+					}
+
+					return true;
+				});
+			}
+
+			var stage1_4 = (cb3) => {
+				var sayString = '【全自动练级插件】【承认之戒】请输入任务队长在里谢里雅堡的Y坐标:';
+
+				cga.sayLongWords(sayString, 0, 3, 1);
+				cga.waitForChatInput((msg, value) => {
+					if (value !== null && value >= 0 && value <= 999) {
+						saveObj.leaderY = value;
+
+						setTimeout(stage1_5, 500, cb3);
+						return false;
+					}
+
+					return true;
+				});
+			}
+
+			var stage1_5 = (cb3) => {
+				var sayString = '【全自动练级插件】【承认之戒】请输入队长昵称过滤字符，玩家昵称中带有此输入字符才会被认定为队长(区分大小写，不可以有半角冒号)，如不需要，请输入ok，如果队长昵称里面包含ok字符，请输入$ok:';
+				cga.sayLongWords(sayString, 0, 3, 1);
+				cga.waitForChatInput((msg, value) => {
+					if (msg !== null && msg.length > 0 && msg.indexOf(':') == -1) {
+						if (msg == 'ok') {
+							saveObj.leaderFilter = '';
+						} else if (msg == '$ok') {
+							saveObj.leaderFilter = 'ok';
+						} else {
+							saveObj.leaderFilter = msg;
+						}
+
+						sayString = '当前已选择玩家昵称:[' + saveObj.leaderFilter + ']为队长标志。';
+						cga.sayLongWords(sayString, 0, 3, 1);
+
+						setTimeout(stage1Final, 500, cb3);
+						return false;
+					}
+
+					return true;
+				});
+			}
+
+			var stage1Final = (cb3) => {
+				configTable.autoRing = saveObj;
+				thisobj.autoRing = saveObj;
+
+				cb3(null)
+				return
+			}
+
+			var sayString = '【全自动练级插件】【承认之戒】请输入是否自动做【承认之戒】任务，0不做1做:';
+			cga.sayLongWords(sayString, 0, 3, 1);
+
+			cga.waitForChatInput((msg, value) => {
+				if (value !== null && (value == 0 || value == 1)) {
+					saveObj.flag = value == 1 ? true : false
+
+					sayString = '当前已选择: 【承认之戒】【' + (saveObj.flag ? '做' : '不做') + '】';
+					cga.sayLongWords(sayString, 0, 3, 1);
+
+					// 如果自动做承认之戒，开始输入必要信息
+					if (saveObj.flag) {
+						setTimeout(stage1_1, 500, cb2);
+					} else {
+						setTimeout(stage1Final, 500, cb3);
+					}
+					return false;
+				}
+
+				return true;
+			});
+
+			return
+		}
+		Async.series([
+			configMode.inputcb,
+			supplyMode.inputcb,
+			teamMode.inputcb,
+			stage0,
+			stage1,
 		], cb);
 	},
 	execute: () => {
