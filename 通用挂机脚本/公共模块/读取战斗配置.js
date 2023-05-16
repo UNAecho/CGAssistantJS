@@ -166,12 +166,12 @@ var configModeArray = [
 		if(!job){
 			throw new Error('请输入角色正确的最终职业名称，或者通过【通用挂机脚本系列】自动调用')
 		}
-		var filename = '练级'
+		var filename = '任务'
 
 		if(job == '格斗士'){
 			filename = '格斗士清怪'
 		}else if(job == '传教士'){
-			filename = '传教士练级'
+			filename = '传教士任务'
 		}else if(job == '魔法师'){
 
 		}else if(job == '弓箭手'){
@@ -294,8 +294,10 @@ var thisobj = {
 	inputcb : (cb)=>{
 		// 如果其他模块已经读取了目标职业，则直接使用
 		if(configTable.finalJob){
+			console.log('【读取战斗配置】其它模块已经读取过目标职业，跳过输入')
 			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
-			return true
+			cb(null)
+			return
 		}
 		
 		var sayString = '【战斗配置插件】请选择角色的最终要练什么职业:';

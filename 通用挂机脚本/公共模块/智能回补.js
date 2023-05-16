@@ -83,11 +83,11 @@ var supplyModeArray = [
 					[7, 4],
 				];
 				if (map == '芙蕾雅') {
-					path.unshift([42, 56, '医院']);
+					path.unshift([42, 56, '曙光营地医院']);
 					path.unshift([513, 282, '曙光骑士团营地']);
 				}
 				else if (map == '曙光骑士团营地') {
-					path.unshift([42, 56, '医院']);
+					path.unshift([42, 56, '曙光营地医院']);
 				}
 
 				cga.walkList(path, () => {
@@ -201,6 +201,8 @@ var supplyModeArray = [
 			} else if (map == '国民会馆' || (mapindex >= 59801 && mapindex <= 59850)) {
 				return true
 			} else if (map == '曙光骑士团营地' || cga.travel.camp.getRegion(map, cga.GetMapXY()) == '曙光骑士团营地域') {
+				return true
+			} else if (map.indexOf('废墟地下') >= 0) {
 				return true
 			}
 			console.log('isAvailable不可用，请检查。map:', map, ',mapindex:', mapindex)
