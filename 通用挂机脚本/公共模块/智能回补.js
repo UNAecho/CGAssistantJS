@@ -67,6 +67,19 @@ var supplyModeArray = [
 					setTimeout(cb, 5000);
 				});
 			} else if (map == '曙光骑士团营地' || cga.travel.camp.getRegion(map, mapXY) == '曙光骑士团营地域') {
+				// 曙光营地指挥部特殊走路方式
+				if(map == '曙光营地指挥部'){
+					cga.travel.autopilot(27012, () => {
+						cga.walkList([[7, 4]], () => {
+							cga.TurnTo(9, 4);
+							setTimeout(() => {
+								cga.travel.autopilot('主地图', cb)
+							}, 5000);
+						});
+					})
+					return
+				}
+
 				// 资深的情况
 				// var path = [
 				// 	[11, 8],

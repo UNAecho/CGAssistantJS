@@ -288,72 +288,70 @@ var autoRing = (cb) => {
 		return;
 	}
 
-	if (cga.travel.switchMainMap() == '曙光骑士团营地') {
+	if (cga.travel.switchMainMap() == '曙光骑士团营地' && (cga.getItemCount('承认之戒', true) > 0 || cga.getItemCount('团长的证明') > 0)) {
 
-		let getIntoMaze = (cb2) => {
-			// 队长稍微等一会再进入地图，防止部分队员的cga.askNpcForObj还没有回调，造成流程上的误判(比如出现进入迷宫后playerthink不能开启，因为流程还停在进入水晶前)
-			if (thisobj.autoRing.part == '队长') {
-				setTimeout(() => {
-					cga.walkList([
-						[44, 22, '废墟地下1层']
-					], () => {
-						setTimeout(autoRing, 1000, cb);
-					});
-				}, 3000);
-			} else {
-				cga.waitForLocation({ mapname: '废墟地下1层' }, () => {
-					setTimeout(autoRing, 1000, cb2);
-				});
-			}
-			return
-		}
 		// 此任务有bug，拿团长的证明时，信笺不一定被收走，这里丢弃一下
 		var letter = cga.findItem('信笺');
 		if (letter != -1) {
 			cga.DropItem(letter);
 		}
 
-		if (mapindex == 27101) {
-			var XY = cga.GetMapXY();
-			// 过了栅栏，可以进入随机迷宫了
-			if (XY.x > 40) {
-				getIntoMaze(cb)
-				return
+		// 如果已经过了栅栏
+		if(mapindex == 27101 && cga.GetMapXY().x > 40 && cga.getTeamPlayers().length){
+			if (thisobj.autoRing.part == '队长') {
+				cga.walkList([
+					[44, 22, '废墟地下1层']
+				], () => {
+					setTimeout(autoRing, 1000, cb);
+				});
 			} else {
-				// 任务超时时间稍微设置长点，5分钟
-				cga.waitTeammatesReady(thisobj.autoRing.teammates, 300000, [39, 22], (r) => {
-					if (r && r == 'ok') {
+				cga.waitForLocation({ mapname: '废墟地下1层' }, () => {
+					setTimeout(autoRing, 1000, cb);
+				});
+			}
+			return
+		}
+
+		// 如果没过栅栏，开始等待队伍人齐
+		cga.travel.autopilot('主地图', () => {
+			// 任务超时时间稍微设置长点，5分钟
+			cga.buildTeam(thisobj.autoRing.teammates, 300000, [53, 47], (r) => {
+				if (r && r == 'ok') {
+					cga.travel.autopilot(27101, () => {
 						// 在本任务cga.buildCustomerTeam中，已经规定了必须有1人是没有承认之戒的。
 						// 也就是仅有且必有1人会拿到团长证明。
 						// 全队与NPC对话，持有【团长的证明】的人会自动将全队带入栅栏(指定坐标)，所以不需要判断各自的【团长的证明】持有情况
 						var obj = { act: "map", target: 27101, pos: [42, 22] }
 						cga.askNpcForObj(27101, [40, 22], obj, () => {
-							setTimeout(autoRing, 1000, cb);
+							if (thisobj.autoRing.part == '队长') {
+								cga.walkList([
+									[44, 22, '废墟地下1层']
+								], () => {
+									setTimeout(autoRing, 1000, cb);
+								});
+							} else {
+								cga.waitForLocation({ mapname: '废墟地下1层' }, () => {
+									setTimeout(autoRing, 1000, cb);
+								});
+							}
 						})
-						return
-					} else if (r && r == 'timeout') {// 如果超时，则重置任务相关数据，回去重新组队
-						rollBack(autoRing)
-						return
-					} else {
-						throw new Error('cga.waitTeammatesReady返回类型错误')
-					}
+					})
+					return
+				} else if (r && r == 'timeout') {// 如果超时，则重置任务相关数据，回去重新组队
+					rollBack(autoRing)
+					return
+				} else {
+					throw new Error('cga.buildTeam返回类型错误')
+				}
 
-				})
-			}
-			return
-		} else {
-			cga.travel.autopilot(27101, () => {
-				setTimeout(autoRing, 1000, cb);
 			})
-		}
+		})
 		return
 	}
 
 	if (cga.getItemCount('团长的证明') >= 1) {
 		cga.travel.falan.toCamp(() => {
-			cga.travel.autopilot(27101, () => {
-				setTimeout(autoRing, 1000, cb);
-			})
+			setTimeout(autoRing, 1000, cb);
 		}, true)
 		return
 	}

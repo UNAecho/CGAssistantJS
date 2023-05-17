@@ -86,7 +86,7 @@ var teamModeArray = [
 				return
 			}
 			// pos传null，是因为执行本函数时已经走到了指的位置。不需要再调整
-			cga.waitTeammatesReady(thisobj.object.area.teammates, thisobj.object.timeout, null, (r) => {
+			cga.buildTeam(thisobj.object.area.teammates, thisobj.object.timeout, null, (r) => {
 				if (r && r == 'timeout') {
 					console.log('等待组队超时，删除练级相关信息')
 					cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
@@ -100,7 +100,7 @@ var teamModeArray = [
 					cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
 					cb(true)
 				} else {
-					throw new Error('cga.waitTeammatesReady返回类型错误')
+					throw new Error('cga.buildTeam返回类型错误')
 				}
 			})
 		},

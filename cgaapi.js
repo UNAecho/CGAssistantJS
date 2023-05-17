@@ -4118,6 +4118,17 @@ module.exports = function(callback){
 		}
 		
 		try {
+			// 如果运行时，自己在队伍中，且是队员
+			let teamplayers = cga.getTeamPlayers();
+			if(teamplayers.length && teamplayers[0].name != cga.GetPlayerInfo().name){
+				console.log('监测到你是队员，等待队长将自己带到指定index:' + targetindex)
+				cga.waitForLocation({ mapindex: targetindex }, () => {
+					console.log('抵达:' + targetindex)
+					setTimeout(cb, 1000);
+				});
+				return
+			}
+
 			// 目标路径信息
 			var targetPath = info.walkForward[targetindex]
 			// 如果目标是自定义地点，更改targetindex为倒数第二个index，因为倒数第一个list是不切换地图的。
@@ -7593,86 +7604,88 @@ module.exports = function(callback){
 	}
 	/**
 	 * UNAecho: 固定组队的封装API，包含了队长和队员的逻辑，调用时，仅需传入固定的队伍名单与队长坐标即可
-	 * 此API逻辑与cga.waitTeammatesReady一致，唯一区别在于cga.waitTeammatesReady有超时的选项
+	 * 此API逻辑与cga.buildTeam一致，唯一区别在于cga.buildTeam有超时的选项
+	 * 
+	 * 此API为历史版本，已弃用。有上位替代，名字也是cga.buildTeam
 	 * @param {Array} teammates 
 	 * @param {Array} pos 组队时，队长所处坐标
 	 * @param {*} cb 
 	 */
-	cga.buildTeam = (teammates,pos,cb)=>{
-		if(!teammates instanceof Array || !pos instanceof Array){
-			throw new Error('teammates和pos必须均为Array')
-		}
-		if(!teammates.length){
-			console.log('传入的数组为空，退出cga.buildTeam')
-			cb(null)
-			return
-		}
-		if(pos.length != 2){
-			throw new Error('pos必须为2维int型数组')
-		}
-		var playerInfo = cga.GetPlayerInfo();
-		var teamplayers = cga.getTeamPlayers();
-		var isleader = teammates[0] == playerInfo.name ? true : false
-		var mapXY = cga.GetMapXY();
+	// cga.buildTeam = (teammates,pos,cb)=>{
+	// 	if(!teammates instanceof Array || !pos instanceof Array){
+	// 		throw new Error('teammates和pos必须均为Array')
+	// 	}
+	// 	if(!teammates.length){
+	// 		console.log('传入的数组为空，退出cga.buildTeam')
+	// 		cb(null)
+	// 		return
+	// 	}
+	// 	if(pos.length != 2){
+	// 		throw new Error('pos必须为2维int型数组')
+	// 	}
+	// 	var playerInfo = cga.GetPlayerInfo();
+	// 	var teamplayers = cga.getTeamPlayers();
+	// 	var isleader = teammates[0] == playerInfo.name ? true : false
+	// 	var mapXY = cga.GetMapXY();
 
-		if(isleader){
-			var waitFor = ()=>{
-				cga.waitTeammates(teammates, (r)=>{
-					if(r){
-						cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
-						cb(true);
-						return;
-					}
-					setTimeout(waitFor, 1000);
-				});
-			}
-			if(mapXY.x == pos[0] && mapXY.y == pos[1]){
-				waitFor()
-			}else{
-				cga.walkList([
-					pos
-				], () => {
-					waitFor()
-				});
-			}
-		}else {
-			var waitAdd = ()=>{
-				cga.addTeammate(teammates[0], (r)=>{
-					if(r){
-						cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
-						cb(true);
-						return;
-					}
-					setTimeout(waitAdd, 1000);
-				});
-			}
+	// 	if(isleader){
+	// 		var waitFor = ()=>{
+	// 			cga.waitTeammates(teammates, (r)=>{
+	// 				if(r){
+	// 					cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
+	// 					cb(true);
+	// 					return;
+	// 				}
+	// 				setTimeout(waitFor, 1000);
+	// 			});
+	// 		}
+	// 		if(mapXY.x == pos[0] && mapXY.y == pos[1]){
+	// 			waitFor()
+	// 		}else{
+	// 			cga.walkList([
+	// 				pos
+	// 			], () => {
+	// 				waitFor()
+	// 			});
+	// 		}
+	// 	}else {
+	// 		var waitAdd = ()=>{
+	// 			cga.addTeammate(teammates[0], (r)=>{
+	// 				if(r){
+	// 					cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
+	// 					cb(true);
+	// 					return;
+	// 				}
+	// 				setTimeout(waitAdd, 1000);
+	// 			});
+	// 		}
 
-			// 如果在队伍中，先判断是不是在指定队伍中
-			if(teamplayers.length){
-				if(teamplayers[0].name == teammates[0]){
-					console.log('已经在指定队伍中，cga.buildTeam执行完毕')
-					cb(true)
-					return
-				}else{
-					cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
-					setTimeout(cb,1000)
-					return
-				}
-			}else{// 如果不在队伍里，再执行正常逻辑
-				var memberPos = cga.getRandomSpace(pos[0], pos[1]);
-				if(mapXY.x == memberPos[0] && mapXY.y == memberPos[1]){
-					waitAdd()
-				}else{
-					cga.walkList([
-						memberPos
-					], () => {
-						waitAdd()
-					});
-				}
+	// 		// 如果在队伍中，先判断是不是在指定队伍中
+	// 		if(teamplayers.length){
+	// 			if(teamplayers[0].name == teammates[0]){
+	// 				console.log('已经在指定队伍中，cga.buildTeam执行完毕')
+	// 				cb(true)
+	// 				return
+	// 			}else{
+	// 				cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
+	// 				setTimeout(cb,1000)
+	// 				return
+	// 			}
+	// 		}else{// 如果不在队伍里，再执行正常逻辑
+	// 			var memberPos = cga.getRandomSpace(pos[0], pos[1]);
+	// 			if(mapXY.x == memberPos[0] && mapXY.y == memberPos[1]){
+	// 				waitAdd()
+	// 			}else{
+	// 				cga.walkList([
+	// 					memberPos
+	// 				], () => {
+	// 					waitAdd()
+	// 				});
+	// 			}
 
-			}
-		}
-	}
+	// 		}
+	// 	}
+	// }
 
 	/**
 	 * UNAecho: 带有名称过滤的组队模式
@@ -7745,7 +7758,7 @@ module.exports = function(callback){
 	 * @param {Array} pos 可选，队长站立坐标，如果传入，则全队会先走至合适的位置，再进行组队逻辑
 	 * @param {*} cb 回调函数，所有队员齐全则传入'ok'，如果不满足条件或没有队伍，会等待至超时，调用cb并传入'timeout'
 	 */
-	cga.waitTeammatesReady = (teammates, timeout, pos, cb) => {
+	cga.buildTeam = (teammates, timeout, pos, cb) => {
 		// 由于cga.waitTeammates判定组队ready延迟2秒return，所以本API需要至少3秒延迟。
 		// 如果延迟为0，则视为无限等待
 		if (timeout > 0 && timeout < 2000) {
@@ -7834,6 +7847,12 @@ module.exports = function(callback){
 			}
 		}
 
+		// 如果已经在队伍中，直接进入retry
+		if(cga.getTeamPlayers().length){
+			retry()
+			return
+		}
+
 		if(isLeader){
 			if(mapXY.x == pos[0] && mapXY.y == pos[1]){
 				retry()
@@ -7845,11 +7864,6 @@ module.exports = function(callback){
 				});
 			}
 		}else{
-			// 如果已经在队伍中，直接进入retry
-			if(cga.getTeamPlayers().length){
-				retry()
-				return
-			}
 			var memberPos = cga.getRandomSpace(pos[0], pos[1]);
 			if(mapXY.x == memberPos[0] && mapXY.y == memberPos[1]){
 				retry()
