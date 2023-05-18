@@ -193,7 +193,6 @@ var autoRing = (cb) => {
 				})
 			})
 		})
-
 		return
 	}
 	// BOSS战斗胜利之前的任何环节都需要判断队伍情况，如果被清空，则回到城里重新执行任务
@@ -241,7 +240,7 @@ var autoRing = (cb) => {
 				cga.AsyncWaitNPCDialog(() => {
 					cga.ClickNPCDialog(1, 0);
 					setTimeout(() => {
-						cga.battle.waitBossBattle(44708, (r) => {
+						cga.battle.waitBossBattle(44708, () => {
 							setTimeout(autoRing, 1000, cb);
 						})
 					}, 1500);
@@ -258,6 +257,7 @@ var autoRing = (cb) => {
 	}
 
 	if (map.indexOf('废墟地下') >= 0) {
+		console.log('进入废墟...')
 		// 覆盖智能组队的teamMode，为了修改playerThink中的teamMode.think逻辑。在任务结束后，记得还原
 		teamMode = taskTeamMode
 		// 修改ctx传给回补提醒的思考方式
@@ -274,7 +274,7 @@ var autoRing = (cb) => {
 				setTimeout(autoRing, 1000, cb);
 			})
 		} else {
-			cga.waitForLocation({ mapname: '遗迹' }, () => {
+			cga.waitForLocation({ mapindex: 44707 }, () => {
 				setTimeout(autoRing, 1000, cb);
 			});
 		}
@@ -296,19 +296,27 @@ var autoRing = (cb) => {
 			cga.DropItem(letter);
 		}
 
+		let go =()=>{
+			// 加少许延迟，防止过图过快，一部分人流程已经走完，而另一部分人流程还未走完。典型的bug在于过栅栏，一些人已经检测到坐标变化，另一部分人没有检测到
+			setTimeout(() => {
+				if (thisobj.autoRing.part == '队长') {
+					cga.walkList([
+						[44, 22, '废墟地下1层']
+					], () => {
+						setTimeout(autoRing, 1000, cb);
+					});
+				} else {
+					cga.waitForLocation({ mapname: '废墟地下1层' }, () => {
+						setTimeout(autoRing, 1000, cb);
+					});
+				}
+			}, 2000);
+			return
+		}
+
 		// 如果已经过了栅栏
 		if(mapindex == 27101 && cga.GetMapXY().x > 40 && cga.getTeamPlayers().length){
-			if (thisobj.autoRing.part == '队长') {
-				cga.walkList([
-					[44, 22, '废墟地下1层']
-				], () => {
-					setTimeout(autoRing, 1000, cb);
-				});
-			} else {
-				cga.waitForLocation({ mapname: '废墟地下1层' }, () => {
-					setTimeout(autoRing, 1000, cb);
-				});
-			}
+			go()
 			return
 		}
 
@@ -322,19 +330,7 @@ var autoRing = (cb) => {
 						// 也就是仅有且必有1人会拿到团长证明。
 						// 全队与NPC对话，持有【团长的证明】的人会自动将全队带入栅栏(指定坐标)，所以不需要判断各自的【团长的证明】持有情况
 						var obj = { act: "map", target: 27101, pos: [42, 22] }
-						cga.askNpcForObj(27101, [40, 22], obj, () => {
-							if (thisobj.autoRing.part == '队长') {
-								cga.walkList([
-									[44, 22, '废墟地下1层']
-								], () => {
-									setTimeout(autoRing, 1000, cb);
-								});
-							} else {
-								cga.waitForLocation({ mapname: '废墟地下1层' }, () => {
-									setTimeout(autoRing, 1000, cb);
-								});
-							}
-						})
+						cga.askNpcForObj(27101, [40, 22], obj, go)
 					})
 					return
 				} else if (r && r == 'timeout') {// 如果超时，则重置任务相关数据，回去重新组队

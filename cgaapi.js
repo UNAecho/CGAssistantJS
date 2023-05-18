@@ -7504,39 +7504,46 @@ module.exports = function(callback){
 	 * @param {*} cb 
 	 */
 	cga.kickPlayer = (kickArr, cb)=>{
-		let name = kickArr.shift()
-		// 如果列表中还有没踢完的人
-		if(name){
-			cga.waitSysMsg((r)=>{
-				if(r.indexOf('被你请出队伍') != -1){
-					setTimeout(cga.kickPlayer, 1000, kickArr, cb);
-					return false
-				}
-				return true
-			})
-			console.log('开始踢人..')
-			cga.DoRequest(cga.REQUEST_TYPE_KICKTEAM);
-			cga.AsyncWaitNPCDialog((err, dlg)=>{
-				var stripper = "你要把谁踢出队伍？";
-				if(dlg && dlg.message && dlg.message.indexOf(stripper) >= 0){
-					var strip = dlg.message.substr(dlg.message.indexOf(stripper) + stripper.length);
-					strip = strip.replace(/\\z/g,"|");
-					strip = strip.replace(/\\n/g,"|");
-					var reg = new RegExp(/([^|\n]+)/g)
-					var match = strip.match(reg);
-					for(var j = 0; j < match.length; ++j){
-						if(match[j] == name){
-							console.log('【'+ match[j] +'】不符合入队条件，踢出。')
-							cga.ClickNPCDialog(0, j / 2);
-							break;
+		console.log('踢人名单:',kickArr)
+		let kick = ()=>{
+			let name = kickArr.shift()
+			// 如果列表中还有没踢完的人
+			if(name){
+				cga.waitSysMsg((r)=>{
+					if(r.indexOf('被你请出队伍') != -1 || r.indexOf('离开') != -1){
+						setTimeout(kick, 1000);
+						return false
+					}
+					return true
+				})
+				console.log('开始踢人..')
+				cga.DoRequest(cga.REQUEST_TYPE_KICKTEAM);
+				cga.AsyncWaitNPCDialog((err, dlg)=>{
+					var stripper = "你要把谁踢出队伍？";
+					if(dlg && dlg.message && dlg.message.indexOf(stripper) >= 0){
+						var strip = dlg.message.substr(dlg.message.indexOf(stripper) + stripper.length);
+						strip = strip.replace(/\\z/g,"|");
+						strip = strip.replace(/\\n/g,"|");
+						var reg = new RegExp(/([^|\n]+)/g)
+						var match = strip.match(reg);
+						for(var j = 0; j < match.length; ++j){
+							if(match[j] == name){
+								console.log('【'+ match[j] +'】不符合入队条件，踢出。')
+								cga.ClickNPCDialog(0, j / 2);
+								break;
+							}
 						}
 					}
-				}
-			});
-		}else{// 列表已经没有被踢的人
-			cb(null)
-			return
+				});
+			}else{// 列表已经没有被踢的人
+				console.log('踢人完毕..')
+				cb(null)
+				return
+			}
 		}
+
+		kick()
+		return
 	}
 
 	//等待名字在teammates列表中的的玩家组队，并自动踢出不符合teammates列表的陌生人。
@@ -8586,6 +8593,8 @@ module.exports = function(callback){
 		let mainLogic = ()=>{
 			if(isLeader){
 				var check = (shareInfoObj, cusObj) => {
+					// 清空上一次踢人的黑名单
+					blacklist = {}
 					// 统计对象
 					let statObj = {}
 					// 不满足check条件的原因
@@ -8800,7 +8809,13 @@ module.exports = function(callback){
 						let curTime = Date.now()
 						var leader = cga.findPlayerUnit((u) => {
 							if (blacklist.hasOwnProperty(u.unit_name)) {
-								console.log('由于不满足队长【' + u.unit_name + '】的队伍配置要求，暂时离队。' + (blacklistTimeout - (curTime - blacklist[u.unit_name])) / 1000 + '秒内不能加入【', u.unit_name, '】队伍')
+								let remain = (blacklistTimeout - (curTime - blacklist[u.unit_name])) / 1000
+								if(remain > 0){
+									console.log('由于不满足队长【' + u.unit_name + '】的队伍配置要求，暂时离队。' + remain + '秒内不能加入【', u.unit_name, '】队伍')
+								}else{
+									console.log('队长【' + u.unit_name + '】的黑名单时间已到，可以重新加入队伍')
+									delete blacklist[u.unit_name]
+								}
 							}
 							if (
 								(u.xpos == leaderPos[0] && u.ypos == leaderPos[1])
@@ -12301,7 +12316,7 @@ module.exports = function(callback){
 			});
 			return;
 		}
-
+		
 		setTimeout(cga.battle.waitBossBattle, 1500, roomIndex , cb);
 		return
 	}
