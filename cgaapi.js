@@ -8244,6 +8244,23 @@ module.exports = function(callback){
 				throw new Error('暗号类型错误，请检查')
 			}
 		}
+		/**
+		 * type : i,#,t,m,r等缩写
+		 * name : 查询的信息名称，如承认之戒、传送小岛、输出、治疗、小号、开启者等等
+		 */
+		var answer = (type,name)=>{
+			let res = reqAct[translateDict[type]](name)
+			// 在回答的同时，在队伍信息里直接更新自己的信息，listener里遍历到自身，则跳过，防止多个地方写入
+			if(!teammate_info[playerInfo.name]){
+				teammate_info[playerInfo.name] = {}
+			}
+			if(!teammate_info[playerInfo.name][translateDict[type]]){
+				teammate_info[playerInfo.name][translateDict[type]] = {}
+			}
+			teammate_info[playerInfo.name].lv = playerInfo.level
+			teammate_info[playerInfo.name][translateDict[type]][name] = res
+			return res
+		}
 
 		var listener = (cb) => {
 			let curTeamplayers = cga.getTeamPlayers()
@@ -8272,27 +8289,17 @@ module.exports = function(callback){
 					indexStr = identifier[t]
 				}
 			}
-			// 统计队内有几人已经完全收集队内信息，如果全员均收集，则中断队长的speaker
-			let doneCnt = 0
 			// 然后再遍历全队，获取正则匹配值，进行主要逻辑
 			for (let t = 0; t < curTeamplayers.length; t++) {
+				// 自己的信息在answer里面已经写入，这里跳过。无论队长还是队员均是如此。
+				if(curTeamplayers[t].is_me){
+					continue
+				}
 				if(nickCache[curTeamplayers[t].name] == curTeamplayers[t].nick){
+					// console.log('[' +curTeamplayers[t].name + ']缓存[' + nickCache[curTeamplayers[t].name] + ']没变')
 					continue
 				}
 				nickCache[curTeamplayers[t].name] = curTeamplayers[t].nick
-				// 累加此队员是否已经完全收集全队信息
-				if(curTeamplayers[t].nick.indexOf('$') != -1){
-					doneCnt +=1
-				}
-				if(isleader && doneCnt == curTeamplayers.length && doneCnt == Object.keys(teammate_info).length){
-					console.log('全队员已经收集队内所有信息，中断speaker')
-					clearTimeout(speakerMeter)
-					setTimeout(() => {
-						cga.ChangeNickName("z" + "check"+allDoneStr)
-					}, 1000);
-					setTimeout(listener, 2000, cb);
-					return
-				}
 				// reqObj具体结果举例
 				// [
 				// 	'z#720313',
@@ -8317,10 +8324,11 @@ module.exports = function(callback){
 				//   ]
 				let resObj = curTeamplayers[t].nick.match(resReg)
 				if(reqObj){
-					let answer = reqAct[translateDict[reqObj[2]]](reqObj[3])
-					setTimeout(() => {
-						cga.ChangeNickName(reqObj[2]+reqObj[3]+indexStr+answer+allDoneStr)
-					}, isleader ? 2000 : 0);
+					let answerStr = answer(reqObj[2],reqObj[3])
+					// 队长的answer已经不在listen里面制作，
+					// setTimeout(() => {
+						cga.ChangeNickName(reqObj[2]+reqObj[3]+indexStr+answerStr+allDoneStr)
+					// }, isleader ? 2000 : 0);
 					continue
 				}
 				if(resObj){
@@ -8349,10 +8357,26 @@ module.exports = function(callback){
 			// 如果队友allDoneStr为空，则正常按顺序问问题。
 			// 如果全员都有allDoneStr标识，则直接跳过询问问题，队长在称号标记check，全员进入check模式
 			var changeNick = ()=>{
+				let teams = cga.getTeamPlayers();
+				let breakFlag = true
+				for (let t = 0; t < teams.length; t++) {
+					if(teams[t].nick.indexOf('$') == -1){
+						breakFlag = false
+						break
+					}
+				}
+
+				if(breakFlag){
+					console.log('检测到全员的信息共享已经收集完毕，中断speaker..')
+					reqArr = []
+					cga.ChangeNickName('check' + '$')
+					return
+				}
+
 				let curReqStr = reqArr.shift()
 				if(curReqStr){
-					cga.ChangeNickName("z" + curReqStr+allDoneStr)
-					speakerMeter = setTimeout(changeNick, 7000);
+					cga.ChangeNickName(curReqStr+allDoneStr)
+					speakerMeter = setTimeout(changeNick, 2500);
 					return
 				}
 			}
@@ -8360,22 +8384,25 @@ module.exports = function(callback){
 			changeNick()
 		}
 
-		// 制作临时请求序列
+		// 队长的问题以及回答
 		var refreshList = ()=>{
 			reqSequence.forEach(str => {
-				reqArr.push(str)
+				let type = str[0]
+				let name = str.substring(1)
+				reqArr.push('z' + str)
+				reqArr.push(type + name + 'z' +answer(type, name))
 			});
 			reqArr.push('check')
 			return reqArr
 		}
 		
-		var check = (flag)=>{
-
+		var check = (flag) => {
 			let delay = 5000
 			if(flag === false){
 				clearTimeout(speakerMeter)
-				console.log('check结果为false，恢复原称号，',delay/1000,'秒后重新进入cga.shareTeammateInfo..')
+				console.log('check结果为false，恢复原称号，清除缓存',delay/1000,'秒后重新进入cga.shareTeammateInfo..')
 				setTimeout(()=>{
+					nickCache = {}
 					cga.ChangeNickName(originNick)
 					cga.shareTeammateInfo(memberCnt, reqSequence, cb)
 					return
@@ -8390,6 +8417,8 @@ module.exports = function(callback){
 					console.log('队员信息中，人数统计缺失，',delay/1000,'秒后重新进入mainLogic..')
 					// 队员缺失，重置统计信息
 					teammate_info = {}
+					// 缓存信息也清除
+					nickCache = {}
 					// 如果人员缺失，那么信息收集齐全的flag要重置。
 					allDoneStr = ''
 					setTimeout(mainLogic, delay);
@@ -8413,10 +8442,12 @@ module.exports = function(callback){
 							if(!isInTeam){
 								console.log('队员信息中【' + checkKeys[k] + '】数据缺失，且该名队员已经离队。删除其数据，',delay/1000,'秒后重新进入mainLogic..')
 								delete teammate_info[checkKeys[k]]
+								// 缓存信息也清除
+								delete nickCache[checkKeys[k]]
 							}else{
 								console.log('队员信息中【' + checkKeys[k] + '】数据缺失，但该名队员还在队伍中，保留其数据，',delay/1000,'秒后重新进入mainLogic..')
 							}
-							setTimeout(mainLogic, delay);
+							setTimeout(mainLogic, isleader ? delay : 1500);
 							return
 						}
 					}
@@ -8462,6 +8493,7 @@ module.exports = function(callback){
 		mainLogic()
 		return
 	}
+
 	/**
 	 * UNAecho:开发一个自动组建自定义队伍的API
 	 * 统计的方式是使用cga.shareTeammateInfo，具体可以统计的数据类型，参照cga.shareTeammateInfo。
