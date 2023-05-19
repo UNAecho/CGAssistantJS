@@ -7762,7 +7762,7 @@ module.exports = function(callback){
 	 * @param {Array} teammates 队伍成员信息，数据结构为String数组，必须为队员名称。
 	 * 【注意】队长的判定是teammates第一个人的名字
 	 * @param {int} timeout 超时时间，以毫秒为单位。如果填0则视为无限等待。
-	 * @param {Array} pos 可选，队长站立坐标，如果传入，则全队会先走至合适的位置，再进行组队逻辑
+	 * @param {Array} pos 可选，队长站立坐标，如果传入，必须为int型数组，长度必须为2。全队会先走至合适的位置，再进行组队逻辑
 	 * @param {*} cb 回调函数，所有队员齐全则传入'ok'，如果不满足条件或没有队伍，会等待至超时，调用cb并传入'timeout'
 	 */
 	cga.buildTeam = (teammates, timeout, pos, cb) => {
@@ -7772,11 +7772,13 @@ module.exports = function(callback){
 			timeout = 3000
 		}
 
-		if (!pos instanceof Array) {
-			throw new Error('pos如果传入，类型必须为Array')
-		}
-		if (pos.length != 2) {
-			throw new Error('pos如果传入，则必须是长度为2的int型Array')
+		if(pos){
+			if (!pos instanceof Array) {
+				throw new Error('pos如果传入，类型必须为Array')
+			}
+			if (pos.length != 2) {
+				throw new Error('pos如果传入，则必须是长度为2的int型Array')
+			}
 		}
 
 		var playerInfo = cga.GetPlayerInfo();
@@ -7856,6 +7858,12 @@ module.exports = function(callback){
 
 		// 如果已经在队伍中，直接进入retry
 		if(cga.getTeamPlayers().length){
+			retry()
+			return
+		}
+
+		// 如果没有传入pos，则直接进入retry
+		if(!pos){
 			retry()
 			return
 		}
