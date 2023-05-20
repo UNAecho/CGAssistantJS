@@ -581,13 +581,13 @@ var cleanUseless = (cb)=>{
 				return item
 			}
 		});
-		cga.sellArray(sellarray, ()=>{
+		cga.sellArray(sellarray, () => {
 			cga.walkList([
-			[153, 123]//扔布点
-			], ()=>{
+				[153, 123]//扔布点
+			], () => {
 				dropUseless(cb);
 			});
-		});
+		}, 8000);
 	});
 }
 

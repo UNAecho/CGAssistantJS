@@ -6420,22 +6420,24 @@ module.exports = function(callback){
 		return arr;
 	}
 	
-	//出售物品
-	cga.sellArray = (sellarray, cb)=>{
-		cga.AsyncWaitNPCDialog((err, dlg)=>{
-			if(err){
+	// 出售物品
+	// UNAecho:增加超时选项，防止因为延迟，出现人物无限往返cb和cga.AsyncWaitNPCDialog两种状态。
+	// 最常见的是双百制造桥头卖装备，与NPC对话过频导致延迟较大(可能为官方有意为之)，导致角色无限执行去扔布，和跟NPC对话卖东西。对话又弹不出框，弹出框又去扔布给取消掉。
+	cga.sellArray = (sellarray, cb, timeout = 3000) => {
+		cga.AsyncWaitNPCDialog((err, dlg) => {
+			if (err) {
 				cb(err);
 				return;
 			}
-			var numOpt = dlg.message.charAt(dlg.message.length-1);
+			var numOpt = dlg.message.charAt(dlg.message.length - 1);
 			cga.ClickNPCDialog(0, numOpt == '3' ? 1 : 0);
-			cga.AsyncWaitNPCDialog(()=>{
+			cga.AsyncWaitNPCDialog(() => {
 				cga.SellNPCStore(sellarray);
-				cga.AsyncWaitNPCDialog(()=>{
+				cga.AsyncWaitNPCDialog(() => {
 					cb(true);
 				});
 			});
-		});
+		}, timeout);
 	}
 	
 	//获取背包里能够出售的物品
