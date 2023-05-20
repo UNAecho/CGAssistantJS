@@ -9628,7 +9628,7 @@ module.exports = function(callback){
 		cga.AsyncWaitChatMsg((err, r)=>{
 
 			if(err){
-				console.log('cga.waitSysMsgTimeout超时，如果cb(err)不为true，则结束监听。')
+				// console.log('cga.waitSysMsgTimeout超时，如果cb(err)不为true，则结束监听。')
 				listen = cb(err);
 
 				if(listen == true)
