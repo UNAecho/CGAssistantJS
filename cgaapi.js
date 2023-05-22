@@ -2078,7 +2078,7 @@ module.exports = function(callback){
 		// 如果全部开传送，将config.allstonedone置为true，无需重复检查。
 		if(config.allstonedone){
 			console.log('人物已经全部开传送，无需检查。')
-			if (cb) setTimeout(cb, 1000,null);
+			if (cb) setTimeout(cb, 1000,true);
 			return
 		}
 		var alldone = true
@@ -2136,7 +2136,10 @@ module.exports = function(callback){
 													cga.SayWords('恭喜，人物已经开启全部法兰王国传送石。', 0, 3, 1);
 													config.allstonedone = true
 												}
-												cga.savePlayerConfig(config, cb);
+												cga.savePlayerConfig(config, ()=>{
+													cb(true)
+													return
+												});
 											})
 										})
 									})
@@ -2200,6 +2203,7 @@ module.exports = function(callback){
 				'强哥杂货店':1051,
 				'银行':1121,
 				'葛利玛的家':1150,
+				'毕夫鲁的家':1152,
 				'冒险者旅馆':1154,
 				'冒险者旅馆 2楼':1164,
 				'流行商店':1162,
@@ -2293,6 +2297,8 @@ module.exports = function(callback){
 				1121:[[238, 111, 1121],],
 				// 葛利玛的家
 				1150:[[216, 43, 1150],],
+				// 毕夫鲁的家
+				1152:[[206, 37, 1152],],
 				// 冒险者旅馆
 				1154:[[238, 64, 1154],],
 				// 流行商店
@@ -2664,6 +2670,8 @@ module.exports = function(callback){
 				1121:[[2, 13, 1000],],
 				// 葛利玛的家
 				1150:[[2, 9, 1000],],
+				// 毕夫鲁的家
+				1152:[[10, 14, 1000],],
 				// 冒险者旅馆
 				1154:[[7, 29, 1000],],
 				// 流行商店
@@ -3949,20 +3957,30 @@ module.exports = function(callback){
 			maxindex : 59999,
 			mapTranslate:{
 				'主地图' : 59521,
-				'银行' : 59548,
 				'冒险者旅馆' : 59538,
+				'武器工房' : 59541,
+				'画廊' : 59542,
+				'银行' : 59548,
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
 				59521:[],
 				// 冒险者旅馆
 				59538:[[102, 115, 59538],],
+				// 武器工房
+				59541:[[144, 120, 59541],],
+				// 画廊
+				59542:[[144, 120, 59541],[28, 21, 59542],],
 				// 银行
 				59548:[[114, 104, 59548],],
 			},
 			walkReverse:{
 				// 冒险者旅馆
 				59538:[[38, 48, 59521],],
+				// 武器工房
+				59541:[[9, 24, 59521],],
+				// 画廊
+				59542:[[48, 47, 59541],],
 				// 银行
 				59548:[[27, 34, 59521],],
 			},
@@ -4451,7 +4469,10 @@ module.exports = function(callback){
 	}
 	
 	/**
+	 * UNAecho:一个自动去村镇开传送的API，会自动识别当前所处位置是否可以以最近距离赶往目标地点。
+	 * 比如如果检测到当前处于奇利村，而目标地点是加纳村的话，那么无需登出，直接启程。
 	 * 
+	 * 一键执行，包含自动开传送、自动在旅途中补给，无需添加任何其他逻辑。
 	 * @param {*} villageName
 	 * @param {*} cb 
 	 * @param {*} finalVillage 
@@ -4510,10 +4531,10 @@ module.exports = function(callback){
 		var next = (cb) => {
 			cga.travel.saveAndSupply(false, ()=>{
 				if(finalVillage && villageName != finalVillage){
-					console.log('抵达【' + villageName + '】，最终目标为【 ' + finalVillage + ' 】下一步前往【' + tmpPath[tmpIndex + 1] +'】。')
+					console.log('抵达【' + villageName + '】，并且已经回补、开启传送。最终目标为【 ' + finalVillage + ' 】下一步前往【' + tmpPath[tmpIndex + 1] +'】。')
 					cga.travel.toVillage(tmpPath[tmpIndex + 1], cb, finalVillage)
 				}else{
-					console.log('抵达【' + villageName + '】。')
+					console.log('抵达【' + villageName + '】并且已经回补、开启传送。')
 					if (cb) cb(null)
 				}
 				return
@@ -7270,7 +7291,62 @@ module.exports = function(callback){
 	}
 
 	/**
-	 * UNA:和NPC交换物品API
+	 * UNAecho:封装一个通用的购买API
+	 * @param {*} item 物品名称
+	 * @param {*} count 购买数量，注意是商品+-的数量，而不是几组。想买1组铜，则填20。
+	 * @param {*} pos 商店NPC的坐标
+	 * @param {*} cb 
+	 */
+	cga.buyItems = (itemName,count,pos,cb)=>{
+		var XY = cga.GetMapXY()
+		var talkPos = cga.getRandomSpace(pos[0], pos[1])
+		if(XY.x != talkPos[0] || XY.y != talkPos[1]){
+			cga.walkList([
+				talkPos
+			], () => {
+				setTimeout(cga.buyItems, 1000, itemName,count,pos,cb);
+			});
+			return
+		}
+		cga.turnTo(pos[0], pos[1]);
+		cga.AsyncWaitNPCDialog(()=>{
+			cga.ClickNPCDialog(0, 0);
+			cga.AsyncWaitNPCDialog((err, dlg)=>{
+				var store = cga.parseBuyStoreMsg(dlg);
+				if(!store)
+				{
+					cb(new Error('商店内容解析失败'));
+					return;
+				}
+
+				var buyitem = [];
+				var emptySlotCount = cga.getInventoryEmptySlotCount();
+				if(emptySlotCount == 0){
+					cb(new Error('背包没有空位'));
+					return
+				}
+
+				store.items.forEach((it)=>{
+					if(it.name == itemName && emptySlotCount > 0){
+						buyitem.push({index: it.index, count: count });
+					}
+				});
+
+				cga.BuyNPCStore(buyitem);
+				cga.AsyncWaitNPCDialog((err, dlg)=>{
+					if(dlg && dlg.message.indexOf('不够')){
+						cb(new Error('你的钱不够'));
+						return
+					}
+					setTimeout(cb, 2000,true);
+					return;
+				});
+			});
+		});
+	}
+
+	/**
+	 * UNAecho:和NPC交换物品API
 	 * goods:目标物品名称
 	 * count:交易数量，注意并不是物品堆叠数，而是游戏商店中"+"和"-"号点出的交换数量。如果不输入，则默认将材料全部兑换。
 	 *  */ 
