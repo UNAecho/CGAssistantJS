@@ -4514,12 +4514,19 @@ module.exports = function(callback){
 
 		var tmpPath = null
 		var tmpIndex = null
+		// 如果找到某个村庄路径，就不要继续遍历，防止覆盖
+		var breakFlag = false
 
 		for (var i = 0; i < villageArray.length; i++){
+			if(breakFlag){
+				breakFlag = false
+				break
+			}
 			for(var j = 0; j < villageArray[i].length; j++){
 				if(villageArray[i][j] == villageName){
 					tmpPath = villageArray[i]
 					tmpIndex = j
+					breakFlag = true
 					break
 				}
 			}
@@ -4563,11 +4570,9 @@ module.exports = function(callback){
 		if(tmpIndex > 0){
 			if(mainMapName == tmpPath[tmpIndex - 1]){
 				if(villageName == '奇利村'){
-					// 提取本地职业数据，查询人物是战斗系还是生产系。
-					const getprofessionalInfos = require('./常用数据/ProfessionalInfo.js');
-					var category = getprofessionalInfos(playerInfo.job).category
+					var category = cga.job.getJob().jobType
 					var ring = cga.findItem('欧兹尼克的戒指')
-					if(category != '制造系' && category != '初始系' && ring == -1){
+					if(category != '生产系' && category != '初始系' && ring == -1){
 						throw new Error('你不是制造系或游民，需要【欧兹尼克的戒指】过海底。')
 					}
 					cga.travel.autopilot('主地图', ()=>{

@@ -13,6 +13,7 @@ var thisobj = {
 	prepare: (cb) => {
 		let playerInfo = cga.GetPlayerInfo();
 		let curJobObj = cga.job.getJob()
+		let config = cga.loadPlayerConfig();
 		// 小号到达一定等级才开始自行做任务，方便赶路和过门禁。
 		let accessLv = 20
 
@@ -28,7 +29,8 @@ var thisobj = {
 		if (curJobObj.curJob == '游民') {
 			if (thisobj.finalJob.jobType == '战斗系') {
 				if (cga.getItemCount('驯兽师推荐信') > 0) {
-					targetObj.missionName = '就职传教士'
+					console.log('战斗系拿完驯兽推荐信之后，先就职矿工练级，方便单人开传送。在刷声望前，随便转职。')
+					targetObj.missionName = '就职矿工'
 				} else {
 					targetObj.missionName = '拿驯兽师推荐信'
 				}
@@ -43,11 +45,18 @@ var thisobj = {
 			}
 		}
 
-		// 检查技能情况
-		let needLearn = learnSkillMission.func.needLearn(thisobj.finalJob.job)
-		if (needLearn != null && cga.skill.ableToLearn(needLearn) == 'able to learn') {
-			targetObj.missionName = '学习必要技能'
-			targetObj.param.job = thisobj.finalJob.job
+		// 生产系自行开启所有传送，至少40级才能过海，最好再高级一点，否则40级容易被飞
+		if(!targetObj.hasOwnProperty('missionName') && playerInfo.level >= 70 && curJobObj.jobType == '生产系' && !config.allstonedone){
+			targetObj.missionName = '单人开全部传送'
+		}
+
+		// 如果没有职业切换需求，开始检查技能情况
+		if (!targetObj.hasOwnProperty('missionName')) {
+			let needLearn = learnSkillMission.func.needLearn(thisobj.finalJob.job)
+			if (needLearn != null && cga.skill.ableToLearn(needLearn) == 'able to learn') {
+				targetObj.missionName = '学习必要技能'
+				targetObj.param.job = thisobj.finalJob.job
+			}
 		}
 
 		// 任务制作
