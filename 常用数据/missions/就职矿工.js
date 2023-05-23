@@ -6,10 +6,10 @@ var thisobj = {
 			workFunc: function (cb2) {
 				let cu = cga.getItemCount('铜')
 				if (cu < 20) {
-					cga.travel.newisland.toStone('D', ()=>{
+					cga.travel.newisland.toStone('D', () => {
 						cga.travel.autopilot('画廊', () => {
-							cga.buyItems('铜',20 - cu,[58,54],(r)=>{
-								if(r){
+							cga.buyItems('铜', 20 - cu, [58, 54], (r) => {
+								if (r) {
 									cb2(true)
 									return
 								}
@@ -41,11 +41,11 @@ var thisobj = {
 			intro: '3.返回国营第24号矿坑道（351.145）地下一楼与矿工毕夫鲁（35.7）对话，选“是”交出【便当？】获得【矿石？】、【有关矿石的纸条】。',
 			workFunc: (cb2) => {
 				var obj = { act: 'item', target: '矿石？' }
-				cga.travel.falan.toStone('W1', (r)=>{
+				cga.travel.falan.toStone('W1', (r) => {
 					cga.walkList([
 						[22, 87, '芙蕾雅'],
 						[351, 145, '国营第24坑道 地下1楼'],
-					], ()=>{
+					], () => {
 						cga.askNpcForObj('国营第24坑道 地下1楼', [35, 7], obj, () => {
 							cb2(true)
 						})
@@ -83,11 +83,11 @@ var thisobj = {
 			intro: '6.前往国营第24矿坑道地下一楼与矿工毕夫鲁（35.7）对话，选“是”交出【饮料？】获得【矿工推荐信】。',
 			workFunc: (cb2) => {
 				var obj = { act: 'item', target: '矿工推荐信' }
-				cga.travel.falan.toStone('W1', (r)=>{
+				cga.travel.falan.toStone('W1', (r) => {
 					cga.walkList([
 						[22, 87, '芙蕾雅'],
 						[351, 145, '国营第24坑道 地下1楼'],
-					], ()=>{
+					], () => {
 						cga.askNpcForObj('国营第24坑道 地下1楼', [35, 7], obj, () => {
 							cb2(true)
 						})
@@ -98,10 +98,10 @@ var thisobj = {
 		{
 			intro: '7.前往圣拉鲁卡村村长的家（49.81）2楼与矿工吉拉瓦特（8.4）对话即可就职矿工，任务完结。',
 			workFunc: (cb2) => {
-				var obj = { act: 'job', target: '矿工' }
-				cga.travel.toVillage(thisobj.data.job.tutorlocation, ()=>{
-					cga.travel.autopilot(thisobj.data.job.tutorRoom,()=>{
-						cga.askNpcForObj('村长的家 2楼', thisobj.data.job.tutorpos, obj, () => {
+				var obj = { act: 'job', target: thisobj.data.job.job }
+				cga.travel.toVillage(thisobj.data.job.tutorlocation, () => {
+					cga.travel.autopilot(thisobj.data.job.tutorRoom, () => {
+						cga.askNpcForObj(thisobj.data.job.tutorRoom, thisobj.data.job.tutorpos, obj, () => {
 							cb2(true)
 						})
 					})
@@ -135,7 +135,7 @@ var thisobj = {
 	data: {// 任务静态数据，可自定义，方便使用
 		job: cga.job.getJob('矿工')
 	},
-	func :{// 任务自定义函数
+	func: {// 任务自定义函数
 
 	},
 	doTask: (param, cb) => {

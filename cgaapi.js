@@ -2836,6 +2836,7 @@ module.exports = function(callback){
 				'地下工房':2303,
 				'食品店':2306,
 				'酒吧':2308,
+				'赛杰利亚酒吧':2308,
 				'医院':2310,
 				'医院 2楼':2311,
 				'村长的家':2312,
@@ -4313,7 +4314,8 @@ module.exports = function(callback){
 		}else if(villageName == '法兰城'){
 
 		}else if(villageName == '艾尔莎岛'){
-
+			tmplist.push([91, 122])
+			tmpTurnDir = 0
 		}else{
 			throw new Error('[UNA脚本警告]:未知地图index，请联系作者更新。')
 		}
@@ -4490,9 +4492,9 @@ module.exports = function(callback){
 		if(cga.needSupplyInitial({  })){
 			console.log('人物没有满状态，先回补。')
 			if(cga.travel.isInVillage()){
-				cga.travel.toHospital(false,()=>{
+				cga.travel.toHospital(()=>{
 					cga.travel.toVillage(villageName, cb, finalVillage)
-				})
+				},false)
 			}else{
 				cga.travel.falan.toCastleHospital(()=>{
 					setTimeout(() => {
@@ -12302,7 +12304,7 @@ module.exports = function(callback){
 		let skillObj = cga.skill.getSkill(skName)
 		let reason = cga.skill.ableToLearn(skName)
 		if (reason.indexOf('lack') != -1) {
-			cb(reason)
+			cb(new Error('技能栏位不足'))
 			return
 		}
 
@@ -12341,6 +12343,7 @@ module.exports = function(callback){
 		}
 		if (skillObj.teacherMainMap == '法兰城') {
 			cga.travel.falan.toStone('C', () => {
+				// 咒术师相关技能
 				if (skillObj.teacherMap == 15009 || skillObj.teacherMap == 15010) {
 					cga.walkList([
 						[17, 53, '法兰城'],
@@ -12362,7 +12365,34 @@ module.exports = function(callback){
 							});
 						})
 					})
-				} else {
+				} else if(skillObj.name == '狩猎'){// 猎人
+					var search = ()=>{
+						var obj = cga.GetMapUnits()
+						var npc = obj.find(u => u.unit_name == '猎人拉修' && u.type == 1 && u.model_id != 0)
+						if (npc){
+							let obj = { act: 'skill', target: skillObj.name }
+							var target = cga.getRandomSpace(npc.xpos,npc.ypos);
+							cga.askNpcForObj(skillObj.teacherMap, [npc.xpos,npc.ypos], obj, ()=>{
+								cb(true)
+							})
+							return
+						}else{
+							var ranX = Math.trunc(Math.random()*(500-472)+472)
+							var ranY = Math.trunc(Math.random()*(220-198)+198)
+							var target = cga.getRandomSpace(ranX,ranY);
+							cga.walkList([
+								target,
+							], search);
+						}
+						return
+					}
+
+					cga.walkList([
+						[65, 53, '法兰城'],
+						[281, 88,'芙蕾雅'],
+					], search)
+				}
+				 else {
 					go(cb)
 				}
 			});
