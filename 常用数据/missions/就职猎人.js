@@ -39,7 +39,12 @@ var thisobj = {
 									return;
 								}
 								if (cga.getItemCount('传说的鹿皮') > 0) {
-									cb2(true);
+									cga.walkList([
+										[681, 343, '伊尔村'],
+									], () => {
+										// 过河拆桥，把技能删除
+										thisobj.func.forgetSkill(cb2)
+									});
 									return;
 								}
 								var item = cga.getInventoryItems().find((it) => {
@@ -115,7 +120,17 @@ var thisobj = {
 		job: cga.job.getJob('猎人')
 	},
 	func: {// 任务自定义函数
-
+		forgetSkill: (cb) => {
+			var skill = cga.skill.getSkill('狩猎体验')
+			var obj = { act: 'forget', target: skill.name }
+			cga.travel.toVillage(skill.teacherMainMap, () => {
+				cga.travel.autopilot(skill.teacherMap, () => {
+					cga.askNpcForObj(skill.teacherMap, skill.teacherPos, obj, () => {
+						cb(true)
+					})
+				})
+			});
+		}
 	},
 	doTask: (param, cb) => {
 		// 接受外部传入的参数
