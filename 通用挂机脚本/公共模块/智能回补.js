@@ -211,7 +211,7 @@ var supplyModeArray = [
 				return true
 			} else if (map.indexOf('半山腰') >= 0) {
 				return true
-			} else if (map == '国民会馆' || (mapindex >= 59801 && mapindex <= 59900)) {
+			} else if (map == '国民会馆' || (mapindex >= 59801 && mapindex < 59900)) {
 				return true
 			} else if (map == '曙光骑士团营地' || cga.travel.camp.getRegion(map, cga.GetMapXY()) == '曙光骑士团营地域') {
 				return true
