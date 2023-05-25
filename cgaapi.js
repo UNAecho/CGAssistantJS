@@ -12186,7 +12186,6 @@ module.exports = function(callback){
 		}
 
 		var reputationData = cga.job.loadReputationData()
-		var category = jobObj.category
 		var titles = playerInfo.titles
 		if(jobObj.jobType == '战斗系'){
 			reputationData = reputationData.reputationList
