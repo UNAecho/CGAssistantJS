@@ -56,25 +56,25 @@ var teamModeArray = [
 			let doneNick = 'done'
 			// 通用数据
 			let cusObj = {
-				'check' : {'i承认之戒' : {sum:-1},'m传送小岛' : {sum:-1}},
-				'part' : thisobj.object.roleObj.part,
-				'leaderPos' : [thisobj.object.leaderX,thisobj.object.leaderY],
-				'leaderFilter' : thisobj.object.leaderFilter,
-				'dangerLevel' : 0,
-				'doneNick' : doneNick,
+				'check': { 'i承认之戒': { sum: -1 }, 'm传送小岛': { sum: -1 } },
+				'part': thisobj.object.roleObj.part,
+				'leaderPos': [thisobj.object.leaderX, thisobj.object.leaderY],
+				'leaderFilter': thisobj.object.leaderFilter,
+				'dangerLevel': 0,
+				'doneNick': doneNick,
 			}
 			// 队长额外所需数据
-			if(cga.isTeamLeader){
+			if (cga.isTeamLeader) {
 				cusObj.nameFilter = thisobj.object.memberFilter
 				cusObj.memberCnt = thisobj.object.minTeamMemberCount
-				cusObj.check['r输出'] = {sum:thisobj.object.roleMaxCount['输出']}
-				cusObj.check['r治疗'] = {sum:thisobj.object.roleMaxCount['治疗']}
-				cusObj.check['r小号'] = {sum:thisobj.object.roleMaxCount['小号']}
+				cusObj.check['r输出'] = { sum: thisobj.object.roleMaxCount['输出'] }
+				cusObj.check['r治疗'] = { sum: thisobj.object.roleMaxCount['治疗'] }
+				cusObj.check['r小号'] = { sum: thisobj.object.roleMaxCount['小号'] }
 			}
 
-			cga.buildCustomerTeam(cusObj,(r)=>{
-				cga.checkTeamAllDone(doneNick,()=>{
-					afterShare(r,cb)
+			cga.buildCustomerTeam(cusObj, (r) => {
+				cga.checkTeamAllDone(doneNick, () => {
+					afterShare(r, cb)
 				})
 			})
 
@@ -959,10 +959,8 @@ var thisobj = {
 			battleArea = '回廊'
 		} else if (camp && minLv > 60 && minLv <= 72) {
 			battleArea = '营地'
-		} else if (camp && minLv > 72 && minLv <= 75) {
+		} else if (camp && minLv > 72 && minLv <= 80) {// 雪塔80层有睡眠怪，导致人物经常阵亡，不再去80层练级
 			battleArea = '蝎子'
-		} else if (camp && minLv > 75 && minLv <= 80) {
-			battleArea = '雪拉威森塔', layer = 80
 		} else if (camp && minLv > 80 && minLv <= 84) {
 			battleArea = '沙滩'
 		} else if (camp && minLv > 84 && minLv <= 94) {
@@ -1316,8 +1314,8 @@ var thisobj = {
 					cga.sayLongWords(sayString, 0, 3, 1);
 					setTimeout(() => {
 						sayString = '【智能组队】请输入你在队内的职责，';
-						for(var i in cga.role.battleRoleArr){
-							sayString += i+cga.role.battleRoleArr[i]
+						for (var i in cga.role.battleRoleArr) {
+							sayString += i + cga.role.battleRoleArr[i]
 						}
 
 						cga.sayLongWords(sayString, 0, 3, 1);
