@@ -4156,7 +4156,7 @@ module.exports = function(callback){
 				}
 			}
 			// 其他情况则抛异常
-			throw new Error('[UNA脚本警告]:targetMap:[' + targetMap +']输入有误，请确认地图中是否有输入的名称地点。')
+			cb(new Error('[UNA脚本警告]:targetMap:[' + targetMap +']输入有误，请确认地图中是否有输入的名称地点。'))
 		}
 		
 		try {
