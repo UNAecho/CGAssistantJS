@@ -3884,6 +3884,22 @@ module.exports = function(callback){
 				44699:[[0, 14, 44690],],
 			},
 		},
+		'矮人城镇':{
+			mainName : '矮人城镇',
+			mainindex : 44750,
+			minindex : 44750,
+			maxindex : 44750,
+			mapTranslate:{
+				'主地图' : 44750,
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				44690:[],
+			},
+			walkReverse:{
+				
+			},
+		},
 		'哥拉尔镇':{
 			mainName : '哥拉尔镇',
 			mainindex : 43100,
