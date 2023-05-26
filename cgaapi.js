@@ -641,6 +641,8 @@ module.exports = function(callback){
 			result = '哥拉尔镇'
 		}else if(mapindex >= 44690 && mapindex < 44700){//
 			result = '圣骑士营地'
+		}else if(mapindex == 44750){// TODO 探索矮人城镇还有没有其它房间和index
+			result = '矮人城镇'
 		}else if(mapindex >= 40000 && mapindex < 50000){// TODO完善范围
 			result = '艾尔巴尼亚王国'
 		}else if(mapindex == 300 && XY.x < 379){// 索奇亚地图比较规则，大于379都是洪恩大风洞的右侧
@@ -3897,7 +3899,7 @@ module.exports = function(callback){
 				44690:[],
 			},
 			walkReverse:{
-				
+
 			},
 		},
 		'哥拉尔镇':{
