@@ -179,47 +179,50 @@ var supplyModeArray = [
 			return false;
 		},
 		isAvailable: (map, mapindex) => {
-			if (map.indexOf('艾尔莎岛') >= 0) {
-				return true
-			} else if (map.indexOf('法兰城') >= 0) {
-				return true
-			} else if (map.indexOf('里谢里雅堡') >= 0) {
-				return true
-			} else if (map.indexOf('盖雷布伦森林') >= 0) {
-				return true
-			} else if (map.indexOf('梅布尔隘地') >= 0) {
-				return true
-			} else if (map.indexOf('诅咒之迷宫') >= 0) {
-				return true
-			} else if (map.indexOf('过去与现在的回廊') >= 0) {
-				return true
-			} else if (map.indexOf('肯吉罗岛') >= 0) {
-				return true
-			} else if (map.indexOf('圣骑士营地') >= 0) {
-				return true
-			} else if (mapindex == 44692) {
-				return true
-			} else if (map.indexOf('黑龙沼泽') >= 0) {
-				return true
-			} else if (map.indexOf('蜥蜴洞穴') >= 0) {
-				return true
-			} else if (map.indexOf('旧日') >= 0) {
-				return true
-			} else if (map.indexOf('小岛') >= 0) {
-				return true
-			} else if (map.indexOf('通往山顶的路') >= 0) {
-				return true
-			} else if (map.indexOf('半山腰') >= 0) {
-				return true
-			} else if (map == '国民会馆' || (mapindex >= 59801 && mapindex < 59900)) {
-				return true
-			} else if (map == '曙光骑士团营地' || cga.travel.camp.getRegion(map, cga.GetMapXY()) == '曙光骑士团营地域') {
-				return true
-			} else if (map.indexOf('废墟地下') >= 0) {
-				return true
-			}
-			console.log('isAvailable不可用，请检查。map:', map, ',mapindex:', mapindex)
-			return false;
+			// 智能回补改为任何地方均可回补，如果需要排除某个任务场所，请在这里补充逻辑
+			return true
+			
+			// if (map.indexOf('艾尔莎岛') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('法兰城') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('里谢里雅堡') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('盖雷布伦森林') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('梅布尔隘地') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('诅咒之迷宫') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('过去与现在的回廊') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('肯吉罗岛') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('圣骑士营地') >= 0) {
+			// 	return true
+			// } else if (mapindex == 44692) {
+			// 	return true
+			// } else if (map.indexOf('黑龙沼泽') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('蜥蜴洞穴') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('旧日') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('小岛') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('通往山顶的路') >= 0) {
+			// 	return true
+			// } else if (map.indexOf('半山腰') >= 0) {
+			// 	return true
+			// } else if (map == '国民会馆' || (mapindex >= 59801 && mapindex < 59900)) {
+			// 	return true
+			// } else if (map == '曙光骑士团营地' || cga.travel.camp.getRegion(map, cga.GetMapXY()) == '曙光骑士团营地域') {
+			// 	return true
+			// } else if (map.indexOf('废墟地下') >= 0) {
+			// 	return true
+			// }
+			// console.log('isAvailable不可用，请检查。map:', map, ',mapindex:', mapindex)
+			// return false;
 		},
 	},
 ]

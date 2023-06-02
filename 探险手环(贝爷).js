@@ -108,7 +108,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 				cga.walkRandomMaze(target, (err)=>{
 					if(err == 4){
 						//非预期的地图切换,重启脚本
-						cb2('restart task');
+						cb2('restart stage');
 						return;
 					}
 					
