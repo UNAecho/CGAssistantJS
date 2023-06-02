@@ -101,7 +101,7 @@ var task = cga.task.Task('探险专家(贝爷)', [
 				cga.walkRandomMaze(target, (err)=>{
 					if(err == 4){
 						//非预期的地图切换,重启脚本
-						cb2('restart task');
+						cb2('restart stage');
 						return;
 					}
 					

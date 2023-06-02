@@ -289,8 +289,8 @@ module.exports = function(callback){
 
 			return true;
 		}, 5000);
-
-		cga.LogBack();
+		// UNAecho:登出过快会导致cga.waitSysMsgTimeout还没运行，登出动作已经结束了。这里加个延迟
+		setTimeout(cga.LogBack, 500);
 	}
 	
 	//转向(x,y)坐标，默认往前一格避免捡起面前的物品
@@ -5769,7 +5769,8 @@ module.exports = function(callback){
 		cga.isMoveThinking = true;
 
 		if(!cga.moveThink('walkList')){
-			console.log('walkList被中断');
+			// console.log('walkList被中断');
+			console.log('cga.walkList被中断');
 			cga.isMoveThinking = false;
 			return;
 		}
@@ -5826,7 +5827,8 @@ module.exports = function(callback){
 					}
 
 					if(!cga.moveThink('walkList')){
-						console.log('walkList被中断');
+						// console.log('walkList被中断');
+						console.log('cga.walkList中的end()被中断');
 						cga.isMoveThinking = false;
 						return;
 					}
@@ -5858,7 +5860,8 @@ module.exports = function(callback){
 			var walker = (err, reason)=>{
 				
 				if(!cga.moveThink('walkList')){
-					console.log('walkList被中断');
+					// console.log('walkList被中断');
+					console.log('cga.walkList中的walker()被中断');
 					cga.isMoveThinking = false;
 					return;
 				}
@@ -6180,6 +6183,206 @@ module.exports = function(callback){
 		return this;
 	}
 	
+	/**
+	 * UNAecho: 对cga.task.Task进行功能扩充升级，稳定运行后再取代cga.task.Task
+	 * 带有解耦性质的playerthink功能的task模块，目的是在task中也使用playerthink的打断机制，与任务的其它属性一样，taskPlayerThink需要外部自定义函数并传入
+	 * 并且新增了任务跳阶段功能，可以跳转至task的任何一个阶段
+	 * @param {*} name 
+	 * @param {*} stages 
+	 * @param {*} requirements 
+	 * @param {*} taskPlayerThink 
+	 * @returns 
+	 */
+	cga.task.TaskWithThink = function(name, stages, requirements, taskPlayerThink){
+		
+		this.name = name;
+		this.stages = stages;
+		this.requirements = requirements
+		this.taskPlayerThink = taskPlayerThink
+		
+		this.anyStepDone = true;
+		this.playerThinkRunning = false
+		/**
+		 * playerThinkTimer的运行开关。playerThinkTimer的运行机制参考练级主插件的playerThinkTimer。
+		 * playerThinkTimer会持续运行taskPlayerThink()，来实现playerThink的功能。
+		 * 与练级时不同，taskAPI的playerThinkTimer在任务结束时，需要关掉。将此flag置为false即可
+		 */
+		this.playerThinkTimerRunning = false
+
+		var interrupt = require('./通用挂机脚本/公共模块/interrupt');
+		this.taskMoveThinkInterrupt = new interrupt();
+		this.taskPlayerThinkInterrupt = new interrupt();
+
+		this.moveThink = (arg) => {
+
+			if (this.taskMoveThinkInterrupt.hasInterrupt())
+				return false;
+		
+			if (arg == 'freqMoveMapChanged') {
+				this.taskPlayerThinkInterrupt.requestInterrupt();
+				return false;
+			}
+		
+			return true;
+		}
+
+		// 打断后所执行的逻辑。多数情况是：执行一个func()，然后回到任务的某一阶段。
+		this.interruptTask = (obj,cb2)=>{
+			let doCallBack = (obj,cb2)=>{
+				if(typeof obj == 'function'){
+					// 执行打断时提供的func，并传入上次打断时的任务index，方便得知任务进行到哪一步了。
+					// taskIndex：外部传入，告知执行完obj()之后，回到任务的哪个index
+					obj((taskIndex)=>{
+						if(typeof taskIndex == 'number'){
+							this.doNext(taskIndex, cb2);
+						}else{
+							console.log('打断任务之后没有传入任务再次进行的步骤,任务结束。执行this.doTask()的callback')
+							this.doNext(this.stages.length, cb2);
+						}
+						return
+					})
+				}else{
+					console.log('打断任务之后没有传入cb,任务结束。执行this.doTask()的callback')
+					this.doNext(this.stages.length, cb2);
+					return
+				}
+			}
+
+			if(this.taskPlayerThinkInterrupt.hasInterrupt()){
+				console.log('objThis.taskPlayerThinkInterrupt.hasInterrupt')
+				doCallBack(obj,cb2)
+				return
+			}else{
+				/**	
+				 * UNAecho:cga.walklist有一个bug，当角色一直走直线时，即便是cga.moveThink()返回false，也不会打断走路。
+				 * 只有当角色出现拐弯、斜向走路时，才会打断walklist。
+				 * 推测是cga.AsyncWalkTo底层实现的走路机制问题，当角色不走直线时，才会重新调用一次cga.walklist的walker()，才能触发打断机制，也就是cga.moveThink('walkList') = false
+				*/
+				this.taskMoveThinkInterrupt.requestInterrupt(() => {
+					if (cga.isInNormalState()) {
+						console.log('状态为平常，且尝试打断walklist。只有当人物处于非直线行走时才触发打断。')
+						doCallBack(obj,cb2)
+						return true;
+					}
+					return false;
+				});
+			}
+		}
+
+		this.playerThinkTimer = () => {
+			if(!this.playerThinkTimerRunning){
+				console.log('由于任务结束，任务：'+this.name+' 的playerThinkTimer已关闭。');
+				return
+			}
+			if (this.playerThinkRunning) {
+				var obj = this.taskPlayerThink()
+				if (obj === false) {
+					console.log('taskPlayerThink off');
+					this.playerThinkRunning = false;
+				}else if(typeof obj == 'function'){
+					console.log('taskPlayerThink off and do function');
+					this.playerThinkRunning = false;
+					this.interruptTask(obj,this.taskCallback)
+				}
+			}
+		
+			setTimeout(this.playerThinkTimer, 1500);
+		}
+
+		this.isDone = function(index){
+			for(var i = this.requirements.length - 1; i >= index; --i){
+				if(typeof this.requirements[i] == 'function' && this.requirements[i]())
+					return true;
+			}
+			return false;
+		}
+		
+		this.isDoneSingleStep = function(index){
+			if(typeof this.requirements[index] == 'function' && this.requirements[index]())
+				return true;
+			return false;
+		}
+		
+		this.doNext = function(index, cb){
+			if(index >= this.stages.length){
+				console.log('任务：'+this.name+' 已完成！');
+				// 关闭playerThinkTimer
+				this.playerThinkTimerRunning = false
+				if(cb)
+					cb(true);
+			} else {
+				this.doStage(index, cb);
+			}
+		}
+	
+		this.doStage = function(index, cb){
+			if(this.anyStepDone){
+				if(this.isDone(index)){
+					console.log('第'+(index+1)+'/'+stages.length+'阶段已完成，跳过。');
+					this.doNext(index+1, cb);
+					return;
+				}
+			} else {
+				if(this.isDoneSingleStep(index)){
+					console.log('第'+(index+1)+'/'+stages.length+'阶段已完成，跳过。');
+					this.doNext(index+1, cb);
+					return;
+				}
+			}
+			console.log('开始执行第'+(index+1)+'阶段：');
+			console.log(this.stages[index].intro);
+			var objThis = this;
+			objThis.stages[index].workFunc(function(r,obj){
+				if(r === false || r instanceof Error){
+					if(cb)
+						cb(r);
+					return;
+				}
+				if(r === true || r === null){
+					console.log('第'+(index+1)+'阶段执行完成。');
+					objThis.doNext(index + 1, cb);
+				} else if( r == 'restart stage' ){
+					console.log('第'+(index+1)+'阶段请求重新执行。');
+					objThis.doNext(index, cb);
+				} else if( r == 'task interrupt' ){
+					console.log('第'+(index+1)+'阶段请求中断任务。');
+					objThis.interruptTask(index,obj,cb)
+					return
+				} else if( r == 'playerThink on'){
+					objThis.taskPlayerThinkInterrupt.hasInterrupt();//restore interrupt state
+					console.log('taskPlayerThink on');
+					objThis.playerThinkRunning = true
+				} else if( r == 'jump' && typeof obj == 'number'){
+					console.log('第'+(index+1)+'阶段请求跳转至第'+(obj+1)+'阶段');
+					objThis.doNext(obj, cb);
+				} else  {
+					throw new Error('无效参数r:',r);
+				}
+			// 注意这里UNAecho添加了index参数进入任务的workFunc中，与cb同级别。目的是为了stage中可以拿到当前index的参数，判断当前task的进度。
+			},index);
+		}
+
+		this.doTask = function(cb){
+			console.log('任务：'+this.name+' 开始执行，共'+this.stages.length+'阶段。');
+
+			this.taskCallback = cb
+			
+			// 如果任务自定义了属于任务自己的playerthink，则开启监听
+			if(typeof this.taskPlayerThink == 'function'){
+				console.log('任务：'+this.name+' 包含自定义playerthink，将在适当的时候运行..');
+				this.playerThinkTimerRunning = true
+				this.playerThinkTimer()
+			}
+
+			this.doStage( (typeof this.jumpToStep != 'undefined') ? this.jumpToStep : 0, this.taskCallback);
+		}
+
+		// 注册打断walklist的方法
+		cga.registerMoveThink(this.moveThink);
+
+		return this;
+	}
+
 	//等待NPC出现
 	cga.task.waitForNPC = (filter, cb)=>{
 		if(!cga.findNPC(filter)){
@@ -8669,6 +8872,10 @@ module.exports = function(callback){
 				cga.walkList([leaderPos], cb);
 				return
 			}else{
+				if(cga.getTeamPlayers().length){
+					cb(null)
+					return
+				}
 				// 由于cga.getRandomSpace不是真随机，所以对于同一个坐标，每次计算结果都是一样的
 				let targetPos = cga.getRandomSpace(leaderPos[0], leaderPos[1]);
 				if(XY.x == targetPos[0] && XY.y == targetPos[1]){
@@ -12474,10 +12681,17 @@ module.exports = function(callback){
 	 */
 	cga.battle = {}
 
-	// 等待BOSS战结束，一般以房间号变动为基准
-	cga.battle.waitBossBattle = (roomIndex , cb) => {
+	// 等待BOSS战结束，一般以地图变动为基准
+	cga.battle.waitBossBattle = (map , cb) => {
+		var obj = {}
+		if(typeof map == 'string'){
+			obj.mapname = map
+		}else if(typeof map == 'number'){
+			obj.mapindex = map
+		}
+
 		if (cga.isInBattle()) {
-			cga.waitForLocation({ mapindex: roomIndex }, () => {
+			cga.waitForLocation(obj, () => {
 				// 虽然战斗胜利一瞬间index就切换到战斗胜利房间，但有时候战斗动画和切屏并未结束
 				// 所以要等到cga.isInNormalState()为true才能退出此API
 				let waitNormal = ()=>{

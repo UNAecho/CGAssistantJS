@@ -18,7 +18,9 @@ var supplyMode = require('../公共模块/智能回补');
 var sellMode = require('../公共模块/智能卖石');
 var teamMode = require('../公共模块/智能组队');
 var configMode = require('../公共模块/读取战斗配置');
-var update = require('../公共模块//修改配置文件');
+var update = require('../公共模块/修改配置文件');
+
+var spawnOfAmber4Mode = require('./转职保证书');
 
 var cga = global.cga;
 var configTable = global.configTable;
@@ -954,7 +956,7 @@ var thisobj = {
 				return false
 			}
 
-			if (typeof obj.autoRing.aim != 'string') {
+			if (typeof obj.autoRing.aim != 'string' || cga.role.taskRoleArr.indexOf(obj.autoRing.aim) == -1) {
 				console.error('读取配置：承认之戒任务数据失败！智能练级会自动帮做承认之戒任务，请明确输入相关设定。');
 				return false
 			}
@@ -1124,6 +1126,7 @@ var thisobj = {
 			configMode.inputcb,
 			supplyMode.inputcb,
 			teamMode.inputcb,
+			spawnOfAmber4Mode.inputcb,
 			stage0,
 			stage1,
 		], cb);
