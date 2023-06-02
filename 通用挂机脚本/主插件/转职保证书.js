@@ -3,16 +3,11 @@ var Async = require('async');
 var updateConfig = require('./../公共模块/修改配置文件');
 var teamMode = require('./../公共模块/组队模式');
 var configMode = require('./../公共模块/读取战斗配置');
-var supplyMode = require('./../公共模块/里堡回补');
+var supplyMode = require('./../公共模块/智能回补');
+var update = require('../公共模块/修改配置文件');
 
 var cga = global.cga;
 var configTable = global.configTable;
-
-// 提取本地职业数据
-const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
-var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
-// 声望数据
-const reputationInfos = require('../../常用数据/reputation.js');
 
 var jump = ()=>{
 	setTimeout(()=>{
@@ -20,120 +15,41 @@ var jump = ()=>{
 	},5000)
 }
 
-
-var playerinfo = cga.GetPlayerInfo();
-
-// 不使用动态组队，避免脚本运行时需要手动组队的麻烦。
-var teammates = null
-// 需要在静态teams中定义好角色所属的队伍。
-var teams = [
-	[
-		"UNAの格斗2",
-		"UNAの格斗01",
-		"UNAの格斗02",
-		"UNAの咒术师",
-		"UNAの传教士2",
-	],
-	[
-		"UNAの格斗3",
-		"UNAの格斗03",
-		"UNAの格斗04",
-		"UNAの暗黑骑士",
-		"UNAの圣骑士",
-	]
-]
-
-// 本次刷保证书的人数
-var maxteammate = 5
-
-var callZLZZ = false;
-var callWYW = false;
-var doneBOSS = false;
-
 cga.waitTeammateSay((player, msg)=>{
 
 	if(msg.indexOf('长老之证x7 GET') >= 0 ){
-		callZLZZ = true;
-	}
-	
-	if(msg.indexOf('觉醒的文言抄本 GET') >= 0 ){
-		callWYW = true;
+		thisobj.callZLZZ = true;
 	}
 
 	return true;
 });
 
-var saveProgressConfig = (step) =>{
-	if(typeof step == 'number'){
+// 重置任务进度以及组队成员
+var rollBack = (cb, result, obj) => {
+	delete thisobj.spawnOfAmber4.teammates
+	// 因为taskStep代表已完成的步骤，读取时会做第n+1步。如果要从任务第0步开始做，这里就需要填-1来使 n + 1 = 0
+	thisobj.spawnOfAmber4.taskStep = -1
+	// 重置任务flag状态
+	thisobj.callZLZZ = false;
+	thisobj.spawnOfAmber4.fuckBoss = false
 
-	}else{
-		throw new Error('saveProgressConfig 必须传入数字步骤，并且小于等于最大步骤')
-	}
+	task.jumpToStep = 0
 	
-	var config = cga.loadPlayerConfig();
-
-	if(!config)
-		config = {};
-
-	config.spawn4stage = step
-	cga.savePlayerConfig(config);
+	update.update_config({ spawnOfAmber4: thisobj.spawnOfAmber4 }, true, () => {
+		configMode.manualLoad('战斗赶路')
+		setTimeout(cb, 1000, result, obj)
+	})
 	return
 }
 
 var loadBattleConfig = ()=>{
-	// TODO 如果队里一个人也没有4级以上补血魔法怎么办
-	var checkSkill = ()=>{
-		var skills = cga.GetSkillsInfo();
-		var job = '其他';
-		skills.filter((sk)=>{
-			if(sk.name.indexOf('补血魔法') >= 0 && sk.lv >= 4){
-				job = '传教士'
-			}else if(sk.name.indexOf('恢复魔法') >= 0 && sk.lv >= 4){
-				job = '巫师'
-			}else if(sk.name.indexOf('气功弹') >= 0 && sk.lv >= 4){
-				job = '格斗士'
-			}else if(sk.name.indexOf('暗黑骑士之力') >= 0){
-				job = '暗黑骑士'
-			}else if(sk.name.indexOf('神圣光芒') >= 0){
-				job = '圣骑士'
-			}
-			return '';
-		});
-		return job;
-	}
-	
-
-	var settingpath = cga.getrootdir() + '\\战斗配置\\'
-	var role = checkSkill()
-	if (role == '传教士'){
-		settingpath = settingpath + 'BOSS传教.json'
-
-	}else if (role == '巫师'){
-		settingpath = settingpath + 'BOSS巫师.json'
-
-	}else if (role == '格斗士'){
-		settingpath = settingpath + 'BOSS格斗.json'
-
-	}else if (role == '暗黑骑士'){
-		settingpath = settingpath + 'BOSS暗黑骑士.json'
-
-	}else if (role == '圣骑士'){
-		settingpath = settingpath + 'BOSS圣骑士.json'
-
+	var job = cga.job.getJob()
+	if(job.job != '传教士'){
+		configMode.manualLoad('BOSS合击')
 	}else{
-		settingpath = settingpath + 'BOSS合击.json'
+		configMode.manualLoad('传教士任务')
 	}
 
-	var setting = JSON.parse(fs.readFileSync(settingpath))
-
-	cga.gui.LoadSettings(setting, (err, result)=>{
-		if(err){
-			console.log(err);
-			return;
-		}else{
-			console.log('读取战斗配置【'+settingpath+'】成功')
-		}
-	})
 	return
 }
 
@@ -171,7 +87,9 @@ var walkMazeBack = (cb)=>{
 }
 
 var goodToGoZLZZ = (cb)=>{
-	
+	// 长老之证数量，用于定时打印log。
+	let cntCache = 0
+
 	var findObj = (cb3)=>{
 		var objs = cga.getMapObjects();
 		var pos = cga.GetMapXY();
@@ -192,20 +110,30 @@ var goodToGoZLZZ = (cb)=>{
 			setTimeout(battleAgain, 5000);
 			return;
 		}
+
+		let cnt = cga.getItemCount('长老之证')
+		// 实时播报进度
+		if(cntCache != cnt){
+			cntCache = cnt
+			console.log('当前长老之证数量:' + cntCache)
+		}
+
 		// 集齐长老之证的人要喊出来已完成。
-		if(cga.getItemCount('长老之证') >= 7){
+		if(cnt >= 7){
 			cga.SayWords('长老之证x7 GET', 0, 3, 1);
 			cb(true);
 			return;
 		}
-		// 因为全局有cga.waitTeammateSay，所以上面有人喊了之后，会把callZLZZ置为true，那么没有集齐长老之证的人，流程也会进行到下一步。
-		if(callZLZZ){
+
+
+		// 因为全局有cga.waitTeammateSay，所以上面有人喊了之后，会把thisobj.callZLZZ置为true，那么没有集齐长老之证的人，流程也会进行到下一步。
+		if(thisobj.callZLZZ){
 			cb(true);
 			return;
 		}
 		
 		cga.cleanInventory(1, ()=>{
-			if(cga.isTeamLeader)
+			if(thisobj.isLeader)
 				cga.ClickNPCDialog(1, 1);
 			
 			setTimeout(battleAgain, 5000);
@@ -243,8 +171,10 @@ var goodToGoZLZZ = (cb)=>{
 			}
 		});
 	}
+	// 打长老之证前读取战斗配置
+	loadBattleConfig()
 
-	if(cga.isTeamLeader){
+	if(thisobj.isLeader){
 		findObj((obj)=>{
 			cga.walkList([
 				[obj.mapx, obj.mapy, '海底墓场外苑第1地带']
@@ -256,31 +186,17 @@ var goodToGoZLZZ = (cb)=>{
 }
 
 var zhanglaozhizheng = (cb)=>{
-	if(cga.isTeamLeader){
-		cga.WalkTo(131, 62);
-		cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, true);
-		if(cga.getTeamPlayers().length >= maxteammate){
+	cga.buildTeam(thisobj.spawnOfAmber4.teammates, 300000, [131, 66], (r) => {
+		if (r && r == 'ok') {
 			goodToGoZLZZ(cb);
-			return;
-		}else{
-			setTimeout(zhanglaozhizheng, 1000, cb);
+			return
+		} else if (r && r == 'timeout') {// 如果超时，则重置任务相关数据，回到任务第一步
+			rollBack(cb, 'jump', 0)
+			return
+		} else {
+			throw new Error('cga.buildTeam返回类型错误')
 		}
-		// cga.waitTeammates(teammates, (r)=>{
-		// 	if(r){
-		// 		goodToGoZLZZ(cb);
-		// 		return;
-		// 	}
-		// 	setTimeout(zhanglaozhizheng, 1000, cb);
-		// });
-	} else {
-		cga.addTeammate(teammates[0], (r)=>{
-			if(r){
-				goodToGoZLZZ(cb);
-				return;
-			}
-			setTimeout(zhanglaozhizheng, 1000, cb);
-		});
-	}
+	})
 }
 
 var goodToGoZDZ = (cb)=>{
@@ -344,7 +260,7 @@ var goodToGoZDZ = (cb)=>{
 		], retry);
 	}
 	
-	if(cga.isTeamLeader)
+	if(thisobj.isLeader)
 	{
 		setTimeout(findZDZ_A, 1000);
 	}
@@ -369,158 +285,100 @@ var goodToGoZDZ = (cb)=>{
 }
 
 var zudangzhe = (cb)=>{
-	var playerinfo = cga.GetPlayerInfo();
-		
-	var teamplayers = cga.getTeamPlayers();
-
-	if(cga.isTeamLeader){
-
-		if(cga.getTeamPlayers().length >= maxteammate){
-			//检查全队觉醒的文言抄本持有状况
-			var CheckItemForWYW = ()=>{
-				cga.waitTeammateSayNextStage2(teammates, (r)=>{
-					if(r === true){
-						callWYW = true
-						console.log('全员持有觉醒的文言抄本，BOSS战时直接登出。')
-						setTimeout(()=>{
-							cga.SayWords('统计完毕，全员持有觉醒的文言抄本，BOSS战时直接登出。', 0, 3, 1);
-						}, 1500);
-					}else{
-						setTimeout(()=>{
-							cga.SayWords('统计完毕，部分队员没有文言抄本，BOSS战需要打完。', 0, 3, 1);
-						}, 1500);
-					}
-					goodToGoZDZ(cb);
-				});
-
-				cga.SayWords('统计一下【觉醒的文言抄本】持有情况，有的请说“1”，没有的请说“2”！', 0, 3, 1);
-				setTimeout(()=>{
-					cga.SayWords((cga.getItemCount('觉醒的文言抄本') >= 1) ? '1' : '2', 0, 3, 1);
-				}, 1500);
-			}
-			// cgaapi.js中，队友的cga.addTeammate方法，有很长的超时等待时间，所以等待人满统计时，要多等待一段时间。
-			setTimeout(CheckItemForWYW, 5000);
-			return;
-		}else{
-			setTimeout(zudangzhe, 1000, cb);
+	cga.buildTeam(thisobj.spawnOfAmber4.teammates, 300000, [213, 166], (r) => {
+		if (r && r == 'ok') {
+			goodToGoZDZ(cb);
+			return
+		} else if (r && r == 'timeout') {// 如果超时，则重置任务相关数据，回到任务第一步
+			rollBack(cb, 'jump', 0)
+			return
+		} else {
+			throw new Error('cga.buildTeam返回类型错误')
 		}
-
-	} else {
-		cga.addTeammate(teammates[0], (r)=>{
-			if(r){
-				// UNA:猜测这里的(player, msg)=>{}的cb，如果return true，对应着cga.waitTeammateSay递归执行，一直重复至return false才停止。
-				cga.waitTeammateSay((player, msg)=>{
-					if(player.index == 0 && msg.indexOf('持有情况')  >= 0){
-						var randomtime = Math.ceil(Math.random()*9000) + Math.ceil(Math.random()*1000)
-						console.log('采用随机延迟，防止间隔过小导致统计疏漏。当前延迟：'+randomtime+'毫秒。')
-						if(cga.getItemCount('觉醒的文言抄本') > 0){
-							callWYW = true
-							setTimeout(() => {
-								cga.SayWords('1', 0, 3, 1);
-							}, randomtime);
-							// 规避统计异常，如冲突，和队长没捕捉到信息，再说一次防止无限等待。
-							setTimeout(() => {
-								cga.SayWords('1', 0, 3, 1);
-							}, Math.ceil(Math.random()*10000));
-						} else if(msg.indexOf('统计一下') >= 0){
-							setTimeout(() => {
-								cga.SayWords('2', 0, 3, 1);
-							}, randomtime);
-							// 规避统计异常，如冲突，和队长没捕捉到信息，再说一次防止无限等待。
-							setTimeout(() => {
-								cga.SayWords('2', 0, 3, 1);
-							}, Math.ceil(Math.random()*10000));
-						}
-						return true
-					}else if(msg == '2'){// 如果听到队友没有文言抄本，那就需要陪着打BOSS。
-						callWYW = false
-						return true
-					}else if(player.index == 0 && msg.indexOf('统计完毕')  >= 0){
-						goodToGoZDZ(cb);
-						return false
-					}
-					return true;
-				});
-				return;
-			}
-			setTimeout(zudangzhe, 1000, cb);
-		});
-	}
+	})
 }
 
 var task = cga.task.Task('琥珀之卵4', [
 	{//0
-		intro: '0.进行一些前期处理工作，识别组队、丢弃烧技能可能获得的小石像怪卡片。',
-		// 这里的stageIndex是从cgaapi中cga.task.Task传过来的任务index，可用于离线写入文件记录任务状态。
-		// 功能已实现，但本任务并不需要，故注掉
-		workFunc: function(cb2,stageIndex){
-			// console.log('开始第'+stageIndex+'步骤')
-			// console.log(cga.isTeamLeader)
-			// console.log(playerinfo.name)
-			// console.log('teammates[0]' + teammates[0])
-			// console.log('teammates.length'+teammates.length)
-			
-			// 采用静态多队伍模式，角色会自己寻找自己在哪个队伍中。
-			for (var t in teams){
-				if (teams[t].indexOf(playerinfo.name) != -1){
-					teammates = teams[t]
-				}
+		intro: '0.进行一些前期处理工作。',
+		workFunc: function(cb2){
+			if(thisobj.spawnOfAmber4.teammates){
+				cb2(true)
+				return
 			}
-			cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false
 
-			var dropcount = 0
-			var dropUseless = () =>{
-				var item = cga.getInventoryItems().find((it)=>{
-					return ((it.name == '小石像怪的卡片' || it.name == '魔石'|| it.name == '卡片？'))
-				});
-				if(item && dropcount < 10){
-					dropcount+=1
-					cga.DropItem(item.pos);
-					setTimeout(dropUseless, 1000);
-				}else{
-					// saveProgressConfig(stageIndex)
-					setTimeout(cb2, 1000, true);
+			cga.travel.newisland.toStone('X', ()=>{
+				let doneNick = 'done'
+				// i转职保证书和i觉醒的文言抄本的min:0的作用是为了一次性在cga.buildCustomerTeam中实现组队以及统计任务道具持有情况
+				// 这样可以在任务期间不需要另行花费时间来统计BOSS战是否登出。
+				let cusObj = {
+					'check': {'#620018': { min: 0 },'r输出': { sum: 4 }, 'r治疗': { sum: 1 }, 'r小号': { sum: 0 } },
+					'part': thisobj.spawnOfAmber4.part,
+					'leaderPos': [thisobj.spawnOfAmber4.leaderX, thisobj.spawnOfAmber4.leaderY],
+					'leaderFilter': thisobj.spawnOfAmber4.leaderFilter,
+					'dangerLevel': 0,
+					'doneNick': doneNick,
+					'memberCnt' : 5,
 				}
-			}
-			dropUseless()
+				
+				cga.buildCustomerTeam(cusObj, (r) => {
+					// 队员监听队长，需要等到超时，才判断队长是否通过队伍的人员构成，所以需要等待全员done
+					cga.checkTeamAllDone(doneNick, () => {
+						// 记录本次任务的队伍以及道具持有情况
+						for (let key of Object.keys(r)){
+							if(key == 'teammates'){
+								continue
+							}
+							if(typeof r[key] == 'object'){
+								if(r[key].item['620018'] == 0){
+									console.log('队员【'+key+'】没有【觉醒的文言抄本】，本次任务需要击倒BOSS，尝试获取文言抄本。注意，抄本是随机掉落的。')
+									thisobj.spawnOfAmber4.fuckBoss = true
+								}
+							}
+						}
+						thisobj.spawnOfAmber4.teammates = r.teammates
+						if(!thisobj.spawnOfAmber4.fuckBoss){
+							console.log('全员都持有【觉醒的文言抄本】，本次任务跳过击杀BOSS环节。')
+						}
+
+						update.update_config({ spawnOfAmber4: thisobj.spawnOfAmber4 }, true, () => {
+							cga.disbandTeam(() => {
+								setTimeout(cb2, 1000, true);
+							})
+						})
+					})
+				})
+			});
 		}
 	},
 	{//1
 		intro: '1.在艾夏岛冒险者旅馆(102.115)内与时空之人(30.20)对话，输入“朵拉”选“是”，再选“确定”可重置本任务',
-		workFunc: function(cb2){
-			var thisstep = ()=>{
-				cga.travel.newisland.toPUB(()=>{
-					cga.walkList([
-					[31, 21],
-					], ()=>{
-						cga.TurnTo(30, 20);
+		workFunc: function(cb2,index){
+			// 如果已经进入？？？开始等待组队，则代表这一步已经进行完毕了
+			if(cga.GetMapIndex().index3==59714){
+				cb2(true)
+				return
+			}
+			cga.travel.newisland.toPUB(()=>{
+				cga.walkList([
+				[31, 21],
+				], ()=>{
+					cga.TurnTo(30, 20);
+					cga.AsyncWaitNPCDialog(()=>{
+						cga.SayWords('朵拉', 0, 3, 1);
 						cga.AsyncWaitNPCDialog(()=>{
-							cga.SayWords('朵拉', 0, 3, 1);
+							cga.ClickNPCDialog(4, 0);
 							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(4, 0);
-								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(1, 0);
-									setTimeout(()=>{
-										cb2(true);
-									}, 1500);
-								});
+								cga.ClickNPCDialog(1, 0);
+								thisobj.spawnOfAmber4.taskStep = index
+								update.update_config({ spawnOfAmber4: thisobj.spawnOfAmber4 }, true, () => {
+									setTimeout(cb2, 2000, true);
+								})
 							});
 						});
 					});
 				});
-			}
-			if(cga.GetPlayerInfo().gold < 10000){
-				cga.SayWords('现金有点少，去银行补充现金', 0, 3, 1);
-				cga.travel.newisland.toBank(() => {
-					cga.turnDir(0);
-					cga.AsyncWaitNPCDialog(() => {
-						cga.MoveGold(cga.GetBankGold(), cga.MOVE_GOLD_FROMBANK);
-						setTimeout(thisstep, 2000);
-					}, 1000);
-				});
-			}else{
-				setTimeout(thisstep, 2000);
-			}
+			});
 		}
 	},
 	{//2
@@ -579,9 +437,38 @@ var task = cga.task.Task('琥珀之卵4', [
 		}
 	},
 	{//3
-		intro: '3.前往盖雷布伦森林路路耶博士的家(244.76)，进入后再离开路路耶博士的家并传送至？？？。' + "\n" + '3.通过(142.69)或(122.69)处黄色传送石进入海底墓场外苑，寻找随机出现的守墓者并与之对话进入战斗。',
+		intro: '3.前往盖雷布伦森林路路耶博士的家(244.76)，进入后再离开路路耶博士的家并传送至？？？。' + "\n" + '通过(142.69)或(122.69)处黄色传送石进入海底墓场外苑，寻找随机出现的守墓者并与之对话进入战斗。',
 		workFunc: function(cb2){
-			var thisstep = ()=>{
+
+			if(cga.getInventoryEmptySlotCount() < 3){
+				console.log('【UNAecho脚本警告】你背包的空闲格子少于3个，长老之证是3个1组，想打满7个，需要3个背包空位。如果全队人都不满足此条件，将会出现在海底无限与NPC交战。请清理背包！')
+			}
+
+			thisobj.bankObj.prepare(()=>{
+				var go =()=>{
+					cga.walkList([
+						[131, 61],
+						], ()=>{
+							cga.TurnTo(131, 59);
+							cga.AsyncWaitNPCDialog(()=>{
+								cga.ClickNPCDialog(32, 0);
+								cga.AsyncWaitNPCDialog((err, dlg)=>{
+									if(dlg && dlg.message.indexOf('还不快点') == -1)
+									{
+										cga.ClickNPCDialog(32, 0);
+										cga.AsyncWaitNPCDialog(()=>{
+											cga.ClickNPCDialog(1, 0);
+											zhanglaozhizheng(cb2);
+										});
+									} else {
+										cga.ClickNPCDialog(1, 0);
+										zhanglaozhizheng(cb2);
+									}
+								});
+							});
+						});
+				}
+
 				if(cga.needSupplyInitial({  })){
 					cga.travel.falan.toCastleHospital(()=>{
 						setTimeout(()=>{
@@ -590,60 +477,52 @@ var task = cga.task.Task('琥珀之卵4', [
 					});
 					return;
 				}
-	
-				cga.travel.newisland.toStone('X', ()=>{
-					cga.walkList([
-					[130, 50, '盖雷布伦森林'],
-					[246, 76, '路路耶博士的家'],
-					], ()=>{
-						cga.WalkTo(3, 10);
-						cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
-							cga.walkList([
-							[131, 61],
-							], ()=>{
-								cga.TurnTo(131, 59);
-								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(32, 0);
-									cga.AsyncWaitNPCDialog((err, dlg)=>{
-										if(dlg && dlg.message.indexOf('还不快点') == -1)
-										{
-											cga.ClickNPCDialog(32, 0);
-											cga.AsyncWaitNPCDialog(()=>{
-												cga.ClickNPCDialog(1, 0);
-												zhanglaozhizheng(cb2);
-											});
-										} else {
-											cga.ClickNPCDialog(1, 0);
-											zhanglaozhizheng(cb2);
-										}
-									});
-								});
+
+				configMode.manualLoad('战斗赶路')
+
+				var XY = cga.GetMapXY();
+				var mapindex = cga.GetMapIndex().index3
+				if(mapindex == 59714 && XY.x > 120 && XY.x < 146 && XY.y > 58 && XY.y < 80){
+					if(cga.getTeamPlayers().length){
+						goodToGoZLZZ(cb2);
+					}else{
+						go()
+					}
+				}else{
+					cga.travel.newisland.toStone('X', ()=>{
+						cga.walkList([
+						[130, 50, '盖雷布伦森林'],
+						[246, 76, '路路耶博士的家'],
+						], ()=>{
+							cga.WalkTo(3, 10);
+							cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
+								go()
 							});
 						});
 					});
-				});
-			}
-			if(cga.GetPlayerInfo().gold < 10000){
-				cga.SayWords('现金有点少，去银行补充现金', 0, 3, 1);
-				cga.travel.newisland.toBank(() => {
-					cga.turnDir(0);
-					cga.AsyncWaitNPCDialog(() => {
-						cga.MoveGold(cga.GetBankGold(), cga.MOVE_GOLD_FROMBANK);
-						setTimeout(thisstep, 2000);
-					}, 1000);
-				});
-			}else{
-				setTimeout(thisstep, 2000);
-			}
+				}
+			})
 		}
 	},
 	{//4
 		intro: '4.集齐7个【长老之证】后返回？？？，由持有7个【长老之证】的队员与荷特普(167.102)对话2次，选“是”交出【长老之证】并传送至盖雷布伦森林。',
-		workFunc: function(cb2){
+		workFunc: function(cb2,index){
+
+			let save = (cb3)=>{
+				thisobj.spawnOfAmber4.taskStep = index
+				update.update_config({ spawnOfAmber4: thisobj.spawnOfAmber4 }, true, () => {
+					setTimeout(cb3, 1000, true);
+				})
+			}
 
 			var sayshit = ()=>{
+				// 无论是否持有7个长老之证，最终目标都是被传送至盖雷布伦森林
+				cga.waitForLocation({mapname : '盖雷布伦森林'}, ()=>{
+					setTimeout(save, 3000, cb2)
+				});
+
 				if(cga.getItemCount('长老之证') >= 7){
-					console.log('长老之证已集齐7个，回去召唤神龙许愿进行任务下一阶段');
+					console.log('长老之证已集齐7个，回去跟影子对话进行任务下一阶段');
 					cga.TurnTo(131, 60);
 					cga.AsyncWaitNPCDialog(()=>{
 						cga.ClickNPCDialog(32, 0);
@@ -651,23 +530,15 @@ var task = cga.task.Task('琥珀之卵4', [
 							cga.ClickNPCDialog(4, 0);
 							cga.AsyncWaitNPCDialog(()=>{
 								cga.ClickNPCDialog(1, 0);
-								cga.waitForLocation({map : '盖雷布伦森林'}, ()=>{
-									cb2(true);
-								});
 							});
 						});
 					});
 				} else {
-					console.log('没打齐7个，但有队友集齐，跟着蹭吃蹭喝去');
-					cga.waitForLocation({mapname : '盖雷布伦森林'}, ()=>{
-						setTimeout(() => {
-							cb2(true);
-						}, 2000);
-					});
+					console.log('有队友集齐7个长老之证，等待蹭车传送回盖雷布伦森林');
 				}
 			}
 			
-			if(cga.isTeamLeader){
+			if(thisobj.isLeader){
 				var walkShit = ()=>{
 					if(cga.GetMapName() == '？？？')
 					{
@@ -696,7 +567,7 @@ var task = cga.task.Task('琥珀之卵4', [
 	},
 	{//5
 		intro: '5.黄昏或夜晚时至神殿·伽蓝与荷特普(92.138)对话。',
-		workFunc: function(cb2){
+		workFunc: function(cb2,index){
 			cga.travel.newisland.toStone('X', ()=>{
 				cga.walkList([
 					[201, 96, '神殿　伽蓝'],
@@ -713,8 +584,11 @@ var task = cga.task.Task('琥珀之卵4', [
 									cga.AsyncWaitNPCDialog(()=>{
 										cga.ClickNPCDialog(1, -1);
 										setTimeout(()=>{
-											cb2(true);
-										}, 1000);
+											thisobj.spawnOfAmber4.taskStep = index
+											update.update_config({ spawnOfAmber4: thisobj.spawnOfAmber4 }, true, () => {
+												setTimeout(cb2, 1000, true);
+											})
+										}, 3000);
 									});
 								});
 							});
@@ -756,36 +630,40 @@ var task = cga.task.Task('琥珀之卵4', [
 	{//7
 		intro: '7.前往梅布尔隘地，持有【琥珀之卵】、【逆十字】与祭坛守卫(211.116)对话进入？？？。',
 		workFunc: function(cb2){
-			var thisstep = ()=>{
-				if(cga.needSupplyInitial({  })){
-					cga.travel.falan.toCastleHospital(()=>{
-						setTimeout(()=>{
-							cb2('restart stage');
-						}, 3000);
-					});
-					return;
-				}
-				
-				cga.travel.newisland.toStone('X', ()=>{
-					cga.walkList([
-						[165, 153],
-					], (r)=>{
-						cga.TurnTo(165, 154);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(32, -1);
+			let go = ()=>{
+				thisobj.bankObj.prepare(()=>{
+					if(cga.needSupplyInitial({  })){
+						cga.travel.falan.toCastleHospital(()=>{
+							setTimeout(()=>{
+								cb2('restart stage');
+							}, 3000);
+						});
+						return;
+					}
+	
+					
+	
+					cga.travel.newisland.toStone('X', ()=>{
+						cga.walkList([
+							[165, 153],
+						], (r)=>{
+							cga.TurnTo(165, 154);
 							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(8, -1);
-								cga.AsyncWaitMovement({map:['梅布尔隘地'], delay:1000, timeout:10000}, ()=>{
-									cga.walkList([
-										[211, 117],
-									], (r)=>{
-										cga.TurnTo(212, 116);
-										cga.AsyncWaitNPCDialog(()=>{
-											cga.ClickNPCDialog(32, -1);
+								cga.ClickNPCDialog(32, -1);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(8, -1);
+									cga.AsyncWaitMovement({map:['梅布尔隘地'], delay:1000, timeout:10000}, ()=>{
+										cga.walkList([
+											[211, 117],
+										], (r)=>{
+											cga.TurnTo(212, 116);
 											cga.AsyncWaitNPCDialog(()=>{
-												cga.ClickNPCDialog(1, -1);
-												cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
-													cb2(r);
+												cga.ClickNPCDialog(32, -1);
+												cga.AsyncWaitNPCDialog(()=>{
+													cga.ClickNPCDialog(1, -1);
+													cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
+														cb2(r);
+													});
 												});
 											});
 										});
@@ -794,20 +672,12 @@ var task = cga.task.Task('琥珀之卵4', [
 							});
 						});
 					});
-				});
+				})
 			}
-			if(cga.GetPlayerInfo().gold < 10000){
-				cga.SayWords('现金有点少，去银行补充现金', 0, 3, 1);
-				cga.travel.newisland.toBank(() => {
-					cga.turnDir(0);
-					cga.AsyncWaitNPCDialog(() => {
-						cga.MoveGold(cga.GetBankGold(), cga.MOVE_GOLD_FROMBANK);
-						setTimeout(thisstep, 2000);
-					}, 1000);
-				});
-			}else{
-				setTimeout(thisstep, 2000);
-			}
+
+			loadBattleConfig()
+
+			go()
 		}
 	},
 	{//8
@@ -823,13 +693,9 @@ var task = cga.task.Task('琥珀之卵4', [
 						step --;
 						setTimeout(go, 500);
 					}else{
-						cga.walkList((cga.isTeamLeader == true) ? 
-						[
-						[156, 197, '？？？', 213, 164],
-						[213, 165],
-						] : [
-						[156, 197, '？？？', 213, 164],
-						], ()=>{
+						cga.walkList([
+							[156, 197, '？？？', 213, 164],
+							], ()=>{
 							zudangzhe(cb2);
 						});
 					}
@@ -839,45 +705,35 @@ var task = cga.task.Task('琥珀之卵4', [
 		}
 	},
 	{//9
-		intro: '9.击倒(161.108)一带的阻挡者，经由(241.118)的传送石进入？？？。',
-		workFunc: function(cb2){
-			
-			var waitBOSS = ()=>{
-				if(cga.isInBattle())
-				{
-					doneBOSS = true;
-					
-					// if(cga.getItemCount('觉醒的文言抄本') > 0){
-					// 	item = cga.GetItemsInfo().find(i => i.itemid == 18257)
-					// 	setTimeout(cb2, 1000, true);
-					// 	return;
-					// }
+		intro: '9.击倒(161.108)一带的阻挡者，经由(241.118)的传送石进入？？？。与BOSS对话，进入战斗。注意：进入战斗即视为战斗胜利，无需击倒BOSS。除非你想获取觉醒的文言抄本，否则可以直接登出，进行下一步。',
+		workFunc: function(cb2,index){
 
-					// 由上面的【自己有文言抄本即登出，不管队友】修改为，视队友持有情况而选择登出还是留战。
-					// 这里的callWYW数值，取决于之前zudangzhe()统计保证书的持有情况。
-					if(callWYW){
-						setTimeout(cb2, 2000, true);
-						return
-					}
-					setTimeout(waitBOSS, 1000);
-					return;
-				}
-				
-				if(doneBOSS && !callWYW && (cga.getItemCount('觉醒的文言抄本') > 0)){
-					cga.SayWords('觉醒的文言抄本 GET', 0, 3, 1);
-					callWYW = true;
-				}
-
-				if(doneBOSS && callWYW){
-					//cga.LogBack();
-					setTimeout(cb2, 1000, true);
-					return;
-				}
-				
-				setTimeout(waitBOSS, 1500);
+			let save = (cb3)=>{
+				thisobj.spawnOfAmber4.taskStep = index
+				update.update_config({ spawnOfAmber4: thisobj.spawnOfAmber4 }, true, () => {
+					setTimeout(cb3, 1000, true);
+				})
 			}
 			
-			if(!cga.isTeamLeader){
+			var waitBOSS = ()=>{
+				if(cga.isInBattle()){
+					if(thisobj.spawnOfAmber4.fuckBoss){
+						console.log('本次队内部分人员需要获取文言抄本，等待BOSS战胜利..')
+						cga.battle.waitBossBattle('梅布尔隘地', () => {
+							save(cb2)
+						})
+						return
+					}else{
+						console.log('本次队内人员不需要再次获取文言抄本，跳过BOSS战')
+						save(cb2)
+					}
+					return;
+				}
+				setTimeout(waitBOSS, 1500);
+				return
+			}
+			
+			if(!thisobj.isLeader){
 				setTimeout(waitBOSS, 1500);
 				return;
 			}
@@ -934,82 +790,77 @@ var task = cga.task.Task('琥珀之卵4', [
 	{//10
 		intro: '10.返回盖雷布伦森林，持有【觉醒的文言抄本】与纳塞(245.73)对话，获得【转职保证书】。',
 		workFunc: function(cb2){
-			// 拾荒规则
-			var itemFilter = (unit) => {
-				// console.log('name = ' + unit.item_name + ', flags = ' + unit.flags + ', counts = ' + unit.item_count)
-				if (unit.flags == 1024 && unit.item_name == '觉醒的文言抄本') {
-					return true
+			
+			var go = () => {
+				let bookCnt = cga.getItemCount('转职保证书')
+
+				if(bookCnt > 0){
+					console.log('已经有保证书了，任务结束')
+					cb2(true)
+					return
 				}
-			}
-			var getbook = ()=> {
+
 				cga.walkList([
-					[244, 74],
+					[130, 50, '盖雷布伦森林'],
 					], ()=>{
-						cga.TurnTo(245, 73);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(32, 0);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(32, 0);
-								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(32, 0);
-									cga.AsyncWaitNPCDialog(()=>{
-										cga.ClickNPCDialog(1, 0);
-										setTimeout(()=>{
-											if(cga.getItemCount('觉醒的文言抄本') > 1){
-												var dropItem = cga.findItem('觉醒的文言抄本');
-												if(dropItem != -1)
-												{
-													cga.DropItem(dropItem);
-												}
-											}
-											if(cga.getItemCount('转职保证书') > 0){
-												setTimeout(cb2, 2500,true);
-												return;
-											}
-											
-										}, 1000, true);
-									});
-								});
-							});
-						});
+						var obj = { act: 'item', target: '转职保证书' }
+						cga.askNpcForObj('盖雷布伦森林', [245, 73], obj, () => {
+							cb2(true)
+						})
 					});
 			}
-			
+
+
 			cga.travel.newisland.toStone('X', ()=>{
-				cga.walkList([
-				[130, 50, '盖雷布伦森林'],
-				[244, 74],
-				], ()=>{
-					console.log(cga.getItemCount('觉醒的文言抄本'))
-					if(cga.getItemCount('觉醒的文言抄本') == 0){
-						console.log('手上没有文言抄本，看看地上有没有队友丢掉的。')
-						// 周围11格内地图信息
-						var allunits = cga.GetMapUnits()
-						// 地面上有道具的信息，过滤规则为itemFilter()
-						var units = allunits.filter(itemFilter);
-						if (units && units.length > 0) {
-							console.log('地上有文言抄本，去捡起来。')
-							// 只要捡一个文言抄本即可，多了没用。
-							var unit = units[0];
-							// console.log('发现【' + unit.item_name + '】，坐标【' + unit.xpos + ',' + unit.ypos + '】')
-							// 获取一个目标周围空闲的坐标，用于拾取
-							walkpos = cga.getRandomSpace(unit.xpos, unit.ypos)
-							cga.walkList([
-								[walkpos[0], walkpos[1]]
-							], () => {
-								cga.TurnTo(unit.xpos, unit.ypos)
-								setTimeout(getbook, 1500);
+				let WYWCnt = cga.getItemCount('觉醒的文言抄本')
+
+				let delay = 0
+				if(WYWCnt == 0){
+					console.log('手上没有文言抄本，等待' + delay / 1000 + '秒后，再去看看指定地点有没有丢弃的文言抄本，如果有，则拾取。')
+					delay = 7000
+				}
+
+				setTimeout(() => {
+					cga.walkList([
+						[146, 96]
+					], () => {
+						if(WYWCnt == 0){
+							let itemFilter = (unit) => {
+								if (unit.flags == 1024 && unit.item_name == '觉醒的文言抄本') {
+									return true
+								}
+							}
+							let units = cga.GetMapUnits().filter(itemFilter);
+							if (units && units.length > 0) {
+								console.log('地上有文言抄本，捡起来。')
+								// 只要捡一个文言抄本即可，多了没用。
+								let unit = units[0];
+								// 获取一个目标周围空闲的坐标，用于拾取
+								walkpos = cga.getRandomSpace(unit.xpos, unit.ypos)
+								cga.walkList([
+									[walkpos[0], walkpos[1]]
+								], () => {
+									cga.TurnTo(unit.xpos, unit.ypos)
+									setTimeout(go, 1500);
+									return
+								});
+							} else {
+								console.log('地上没有发现队友丢的文言抄本，白嫖失败。等待下次任务打BOSS时有几率获取。')
+								cb2(true);
 								return
-							});
-						} else {
-							console.log('地上也没有发现队友丢的文言抄本，白嫖失败。等待下次任务打BOSS时有几率获取。')
-							cb2(true);
-							return
+							}
+						}else if(WYWCnt == 1){
+							setTimeout(go, 1500);
+						}else{
+							let item = cga.findItem('觉醒的文言抄本');
+
+							if(item != -1){
+								cga.DropItem(item);
+							}
+							setTimeout(go, 1500);
 						}
-					}else{
-						setTimeout(getbook, 2500);
-					}
-				});
+					});
+				}, delay);
 			});
 		}
 	},
@@ -1025,7 +876,7 @@ var task = cga.task.Task('琥珀之卵4', [
 			return (cga.getItemCount('琥珀之卵') >= 1) ? true : false;
 		},
 		function(){//长老之证
-			return (cga.getItemCount('长老之证') >= 7 || callZLZZ) ? true : false;
+			return (cga.getItemCount('长老之证') >= 7 || thisobj.callZLZZ) ? true : false;
 		},
 		function(){
 			return false;
@@ -1053,89 +904,264 @@ var task = cga.task.Task('琥珀之卵4', [
 	// task.anyStepDone = false意为关掉下面步骤做完导致上面步骤直接跳过的方式。
 	// 详见cgaapi中的cga.task.Task源码
 	task.anyStepDone = false;
-	task.jumpToStep = 0;
 
 var loop = ()=>{
-	callSubPluginsAsync('prepare', ()=>{
-		cga.SayWords('欢迎使用【UNAの脚本】全自动保证书+转职+刷声望流程，当前正在进行：【'+configTable.mainPlugin+'】阶段。', 0, 3, 1);
-		task.doTask(()=>{
-			if(professionalInfo.jobmainname == '暗黑骑士' || professionalInfo.jobmainname == '教团骑士'){
-				console.log('暗黑骑士和教团骑士无法通过保证书刷称号，直接进入陪打循环。')
+	cga.SayWords('欢迎使用【UNAの脚本】全自动保证书+转职+刷声望流程，当前正在进行：【'+configTable.mainPlugin+'】阶段。', 0, 3, 1);
+	task.doTask(()=>{
+		if(thisobj.job.job == '暗黑骑士' || thisobj.job.job == '教团骑士'){
+			console.log('暗黑骑士和教团骑士无法通过保证书刷称号，直接进入陪打循环。')
+			rollBack(()=>{
 				setTimeout(loop, 3000);
-				return
-			}else{
-				console.log('任务完成，去阿蒙刷新一下称号。');
-				cga.travel.falan.toStone('E2', ()=>{
-					cga.walkList([
-						[230, 82],
-					], ()=>{
-						cga.turnTo(230, 83);
-						setTimeout(() => {
-							if(cga.ismaxbattletitle() || cga.getItemCount('转职保证书') == 0 || 
-							(reputationInfos.getReputation(cga.GetPlayerInfo().titles) == '敬畏的寂静' && configMode.finalJob.jobmainname == professionalInfo.jobmainname)
-							){
-								console.log('称号已满、包中没有保证书或已经不需要再烧声望，重新做本任务。')
-								// 重置任务flag状态
-								callZLZZ = false;
-								callWYW = false;
-								doneBOSS = false;
-
+			})
+			return
+		}else{
+			console.log('任务完成，去阿蒙刷新一下称号。');
+			cga.travel.falan.toStone('E2', ()=>{
+				cga.walkList([
+					[230, 82],
+				], ()=>{
+					cga.turnTo(230, 83);
+					setTimeout(() => {
+						if(thisobj.spawnOfAmber4.aim == '无限循环' || cga.getItemCount('转职保证书') == 0){
+							console.log('称号已满、包中没有保证书或已经不需要再烧声望，重新做本任务。')
+							rollBack(()=>{
 								setTimeout(loop, 3000);
-								return
-							}else{
-								console.log('未到达满称号，开始转职刷声望')
-								setTimeout(jump, 3000);
-								return
-							}
-						}, 3000);
-					});
+							})
+							return
+						}else{
+							console.log('未到达满称号，开始转职刷声望')
+							setTimeout(jump, 3000);
+							return
+						}
+					}, 3000);
 				});
-			}
-		});
-		return false;
+			});
+		}
 	});
 }
 
 var thisobj = {
+	taskName : '琥珀之卵4',
+	// 队长flag的缓存，通过spawnOfAmber4.part == '队长'判断
+	isLeader : false,
+	// 自动匹配队伍，记录至此
+	teammates : null,
+	// 自动存取魔币
+	bankObj : require('../子插件/自动存取魔币.js'),
+	// 人物职业以及声望信息
+	job:cga.job.getJob(),
+	// 任务相关flag
+	callZLZZ : false,
 	getDangerLevel : ()=>{
 		return 0;
 	},
 	translate : (pair)=>{
-		
-		if(teamMode.translate(pair))
+
+		if (pair.field == 'sellStore') {
+			pair.field = '是否卖石';
+			pair.value = pair.value == 1 ? '卖石' : '不卖石';
+			pair.translated = true;
 			return true;
-		if(configMode.translate(pair))
+		}
+
+		if (pair.field == 'spawnOfAmber4') {
+			pair.field = '是否自动做' + thisobj.taskName;
+			pair.value = pair.value.flag ? '做' : '不做';
+			pair.translated = true;
+			return true;
+		}
+
+		if (supplyMode.translate(pair))
+			return true;
+
+		if (teamMode.translate(pair))
+			return true;
+
+		if (configMode.translate(pair))
 			return true;
 
 		return false;
 	},
 	loadconfig : (obj)=>{
 
-		if(!supplyMode.loadconfig(obj))
-			return false;
-		
-		if(!teamMode.loadconfig(obj))
-			return false;
+		if (typeof obj.spawnOfAmber4 == 'object') {
+			if (typeof obj.spawnOfAmber4.flag != 'boolean') {
+				console.error('读取配置：' + thisobj.taskName + '任务数据失败！智能练级会自动帮做' + thisobj.taskName + '任务，请明确输入相关设定。');
+				return false
+			}
 
-		if(!configMode.loadconfig(obj))
-			return false;
-		
-		configTable.sellStore = obj.sellStore;
-		thisobj.sellStore = obj.sellStore
-		
-		if(thisobj.sellStore == undefined){
-			console.error('读取配置：是否卖石失败！');
+			if (typeof obj.spawnOfAmber4.part != 'string') {
+				console.error('读取配置：' + thisobj.taskName + '任务数据失败！智能练级会自动帮做' + thisobj.taskName + '任务，请明确输入相关设定。');
+				return false
+			}else{
+				thisobj.isLeader = obj.spawnOfAmber4.part == '队长' ? true : false
+			}
+
+			if (typeof obj.spawnOfAmber4.aim != 'string' || cga.role.taskRoleArr.indexOf(obj.spawnOfAmber4.aim) == -1) {
+				console.error('读取配置：' + thisobj.taskName + '任务数据失败！智能练级会自动帮做' + thisobj.taskName + '任务，请明确输入相关设定。');
+				return false
+			}
+			// 如果离线记录了任务进度，则继续完成余下部分
+			if (typeof obj.spawnOfAmber4.taskStep != 'number') {
+				console.log('读取配置：' + thisobj.taskName + '任务进度失败，从任务最初开始做任务。');
+				task.jumpToStep = 0;
+			}else{
+				// jumpToStep需要进行taskStep的下一步
+				task.jumpToStep = obj.spawnOfAmber4.taskStep + 1
+			}
+			
+			configTable.spawnOfAmber4 = obj.spawnOfAmber4
+			thisobj.spawnOfAmber4 = obj.spawnOfAmber4;
+		} else {
+			console.error('读取配置：' + thisobj.taskName + '任务数据失败！智能练级会自动帮做' + thisobj.taskName + '任务，请明确输入相关设定。');
+			return false
+		}
+		// 获取人物目标职业
+		if(!configMode.loadconfig(obj)){
 			return false;
 		}
-		
 		return true;
 	},
 	inputcb : (cb)=>{
-		Async.series([teamMode.inputcb,], cb);
+		var stage1 = (cb2) => {
+			var saveObj = {}
+
+			var stage1_1 = (cb3) => {
+				var sayString = '【全自动练级插件】【' + thisobj.taskName + '】请输入此任务你是队长还是队员，0队长1队员:';
+
+				cga.sayLongWords(sayString, 0, 3, 1);
+				cga.waitForChatInput((msg, value) => {
+					if (value !== null && (value == 0 || value == 1)) {
+						saveObj.part = value == 0 ? '队长' : '队员'
+
+						sayString = '当前已选择: 你是【' + saveObj.part + '】';
+						cga.sayLongWords(sayString, 0, 3, 1);
+
+						setTimeout(stage1_2, 500, cb3);
+						return false;
+					}
+
+					return true;
+				});
+			}
+
+			var stage1_2 = (cb3) => {
+				var sayString = '【全自动练级插件】【' + thisobj.taskName + '】请输入你做此任务的目的，';
+				for (var i in cga.role.taskRoleArr) {
+					sayString += i + cga.role.taskRoleArr[i]
+				}
+				cga.sayLongWords(sayString, 0, 3, 1);
+				cga.waitForChatInput((msg, value) => {
+					if (value !== null && value < cga.role.taskRoleArr.length) {
+						saveObj.aim = cga.role.taskRoleArr[value]
+
+						sayString = '当前已选择: 【' + saveObj.aim + '】';
+						cga.sayLongWords(sayString, 0, 3, 1);
+
+						setTimeout(stage1_3, 500, cb3);
+						return false;
+					}
+
+					return true;
+				});
+			}
+
+
+			var stage1_3 = (cb3) => {
+				var sayString = '【全自动练级插件】【' + thisobj.taskName + '】请输入任务队长在艾尔莎岛的X坐标:';
+
+				cga.sayLongWords(sayString, 0, 3, 1);
+				cga.waitForChatInput((msg, value) => {
+					if (value !== null && value >= 0 && value <= 999) {
+						saveObj.leaderX = value;
+
+						setTimeout(stage1_4, 500, cb3);
+						return false;
+					}
+
+					return true;
+				});
+			}
+
+			var stage1_4 = (cb3) => {
+				var sayString = '【全自动练级插件】【' + thisobj.taskName + '】请输入任务队长在艾尔莎岛的Y坐标:';
+
+				cga.sayLongWords(sayString, 0, 3, 1);
+				cga.waitForChatInput((msg, value) => {
+					if (value !== null && value >= 0 && value <= 999) {
+						saveObj.leaderY = value;
+
+						setTimeout(stage1_5, 500, cb3);
+						return false;
+					}
+
+					return true;
+				});
+			}
+
+			var stage1_5 = (cb3) => {
+				var sayString = '【全自动练级插件】【' + thisobj.taskName + '】请输入队长昵称过滤字符，玩家昵称中带有此输入字符才会被认定为队长(区分大小写，不可以有半角冒号)，如不需要，请输入ok，如果队长昵称里面包含ok字符，请输入$ok:';
+				cga.sayLongWords(sayString, 0, 3, 1);
+				cga.waitForChatInput((msg, value) => {
+					if (msg !== null && msg.length > 0 && msg.indexOf(':') == -1) {
+						if (msg == 'ok') {
+							saveObj.leaderFilter = '';
+						} else if (msg == '$ok') {
+							saveObj.leaderFilter = 'ok';
+						} else {
+							saveObj.leaderFilter = msg;
+						}
+
+						sayString = '当前已选择玩家昵称:[' + saveObj.leaderFilter + ']为队长标志。';
+						cga.sayLongWords(sayString, 0, 3, 1);
+
+						setTimeout(stage1Final, 500, cb3);
+						return false;
+					}
+
+					return true;
+				});
+			}
+
+			var stage1Final = (cb3) => {
+				configTable.spawnOfAmber4 = saveObj;
+				thisobj.spawnOfAmber4 = saveObj;
+
+				cb3(null)
+				return
+			}
+
+			var sayString = '【全自动练级插件】【' + thisobj.taskName + '】请输入是否自动做【' + thisobj.taskName + '】任务，0不做1做:';
+			cga.sayLongWords(sayString, 0, 3, 1);
+
+			cga.waitForChatInput((msg, value) => {
+				if (value !== null && (value == 0 || value == 1)) {
+					saveObj.flag = value == 1 ? true : false
+
+					sayString = '当前已选择: 【' + thisobj.taskName + '】【' + (saveObj.flag ? '做' : '不做') + '】';
+					cga.sayLongWords(sayString, 0, 3, 1);
+
+					// 如果自动做琥珀之卵4，开始输入必要信息
+					if (saveObj.flag) {
+						setTimeout(stage1_1, 500, cb2);
+					} else {
+						setTimeout(stage1Final, 500, cb3);
+					}
+					return false;
+				}
+
+				return true;
+			});
+
+			return
+		}
+		
+		Async.series([
+			stage1,
+		], cb);
 	},
 	execute : ()=>{
 		callSubPlugins('init');
-		loadBattleConfig()
 		loop();
 	},
 }
