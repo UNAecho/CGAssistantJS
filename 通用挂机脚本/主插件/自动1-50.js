@@ -41,25 +41,25 @@ var loadBattleConfig = ()=>{
 
 	var settingpath = cga.getrootdir() + '\\战斗配置\\'
 	// 因为传教士可能还有正在刷声望的小号，这样可以区分是保姆还是小号
-	if (professionalInfo.jobmainname == '传教士'){
+	if (professionalInfo.name == '传教士'){
 		if(cga.GetPlayerInfo().job.indexOf('见习') != -1){
 			settingpath = settingpath + '营地组队普攻刷声望.json'
 		}else{
 			settingpath = settingpath + '传教练级.json'
 		}
-	}else if(professionalInfo.jobmainname == '格斗士'){
+	}else if(professionalInfo.name == '格斗士'){
 		settingpath = settingpath + '格斗练级.json'
-	}else if(professionalInfo.jobmainname == '弓箭手'){
+	}else if(professionalInfo.name == '弓箭手'){
 		settingpath = settingpath + '弓箭练级.json'
-	}else if(professionalInfo.jobmainname == '剑士'){
+	}else if(professionalInfo.name == '剑士'){
 		settingpath = settingpath + '剑士练级.json'
-	}else if(professionalInfo.jobmainname == '战斧斗士'){
+	}else if(professionalInfo.name == '战斧斗士'){
 		settingpath = settingpath + '战斧练级.json'
-	}else if(professionalInfo.jobmainname == '魔术师'){
+	}else if(professionalInfo.name == '魔术师'){
 		settingpath = settingpath + '法师练级.json'
-	}else if(professionalInfo.jobmainname == '巫师'){
+	}else if(professionalInfo.name == '巫师'){
 		settingpath = settingpath + '巫师练级.json'
-	}else if(professionalInfo.jobmainname == '封印师'){
+	}else if(professionalInfo.name == '封印师'){
 		settingpath = settingpath + '封印师练级.json'
 	}else{
 		settingpath = settingpath + '营地组队普攻刷声望.json'

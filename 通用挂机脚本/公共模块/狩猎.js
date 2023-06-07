@@ -429,10 +429,10 @@
 	name : '闪亮的珍珠',
 	display_name : '闪亮的珍珠',
 	func : (cb)=>{
-		var obj = {act : "map", target : "小岛"}
+		var obj = {act : 'map', target : '小岛', npcpos : [27,15]}
 		cga.travel.falan.toStone('C', (r)=>{
 			cga.travel.autopilot(1504,()=>{
-				cga.askNpcForObj(1504, [27,15],obj,()=>{
+				cga.askNpcForObj(obj,()=>{
 					cga.walkList([
 						[66, 9],
 					], cb);

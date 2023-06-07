@@ -5,7 +5,7 @@ var thisobj = {
 			intro: '1.前往法兰城大圣堂里面，就职处',
 			workFunc: function (cb2) {
 				cga.travel.falan.toStone('C', () => {
-					cga.travel.autopilot(thisobj.data.job.tutorRoom, () => {
+					cga.travel.autopilot(thisobj.data.job.npcMap, () => {
 						cb2(true);
 					})
 				});
@@ -14,9 +14,9 @@ var thisobj = {
 		{
 			intro: '2.就职答题',
 			workFunc: function (cb2) {
-				var obj = { act: 'item', target: '僧侣适性检查合格证' }
-				cga.travel.autopilot(thisobj.data.job.tutorRoom, () => {
-					cga.askNpcForObj(thisobj.data.job.tutorRoom, [16, 11], obj, () => {
+				var obj = { act: 'item', target: '僧侣适性检查合格证', npcpos : [16, 11] }
+				cga.travel.autopilot(thisobj.data.job.npcMap, () => {
+					cga.askNpcForObj(obj, () => {
 						cb2(true)
 					})
 				})
@@ -25,9 +25,9 @@ var thisobj = {
 		{
 			intro: '3、与相关职业就职人员对话，就职成功，任务完结。',
 			workFunc: (cb2) => {
-				var obj = { act: 'job', target: '传教士' }
-				cga.travel.autopilot(thisobj.data.job.tutorRoom, () => {
-					cga.askNpcForObj(thisobj.data.job.tutorRoom, thisobj.data.job.tutorpos, obj, () => {
+				var obj = { act: 'job', target: '传教士', npcpos : thisobj.data.job.npcpos }
+				cga.travel.autopilot(thisobj.data.job.npcMap, () => {
+					cga.askNpcForObj(obj, () => {
 						cb2(true)
 					})
 				})
@@ -37,9 +37,9 @@ var thisobj = {
 			intro: '4、学习单体补血。',
 			workFunc: (cb2) => {
 				var go = (skillObj) => {
-					var obj = { act: 'skill', target: skillObj.name }
-					cga.travel.autopilot(skillObj.teacherMap, () => {
-						cga.askNpcForObj(skillObj.teacherMap, skillObj.teacherPos, obj, () => {
+					var obj = { act: 'skill', target: skillObj.name, npcpos : skillObj.npcpos }
+					cga.travel.autopilot(skillObj.npcMap, () => {
+						cga.askNpcForObj(obj, () => {
 							cb2(true)
 						})
 					})
@@ -62,9 +62,9 @@ var thisobj = {
 			intro: '5、学习强力补血补血。',
 			workFunc: (cb2) => {
 				var go = (skillObj) => {
-					var obj = { act: 'skill', target: skillObj.name }
-					cga.travel.autopilot(skillObj.teacherMap, () => {
-						cga.askNpcForObj(skillObj.teacherMap, skillObj.teacherPos, obj, () => {
+					var obj = { act: 'skill', target: skillObj.name, npcpos : skillObj.npcpos }
+					cga.travel.autopilot(skillObj.npcMap, () => {
+						cga.askNpcForObj(obj, () => {
 							cb2(true)
 						})
 					})

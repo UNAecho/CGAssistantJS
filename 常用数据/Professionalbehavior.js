@@ -2,7 +2,7 @@ module.exports = function(cga,job,behavior,cb) {
     // 提取本地职业信息
     const getprofessionalInfos = require('./ProfessionalInfo.js');
     var professionalInfo = getprofessionalInfos(job)
-    console.log('目标职业:【' + professionalInfo.jobmainname + '】动作:【' + behavior + '】')
+    console.log('目标职业:【' + professionalInfo.name + '】动作:【' + behavior + '】')
     // 通用学习动作
     var learn = ()=>{
         cga.AsyncWaitNPCDialog(()=>{
@@ -72,7 +72,7 @@ module.exports = function(cga,job,behavior,cb) {
                     if(dlg && dlg.message.indexOf('我想转职') >= 0){
                         cga.SayWords('已经有其他职业，请手动决策', 0, 3, 1);
                         var retry = ()=>{
-                            if(targetJob && getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname == targetJob){
+                            if(targetJob && getprofessionalInfos(cga.GetPlayerInfo().job).name == targetJob){
                                 setTimeout(cb, 2000,true);
                             }else{
                                 setTimeout(retry, 3000);
@@ -95,7 +95,7 @@ module.exports = function(cga,job,behavior,cb) {
     if(behavior == 'learning'){
         console.log('professionalInfo.teacherwalk = ' + professionalInfo.teacherwalk)
         if(professionalInfo.teacherlocation == '法兰城'){
-            if(professionalInfo.jobmainname == '猎人'){
+            if(professionalInfo.name == '猎人'){
                 var search = ()=>{
                     var obj = cga.GetMapUnits()
                     var npc = obj.find(u => u.unit_name == '猎人拉修' && u.type == 1 && u.model_id != 0)
@@ -123,7 +123,7 @@ module.exports = function(cga,job,behavior,cb) {
             }else{
                 cga.travel.falan.toStone('C', ()=>{
                     cga.walkList(professionalInfo.teacherwalk, ()=>{
-                        cga.TurnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
+                        cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                         learn()
                     });
                 });
@@ -168,14 +168,14 @@ module.exports = function(cga,job,behavior,cb) {
                                 cga.AsyncWaitMovement({map:15006, delay:1000, timeout:5000}, ()=>{
                                     // 使用特殊定制的walklist
                                     cga.walkList(templist, ()=>{
-                                        cga.TurnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
+                                        cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                                         learn()
                                     });
                                 });
                             });
                         }, 1500);
                     }else{
-                        cga.TurnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
+                        cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                         learn()
                     }
                 });
@@ -209,15 +209,15 @@ module.exports = function(cga,job,behavior,cb) {
                         throw new Error('未知的抗性名称');
                 }
                 cga.walkList(poslist, ()=>{
-                    cga.TurnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
+                    cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                     learn()
                 });
             }
         }
     }else{//就职、转职、晋级
         console.log('professionalInfo.tutorwalk = ' + professionalInfo.tutorwalk)
-        if(professionalInfo.tutorlocation == '法兰城'){
-            if(professionalInfo.jobmainname == '战斧斗士'){
+        if(professionalInfo.npcMainMap == '法兰城'){
+            if(professionalInfo.name == '战斧斗士'){
                 cga.travel.falan.toStone('C', ()=>{
                     cga.walkList([
                         [41, 98, '法兰城'],
@@ -235,14 +235,14 @@ module.exports = function(cga,job,behavior,cb) {
             }else{
                 cga.travel.falan.toStone('C', ()=>{
                     cga.walkList(professionalInfo.tutorwalk, ()=>{
-                        cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                        cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                         choose()
                     });
                 })
             }
         }else{//非法兰城职业、职级变动
-            if(professionalInfo.tutorlocation == "哥拉尔镇"){
-                if(professionalInfo.jobmainname == '盗贼'){
+            if(professionalInfo.npcMainMap == "哥拉尔镇"){
+                if(professionalInfo.name == '盗贼'){
                     cga.travel.falan.toCity('哥拉尔镇', ()=>{
                         cga.walkList([
                             [176, 105, '库鲁克斯岛'],
@@ -253,7 +253,7 @@ module.exports = function(cga,job,behavior,cb) {
                                     cga.ClickNPCDialog(1, -1);
                                     cga.AsyncWaitMovement({map:47003}, ()=>{
                                         cga.walkList(professionalInfo.tutorwalk, ()=>{
-                                            cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                                            cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                                             choose()
                                         });
                                 });
@@ -261,50 +261,50 @@ module.exports = function(cga,job,behavior,cb) {
                         });
                     });
                 }
-            }else if(professionalInfo.tutorlocation == "圣拉鲁卡村"){
-                cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, ()=>{
+            }else if(professionalInfo.npcMainMap == "圣拉鲁卡村"){
+                cga.travel.falan.toTeleRoom(professionalInfo.npcMainMap, ()=>{
                     cga.walkList(professionalInfo.tutorwalk, ()=>{
-                        cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                        cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                         choose()
                     });
-                    // if(professionalInfo.jobmainname == '药剂师'){
+                    // if(professionalInfo.name == '药剂师'){
                     //     cga.travel.shenglaluka.toHospital(()=>{
                     //         cga.walkList([
                     //             [14, 11, 2311],
                     //             [12, 6],
                     //             ], ()=>{
-                    //                 cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                    //                 cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                     //                 choose(cb,'药剂师')
                     //         });
                     //     },true)
-                    // }else if(professionalInfo.jobmainname == '矿工'){
+                    // }else if(professionalInfo.name == '矿工'){
                     //     cga.travel.autopilot('村长的家 2楼',()=>{
                     //         cga.walkList([
                     //             [8, 5]
                     //         ], ()=>{
-                    //             cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                    //             cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                     //             choose(cb,'矿工')
                     //         });
                     //     })
                     // }
                 });
-            }else if(professionalInfo.tutorlocation == "伊尔村"){
-                cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, ()=>{
-                    if(professionalInfo.jobmainname == '猎人'){
+            }else if(professionalInfo.npcMainMap == "伊尔村"){
+                cga.travel.falan.toTeleRoom(professionalInfo.npcMainMap, ()=>{
+                    if(professionalInfo.name == '猎人'){
                         cga.walkList(professionalInfo.tutorwalk, ()=>{
-                            cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                            cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                             choose(cb,'猎人')
                         });
-                    }else if(professionalInfo.jobmainname == '厨师'){
+                    }else if(professionalInfo.name == '厨师'){
                         cga.walkList(professionalInfo.tutorwalk, ()=>{
-                            cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                            cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                             choose()
                         });
                     }
                 });
             }else{//法兰其他区域职业所
-                    if (professionalInfo.jobmainname == '格斗士'){
-                        cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, ()=>{
+                    if (professionalInfo.name == '格斗士'){
+                        cga.travel.falan.toTeleRoom(professionalInfo.npcMainMap, ()=>{
                             cga.walkList(professionalInfo.tutorwalk, ()=>{
                                 cga.TurnTo(23,23)
                                 cga.AsyncWaitNPCDialog((err, dlg)=>{
@@ -316,13 +316,13 @@ module.exports = function(cga,job,behavior,cb) {
                                 cga.AsyncWaitMovement({map:'师范的房间'}, ()=>{
                                     cga.walkList([
                                         [19,15]], ()=>{
-                                            cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                                            cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                                             choose()
                                     });
                                 });
                             });
                         });
-                    }else if(professionalInfo.jobmainname == '教团骑士'){
+                    }else if(professionalInfo.name == '教团骑士'){
                         cga.travel.falan.toCamp(()=>{
                             cga.walkList([
                                 [52, 68, '曙光营地指挥部'],
@@ -338,7 +338,7 @@ module.exports = function(cga,job,behavior,cb) {
                                 });
                                 cga.waitForLocation({mapindex: 27015, pos : [11, 0]}, ()=>{
                                     cga.walkList(professionalInfo.tutorwalk, ()=>{
-                                            cga.TurnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+                                            cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
                                             choose()
                                     });
                                 });

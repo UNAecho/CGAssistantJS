@@ -345,7 +345,7 @@ var loop = ()=>{
 	callSubPluginsAsync('prepare', ()=>{
 		// cga.SayWords('欢迎使用【UNAの脚本】全自动保证书+转职+刷声望流程，当前正在进行：【'+configTable.mainPlugin+'】阶段。', 0, 3, 1);
 		task.doTask(()=>{
-			if(professionalInfo.jobmainname == '暗黑骑士' || professionalInfo.jobmainname == '教团骑士'){
+			if(professionalInfo.name == '暗黑骑士' || professionalInfo.name == '教团骑士'){
 				console.log('暗黑骑士和教团骑士无法通过保证书刷称号，直接进入陪打循环。')
 				setTimeout(loop, 3000);
 				return
@@ -358,7 +358,7 @@ var loop = ()=>{
 						cga.turnTo(230, 83);
 						setTimeout(() => {
 							if(cga.ismaxbattletitle() || cga.getItemCount('转职保证书') == 0 || 
-							(reputationInfos.getReputation(cga.GetPlayerInfo().titles) == '敬畏的寂静' && configMode.finalJob.jobmainname == professionalInfo.jobmainname)
+							(reputationInfos.getReputation(cga.GetPlayerInfo().titles) == '敬畏的寂静' && configMode.finalJob.name == professionalInfo.name)
 							){
 								console.log('称号已满、包中没有保证书或已经不需要再烧声望，重新做本任务。')
 								// 重置任务flag状态

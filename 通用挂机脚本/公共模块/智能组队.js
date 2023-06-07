@@ -245,7 +245,7 @@ var battleAreaArray = [
 		name: '雪拉威森塔',
 		muster: (cb) => {
 			cga.travel.newisland.toStone('X', () => {
-				cga.askNpcForObj('艾尔莎岛', [165, 154], { act: 'map', target: '利夏岛' }, () => {
+				cga.askNpcForObj({ act: 'map', target: '利夏岛', npcpos : [165, 154] }, () => {
 					cga.walkList([
 						[90, 99, '国民会馆'],
 						cga.isTeamLeader ? [108, 42] : [108, 43],
@@ -299,8 +299,8 @@ var battleAreaArray = [
 		name: '梅布尔隘地',
 		muster: (cb) => {
 			cga.travel.newisland.toStone('X', () => {
-				var obj = { act: "map", target: "梅布尔隘地", neg: "梅布尔隘地" }
-				cga.askNpcForObj("艾尔莎岛", [165, 154], obj, () => {
+				var obj = { act: 'map', target: '梅布尔隘地', neg: '梅布尔隘地', npcpos : [165, 154] }
+				cga.askNpcForObj(obj, () => {
 					cga.walkList([
 						cga.isTeamLeader ? [198, 49] : [198, 48],
 					], cb);
@@ -717,7 +717,7 @@ var battleAreaArray = [
 				cga.walkList([
 					[116, 69, '总部1楼'],
 				], () => {
-					cga.askNpcForObj('总部1楼', [87, 50], { act: 'item', target: '战斗号角' }, () => {
+					cga.askNpcForObj({ act: 'item', target: '战斗号角', npcpos : [87, 50] }, () => {
 						cga.walkList([
 							[4, 47, '圣骑士营地'],
 						], () => {
@@ -728,8 +728,8 @@ var battleAreaArray = [
 				return;
 			}
 			var go = (cb2) => {
-				cga.askNpcForObj('圣骑士营地', [120, 81], { act: 'map', target: '旧日之地' }, () => {
-					cga.askNpcForObj('旧日之地', [45, 46], { act: 'map', target: '迷宫入口' }, () => {
+				cga.askNpcForObj({ act: 'map', target: '旧日之地', npcpos : [120, 81] }, () => {
+					cga.askNpcForObj({ act: 'map', target: '迷宫入口', npcpos : [45, 46] }, () => {
 						cga.walkList([
 							cga.isTeamLeader ? [6, 5] : [6, 6],
 						], cb2);

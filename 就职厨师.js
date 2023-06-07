@@ -218,7 +218,7 @@ var cga = require('./cgaapi')(function () {
 								if(dlg && dlg.message.indexOf('我想转职') >= 0){
 									cga.SayWords('已经有其他职业，请手动决策', 0, 3, 1);
 									var retry = ()=>{
-										if(getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname == targetJob){
+										if(getprofessionalInfos(cga.GetPlayerInfo().job).name == targetJob){
 											setTimeout(cb2, 3000,true);
 										}else{
 											setTimeout(retry, 3000);
@@ -280,10 +280,10 @@ var cga = require('./cgaapi')(function () {
 				return (cga.getItemCount('厨师推荐信') > 0) ? true : false;
 			},
 			function () {
-				return (getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname == targetJob)? true : false;
+				return (getprofessionalInfos(cga.GetPlayerInfo().job).name == targetJob)? true : false;
 			},
 			function () {
-				return (cga.findPlayerSkill(skillname) && getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname == targetJob) ? true : false;
+				return (cga.findPlayerSkill(skillname) && getprofessionalInfos(cga.GetPlayerInfo().job).name == targetJob) ? true : false;
 			}
 		]
 	);

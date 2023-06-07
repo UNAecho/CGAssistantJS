@@ -10,10 +10,7 @@ var supplyObject = require(rootdir + '/通用挂机脚本/公共模块/通用登
 var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
 var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 
-// 提取本地职业数据
-const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
-var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
-var job = professionalInfo.jobmainname
+var job = cga.job.getJob().job
 var skillname = professionalInfo.skill
 
 // 声望数据

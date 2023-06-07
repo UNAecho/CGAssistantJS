@@ -18,7 +18,7 @@ require('./leo/common').then(cga => {
 	const getprofessionalInfos = require('./常用数据/ProfessionalInfo.js');
 	var professionalInfo = getprofessionalInfos(playerinfo.job)
 
-	console.log('当前人物职业：【'+professionalInfo.jobmainname+'】，称号：【'+title+'】');
+	console.log('当前人物职业：【'+professionalInfo.name+'】，称号：【'+title+'】');
 	
 	var changeScript = ()=>{
 		var rootdir = cga.getrootdir()
@@ -72,7 +72,7 @@ require('./leo/common').then(cga => {
 
 
 
-    if(professionalInfo.jobmainname == '传教士'){
+    if(professionalInfo.name == '传教士'){
     	//检查是否有气绝回复技能
     	var skill = cga.findPlayerSkill('气绝回复');
     	if(!skill){
@@ -110,7 +110,7 @@ require('./leo/common').then(cga => {
 			var force = true ;			//是否强制启用战斗配置
 			leo.autoBattle(sets,firstRoundDelay,roundDelay,force);
     	}
-    }else if(professionalInfo.jobmainname == '咒术师'){
+    }else if(professionalInfo.name == '咒术师'){
     	//检查是否有石化魔法技能
     	var skill = cga.findPlayerSkill('石化魔法');
     	if(!skill){
@@ -148,7 +148,7 @@ require('./leo/common').then(cga => {
 			var force = true ;			//是否强制启用战斗配置
 			leo.autoBattle(sets,firstRoundDelay,roundDelay,force);
     	}
-    }else if(professionalInfo.jobmainname == '巫师'){
+    }else if(professionalInfo.name == '巫师'){
     	//检查是否有恢复魔法技能
     	var skill = cga.findPlayerSkill('恢复魔法');
     	if(!skill){
@@ -271,11 +271,11 @@ require('./leo/common').then(cga => {
 				playerinfo = cga.GetPlayerInfo();
 				const reputationInfos = require('./常用数据/reputation.js');
 				var skillcount = reputationInfos.skillCount(leo.getPlayerSysTitle(playerinfo.titles),percentage)
-				if(professionalInfo.jobmainname == '传教士'){
+				if(professionalInfo.name == '传教士'){
 					needGold = skillcount * 5 + 1000
-				}else if(professionalInfo.jobmainname == '咒术师'){
+				}else if(professionalInfo.name == '咒术师'){
 					needGold = skillcount * 5 + 1000
-				}else if(professionalInfo.jobmainname == '巫师'){
+				}else if(professionalInfo.name == '巫师'){
 					needGold = skillcount * 15 + 1000
 				}else{
 					console.log('脚本结束：人物的职业有误，必须是传教士或者咒术师、巫师');

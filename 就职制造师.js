@@ -17,7 +17,7 @@ var cga = require('./cgaapi')(function(){
 	var professionalInfos = getprofessionalInfos('制造系')
 	var professionalInfo = null
 	for(p in professionalInfos){
-		joblist.push(professionalInfos[p].jobmainname)
+		joblist.push(professionalInfos[p].name)
 	}
 	var forgetskill = (skillname)=>{
 		var dialogHandler = (err, dialog)=>{
@@ -83,8 +83,8 @@ var cga = require('./cgaapi')(function(){
 						var sayString2 = '当前已选择职业:[' + joblist[index - 1] + ']。';
 						professionalInfo = getprofessionalInfos(joblist[index - 1])
 						// 判断是否是转职
-						var currentjob = getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname
-						if ((currentjob != professionalInfo.jobmainname) && currentjob != '游民'){
+						var currentjob = getprofessionalInfos(cga.GetPlayerInfo().job).name
+						if ((currentjob != professionalInfo.name) && currentjob != '游民'){
 							transferflag = true
 							sayString2 += '你选的职业和你当前职业不同，注意你是转职哦。'
 						}
@@ -474,16 +474,16 @@ var cga = require('./cgaapi')(function(){
 	{
 		intro: '13.去圣拉鲁卡村就职。 ',
 		workFunc: function(cb2){
-			if(professionalInfo.tutorlocation == undefined){
+			if(professionalInfo.npcMainMap == undefined){
 				throw new error('professioninfo未登录职业导师坐标信息,请手动就职!')
 			}
 			var induction = ()=>{
 				cga.travel.autopilot('地下工房',()=>{
-					var target = cga.getRandomSpace(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+					var target = cga.getRandomSpace(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
 					cga.walkList([
 					target
 					], ()=>{
-						cga.turnTo(professionalInfo.tutorpos[0], professionalInfo.tutorpos[1]);
+						cga.turnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
 						cga.AsyncWaitNPCDialog(()=>{
 							// 是转职
 							if(transferflag){
@@ -509,10 +509,10 @@ var cga = require('./cgaapi')(function(){
 			}
 
 			var villageName = cga.travel.switchMainMap()
-			if(villageName == professionalInfo.tutorlocation){
+			if(villageName == professionalInfo.npcMainMap){
 				induction()
 			}else{
-				cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, induction);
+				cga.travel.falan.toTeleRoom(professionalInfo.npcMainMap, induction);
 			}
 		}
 	},
@@ -524,11 +524,11 @@ var cga = require('./cgaapi')(function(){
 			}
 
 			var learn = ()=>{
-				var target = cga.getRandomSpace(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
+				var target = cga.getRandomSpace(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
 				cga.walkList([
 				target
 				], ()=>{
-					cga.turnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
+					cga.turnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
 					cga.AsyncWaitNPCDialog(()=>{
 						cga.ClickNPCDialog(0, 0);
 						cga.AsyncWaitNPCDialog(()=>{
@@ -630,7 +630,7 @@ var cga = require('./cgaapi')(function(){
 			return ((cga.getItemCount('武器工推荐信') > 0 || cga.getItemCount('防具工推荐信') > 0)  && professionalInfo != null) ? true : false;
 		},
 		function(){//就职
-			return (professionalInfo != null && (getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname == professionalInfo.jobmainname)) ? true : false;
+			return (professionalInfo != null && (getprofessionalInfos(cga.GetPlayerInfo().job).name == professionalInfo.name)) ? true : false;
 		},
 		function(){//学得意技
 			return (professionalInfo != null && cga.findPlayerSkill(professionalInfo.skill)) ? true : false;

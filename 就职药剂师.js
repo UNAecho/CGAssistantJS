@@ -162,10 +162,10 @@ var cga = require('./cgaapi')(function () {
 				return (cga.getItemCount('药剂师推荐信') > 0) ? true : false;
 			},
 			function () {
-				return (getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname == targetJob)? true : false;
+				return (getprofessionalInfos(cga.GetPlayerInfo().job).name == targetJob)? true : false;
 			},
 			function () {
-				return (cga.findPlayerSkill(skillname) && getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname == targetJob) ? true : false;
+				return (cga.findPlayerSkill(skillname) && getprofessionalInfos(cga.GetPlayerInfo().job).name == targetJob) ? true : false;
 			}
 		]
 	);

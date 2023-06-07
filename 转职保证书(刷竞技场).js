@@ -23,10 +23,10 @@ var cga = require('./cgaapi')(function(){
 	const getprofessionalInfos = require('./常用数据/ProfessionalInfo.js');
 	var professionalInfo = getprofessionalInfos(playerinfo.job)
 	
-	if (professionalInfo.jobmainname == '暗黑骑士' || professionalInfo.jobmainname == '教团骑士'){
+	if (professionalInfo.name == '暗黑骑士' || professionalInfo.name == '教团骑士'){
 		// 黑白骑无法打开保证书上限，吉拉在52级之前是70点声望一场，打12场即可满足每天800上限。
 		// 打20场是防止出现战斗失败却累计次数的情况，多打几盘提升稳妥。
-		console.log('当前职业：【'+professionalInfo.jobmainname+'】，为限制循环次数的职业')
+		console.log('当前职业：【'+professionalInfo.name+'】，为限制循环次数的职业')
 		var battlecount = 20
 	}
 

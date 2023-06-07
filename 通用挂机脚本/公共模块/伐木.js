@@ -123,10 +123,10 @@ var mineArray = [
 		name : '古藤',
 		display_name : '古藤',
 		func : (cb)=>{
-			var obj = {act : "map", target : "小岛"}
+			var obj = {act : 'map', target : '小岛', npcpos : [27,15]}
 			cga.travel.falan.toStone('C', (r)=>{
 				cga.travel.autopilot(1504,()=>{
-					cga.askNpcForObj(1504, [27,15],obj,()=>{
+					cga.askNpcForObj(obj,()=>{
 						cga.walkList([
 							[73, 98],
 						], cb);

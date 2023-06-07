@@ -16,10 +16,7 @@ var supplySelena = require(rootdir + '/通用挂机脚本/公共模块/莎莲娜
 // 跳转模块
 var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 
-// 提取本地职业数据
-const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
-var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
-var job = professionalInfo.jobmainname
+var job = cga.job.getJob().job
 var jobLv = getprofessionalInfos.getJobLevel(cga.GetPlayerInfo().job)
 
 // 小号申请蹭车暗号

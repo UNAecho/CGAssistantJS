@@ -120,7 +120,7 @@ var welcome = ()=>{
 
 // 检查卡片信息、封印技能等
 var check = ()=>{
-	if(professionalInfo.jobmainname == '封印师'){
+	if(professionalInfo.name == '封印师'){
 		var petCardInfo = petInfoObj.getPetCardInfo(thisobj.targetPet.realname)
 		if(!petCardInfo || petCardInfo.can_catch == 0){
 			throw new Error('错误，无法查询到宠物卡片登记信息，或该宠物无法封印。')

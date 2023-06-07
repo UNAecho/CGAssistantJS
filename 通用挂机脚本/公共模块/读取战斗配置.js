@@ -41,8 +41,8 @@ var configModeArray = [
 
 		var setting = null
 		// 如果没有可烧的技能，同时还是保姆职业，则直接读取通用保姆练级模式，退出逻辑
-		if(!skill && accompany.indexOf(thisobj.finalJob.jobmainname) != -1){
-			setting = JSON.parse(fs.readFileSync(cga.getrootdir() + '\\战斗配置\\' + thisobj.finalJob.jobmainname + '练级.json'))
+		if(!skill && accompany.indexOf(thisobj.finalJob.name) != -1){
+			setting = JSON.parse(fs.readFileSync(cga.getrootdir() + '\\战斗配置\\' + thisobj.finalJob.name + '练级.json'))
 			console.log('没有需要修炼的技能，读取通用练级模式或保姆练级模式')
 			thisobj.manualLoad(setting)
 			return
@@ -115,7 +115,7 @@ var configModeArray = [
 	 */
 	name : '烧声望模式',
 	func : ()=>{
-		var job = getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname
+		var job = cga.job.getJob().job
 		// 如果既没有外部指定finalJob，也没有loadconfig读取到finalJob，那么中止逻辑
 		if(job != '传教士' && job != '咒术师'){
 			throw new Error('【自动读取战斗配置】本模块仅允许传教士和咒术师调用，请检查你的职业')
@@ -161,7 +161,7 @@ var configModeArray = [
 	 */
 	name : '节能模式',
 	func : ()=>{// TODO任务所有职业的读取
-		var job = thisobj.finalJob ? thisobj.finalJob.jobmainname : getprofessionalInfos(cga.GetPlayerInfo().job).jobmainname
+		var job = thisobj.finalJob ? thisobj.finalJob.job : cga.job.getJob().job
 		// 如果既没有外部指定finalJob，也没有loadconfig读取到finalJob，那么中止逻辑
 		if(!job){
 			throw new Error('请输入角色正确的最终职业名称，或者通过【通用挂机脚本系列】自动调用')
@@ -278,7 +278,7 @@ var thisobj = {
 			return
 		}
 		if(typeof obj.finalJob == 'number'){
-			configTable.finalJob = professionalArray[obj.finalJob].jobmainname;
+			configTable.finalJob = professionalArray[obj.finalJob].name;
 			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
 		}else{
 			configTable.finalJob = obj.finalJob;
@@ -304,15 +304,15 @@ var thisobj = {
 		for(var i in professionalArray){
 			if(i != 0)
 				sayString += ', ';
-			sayString += '('+ (parseInt(i)+1) + ')' + professionalArray[i].jobmainname;
+			sayString += '('+ (parseInt(i)+1) + ')' + professionalArray[i].name;
 		}
 		cga.sayLongWords(sayString, 0, 3, 1);
 		cga.waitForChatInput((msg, index)=>{
 			if(index !== null && index >= 1 && professionalArray[index - 1]){
-				configTable.finalJob = professionalArray[index - 1].jobmainname;
+				configTable.finalJob = professionalArray[index - 1].name;
 				thisobj.finalJob = professionalArray[index - 1];
 				
-				var sayString2 = '当前已选择:[' + thisobj.finalJob.jobmainname + ']。';
+				var sayString2 = '当前已选择:[' + thisobj.finalJob.name + ']。';
 				cga.sayLongWords(sayString2, 0, 3, 1);
 
 				cb(null);

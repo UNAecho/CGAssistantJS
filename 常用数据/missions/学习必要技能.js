@@ -12,7 +12,10 @@ var thisobj = {
 					return
 				}
 				console.log('检测到你的目标职业【' + thisobj.data.jobObj.job + '】需要学习【' + targetSkill + '】')
-				cga.skill.learn(targetSkill, () => {
+				cga.askNpcForObj({
+					act : 'skill', 
+					target : targetSkill,
+				},() => {
 					setTimeout(() => {
 						cb2('restart stage');
 					}, 2000);

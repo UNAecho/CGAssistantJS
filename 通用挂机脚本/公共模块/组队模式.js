@@ -215,10 +215,8 @@ var teamModeArray = [
 
 var cga = global.cga;
 var configTable = global.configTable;
-// 提取本地职业数据
-const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
-var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
-var commonJob = professionalInfo.jobmainname
+
+var commonJob = cga.job.getJob().job
 // 在烧声望模式中，传咒职业单人在灵堂刷即可，需要单人模式
 var skipTeamModeJob = ['传教士','咒术师']
 

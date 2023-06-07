@@ -23,15 +23,15 @@ var memberPos = [65, 98]
 var teammates = null
 var teams = [
 	[
-		"UNAの传教士",
-		"UNAの格斗1",
-		"UNAの格斗2",
-		"UNAの战斧2",
-		"UNAの战斧3",
+		'UNAの传教士',
+		'UNAの格斗1',
+		'UNAの格斗2',
+		'UNAの战斧2',
+		'UNAの战斧3',
 	],[
-		"UNAの暗黑骑士",
-		"UNAの饲养师",
-		"UNAの剑士",
+		'UNAの暗黑骑士',
+		'UNAの饲养师',
+		'UNAの剑士',
 	]
 ]
 
@@ -122,8 +122,8 @@ var waitMembers = (leaderPos, memberPos, cb)=>{
 
 var goToIsland = (cb) => {
 	var villageObj = {
-		"name" : "蒂娜村",
-		"exit" : [44, 62, '莎莲娜']
+		'name' : '蒂娜村',
+		'exit' : [44, 62, '莎莲娜']
 	}
 
 	var go = (cb)=>{
@@ -148,14 +148,14 @@ var goToIsland = (cb) => {
 			cga.travel.falan.toStone('C', (r)=>{
 				cga.travel.autopilot(1522,()=>{
 					let timeRange = cga.getTimeRange()
-					if(timeRange == "黄昏" || timeRange == "夜晚"){
-						villageObj["name"] = "杰诺瓦镇"
-						villageObj["exit"] = [71, 18, '莎莲娜']
+					if(timeRange == '黄昏' || timeRange == '夜晚'){
+						villageObj['name'] = '杰诺瓦镇'
+						villageObj['exit'] = [71, 18, '莎莲娜']
 					}
-					cga.travel.falan.toTeleRoom(villageObj["name"], ()=>{
-						cga.travel.autopilot("主地图",()=>{
+					cga.travel.falan.toTeleRoom(villageObj['name'], ()=>{
+						cga.travel.autopilot('主地图',()=>{
 							cga.walkList([
-								villageObj["exit"]
+								villageObj['exit']
 								], ()=>{
 									go(cb)
 								});
@@ -191,7 +191,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * 走至11，13与11，12瑞娜对话，输入“阿鲁卡那斯”，等待出现对话框，一顿下一步和确定，获得【匆忙写下的笔录】并传送回小岛，博士面前。
 		 */
 		workFunc: function(cb2){
-			var obj = {act : "map", target : 57180}
+			var obj = {act : 'map', target : 57180, npcpos : [59,78], waitLocation: 57176}
 
 			var XY = cga.GetMapXY();
 			if(XY.x >= 80 && XY.y <= 25){
@@ -201,7 +201,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			}
 
 			waitMembers(leaderPos,memberPos,()=>{
-				cga.askNpcForObj(57176, [59,78],obj,()=>{
+				cga.askNpcForObj(obj,()=>{
 					cga.walkList([
 						[19, 11],
 					], ()=>{
@@ -220,8 +220,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		intro: '3.与瑞娜（10.13）对话，输入“阿鲁卡那斯”获得【匆忙写下的笔录】并传送回小岛。',
 		workFunc: function(cb2){
 			// 留一个空位给任务物品
-			var obj = {act : "map", target : 57176, say : "阿鲁卡那斯"}
-			cga.askNpcForObj(57181, [11, 12],obj,()=>{
+			var obj = {act : 'map', target : 57176, say : '阿鲁卡那斯', npcpos : [11,12], waitLocation: 57181}
+			cga.askNpcForObj(obj,()=>{
 				cb2(true)
 			})
 		}
@@ -229,10 +229,10 @@ var task = cga.task.Task(configTable.mainPlugin, [
 	{//3
 		intro: '4.前往法兰城里谢里雅堡2楼图书馆与博学者（18.19）对话，交出【匆忙写下的笔录】获得【鸟类大全】。',
 		workFunc: function(cb2){
-			var obj = {act : "item", target : "鸟类大全"}
+			var obj = {act : 'item', target : '鸟类大全', npcpos : [18,19]}
 			cga.travel.falan.toStone('C', (r)=>{
 				cga.travel.autopilot(1504,()=>{
-					cga.askNpcForObj(1504, [18,19],obj,()=>{
+					cga.askNpcForObj(obj,()=>{
 						cb2(true)
 					})
 				})
@@ -255,12 +255,12 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * UNAecho提醒：别设置自动吃料理把【星鳗饭团】给吃了，不要问我是怎么知道的。
 		 */
 		workFunc: function(cb2){
-			var obj1 = {act : "item", target : "星鳗饭团"}
-			var obj2 = {act : "item", target : "暗号"}
+			var obj1 = {act : 'item', target : '星鳗饭团', npcpos : [55, 81], waitLocation: 57176}
+			var obj2 = {act : 'item', target : '暗号', npcpos : [79, 88], waitLocation: 57176}
 
 			waitMembers(leaderPos,memberPos,()=>{
-				cga.askNpcForObj(57176, [55, 81],obj1,()=>{
-					cga.askNpcForObj(57176, [79, 88],obj2,()=>{
+				cga.askNpcForObj(obj1,()=>{
+					cga.askNpcForObj(obj2,()=>{
 						cb2(true)
 					})
 				})})
@@ -274,8 +274,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * UNAecho提醒：别设置自动吃料理把【星鳗饭团】给吃了，不要问我是怎么知道的。
 		 */
 		workFunc: function(cb2){
-			var obj1 = {act : "map", target : "通往山顶的路100M"}
-			var obj2 = {act : "map", target : "半山腰"}
+			var obj1 = {act : 'map', target : '通往山顶的路100M'}
+			var obj2 = {act : 'map', target : '半山腰'}
 
 			var walkMaze = (cb)=>{
 				var map = cga.GetMapName();
@@ -315,8 +315,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * UNAecho提醒：别设置自动吃料理把【星鳗饭团】给吃了，不要问我是怎么知道的。
 		 */
 		workFunc: function(cb2){
-			var obj1 = {act : "map", target : "通往山顶的路1100M"}
-			var obj2 = {act : "map", target : "圣鸟之巢"}
+			var obj1 = {act : 'map', target : '通往山顶的路1100M'}
+			var obj2 = {act : 'map', target : '圣鸟之巢'}
 
 			var walkMaze = (cb)=>{
 				var map = cga.GetMapName();
@@ -359,8 +359,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * UNAecho提醒：别设置自动吃料理把【星鳗饭团】给吃了，不要问我是怎么知道的。
 		 */
 		workFunc: function(cb2){
-			var obj = {act : "map", target : "圣山之巅", say : "我是来送鳗鱼饭的"}
-			cga.askNpcForObj("圣鸟之巢", [14,11],obj,()=>{
+			var obj = {act : 'map', target : '圣山之巅', say : '我是来送鳗鱼饭的', npcpos : [14, 11], waitLocation: '圣鸟之巢'}
+			cga.askNpcForObj(obj,()=>{
 				cb2(true)
 			})
 		}
@@ -382,14 +382,14 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * 战斗胜利index57185，BOSS坐标23，22
 		 */
 		workFunc: function(cb2){
-			var obj = {act : "map", target : 57185}
+			var obj = {act : 'map', target : 57185}
 
 			waitMembers([32, 27],[33, 27],()=>{
 				console.log('请手动战斗，胜利后脚本自动继续..')
 				if(cga.isTeamLeader){
 					cga.waitTeammateReady(null, (r)=>{
 						configMode.manualLoad('手动BOSS')
-						r("ok")
+						r('ok')
 						return
 					}, (r)=>{
 						cga.walkList([
@@ -407,7 +407,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 				}else{
 					cga.waitTeammateReady(null, (r)=>{
 						configMode.manualLoad('手动BOSS')
-						r("ok")
+						r('ok')
 						return
 					}, (r)=>{
 						cga.waitForLocation({mapname : obj.target}, ()=>{
@@ -425,8 +425,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * 【注意】【圣鸟之羽】在半山7/结界之链还会用到，请不要丢弃
 		 */
 		workFunc: function(cb2){
-			var obj = {act : "item", target : "圣鸟之羽"}
-			cga.askNpcForObj("圣山之巅", [23,22],obj,()=>{
+			var obj = {act : 'item', target : '圣鸟之羽', npcpos : [23,22], waitLocation: '圣山之巅'}
+			cga.askNpcForObj(obj,()=>{
 				cb2(true)
 			})
 		}

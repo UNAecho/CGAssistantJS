@@ -2190,6 +2190,7 @@ module.exports = function(callback){
 				'主地图' : 1000,
 				'法兰城' : 1000,
 				'拿潘食品店' : 1062,
+				'职业介绍所':1091,
 				'职业公会' : 1092,
 				'酒吧':{
 					1101:'科特利亚酒吧',// 调教技能学习地
@@ -2215,7 +2216,10 @@ module.exports = function(callback){
 				'公寓':1187,
 				'公寓2楼':1188,
 				'美容院':1189,
-				'职业介绍所':1091,
+				'豪宅':{
+					1193:'普通民房',
+					21005:'咒术师就职任务相关',
+				},
 				'大圣堂的入口':1201,
 				'礼拜堂':1202,
 				'2楼客房':1206,
@@ -2271,6 +2275,7 @@ module.exports = function(callback){
 				'召唤之间':1535,
 				'召唤之间':1536,
 				'饲养师之家':1810,
+				'镜中的豪宅  阁楼':21011,
 				'气功弹':'气功弹',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
@@ -2320,6 +2325,8 @@ module.exports = function(callback){
 				1188:[[182, 132, 1187],[16, 7, 1188],],
 				// 美容院
 				1189:[[216, 124, 1189],],
+				// 豪宅
+				1193:[[96, 148, 1193],],
 				// 职业介绍所
 				1091:[[195, 50, 1091],],
 				// 大圣堂的入口
@@ -2643,6 +2650,52 @@ module.exports = function(callback){
 				1537:[[153, 100, 1500],[47, 85, 1535],],
 				// 饲养师之家
 				1810:[[122, 36, 1810],],
+				// 豪宅
+				21005:[[96, 148, 21005],],
+				// 镜中的豪宅  阁楼
+				21011:[[(cb)=>{
+					cga.walkList([
+						[96, 149, '豪宅'],
+						[33, 22, '豪宅  地下'],
+						[9, 5, '豪宅'],
+						[33, 10, '镜中的豪宅'],
+						], ()=>{
+							cga.askNpcForObj({ act: 'item', target: '一楼食品库的钥匙', npcpos : [35, 1] }, () => {
+								cga.askNpcForObj({ act: 'map', target: '镜中的豪宅', pos:[36, 11], npcpos : [36, 10]}, () => {
+									cga.walkList([
+										[27, 67, '豪宅'],
+										[58, 66, '豪宅  地下'],
+										[41, 23, '豪宅'],
+										[59, 6, '豪宅  2楼'],
+										[16, 9, '镜中的豪宅  2楼'],
+										], ()=>{
+											cga.askNpcForObj({ act: 'item', target: '二楼房间的钥匙', npcpos : [41, 10] }, () => {
+												cga.askNpcForObj({ act: 'map', target: '镜中的豪宅  2楼', pos:[40, 18], npcpos : [40, 17]}, () => {
+													cga.walkList([
+														[17, 61, '豪宅  2楼'],
+														[5, 23, '豪宅  阁楼'],
+														[14, 30, '镜中的豪宅  阁楼'],
+														[14, 36, '镜中的豪宅  2楼'],
+														], ()=>{
+															cga.askNpcForObj({ act: 'item', target: '阁楼的钥匙', npcpos : [12, 35] }, () => {
+																cga.walkList([
+																	[16, 51, '镜中的豪宅  阁楼'],
+																	], ()=>{
+																		cga.askNpcForObj({ act: 'map', target: '镜中的豪宅  阁楼', pos:[23, 18], npcpos : [23, 19]}, () => {
+																			cga.walkList([
+																				[23, 11],
+																				], cb);
+																		})
+																	});
+															})
+														});
+												})
+											})
+										});
+								})
+							})
+						})
+				}, null, 21007],],
 				// 客房
 				32830:[[219, 136, 1101],[27, 20, 1102],[10, 17, 32830],],
 				// 学气功弹
@@ -2825,6 +2878,8 @@ module.exports = function(callback){
 				1537:[[3, 7, 1500],],
 				// 饲养师之家
 				1810:[[10, 17, 1000],],
+				// 豪宅
+				21005:[[18, 34, 1000],],
 				// 客房
 				32830:[[2, 7, 1102]],
 			},
@@ -4241,7 +4296,14 @@ module.exports = function(callback){
 		return
 	}
 	// UNA:添加全域自动导航至医院补给。isPro为true是去资深护士处补给，否则是普通护士补给
-	cga.travel.toHospital = (cb, isPro = false)=>{
+	/**
+	 * UNAecho: 全域自动导航至医院补给
+	 * @param {*} cb 
+	 * @param {*} isPro 是否去资深补给
+	 * @param {*} returnToMainMap 补给后是否回到当前区域的主地图(例：里堡补完回到法兰城地图)，默认为true，回到主地图
+	 * @returns 
+	 */
+	cga.travel.toHospital = (cb, isPro = false, returnToMainMap = true)=>{
 		// 不需要补血则跳过
 		if(!cga.needSupplyInitial({  })){
 			cga.travel.autopilot('主地图',()=>{
@@ -4347,10 +4409,13 @@ module.exports = function(callback){
 			tmplist, ()=>{
 				cga.turnDir(tmpTurnDir)
 				setTimeout(() => {
-					cga.travel.autopilot('主地图',()=>{
+					if(returnToMainMap){
 						if (cb) cb(null)
-						return
-					})
+					}else{
+						cga.travel.autopilot('主地图',()=>{
+							if (cb) cb(null)
+						})
+					}
 				}, 5000);
 				return
 			}
@@ -6864,14 +6929,14 @@ module.exports = function(callback){
 			config["mission"] = {}
 		}
 		if(!category){
-			throw new Error('category数值有误，请手动检查ProfessionalInfo.js中【' + professionalInfo.jobmainname+'】的category')
+			throw new Error('category数值有误，请手动检查ProfessionalInfo.js中【' + professionalInfo.name+'】的category')
 		}
 		// 护士和医生属于生产系，但晋级需要做战斗系的任务
-		if(['护士', '医生',].indexOf(professionalInfo.jobmainname) != -1){
+		if(['护士', '医生',].indexOf(professionalInfo.name) != -1){
 			category = '战斗系'
 		}else if(['物理系', '魔法系', '魔物系',].indexOf(category) != -1){
 			category = '战斗系'
-		}else if(['猎人', '樵夫','矿工'].indexOf(professionalInfo.jobmainname) != -1){
+		}else if(['猎人', '樵夫','矿工'].indexOf(professionalInfo.name) != -1){
 			category = '采集系'
 		}else{
 			category = '生产系'
@@ -9342,10 +9407,11 @@ module.exports = function(callback){
 	/**
 	 * UNAecho:一个与NPC打交道的API，持续与NPC交互，直到获取某个东西，或看到NPC某句话
 	 * @param {String | Number} map NPC所处地图，可以是名称也可以是index
-	 * @param {Array} npcPos NPC坐标
-	 * @param {String | Number | Object} obj 目标对象
-	 * 如果传入String或Number时，默认是索取物品String名称或物品Int型id，并且所有选项都选积极选项
+	 * @param {Array} npcpos NPC坐标
+	 * @param {String | Number | Object} obj 参数对象，包含诸多规定输入值，具体如下：
 	 * obj格式以及各个key的功能：
+	 * obj.waitLocation : 目标NPC所处的地图，在组队时必须传入。因为队长需要走至此地图，而队员只需等待队长将自己带到此地图。
+	 * obj.npcpos : 目标NPC所处的坐标，必须传入。
 	 * obj.act : 与NPC交互的动作目的。有item，msg，map3种类型可选：
 		item: 找NPC拿道具，物品栏出现此道具则调用cb，函数结束
 		msg: 找NPC对话，直至NPC出现此msg的内容，调用cb，函数结束
@@ -9372,7 +9438,7 @@ module.exports = function(callback){
 	 * @param {*} cb 回调函数，在obj.act不为map时，调用时会传入队伍全员信息
 	 * @returns 
 	 */
-	cga.askNpcForObj = (map, npcPos, obj, cb) => {
+	cga.askNpcForObj = (obj, cb) => {
 		/**
 		 * dialog options:
 		 *     0  : 列表选择 cga.ClickNPCDialog(0, 6) 第一个参数应该是被忽略的，第二个参数选择列表序号，从0开始
@@ -9384,17 +9450,23 @@ module.exports = function(callback){
 		 */
 
 		// 检查输入类型
-		if(typeof map != 'string' && typeof map != 'number'){
-			throw new Error('map必须为String或Number类型')
+		if(Object.prototype.toString.call(obj) != '[object Object]'){
+			throw new Error('参数obj必须为object类型')
 		}
-		if(!Array.isArray(npcPos) || npcPos.length != 2){
-			throw new Error('npcPos必须为Int型数组，长度为2')
+		if(obj.hasOwnProperty('waitLocation') && typeof obj.waitLocation != 'string' && typeof obj.waitLocation != 'number'){
+			throw new Error('obj.map必须为String或Number类型')
 		}
-		if(typeof obj == 'string' || typeof obj == 'number'){
-			obj = {act : "item", target : obj}
+		if(obj.hasOwnProperty('npcpos') && (!Array.isArray(obj.npcpos) || obj.npcpos.length != 2)){
+			throw new Error('obj.npcpos如果传入，必须为Int型数组，长度为2')
 		}
 		if(typeof obj != 'object' || !obj.hasOwnProperty("act") || !obj.hasOwnProperty("target")){
 			throw new Error('obj格式有误，见API注释')
+		}
+		if((obj.hasOwnProperty('job') || obj.hasOwnProperty('promote')) && (typeof obj.target != 'string')){
+			throw new Error('obj.act为job或promote时，obj.target必须为string类型的职业统称。')
+		}
+		if((obj.hasOwnProperty('skill') || obj.hasOwnProperty('forget')) && (typeof obj.target != 'string')){
+			throw new Error('obj.act为skill或forget时，obj.target必须为string类型的技能名称。')
 		}
 		if(obj.hasOwnProperty("pos") && (!Array.isArray(obj.pos) || obj.pos.length != 2)){
 			throw new Error('obj.pos格式必须为长度为2的Number数组')
@@ -9402,13 +9474,27 @@ module.exports = function(callback){
 		if(obj.hasOwnProperty("say") && (typeof obj.say != 'string' || obj.say.length == 0)){
 			throw new Error('obj.say格式必须为长度大于0的字符串')
 		}
+
+		// 如果是学技能，判断技能栏剩余数和金币剩余数是否充足
+		if(obj.hasOwnProperty('skill')){
+			let reason = cga.skill.ableToLearn(obj.target)
+			if (reason.indexOf('slot') != -1) {
+				throw new Error('技能栏位不足')
+			}else if(reason.indexOf('gold') != -1) {
+				throw new Error('学习技能金币不足')
+			}
+		}
+
 		// 如果此flag为false，则终止重复和NPC对话
 		let repeatFlag = true
 		// 如果是与npc说话，则turnto只需要一次
 		let turnToFlag = true
+
 		const dialogHandler = (err, dlg)=>{
 			var actNumber = -1
 			if(dlg && dlg.options == 0){
+				// TODO 这里等到获取晋级时options是0，type是多少之后，再去掉
+				console.log("🚀 ~ file: cgaapi.js:9474 ~ dialogHandler ~ dlg:", dlg)
 				// 转职确认画面，5000金币，需要点击【好的】(cga.ClickNPCDialog(0, 0))，【算了】cga.ClickNPCDialog(0, 1)
 				if(dlg.type == 2){
 					actNumber = 0
@@ -9528,11 +9614,11 @@ module.exports = function(callback){
 		}
 
 		// 为任务物品清理背包中的魔石
-		var dropStoneForMissionItem = (item)=>{
+		let dropStoneForMissionItem = (item)=>{
 			// 持续递归，直至背包中存在目标任务物品才结束
 			if(cga.findItem(item) == -1){
-				var inventory = cga.getInventoryItems();
-				var stone = cga.findItem('魔石');
+				let inventory = cga.getInventoryItems();
+				let stone = cga.findItem('魔石');
 				if(inventory.length == 20 && stone == -1){
 					throw new Error('错误，请手动清理物品，否则任务无法继续')
 				}
@@ -9547,7 +9633,7 @@ module.exports = function(callback){
 			}
 		}
 
-		var askAndCheck = ()=>{
+		let askAndCheck = (npcpos,cb)=>{
 			var retry = (cb)=>{
 				if(!repeatFlag){
 					cb("ok")
@@ -9555,41 +9641,41 @@ module.exports = function(callback){
 				}
 				if(obj.act == "item" && cga.findItem(obj.target) != -1){
 					repeatFlag = false
-					setTimeout(retry, 1000, cb);
+					setTimeout(retry, 500, cb);
 					return
 				}else if(obj.act == "map" && (obj.target == cga.GetMapName() || obj.target == cga.GetMapIndex().index3) && (!obj.pos || (cga.GetMapXY().x == obj.pos[0] && cga.GetMapXY().y == obj.pos[1]))){
 					repeatFlag = false
-					setTimeout(retry, 1000, cb);
+					setTimeout(retry, 500, cb);
 					return
 				}else if(obj.act == "skill" && (cga.findPlayerSkill(obj.target))){
 					repeatFlag = false
-					setTimeout(retry, 1000, cb);
+					setTimeout(retry, 500, cb);
 					return
 				}else if(obj.act == "forget" && (!cga.findPlayerSkill(obj.target))){
 					repeatFlag = false
-					setTimeout(retry, 1000, cb);
+					setTimeout(retry, 500, cb);
 					return
 				}else if(obj.act == "job" && cga.job.getJob(obj.target).job == cga.job.getJob().job){
 					repeatFlag = false
-					setTimeout(retry, 1000, cb);
+					setTimeout(retry, 500, cb);
 					return
 				}else if(obj.act == "promote" && cga.job.getJob().jobLv >= obj.target){
 					repeatFlag = false
-					setTimeout(retry, 1000, cb);
+					setTimeout(retry, 500, cb);
 					return
 				}
 
 				// 自定义与NPC交谈的内容
 				if(obj.say){
 					if (turnToFlag){
-						cga.turnTo(npcPos[0], npcPos[1])
+						cga.turnTo(npcpos[0], npcpos[1])
 						turnToFlag = false
 					}
 					setTimeout(() => {
 						cga.SayWords(obj.say, 0, 3, 1);
 					}, 500);
 				}else{
-					cga.turnTo(npcPos[0], npcPos[1])
+					cga.turnTo(npcpos[0], npcpos[1])
 				}
 				cga.AsyncWaitNPCDialog(dialogHandler);
 				setTimeout(retry, 3500, cb);
@@ -9615,62 +9701,255 @@ module.exports = function(callback){
 			}
 		}
 
-		let mapName = cga.GetMapName();
-		let mapIndex = cga.GetMapIndex().index3;
+		let go = (cb) =>{
 
-		if(typeof map == 'string'){
-			if(map != mapName){
-				// console.log("等待地图:", map)
-				setTimeout(cga.askNpcForObj, 1500, map, npcPos, obj, cb);
+			let tmpObj = null
+			if(obj.act == 'job' || obj.act == 'promote'){
+				tmpObj = cga.job.getJob(obj.target)
+			}else if(obj.act == 'skill'){
+				tmpObj = cga.skill.getSkill(obj.target)
+			}else{
+				walkToNPC(obj.npcpos,cb)
 				return
 			}
-		}else if(typeof map == 'number'){
-			if(map != mapIndex){
-				// console.log("等待地图:", map)
-				setTimeout(cga.askNpcForObj, 1500, map, npcPos, obj, cb);
+
+			if (cga.needSupplyInitial({}) && cga.travel.isInVillage()) {
+				cga.travel.toHospital(() => {
+					setTimeout(go, 3000, cb);
+				})
 				return
 			}
-		}else{
-			throw new Error('map对象必须为String或Number类型')
+			
+			// 常用的可传送村镇
+			const teleVillages = ['圣拉鲁卡村', '伊尔村', '亚留特村', '维诺亚村', '奇利村', '加纳村', '杰诺瓦镇', '阿巴尼斯村', '蒂娜村']
+
+			let startFunc = null
+			let walkFunc = null
+			let searchFunc = null
+
+			// 首先装载登出起点函数
+			if(tmpObj.npcMainMap == '法兰城'){
+				startFunc = (cb)=>{
+					cga.travel.falan.toStone('C', cb)
+				}
+			}else if (teleVillages.indexOf(tmpObj.npcMainMap) != -1) {
+				startFunc = (cb)=>{
+					cga.travel.toVillage(tmpObj.npcMainMap, cb)
+				}
+			} else {
+				throw new Error('API未支持的npcMainMap领域【'+tmpObj.npcMainMap+'】请联系作者更新')
+			}
+
+			// 其次装载赶往NPC地图的函数
+			// 咒术师相关。
+			// 注意：如果你不携带咒术师推荐信，跟门童小孩对话，进入的是15011房间，这个房间的职业导师只是一个普通NPC，没有职业功能。对话会让你做咒术师就职任务
+			// 如果持有咒术师推荐信，则进入正常的15012职业导师房间
+			if(tmpObj.npcMap >= 15009 && tmpObj.npcMap <= 15012){
+				walkFunc = (cb)=>{
+					cga.walkList([
+						[17, 53, '法兰城'],
+						[22, 88, '芙蕾雅'],
+					], () => {
+						cga.askNpcForObj({ act: 'map', target: 15000 , npcpos : [201, 165]}, () => {
+							cga.walkList([
+								[20, 8, '莎莲娜海底洞窟 地下2楼'],
+							], () => {
+								cga.askNpcForObj({ act: 'map', target: 15006, say: '咒术', npcpos : [31, 22] }, () => {
+									cga.walkList([
+										[38, 37, '咒术师的秘密住处'],
+										[10, 0, 15008],
+									], ()=>{
+										// 职业相关
+										if(tmpObj.npcMap == 15012){
+											cga.askNpcForObj({ act: 'map', target: 15012, npcpos : [11, 0]}, cb)
+											return
+										}
+										// 技能相关
+										let roomWalkList = null
+										if(tmpObj.npcMap == 15010){// 强力咒术魔法相关
+											roomWalkList = [1, 10, 15010]
+										}else{// 抗性技能相关
+											roomWalkList = [19, 10, 15009]
+										}
+										cga.walkList([
+											[38, 37, '咒术师的秘密住处'],
+											[10, 0, 15008],
+											roomWalkList,
+										], cb);
+										});
+								})
+							});
+						})
+					})
+				}
+			}else if(tmpObj.npcMap == 100){// 芙蕾雅全域
+				walkFunc = (cb)=>{
+					cga.walkList([
+						[65, 53, '法兰城'],
+						[281, 88,'芙蕾雅'],
+					], cb)
+				}
+			} else {
+				walkFunc = (cb)=>{
+					cga.travel.autopilot(tmpObj.npcMap, cb)
+				}
+			}
+
+			// 然后装载NPC寻找函数，因为某些NPC出现位置不是固定的，例如狩猎技能NPC猎人拉修
+			if(tmpObj.npcpos instanceof Array){
+				searchFunc = (cb)=>{
+					cb(tmpObj.npcpos)
+				}
+			}else if(tmpObj.name == '狩猎'){
+				searchFunc = (cb)=>{
+					let obj = cga.GetMapUnits()
+					let npc = obj.find(u => u.unit_name == '猎人拉修' && u.type == 1 && u.model_id != 0)
+					if (npc){
+						cb([npc.xpos,npc.ypos])
+						return
+					}else{
+						if(!isLeader()){
+							setTimeout(searchFunc, 1000,cb);
+							return
+						}
+						let ranX = Math.trunc(Math.random()*(500-472)+472)
+						let ranY = Math.trunc(Math.random()*(220-198)+198)
+						let target = cga.getRandomSpace(ranX,ranY);
+						cga.walkList([
+							target,
+						], ()=>{
+							searchFunc(cb)
+						});
+					}
+				}
+			} else {
+				throw new Error('API未支持的npcpos领域【'+tmpObj.npcpos+'】请联系作者更新')
+			}
+
+			// 制作好3种导航函数之后，顺序执行
+			// 但要区分是队长还是队员
+			var map = cga.GetMapName();
+			var mapindex = cga.GetMapIndex().index3
+
+			if(isLeader()){
+				if(map == tmpObj.npcMap || mapindex == tmpObj.npcMap){
+					console.log('已经在目标地图，跳过赶路模块')
+					searchFunc((npcpos)=>{
+						walkToNPC(npcpos,cb)
+					})
+					return
+				}
+				startFunc(()=>{
+					walkFunc(()=>{
+						searchFunc((npcpos)=>{
+							walkToNPC(npcpos,cb)
+						})
+					})
+				})
+			}else{
+				let waitObj = {}
+				if(typeof obj.waitLocation == 'string'){
+					waitObj.mapname = obj.waitLocation
+				}else if(typeof obj.waitLocation == 'number'){
+					waitObj.mapindex = obj.waitLocation
+				}else{
+					if(!isLeader()){
+						throw new Error('此次是组队模式，必须传入队员等待专用的waitLocation值，否则队员行为会发生异常')
+					}
+				}
+
+				cga.waitForLocation(waitObj, ()=>{
+					console.log('检测到队长已经带队至NPC目标地图..')
+					searchFunc((npcpos)=>{
+						walkToNPC(npcpos,cb)
+					})
+				})
+			}
 		}
 
-		var playerInfo = cga.GetPlayerInfo();
-		var teamplayers = cga.getTeamPlayers();
-		var isLeader = false
-        isLeader = ((teamplayers.length && teamplayers[0].name == playerInfo.name) || teamplayers.length == 0) ? true : false;
-
-		if(isLeader){
+		let walkToNPC = (npcpos,cb) => {
 			// 如果NPC周围只有1格空闲地形，改用cga.getRandomSpace
-			var spaceList = null
-			let tmpArr = []
+			let spaceList = null
 			try {
-				spaceList = cga.get2RandomSpace(npcPos[0],npcPos[1])
-				// 最终站位
-				tmpArr.push(spaceList[0])
-				// 如果是组队，把队员都拉到NPC周围
-				if (teamplayers.length){
-					tmpArr.push(spaceList[1])
-					tmpArr.push(spaceList[0])
-					tmpArr.push(spaceList[1])
-					tmpArr.push(spaceList[0])
-				}
+				spaceList = cga.get2RandomSpace(npcpos[0],npcpos[1])
 			} catch (error) {
 				if(error.message.indexOf('只有一格') != -1){
-					// TODO 队员自行离队对话
-					console.log('NPC周围只有1格，改为cga.getRandomSpace来计算。【注意】，由于NPC周围只有1格，部分队员无法在不离队的情况下原地与NPC对话，请修改逻辑')
-					spaceList = cga.getRandomSpace(npcPos[0],npcPos[1])
-					// TODO 如果在柜台后面，想办法处理
-					if(spaceList == null){
-						throw new Error('NPC周围1格站位也没有，猜测在柜台后面，或数据有误，请手动处理。')
-					}
-					// cga.getRandomSpace返回是1维数组，cga.get2RandomSpace返回是2维数组
-					tmpArr.push(spaceList)
+					spaceList = cga.getRandomSpace(npcpos[0],npcpos[1])
+				}else{
+					throw new Error('未知错误,error:' + error)
 				}
 			}
-			cga.walkList(tmpArr, askAndCheck);
-		}else{
-			cga.waitForLocation({pos : npcPos}, askAndCheck)
+			// 如果NPC周围1x1均无法抵达，尝试检测隔墙的空闲位置，例如驯兽师导师
+			if(spaceList === null){
+				spaceList = cga.getRandomSpaceThroughWall(npcpos[0],npcpos[1])
+			}
+
+			let carryTeamToPosArr = (npcpos,arr1,arr2,leaveteam,cb)=>{
+				let tmpArr = []
+				// 如果是组队，把队员都拉到NPC周围
+				if (isLeader()){
+					// 单人或者队长最终站位
+					tmpArr.push(arr1)
+					// 如果是队长，并且在带队，那么需要把队友拉到NPC周围
+					if(cga.getTeamPlayers().length){
+						tmpArr.push(arr2)
+						tmpArr.push(arr1)
+						tmpArr.push(arr2)
+						tmpArr.push(arr1)
+					}
+					cga.walkList(tmpArr, ()=>{
+						if(leaveteam){
+							cga.disbandTeam(()=>{
+								askAndCheck(npcpos,cb)
+							})
+							return
+						}
+						askAndCheck(npcpos,cb)
+					});
+				}else{// 如果是队员
+					// 如果需要NPC周围只有1格，需要解散队伍后自行走至NPC面前
+					if(leaveteam){
+						console.log('NPC周围只有1格，需要等待队长解散队伍..')
+						tmpArr.push(arr1)
+						cga.disbandTeam(()=>{
+							cga.walkList(tmpArr, ()=>{
+								askAndCheck(npcpos,cb)
+							});
+						})
+						return
+					}
+					cga.waitForLocation({pos : [npcpos[0],npcpos[1]]}, ()=>{
+						askAndCheck(npcpos,cb)
+					})
+				}
+			}
+
+			// NPC周围只有1格可站立。cga.getRandomSpace返回是1维数组，cga.get2RandomSpace返回是2维数组
+			if(typeof spaceList[0] == 'number'){
+				console.log('NPC周围只有1格，改为cga.getRandomSpace来计算。')
+				/**
+				 * UNAecho: 这里考虑到类似海底说【咒术】的透明NPC周围仅有1格可站立，且组队的情况。
+				 * 逻辑是：如果NPC周围只有1格，那么这1格必有另外1格可站立，否则此格无法抵达。
+				 * 队长先使用NPC周围仅存的1格来获取另外1格空闲格子，使用此空闲格子+NPC周围空闲格子做成walklist，这样减少了队员离队自行走路的危险性。
+				 * 由于NPC周围只有1格可站立，部分队员无法在不离队的情况下与NPC对话。所以这里要考虑队员离队与NPC对话的做法。
+				 */
+				let spaceList2 = cga.getRandomSpace(spaceList[0],spaceList[1])
+				carryTeamToPosArr(npcpos,spaceList,spaceList2,true,cb)
+			}else if(spaceList[0] instanceof Array){// 正常情况，NPC周围有2格或以上可站立
+				carryTeamToPosArr(npcpos,spaceList[0],spaceList[1],false,cb)
+			}
+
 		}
+
+		// 实时判断是否为队长
+		let isLeader = ()=>{
+			let playerInfo = cga.GetPlayerInfo();
+			let teamplayers = cga.getTeamPlayers();
+			return ((teamplayers.length && teamplayers[0].name == playerInfo.name) || teamplayers.length == 0)
+		}
+
+		go(cb)
+		return
 	}
 
 	/**
@@ -11387,51 +11666,70 @@ module.exports = function(callback){
 		});
 	}
 	
-	//获取一格(x,y)周围1x1区域内的空闲地形格子
+	/**
+	 * UNAecho:获取一格(x,y)周围1x1区域内的空闲地形格子
+	 * 修正bug:添加可达判断，如果空闲格子无法抵达(比如门、柜台的另一侧等)，则跳过此格子，因为没有意义。
+	 * @param {*} x 
+	 * @param {*} y 
+	 * @returns 
+	 */
 	cga.getRandomSpace = (x, y)=>{
-		var walls = cga.buildMapCollisionMatrix(true);
-		if(walls.matrix[y][x-1] == 0)
+		let walls = cga.buildMapCollisionMatrix(true);
+		let XY = cga.GetMapXY();
+
+		if(walls.matrix[y][x-1] == 0 && cga.isPathAvailable(XY.x, XY.y, x-1, y))
 			return [x-1, y];
-		if(walls.matrix[y][x+1] == 0)
+		if(walls.matrix[y][x+1] == 0 && cga.isPathAvailable(XY.x, XY.y, x+1, y))
 			return [x+1, y];
-		if(walls.matrix[y-1][x] == 0)
+		if(walls.matrix[y-1][x] == 0 && cga.isPathAvailable(XY.x, XY.y, x, y-1))
 			return [x, y-1];
-		if(walls.matrix[y+1][x] == 0)
+		if(walls.matrix[y+1][x] == 0 && cga.isPathAvailable(XY.x, XY.y, x, y+1))
 			return [x, y+1];
-		if(walls.matrix[y+1][x+1] == 0)
+		if(walls.matrix[y+1][x+1] == 0 && cga.isPathAvailable(XY.x, XY.y, x+1, y+1))
 			return [x+1,y+1];
-		if(walls.matrix[y+1][x-1] == 0)
+		if(walls.matrix[y+1][x-1] == 0 && cga.isPathAvailable(XY.x, XY.y, x-1, y+1))
 			return [x-1,y+1];
-		if(walls.matrix[y-1][x+1] == 0)
+		if(walls.matrix[y-1][x+1] == 0 && cga.isPathAvailable(XY.x, XY.y, x+1, y-1))
 			return [x+1,y-1];
-		if(walls.matrix[y-1][x-1] == 0)
+		if(walls.matrix[y-1][x-1] == 0 && cga.isPathAvailable(XY.x, XY.y, x-1, y-1))
 			return [x-1,y-1];
 		
 		return null;
 	}
 	
-	//获取一格(x,y)周围1x1区域内的空闲地形的2个格子，多用于组队和NPC对话
-	cga.get2RandomSpace = (x, y)=>{
-		var walls = cga.buildMapCollisionMatrix(true);
-		var result = []
-		var pos = []
-		
-		if(walls.matrix[y][x-1] == 0)
-			pos.push([x-1, y]);
-		if(walls.matrix[y][x+1] == 0)
-			pos.push([x+1, y]);
-		if(walls.matrix[y-1][x] == 0)
-			pos.push([x, y-1]);
-		if(walls.matrix[y+1][x] == 0)
-			pos.push([x, y+1]);
-		if(walls.matrix[y+1][x+1] == 0)
-			pos.push([x+1,y+1]);
-		if(walls.matrix[y+1][x-1] == 0)
-			pos.push([x-1,y+1]);
-		if(walls.matrix[y-1][x+1] == 0)
-			pos.push([x+1,y-1]);
-		if(walls.matrix[y-1][x-1] == 0)
-			pos.push([x-1,y-1]);
+	/**
+	 * UNAecho:获取一格(x,y)周围1x1区域内的空闲地形的2个格子，多用于组队和NPC对话
+	 * 修正bug:添加可达判断，如果空闲格子无法抵达(比如门、柜台的另一侧等)，则跳过此格子，因为没有意义。
+	 * @param {*} x 
+	 * @param {*} y 
+	 * @returns 
+	 */
+	cga.get2RandomSpace = (x, y) => {
+		let walls = cga.buildMapCollisionMatrix(true);
+		let XY = cga.GetMapXY();
+		let result = []
+		let pos = []
+
+		// UNAecho:优化写法，原来穷举8个方向的方式不够灵活
+		let xShift = [-1,0,1]
+		let yShift = [-1,0,1]
+
+		for(let i of xShift){
+			for(let j of yShift){
+				// xy均等于0，站在NPC坐标是无法对话的。
+				if(i == 0 && j == 0){
+					continue
+				}
+				// 地图边缘
+				if(x + i < 0 || y + j < 0){
+					continue
+				}
+				if(walls.matrix[y + j][x + i] == 0 && cga.isPathAvailable(XY.x, XY.y, x + i, y + j)){
+					pos.push([xpos + i,y + j])
+				}
+			}
+		}
+
 		if(pos.length <= 1){
 			throw new Error('NPC周围最多可能只有一格空闲地形，无法返回多个坐标。')
 		}
@@ -11462,6 +11760,39 @@ module.exports = function(callback){
 		}
 
 		return null
+	}
+	
+	/**
+	 * UNAecho:获取一格(x,y)周围0x2区域内的空闲地形格子，用于无法直接抵达1x1范围内的NPC。
+	 * 比如驯兽师职业导师站在柜台后面，虽然周围有 cga.buildMapCollisionMatrix()==0 的格子，但无法抵达。
+	 * 这时需要找到一个坐标，可以与其隔着柜台对话。
+	 * 原理是获取0x2坐标，在x或y轴+2判断是否有可抵达的空闲格子
+	 * @param {*} x 
+	 * @param {*} y 
+	 * @returns 
+	 */
+	cga.getRandomSpaceThroughWall = (x, y)=>{
+		let walls = cga.buildMapCollisionMatrix(true);
+		let XY = cga.GetMapXY();
+
+		let xShift = [-2,0,2]
+		let yShift = [-2,0,2]
+
+		for(let i of xShift){
+			for(let j of yShift){
+				// xy等于正负2，此时人物与NPC是斜方向，无法对话，舍弃。
+				// xy均等于0，站在NPC坐标是无法对话的。而且使用这个API，NPC本身就是无法抵达的。
+				if(i + j == 0){
+					continue
+				}
+				
+				if(walls.matrix[y + j][x + i] == 0 && cga.isPathAvailable(XY.x, XY.y, x + i, y + j)){
+					return [x + i,y + j]
+				}
+			}
+		}
+
+		return null;
 	}
 	
 	//获取一格(x,y)周围1x1区域内的空闲地形格子，并判断其方向
@@ -12394,7 +12725,7 @@ module.exports = function(callback){
 			for(var j in data[i].titles){
 				if(searchJobName == data[i].titles[j]){
 					jobObj = data[i]
-					jobObj.job = data[i].jobmainname
+					jobObj.job = data[i].name
 					if(['物理系', '魔法系', '魔物系'].indexOf(data[i].category)!=-1){
 						jobObj.jobType = '战斗系'
 					}else{
@@ -12445,7 +12776,8 @@ module.exports = function(callback){
 		return jobObj
 	}
 
-	// UNAecho:添加关于技能信息的API
+
+	// UNAecho:关于技能信息的API对象
 	cga.skill = {}
 
 	// 获取本地职业数据。
@@ -12496,8 +12828,8 @@ module.exports = function(callback){
 		// 计算技能所需金币
 		let gold = cga.GetPlayerInfo().gold
 		let costSum = skillObj.cost
-		if (teleVillages.indexOf(skillObj.teacherMainMap) != -1) {
-			costSum += cga.travel.teleCost[skillObj.teacherMainMap]
+		if (teleVillages.indexOf(skillObj.npcMainMap) != -1) {
+			costSum += cga.travel.teleCost[skillObj.npcMainMap]
 		}
 		if (gold < costSum) {
 			console.log('学习技能:【' + skillObj.name + '】，需要:【' + costSum + '】(可能包含传送费)，你的钱:【' + gold + '】不够')
@@ -12532,21 +12864,22 @@ module.exports = function(callback){
 	cga.skill.learn = (skName, cb) => {
 		let skillObj = cga.skill.getSkill(skName)
 		let reason = cga.skill.ableToLearn(skName)
-		if (reason.indexOf('lack') != -1) {
-			cb(new Error('技能栏位不足'))
-			return
+		if (reason.indexOf('slot') != -1) {
+			throw new Error('技能栏位不足')
+		}else if(reason.indexOf('gold') != -1) {
+			throw new Error('学习技能金币不足')
 		}
 
 		let go = (cb2) => {
-			cga.travel.autopilot(skillObj.teacherMap, () => {
+			cga.travel.autopilot(skillObj.npcMap, () => {
 				learn(cb2)
 			})
 			return
 		}
 
 		let learn = (cb3) => {
-			let obj = { act: 'skill', target: skillObj.name }
-			cga.askNpcForObj(skillObj.teacherMap, skillObj.teacherPos, obj, cb3)
+			let obj = { act: 'skill', target: skillObj.name, npcpos : skillObj.npcpos }
+			cga.askNpcForObj(obj, cb3)
 			return
 		}
 
@@ -12559,7 +12892,7 @@ module.exports = function(callback){
 		var map = cga.GetMapName();
 		var mapindex = cga.GetMapIndex().index3;
 		// 如果已经在技能导师房间，则无需回补直接学习
-		if (map == skillObj.teacherMap || mapindex == skillObj.teacherMap) {
+		if (map == skillObj.npcMap || mapindex == skillObj.npcMap) {
 			learn(cb)
 			return
 		}
@@ -12570,23 +12903,23 @@ module.exports = function(callback){
 			})
 			return
 		}
-		if (skillObj.teacherMainMap == '法兰城') {
+		if (skillObj.npcMainMap == '法兰城') {
 			cga.travel.falan.toStone('C', () => {
 				// 咒术师相关技能
-				if (skillObj.teacherMap == 15009 || skillObj.teacherMap == 15010) {
+				if (skillObj.npcMap == 15009 || skillObj.npcMap == 15010) {
 					cga.walkList([
 						[17, 53, '法兰城'],
 						[22, 88, '芙蕾雅'],
 					], () => {
-						cga.askNpcForObj('芙蕾雅', [201, 165], { act: 'map', target: 15000 }, () => {
+						cga.askNpcForObj({ act: 'map', target: 15000, npcpos : [201, 165] }, () => {
 							cga.walkList([
 								[20, 8, '莎莲娜海底洞窟 地下2楼'],
 							], () => {
-								cga.askNpcForObj('莎莲娜海底洞窟 地下2楼', [31, 22], { act: 'map', target: 15006, say: '咒术' }, () => {
+								cga.askNpcForObj({ act: 'map', target: 15006, say: '咒术', npcpos : [31, 22] }, () => {
 									cga.walkList([
 										[38, 37, '咒术师的秘密住处'],
 										[10, 0, 15008],
-										skillObj.teacherMap == 15010 ? [1, 10, 15010] : [19, 10, 15009],
+										skillObj.npcMap == 15010 ? [1, 10, 15010] : [19, 10, 15009],
 									], () => {
 										learn(cb)
 									});
@@ -12599,9 +12932,9 @@ module.exports = function(callback){
 						var obj = cga.GetMapUnits()
 						var npc = obj.find(u => u.unit_name == '猎人拉修' && u.type == 1 && u.model_id != 0)
 						if (npc){
-							let obj = { act: 'skill', target: skillObj.name }
+							let obj = { act: 'skill', target: skillObj.name, npcpos : [npc.xpos,npc.ypos] }
 							var target = cga.getRandomSpace(npc.xpos,npc.ypos);
-							cga.askNpcForObj(skillObj.teacherMap, [npc.xpos,npc.ypos], obj, ()=>{
+							cga.askNpcForObj(obj, ()=>{
 								cb(true)
 							})
 							return
@@ -12625,8 +12958,8 @@ module.exports = function(callback){
 					go(cb)
 				}
 			});
-		} else if (teleVillages.indexOf(skillObj.teacherMainMap) != -1) {
-			cga.travel.toVillage(skillObj.teacherMainMap, () => {
+		} else if (teleVillages.indexOf(skillObj.npcMainMap) != -1) {
+			cga.travel.toVillage(skillObj.npcMainMap, () => {
 				go(cb)
 			})
 		} else {

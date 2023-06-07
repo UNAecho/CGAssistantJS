@@ -9,12 +9,12 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	// 提取本地职业数据
 	const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
 	var professionalInfo = getprofessionalInfos(playerinfo.job)
-	var job = professionalInfo.jobmainname
+	var job = professionalInfo.name
 
 	// 导师所在地图
-	var NPCRoom = professionalInfo.tutorRoom
+	var NPCRoom = professionalInfo.npcMap
 	// 导师坐标
-	var NPCpos = professionalInfo.tutorpos
+	var NPCpos = professionalInfo.npcpos
 	
 	// 声望数据
 	const reputationInfos = require(rootdir + '/常用数据/reputation.js');
@@ -31,15 +31,15 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		scriptMode.call_ohter_script(body)
 	}
 
-	var talkToTutor = (tutorPos, cb)=>{
-		var target = cga.getRandomSpace(tutorPos[0],tutorPos[1])
+	var talkToTutor = (npcpos, cb)=>{
+		var target = cga.getRandomSpace(npcpos[0],npcpos[1])
 		// 驯兽师导师在柜台里，必须指定唯一对话坐标
 		if(job == '驯兽师'){
 			target = [13, 10]
 		}
 		cga.walkList(
 			[target], ()=>{
-				cga.turnTo(tutorPos[0],tutorPos[1]);
+				cga.turnTo(npcpos[0],npcpos[1]);
 				cga.AsyncWaitNPCDialog(()=>{
 					// cga.ClickNPCDialog(0, 0);就职
 					// cga.ClickNPCDialog(0, 1);转职
@@ -103,7 +103,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	{//1
 		intro: '2.出发去职业导师地点',
 		workFunc: function(cb2){
-			if(professionalInfo.tutorlocation == '法兰城'){
+			if(professionalInfo.npcMainMap == '法兰城'){
 				var go = ()=>{
 					try {
 						cga.travel.autopilot(NPCRoom,()=>{
@@ -122,7 +122,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 					cga.travel.falan.toStone('C', go)
 				}
 			}else{//非法兰城职业、职级变动
-				if(fastTravel[professionalInfo.tutorlocation]){
+				if(fastTravel[professionalInfo.npcMainMap]){
 					var go = ()=>{
 						try {
 							cga.travel.autopilot(NPCRoom,()=>{
@@ -135,10 +135,10 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 						return
 					}
 					var villageName = cga.travel.switchMainMap()
-					if(villageName == professionalInfo.tutorlocation){
+					if(villageName == professionalInfo.npcMainMap){
 						go()
 					}else{
-						cga.travel.falan.toTeleRoom(professionalInfo.tutorlocation, go)
+						cga.travel.falan.toTeleRoom(professionalInfo.npcMainMap, go)
 					}
 				}else if(job == '魔术师'){
 					cga.travel.falan.toStone('W1', ()=>{

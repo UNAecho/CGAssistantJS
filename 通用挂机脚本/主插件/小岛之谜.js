@@ -19,15 +19,15 @@ var playerInfo = cga.GetPlayerInfo();
 var teammates = null
 var teams = [
 	[
-		"UNAの传教士",
-		"UNAの格斗1",
-		"UNAの格斗2",
-		"UNAの战斧2",
-		"UNAの战斧3",
+		'UNAの传教士',
+		'UNAの格斗1',
+		'UNAの格斗2',
+		'UNAの战斧2',
+		'UNAの战斧3',
 	],[
-		"UNAの暗黑骑士",
-		"UNAの饲养师",
-		"UNAの剑士",
+		'UNAの暗黑骑士',
+		'UNAの饲养师',
+		'UNAの剑士',
 	]
 ]
 
@@ -56,11 +56,11 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * ◆已经完成过本任务拥有“背叛者”称号时，不可解本任务，无法获得【阿斯提亚锥形水晶】，会获得半山6《地狱的回响》的任务道具【锄头】
 		 */
 		workFunc: function(cb2){
-			var obj = {act : "item", target : "阿斯提亚锥形水晶"}
+			var obj = {act : 'item', target : '阿斯提亚锥形水晶', npcpos : [27,15]}
 			healMode.func(()=>{
 				cga.travel.falan.toStone('C', (r)=>{
 					cga.travel.autopilot(1504,()=>{
-						cga.askNpcForObj(1504, [27,15],obj,()=>{
+						cga.askNpcForObj(obj,()=>{
 							cb2(true)
 						})
 					})
@@ -79,8 +79,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * ◆本任务的半山腰不会遇敌
 		 */
 		workFunc: function(cb2){
-			var obj1 = {act : "map", target : "通往山顶的路100M"}
-			var obj2 = {act : "map", target : "半山腰"}
+			var obj1 = {act : 'map', target : '通往山顶的路100M'}
+			var obj2 = {act : 'map', target : '半山腰'}
 
 			var go = (cb)=>{
 				var map = cga.GetMapName();
@@ -104,7 +104,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 						});
 					return;
 				}
-				cga.UseItem(cga.findItem("阿斯提亚锥形水晶"));
+				cga.UseItem(cga.findItem('阿斯提亚锥形水晶'));
 				setTimeout(go, 2000, cb);
 				
 			}
@@ -122,8 +122,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * 特殊圣鸟之巢，无需给星鳗饭团，index57247
 		 */
 		workFunc: function(cb2){
-			var obj1 = {act : "map", target : "通往山顶的路1100M"}
-			var obj2 = {act : "map", target : "圣鸟之巢"}
+			var obj1 = {act : 'map', target : '通往山顶的路1100M'}
+			var obj2 = {act : 'map', target : '圣鸟之巢'}
 
 			var walkMaze = (cb)=>{
 				var map = cga.GetMapName();
@@ -154,8 +154,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * 特殊圣山之巅，无BOSS战斗。index57248
 		 */
 		workFunc: function(cb2){
-			var obj = {act : "map", target : "圣山之巅"}
-			cga.askNpcForObj("圣鸟之巢", [14,11],obj,()=>{
+			var obj = {act : 'map', target : '圣山之巅', npcpos : [14,11], waitLocation: '圣鸟之巢'}
+			cga.askNpcForObj(obj,()=>{
 				cb2(true)
 			})
 		}
@@ -163,8 +163,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 	{//4
 		intro: '5.与阿鲁卡那斯（23.22）对话，交出【阿斯提亚锥形水晶】获得称号“背叛者”并传送回法兰城，任务完结。',
 		workFunc: function(cb2){
-			var obj = {act : "map", target : "法兰城"}
-			cga.askNpcForObj("圣山之巅", [23,22],obj,()=>{
+			var obj = {act : 'map', target : '法兰城', npcpos : [23,22], waitLocation: '圣山之巅'}
+			cga.askNpcForObj(obj,()=>{
 				cb2(true)
 			})
 		}

@@ -19,15 +19,15 @@ var playerInfo = cga.GetPlayerInfo();
 var teammates = null
 var teams = [
 	[
-		"UNAの传教士",
-		"UNAの格斗1",
-		"UNAの格斗2",
-		"UNAの战斧2",
-		"UNAの战斧3",
+		'UNAの传教士',
+		'UNAの格斗1',
+		'UNAの格斗2',
+		'UNAの战斧2',
+		'UNAの战斧3',
 	],[
-		"UNAの暗黑骑士",
-		"UNAの饲养师",
-		"UNAの剑士",
+		'UNAの暗黑骑士',
+		'UNAの饲养师',
+		'UNAの剑士',
 	]
 ]
 
@@ -125,21 +125,21 @@ var task = cga.task.Task(configTable.mainPlugin, [
 	{//0
 		intro: '1.前往法兰城里谢里雅堡2楼西边走廊尽头的图书馆（0.74）与博学者（18.19）对话，获得【项链的情报】、【修特的项链】。双击【修特的项链】获得【航海图】。',
 		workFunc: function(cb2){
-			var item1 = '项链的情报'
-			var item2 = '修特的项链'
+			var item1 = {act : 'item', target : '项链的情报', npcpos : [18,19], waitLocation: '圣山之巅'}
+			var item2 = {act : 'item', target : '修特的项链', npcpos : [18,19], waitLocation: '圣山之巅'}
 
 			var checkItem = (cb)=>{
-				let itemPos1 = cga.findItem(item1)
-				let itemPos2 = cga.findItem(item2)
+				let itemPos1 = cga.findItem(item1.target)
+				let itemPos2 = cga.findItem(item2.target)
 				if(itemPos1 != -1 && itemPos2 == -1){
-					console.log('没有', item2, '丢弃', item1)
+					console.log('没有', item2.target, '丢弃', item1.target)
 					cga.DropItem(itemPos1);
 					setTimeout(() => {
 						cb2('restart stage');
 					}, 2000);
 					return
 				}else if(itemPos1 == -1 && itemPos2 != -1){
-					console.log('没有', item1, '丢弃', item2)
+					console.log('没有', item1.target, '丢弃', item2.target)
 					cga.DropItem(itemPos2);
 					setTimeout(() => {
 						cb2('restart stage');
@@ -164,7 +164,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 					if(cga.getInventoryEmptySlotCount() > 1){
 						cga.travel.falan.toStone('C', (r)=>{
 							cga.travel.autopilot(1504,()=>{
-								cga.askNpcForObj(1504, [18,19],item2,()=>{
+								cga.askNpcForObj(item2,()=>{
 									checkItem(null)
 								})
 							})
@@ -182,8 +182,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		workFunc: function(cb2){
 
 			var villageObj = {
-				"name" : "蒂娜村",
-				"exit" : [44, 62, '莎莲娜']
+				'name' : '蒂娜村',
+				'exit' : [44, 62, '莎莲娜']
 			}
 
 			var go = (cb)=>{
@@ -213,14 +213,14 @@ var task = cga.task.Task(configTable.mainPlugin, [
 					cga.travel.falan.toStone('C', (r)=>{
 						cga.travel.autopilot(1522,()=>{
 							let timeRange = cga.getTimeRange()
-							if(timeRange == "黄昏" || timeRange == "夜晚"){
-								villageObj["name"] = "杰诺瓦镇"
-								villageObj["exit"] = [71, 18, '莎莲娜']
+							if(timeRange == '黄昏' || timeRange == '夜晚'){
+								villageObj['name'] = '杰诺瓦镇'
+								villageObj['exit'] = [71, 18, '莎莲娜']
 							}
-							cga.travel.falan.toTeleRoom(villageObj["name"], ()=>{
-								cga.travel.autopilot("主地图",()=>{
+							cga.travel.falan.toTeleRoom(villageObj['name'], ()=>{
+								cga.travel.autopilot('主地图',()=>{
 									cga.walkList([
-										villageObj["exit"]
+										villageObj['exit']
 										], ()=>{
 											go(cb2)
 										});
@@ -258,12 +258,12 @@ var task = cga.task.Task(configTable.mainPlugin, [
 	{//3
 		intro: '4.与瑞娜的父亲（70.81）对话，选“否”交出【项链的情报】获得【巧克力】。',
 		workFunc: function(cb2){
-			var obj = {act : "item", target : "巧克力", neg : "因为这件事"}
+			var obj = {act : 'item', target : '巧克力', neg : '因为这件事', npcpos : [70,81], waitLocation: 57176}
 			waitMembers([66,98],[65,98],()=>{
 				// 赶路用
 				configMode.manualLoad('练级')
 
-				cga.askNpcForObj(57176, [70,81],obj,()=>{
+				cga.askNpcForObj(obj,()=>{
 					cb2(true)
 				})
 			})
@@ -272,8 +272,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 	{//4
 		intro: '5.与罗伯尼克博士（59.78）对话，交出【巧克力】获得【金属探测仪】。',
 		workFunc: function(cb2){
-			var obj = {act : "item", target : "金属探测仪"}
-			cga.askNpcForObj(57176, [59,78],obj,()=>{
+			var obj = {act : 'item', target : '金属探测仪', npcpos : [59,78], waitLocation: 57176}
+			cga.askNpcForObj(obj,()=>{
 				cb2(true)
 			})
 		}
@@ -285,7 +285,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * ◆达尔文海海底为随机迷宫，约12层；魔物为水龙蜥、水晶螃蟹、蜥蜴斗士（怀旧服为Lv.49~59；时长/道具服为Lv.119~129）
 		 */
 		workFunc: function(cb2){
-			var obj = {act : "item", target : "星鳗饭团"}
+			var obj = {act : 'item', target : '星鳗饭团'}
 
 			// 注意与觅食的水龙蜥对话完毕，地图index并没有变，只是切换到一个密闭的区域，坐标为121,25。
 			// 中间有一个黄色随即迷宫传送石(121,20)，进入即是【达尔文海海底地下1楼】index为1589，但可能是随机的，以地图名称为准
@@ -328,8 +328,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			// 深海秘窟战斗前index57177
 			// 战斗后index57178
 			// 不管BOSS战前战后，坐标都是20,17，对话都只有一个确定键
-			var obj1 = {act : "map", target : 57177}
-			var obj2 = {act : "map", target : 57178}
+			var obj1 = {act : 'map', target : 57177}
+			var obj2 = {act : 'map', target : 57178}
 
 			var walkMaze = (cb)=>{
 				var map = cga.GetMapName();
@@ -372,14 +372,14 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * BOSS不管战前战后，对话都只有一句话，一个确定键
 		 */
 		workFunc: function(cb2){
-			var obj = {act : "map", target : 57178}
+			var obj = {act : 'map', target : 57178}
 
 			console.log('请手动战斗，胜利后脚本自动继续..')
 
 			if(cga.isTeamLeader){
 				cga.waitTeammateReady(null, (r)=>{
 					configMode.manualLoad('手动BOSS')
-					r("ok")
+					r('ok')
 					return
 				}, (r)=>{
 					cga.walkList([
@@ -397,7 +397,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			}else{
 				cga.waitTeammateReady(null, (r)=>{
 					configMode.manualLoad('手动BOSS')
-					r("ok")
+					r('ok')
 					return
 				}, (r)=>{
 					cga.waitForLocation({mapname : obj.target}, ()=>{
@@ -415,8 +415,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * 队员加入完毕后，队长恢复组队赶路模式并继续逻辑
 		 */
 		workFunc: function(cb2){
-			var obj = {act : "item", target : "机器零件"}
-			cga.askNpcForObj(57178, [20,17],obj,()=>{
+			var obj = {act : 'item', target : '机器零件', npcpos : [20,17], waitLocation: 57178}
+			cga.askNpcForObj(obj,()=>{
 				cb2(true)
 			})
 		}
@@ -424,14 +424,14 @@ var task = cga.task.Task(configTable.mainPlugin, [
 	{//9
 		intro: '10.与罗伯尼克博士（59.78）对话，交出【机器零件】获得【博士的腕轮】，任务完结。',
 		workFunc: function(cb2){
-			var obj = {act : "item", target : "博士的腕轮"}
+			var obj = {act : 'item', target : '博士的腕轮', npcpos : [59,78], waitLocation: 57176}
 			// 防止队长走1格遇敌
 			configMode.manualLoad('生产赶路')
 			waitMembers([82,22],[82,21],()=>{
 				// 回去的路上依然有敌人
 				configMode.manualLoad('练级')
 
-				cga.askNpcForObj(57176, [59,78],obj,()=>{
+				cga.askNpcForObj(obj,()=>{
 					cb2(true)
 				})
 			})

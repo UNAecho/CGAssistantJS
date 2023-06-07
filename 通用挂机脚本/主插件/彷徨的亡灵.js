@@ -188,9 +188,9 @@ var task = cga.task.Task(configTable.mainPlugin, [
 	{//0
 		intro: '1.前往法兰城里谢里雅堡1楼与士兵海德（81.18）对话，获得【海德的好运符】。',
 		workFunc: function(cb2){
-			var obj = '海德的好运符'
+			var obj = {act : 'item', target : '海德的好运符', npcpos : [81,18]}
 			healMode.func(()=>{
-				if(cga.findItem(obj) != -1){
+				if(cga.findItem(obj.target) != -1){
 					setTimeout(() => {
 						cb2(true);
 					}, 1000);
@@ -198,7 +198,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 					if(cga.getInventoryEmptySlotCount() > 0){
 						cga.travel.falan.toStone('C', (r)=>{
 							cga.travel.autopilot(1520,()=>{
-								cga.askNpcForObj(1520, [81,18],obj,()=>{
+								cga.askNpcForObj(obj,()=>{
 									cb2(true)
 								})
 							})
@@ -319,9 +319,9 @@ var task = cga.task.Task(configTable.mainPlugin, [
 	{//3
 		intro: '4.返回法兰城里谢里雅堡1楼与士兵海德对话，交出【修特的项链】获得【海德的戒指】、称号“追查真相中”，任务完结。',
 		workFunc: function(cb2){
-			var obj = '海德的戒指'
+			var obj = {act : 'item', target : '海德的戒指', npcpos : [81,18]}
 			healMode.func(()=>{
-				if(cga.findItem(obj) != -1){
+				if(cga.findItem(obj.target) != -1){
 					setTimeout(() => {
 						cb2(true);
 					}, 1000);
@@ -329,7 +329,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 					if(cga.getInventoryEmptySlotCount() > 0){
 						cga.travel.falan.toStone('C', (r)=>{
 							cga.travel.autopilot(1520,()=>{
-								cga.askNpcForObj(1520, [81,18],obj,()=>{
+								cga.askNpcForObj(obj,()=>{
 									cb2(true)
 								})
 							})

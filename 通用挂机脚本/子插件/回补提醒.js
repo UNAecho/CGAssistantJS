@@ -1,7 +1,4 @@
-// 提取本地职业数据
-const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
-var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
-var commonJob = professionalInfo.jobmainname
+var commonJob = cga.job.getJob().job
 
 var thisobj = {
 	muteUntil : 0,

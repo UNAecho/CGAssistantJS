@@ -115,7 +115,7 @@ const teachers = [
 	skillname : professionalInfo.skill,
 	location : professionalInfo.teacherlocation,
 	path : professionalInfo.teacherwalk,
-	pos : professionalInfo.teacherpos,	
+	pos : professionalInfo.npcpos,	
 },
 ]
 
@@ -442,7 +442,7 @@ var forgetAndLearn = (cb)=>{
 
 	var goAndLearn = (cb2)=>{
 		cga.walkList(professionalInfo.teacherwalk, ()=>{
-			cga.turnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
+			cga.turnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
 			var dialogHandler = (err, dialog)=>{
 				if(dialog){
 					// 这里需要使用configTable.craftType作为名称，否则会出现configTable.craftType如果填错，直接把自己本职技能给遗忘的严重bug
@@ -470,7 +470,7 @@ var forgetAndLearn = (cb)=>{
 					}
 					if (dialog.message.indexOf('已经删除') >= 0 || !hasSkill) {
 						setTimeout(()=>{
-							cga.TurnTo(professionalInfo.teacherpos[0], professionalInfo.teacherpos[1]);
+							cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
 							cga.AsyncWaitNPCDialog((dlg)=>{
 								cga.ClickNPCDialog(0, 0);
 								cga.AsyncWaitNPCDialog((dlg2)=>{

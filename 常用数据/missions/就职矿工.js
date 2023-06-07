@@ -27,10 +27,10 @@ var thisobj = {
 		{
 			intro: '2.前往法兰城毕夫鲁的家（206.37），持有【铜】*20与那尔薇（8.3）对话，选“是”获得【便当？】。',
 			workFunc: function (cb2) {
-				var obj = { act: 'item', target: '便当？' }
+				var obj = { act: 'item', target: '便当？', npcpos : [8, 3] }
 				cga.travel.falan.toStone('C', () => {
 					cga.travel.autopilot('毕夫鲁的家', () => {
-						cga.askNpcForObj('毕夫鲁的家', [8, 3], obj, () => {
+						cga.askNpcForObj(obj, () => {
 							cb2(true)
 						})
 					})
@@ -40,13 +40,13 @@ var thisobj = {
 		{
 			intro: '3.返回国营第24号矿坑道（351.145）地下一楼与矿工毕夫鲁（35.7）对话，选“是”交出【便当？】获得【矿石？】、【有关矿石的纸条】。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '矿石？' }
+				var obj = { act: 'item', target: '矿石？', npcpos : [35, 7] }
 				cga.travel.falan.toStone('W1', (r) => {
 					cga.walkList([
 						[22, 87, '芙蕾雅'],
 						[351, 145, '国营第24坑道 地下1楼'],
 					], () => {
-						cga.askNpcForObj('国营第24坑道 地下1楼', [35, 7], obj, () => {
+						cga.askNpcForObj(obj, () => {
 							cb2(true)
 						})
 					});
@@ -56,10 +56,10 @@ var thisobj = {
 		{
 			intro: '4.前往法兰城凯蒂夫人店（196.78）与鉴定师马尔弗（13.9）对话，选“是”交出【矿石？】、【有关矿石的纸条】获得【给那尔薇的信】。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '给那尔薇的信' }
+				var obj = { act: 'item', target: '给那尔薇的信', npcpos : [13, 9] }
 				cga.travel.falan.toStone('C', () => {
 					cga.travel.autopilot('凯蒂夫人的店', () => {
-						cga.askNpcForObj('凯蒂夫人的店', [13, 9], obj, () => {
+						cga.askNpcForObj(obj, () => {
 							cb2(true)
 						})
 					})
@@ -69,10 +69,10 @@ var thisobj = {
 		{
 			intro: '5.前往毕夫鲁之家与那尔薇（8.3）对话，选“是”交出【给那尔薇的信】获得【饮料？】。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '饮料？' }
+				var obj = { act: 'item', target: '饮料？', npcpos : [8, 3] }
 				cga.travel.falan.toStone('C', () => {
 					cga.travel.autopilot('毕夫鲁的家', () => {
-						cga.askNpcForObj('毕夫鲁的家', [8, 3], obj, () => {
+						cga.askNpcForObj(obj, () => {
 							cb2(true)
 						})
 					})
@@ -82,13 +82,13 @@ var thisobj = {
 		{
 			intro: '6.前往国营第24矿坑道地下一楼与矿工毕夫鲁（35.7）对话，选“是”交出【饮料？】获得【矿工推荐信】。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '矿工推荐信' }
+				var obj = { act: 'item', target: '矿工推荐信', npcpos : [35, 7] }
 				cga.travel.falan.toStone('W1', (r) => {
 					cga.walkList([
 						[22, 87, '芙蕾雅'],
 						[351, 145, '国营第24坑道 地下1楼'],
 					], () => {
-						cga.askNpcForObj('国营第24坑道 地下1楼', [35, 7], obj, () => {
+						cga.askNpcForObj(obj, () => {
 							cb2(true)
 						})
 					});
@@ -98,10 +98,10 @@ var thisobj = {
 		{
 			intro: '7.前往圣拉鲁卡村村长的家（49.81）2楼与矿工吉拉瓦特（8.4）对话即可就职矿工，任务完结。',
 			workFunc: (cb2) => {
-				var obj = { act: 'job', target: thisobj.data.job.job }
-				cga.travel.toVillage(thisobj.data.job.tutorlocation, () => {
-					cga.travel.autopilot(thisobj.data.job.tutorRoom, () => {
-						cga.askNpcForObj(thisobj.data.job.tutorRoom, thisobj.data.job.tutorpos, obj, () => {
+				var obj = { act: 'job', target: thisobj.data.job.job, npcpos : thisobj.data.job.npcpos }
+				cga.travel.toVillage(thisobj.data.job.npcMainMap, () => {
+					cga.travel.autopilot(thisobj.data.job.npcMap, () => {
+						cga.askNpcForObj(obj, () => {
 							cb2(true)
 						})
 					})
@@ -132,6 +132,9 @@ var thisobj = {
 			return (cga.job.getJob().job == '矿工') ? true : false;
 		},
 	],
+	taskPlayerThink: () => {
+		return true
+	},
 	data: {// 任务静态数据，可自定义，方便使用
 		job: cga.job.getJob('矿工')
 	},
@@ -141,7 +144,7 @@ var thisobj = {
 	doTask: (param, cb) => {
 		// 接受外部传入的参数
 		thisobj.param = param
-		var task = cga.task.Task(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements)
+		var task = cga.task.TaskWithThink(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements)
 		task.doTask(cb)
 		return
 	},

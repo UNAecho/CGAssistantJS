@@ -7,7 +7,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	// 提取本地职业信息
 	const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
 	var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
-	var jobmainname = professionalInfo.jobmainname
+	var name = professionalInfo.name
 	/* tips:龙心id 622042，type = 26
 	* 黑色方舟顶层出去，后传送至白色方舟index 59934，x= 145,y=56
 	* 白色方舟目送者149，79。人物与其对话坐标站在149，78
@@ -790,7 +790,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 				})
 			}else{// 生产系
 				var retry = ()=>{
-					if(cga.getItemCount(productDict[jobmainname].item) > 0){
+					if(cga.getItemCount(productDict[name].item) > 0){
 						console.log('你已持有晋级物品，具备晋级资格')
 						setTimeout(cb2, 1000, true);
 						return
@@ -951,13 +951,13 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	
 	var chooseteam = ()=>{
 
-		if(red.indexOf(jobmainname) != -1){
+		if(red.indexOf(name) != -1){
 			groupName = 'red'
 			cga.SayWords('1', 0, 3, 1);
-		}else if(blue.indexOf(jobmainname) != -1){
+		}else if(blue.indexOf(name) != -1){
 			groupName = 'blue'
 			cga.SayWords('2', 0, 3, 1);
-		}else if(yellow.indexOf(jobmainname) != -1){
+		}else if(yellow.indexOf(name) != -1){
 			groupName = 'yellow'
 			cga.SayWords('3', 0, 3, 1);
 		}else{
@@ -981,7 +981,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			}
 			
 			if(mineObject != null){
-				cga.SayWords('当前职业：【'+jobmainname+'】，应走【'+mineObject.name+'】。战斗配置改为单人逃跑赶路', 0, 3, 1);
+				cga.SayWords('当前职业：【'+name+'】，应走【'+mineObject.name+'】。战斗配置改为单人逃跑赶路', 0, 3, 1);
 				configMode.func('逃跑模式')
 				task.doTask(()=>{
 					cga.gui.LoadScript({

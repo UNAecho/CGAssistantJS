@@ -32,15 +32,15 @@ var memberPos = [65, 98]
 var teammates = null
 var teams = [
 	[
-		"UNAの传教士",
-		"UNAの格斗1",
-		"UNAの格斗2",
-		"UNAの战斧2",
-		"UNAの战斧3",
+		'UNAの传教士',
+		'UNAの格斗1',
+		'UNAの格斗2',
+		'UNAの战斧2',
+		'UNAの战斧3',
 	],[
-		"UNAの暗黑骑士",
-		"UNAの饲养师",
-		"UNAの剑士",
+		'UNAの暗黑骑士',
+		'UNAの饲养师',
+		'UNAの剑士',
 	]
 ]
 
@@ -138,7 +138,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 	{//0
 		intro: '1.前往法兰城里谢里雅堡2楼图书馆与阿斯提亚祭司（27.15）对话，选“是”交出1000G获得【锄头】并传送至小岛。',
 		workFunc: function(cb2){
-			var obj = {act : "item", target : "锄头"}
+			var obj = {act : 'item', target : '锄头', npcpos : [27, 15]}
 
 			// 即便手里有锄头，也需要丢掉
 			// 黑心祭祀，有锄头不给传送，只有扔掉锄头才收你1000块再给你把锄头，再传送过去
@@ -150,7 +150,7 @@ var task = cga.task.Task(configTable.mainPlugin, [
 			healMode.func(()=>{
 				cga.travel.falan.toStone('C', (r)=>{
 					cga.travel.autopilot(1504,()=>{
-						cga.askNpcForObj(1504, [27,15],obj,()=>{
+						cga.askNpcForObj(obj,()=>{
 							waitMembers(leaderPos,memberPos,()=>{
 								cb2(true)
 							})
@@ -169,9 +169,9 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * ◆半山腰为固定地图；魔物为（怀旧服Lv.72~74；时长/道具服Lv.142~144）的虎人*2~4、迷你蝙蝠*2、液态史莱姆*1、利牙*1，最高遇敌数量8
 		 */
 		workFunc: function(cb2){
-			var obj1 = {act : "map", target : "小岛"}
-			var obj2 = {act : "map", target : "通往山顶的路100M"}
-			var obj3 = {act : "map", target : "半山腰"}
+			var obj1 = {act : 'map', target : '小岛'}
+			var obj2 = {act : 'map', target : '通往山顶的路100M'}
+			var obj3 = {act : 'map', target : '半山腰'}
 
 			var walkMaze = (cb)=>{
 				var map = cga.GetMapName();
@@ -210,8 +210,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * 圣山内部index57402
 		 */
 		workFunc: function(cb2){
-			var obj = {act : "map", target : "圣山内部"}
-			cga.askNpcForObj("半山腰", [81,56],obj,()=>{
+			var obj = {act : 'map', target : '圣山内部', npcpos : [81, 56], waitLocation: '半山腰'}
+			cga.askNpcForObj(obj,()=>{
 				waitMembers([16, 12],[15, 12],()=>{
 					cb2(true)
 				})
@@ -224,9 +224,9 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * 地狱入口index57403
 		 */
 		workFunc: function(cb2){
-			var obj1 = {act : "map", target : "圣山内部"}
-			var obj2 = {act : "map", target : "通往地狱的道路地下1层"}
-			var obj3 = {act : "map", target : "地狱入口"}
+			var obj1 = {act : 'map', target : '圣山内部'}
+			var obj2 = {act : 'map', target : '通往地狱的道路地下1层'}
+			var obj3 = {act : 'map', target : '地狱入口'}
 
 			var walkMaze = (cb)=>{
 				var map = cga.GetMapName();
@@ -265,8 +265,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * 从地狱入口传送回来的特殊圣山之巅，index57404
 		 */
 		workFunc: function(cb2){
-			var obj = {act : "map", target : "圣山之巅"}
-			cga.askNpcForObj("地狱入口", [24, 25],obj,()=>{
+			var obj = {act : 'map', target : '圣山之巅', npcpos : [24, 25], waitLocation: '地狱入口'}
+			cga.askNpcForObj(obj,()=>{
 				cb2(true)
 			})
 		}
@@ -274,8 +274,8 @@ var task = cga.task.Task(configTable.mainPlugin, [
 	{//5
 		intro: '6.与阿鲁卡那斯对话，交出称号“背叛者”获得称号“地狱的回响”并传送回法兰城。',
 		workFunc: function(cb2){
-			var obj = {act : "map", target : "法兰城"}
-			cga.askNpcForObj("圣山之巅", [23,22],obj,()=>{
+			var obj = {act : 'map', target : '法兰城', npcpos : [23,22], waitLocation: '圣山之巅'}
+			cga.askNpcForObj(obj,()=>{
 				cb2(true)
 			})
 		}
@@ -290,10 +290,10 @@ var task = cga.task.Task(configTable.mainPlugin, [
 		 * 【注意】【大天使的呼吸】为消耗品，使用1次就消失
 		 */
 		workFunc: function(cb2){
-			var obj = {act : "item", target : "大天使的呼吸"}
+			var obj = {act : 'item', target : '大天使的呼吸', npcpos : [27,15]}
 			cga.travel.falan.toStone('C', (r)=>{
 				cga.travel.autopilot(1504,()=>{
-					cga.askNpcForObj(1504, [27,15],obj,()=>{
+					cga.askNpcForObj(obj,()=>{
 						cb2(true)
 					})
 				})

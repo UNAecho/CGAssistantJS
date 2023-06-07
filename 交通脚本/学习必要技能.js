@@ -54,7 +54,7 @@ var cga = require('../cgaapi')(function(){
 	{//2
 		intro: '3.学宠物强化',
 		workFunc: function(cb2){
-			if (professionalInfo.jobmainname != '饲养师'){
+			if (professionalInfo.name != '饲养师'){
 				console.log('非饲养师不需要宠物强化，脚本练级效率是无限的，跳过')
 				cb2(true)
 				return
@@ -156,7 +156,7 @@ var cga = require('../cgaapi')(function(){
 				cb2(true)
 				return
 			}
-			if (professionalInfo.jobmainname == '暗黑骑士' || professionalInfo.jobmainname == '教团骑士'){
+			if (professionalInfo.name == '暗黑骑士' || professionalInfo.name == '教团骑士'){
 				console.log('暗黑骑士或教团骑士不能刷声望，跳过')
 				cb2(true)
 				return
@@ -311,7 +311,7 @@ var cga = require('../cgaapi')(function(){
 		intro: '13.昏睡魔法，是咒术师的得意技；传教士也要学，方便带双王',
 		workFunc: function(cb2){
 			var skillname = '昏睡魔法'
-			if(professionalInfo.jobmainname == '传教士' || professionalInfo.jobmainname == '咒术师'){
+			if(professionalInfo.name == '传教士' || professionalInfo.name == '咒术师'){
 				if(cga.findPlayerSkill(skillname)){
 					console.log('已经学会' + skillname + ',跳过')
 					cb2(true)

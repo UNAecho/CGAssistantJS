@@ -1,9 +1,7 @@
 var cga = global.cga;
 var configTable = global.configTable;
-// 提取本地职业数据
-const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
-var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
-var commonJob = professionalInfo.jobmainname
+
+var commonJob = cga.job.getJob().job
 
 var thisobj = {
 	prepare : (cb)=>{// prepare步骤时候取消低忠诚出战
