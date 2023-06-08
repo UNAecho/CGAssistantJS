@@ -11725,7 +11725,7 @@ module.exports = function(callback){
 					continue
 				}
 				if(walls.matrix[y + j][x + i] == 0 && cga.isPathAvailable(XY.x, XY.y, x + i, y + j)){
-					pos.push([xpos + i,y + j])
+					pos.push([x + i,y + j])
 				}
 			}
 		}
