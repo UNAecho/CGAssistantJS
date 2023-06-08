@@ -150,8 +150,8 @@ var autoRing = (cb) => {
 	if (cga.getItemCount('信') >= 1) {
 		cga.travel.falan.toStone('C', (r) => {
 			cga.travel.autopilot('谒见之间', () => {
-				var obj = { act: "item", target: "承认之戒" }
-				cga.askNpcForObj('谒见之间', [5, 3], obj, () => {
+				var obj = { act: 'item', target: '承认之戒', npcpos : [5, 3]}
+				cga.askNpcForObj(obj, () => {
 					setTimeout(autoRing, 1000, cb);
 				})
 			})
@@ -173,8 +173,8 @@ var autoRing = (cb) => {
 					[52, 68, '曙光营地指挥部'],
 					[69, 69, '曙光营地指挥部', 85, 2],
 				], () => {
-					var obj = { act: "item", target: "信" }
-					cga.askNpcForObj('曙光营地指挥部', [95, 7], obj, () => {
+					var obj = { act: 'item', target: '信', npcpos : [95, 7] }
+					cga.askNpcForObj(obj, () => {
 						setTimeout(autoRing, 1000, cb);
 					})
 				});
@@ -189,8 +189,8 @@ var autoRing = (cb) => {
 		rollBack(() => {
 			cga.disbandTeam(() => {
 				// 异常情况可能有：背包满了。魔石以及神之金需要自动丢弃，这部分功能在战斗配置中设置。
-				var obj = { act: "item", target: "怪物碎片" }
-				cga.askNpcForObj(44708, [14, 14], obj, () => {
+				var obj = { act: 'item', target: '怪物碎片', npcpos : [14, 14] }
+				cga.askNpcForObj(obj, () => {
 					setTimeout(autoRing, 1000, cb);
 				})
 			})
@@ -331,8 +331,8 @@ var autoRing = (cb) => {
 						// 在本任务cga.buildCustomerTeam中，已经规定了必须有1人是没有承认之戒的。
 						// 也就是仅有且必有1人会拿到团长证明。
 						// 全队与NPC对话，持有【团长的证明】的人会自动将全队带入栅栏(指定坐标)，所以不需要判断各自的【团长的证明】持有情况
-						var obj = { act: "map", target: 27101, pos: [42, 22] }
-						cga.askNpcForObj(27101, [40, 22], obj, go)
+						var obj = { act: 'map', target: 27101, pos: [42, 22], npcpos : [40, 22], waitLocation: 27101 }
+						cga.askNpcForObj(obj, go)
 					})
 					return
 				} else if (r && r == 'timeout') {// 如果超时，则重置任务相关数据，回去重新组队
@@ -360,8 +360,8 @@ var autoRing = (cb) => {
 				[52, 68, '曙光营地指挥部'],
 				[69, 69, '曙光营地指挥部', 85, 2],
 			], () => {
-				var obj = { act: "item", target: "团长的证明" }
-				cga.askNpcForObj(27015, [95, 7], obj, () => {
+				var obj = { act: 'item', target: '团长的证明', npcpos : [95, 7] }
+				cga.askNpcForObj(obj, () => {
 					setTimeout(autoRing, 1000, cb);
 				})
 			});
@@ -373,8 +373,8 @@ var autoRing = (cb) => {
 	if (cga.getItemCount('承认之戒', true) == 0) {
 		cga.travel.falan.toStone('C', (r) => {
 			cga.travel.autopilot('谒见之间', () => {
-				var obj = { act: "item", target: "信笺" }
-				cga.askNpcForObj('谒见之间', [5, 3], obj, () => {
+				var obj = { act: 'item', target: '信笺', npcpos : [5, 3] }
+				cga.askNpcForObj(obj, () => {
 					setTimeout(autoRing, 1000, cb);
 				})
 			})

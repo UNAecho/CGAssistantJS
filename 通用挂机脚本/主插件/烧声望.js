@@ -16,7 +16,7 @@ var configTable = global.configTable;
 // 提取本地职业数据
 const getprofessionalInfos = require('../../常用数据/ProfessionalInfo.js');
 var professionalInfo = getprofessionalInfos(cga.GetPlayerInfo().job)
-var commonJob = professionalInfo.jobmainname
+var commonJob = professionalInfo.name
 
 var interrupt = require('./../公共模块/interrupt');
 

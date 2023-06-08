@@ -9,6 +9,8 @@ const professionalArray = getprofessionalInfos.Professions
 // 学习必要技能任务对象，用于获取需要学习的任务技能，统一静态变量，防止多处数据不统一。
 const learnSkillMission = require(rootdir + '/常用数据/missions/学习必要技能.js');
 
+var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
+
 var thisobj = {
 	prepare: (cb) => {
 		let playerInfo = cga.GetPlayerInfo();
@@ -48,6 +50,15 @@ var thisobj = {
 		// 生产系自行开启所有传送，至少40级才能过海，最好再高级一点，否则40级容易被飞
 		if(!targetObj.hasOwnProperty('missionName') && playerInfo.level >= 70 && curJobObj.jobType == '生产系' && !config.allstonedone){
 			targetObj.missionName = '单人开全部传送'
+		}
+
+		// 转职保证书、刷声望。声望小于（不包含）敬畏的寂静时，需要转职刷声望
+		if(thisobj.finalJob.jobType == '战斗系' && playerInfo.level >= 80 && curJobObj.reputationLv < 13){
+			console.log('你是战斗系，并且声望小于敬畏的寂静，开始进入烧声望环节。包括【转职保证书】【烧声望】【传咒驯互转】3个环节')
+			setTimeout(()=>{
+				updateConfig.update_config({'mainPlugin' : '转职保证书'})
+			},2000)
+			return
 		}
 
 		// 如果没有职业切换需求，开始检查技能情况
@@ -91,7 +102,7 @@ var thisobj = {
 		}
 
 		if (typeof obj.finalJob == 'number') {
-			configTable.finalJob = professionalArray[obj.finalJob].jobmainname;
+			configTable.finalJob = professionalArray[obj.finalJob].name;
 			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
 		} else {
 			configTable.finalJob = obj.finalJob;
@@ -117,12 +128,12 @@ var thisobj = {
 		for (var i in professionalArray) {
 			if (i != 0)
 				sayString += ', ';
-			sayString += '(' + (parseInt(i) + 1) + ')' + professionalArray[i].jobmainname;
+			sayString += '(' + (parseInt(i) + 1) + ')' + professionalArray[i].name;
 		}
 		cga.sayLongWords(sayString, 0, 3, 1);
 		cga.waitForChatInput((msg, index) => {
 			if (index !== null && index >= 1 && professionalArray[index - 1]) {
-				configTable.finalJob = professionalArray[index - 1].jobmainname;
+				configTable.finalJob = professionalArray[index - 1].name;
 				thisobj.finalJob = cga.job.getJob(configTable.finalJob)
 
 				var sayString2 = '当前已选择:[' + thisobj.finalJob.job + ']。';
