@@ -1,34 +1,54 @@
 {
-    "mainPlugin": "全自动练级",
+    "mainPlugin": "转职保证书",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
         "回补提醒",
         "换水晶",
         "掉魂自动招魂",
+        "智能培养角色",
         "监听回补",
         "监听宠物忠诚度",
         "自动加点",
         "自动存取魔币",
-        "队员卖石","智能培养角色"
+        "队员卖石"
     ],
-    "finalJob":"教团骑士",
-    "supplyMode": 1,
-    "teamMode": 0,
-    "teammates": [
-        "UNAの咒术师",
-        "UNAの暗黑骑士",
-        "UNAの格斗2",
-        "UNAの格斗3",
-        "UNAの圣骑士"
-    ],
-    "timeout" : 180000,
-    "battleArea": 0,
+    "finalJob": "教团骑士",
+    "roleObj": {
+        "part": "队员",
+        "role": "输出"
+    },
+    "leaderFilter": "bus",
+    "memberFilter": "UNA",
+    "minTeamMemberCount": 5,
+    "roleMaxCount": {
+        "输出": 2,
+        "治疗": 1,
+        "小号": 3
+    },
+    "leaderX": 143,
+    "leaderY": 109,
+    "timeout": 180000,
+    "spawnOfAmber4": {
+        "flag": true,
+        "part": "队员",
+        "aim": "无限循环",
+        "leaderX": 146,
+        "leaderY": 109,
+        "leaderFilter": "egg"
+    },
     "sellStore": 1,
-    "layerLevel": 1,
+    "autoRing": {
+        "flag": true,
+        "part": "队员",
+        "aim": "一次性",
+        "leaderX": 50,
+        "leaderY": 77,
+        "leaderFilter": "ring"
+    },
     "minHp": "25%",
     "minMp": "25%",
-    "buyCrystal": "水火的水晶（5：5）",
+    "buyCrystal": "地水的水晶（5：5）",
     "minLoyality": 40,
     "maxEndurance": 333,
     "maxStrength": 80,
