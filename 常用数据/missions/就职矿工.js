@@ -27,7 +27,7 @@ var thisobj = {
 		{
 			intro: '2.前往法兰城毕夫鲁的家（206.37），持有【铜】*20与那尔薇（8.3）对话，选“是”获得【便当？】。',
 			workFunc: function (cb2) {
-				var obj = { act: 'item', target: '便当？', npcpos : [8, 3] }
+				var obj = { act: 'item', target: '便当？', npcpos: [8, 3] }
 				cga.travel.falan.toStone('C', () => {
 					cga.travel.autopilot('毕夫鲁的家', () => {
 						cga.askNpcForObj(obj, () => {
@@ -40,7 +40,7 @@ var thisobj = {
 		{
 			intro: '3.返回国营第24号矿坑道（351.145）地下一楼与矿工毕夫鲁（35.7）对话，选“是”交出【便当？】获得【矿石？】、【有关矿石的纸条】。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '矿石？', npcpos : [35, 7] }
+				var obj = { act: 'item', target: '矿石？', npcpos: [35, 7] }
 				cga.travel.falan.toStone('W1', (r) => {
 					cga.walkList([
 						[22, 87, '芙蕾雅'],
@@ -56,7 +56,7 @@ var thisobj = {
 		{
 			intro: '4.前往法兰城凯蒂夫人店（196.78）与鉴定师马尔弗（13.9）对话，选“是”交出【矿石？】、【有关矿石的纸条】获得【给那尔薇的信】。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '给那尔薇的信', npcpos : [13, 9] }
+				var obj = { act: 'item', target: '给那尔薇的信', npcpos: [13, 9] }
 				cga.travel.falan.toStone('C', () => {
 					cga.travel.autopilot('凯蒂夫人的店', () => {
 						cga.askNpcForObj(obj, () => {
@@ -69,7 +69,7 @@ var thisobj = {
 		{
 			intro: '5.前往毕夫鲁之家与那尔薇（8.3）对话，选“是”交出【给那尔薇的信】获得【饮料？】。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '饮料？', npcpos : [8, 3] }
+				var obj = { act: 'item', target: '饮料？', npcpos: [8, 3] }
 				cga.travel.falan.toStone('C', () => {
 					cga.travel.autopilot('毕夫鲁的家', () => {
 						cga.askNpcForObj(obj, () => {
@@ -82,7 +82,7 @@ var thisobj = {
 		{
 			intro: '6.前往国营第24矿坑道地下一楼与矿工毕夫鲁（35.7）对话，选“是”交出【饮料？】获得【矿工推荐信】。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '矿工推荐信', npcpos : [35, 7] }
+				var obj = { act: 'item', target: '矿工推荐信', npcpos: [35, 7] }
 				cga.travel.falan.toStone('W1', (r) => {
 					cga.walkList([
 						[22, 87, '芙蕾雅'],
@@ -98,13 +98,9 @@ var thisobj = {
 		{
 			intro: '7.前往圣拉鲁卡村村长的家（49.81）2楼与矿工吉拉瓦特（8.4）对话即可就职矿工，任务完结。',
 			workFunc: (cb2) => {
-				var obj = { act: 'job', target: thisobj.data.job.job, npcpos : thisobj.data.job.npcpos }
-				cga.travel.toVillage(thisobj.data.job.npcMainMap, () => {
-					cga.travel.autopilot(thisobj.data.job.npcMap, () => {
-						cga.askNpcForObj(obj, () => {
-							cb2(true)
-						})
-					})
+				var obj = { act: 'job', target: thisobj.data.job.job }
+				cga.askNpcForObj(obj, () => {
+					cb2(true)
 				})
 			}
 		},
@@ -142,6 +138,8 @@ var thisobj = {
 
 	},
 	doTask: (param, cb) => {
+		// 单人即可完成，战斗改为逃跑
+		cga.loadBattleConfig('战斗赶路')
 		// 接受外部传入的参数
 		thisobj.param = param
 		var task = cga.task.TaskWithThink(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements)

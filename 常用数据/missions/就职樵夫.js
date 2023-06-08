@@ -56,7 +56,7 @@ var thisobj = {
 		{
 			intro: '3.带着伐下的孟宗竹回到法兰城内艾文蛋糕店[216.148]内找艾文交谈后就可以换到手斧。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '手斧？', npcpos : [12, 5] }
+				var obj = { act: 'item', target: '手斧？', npcpos: [12, 5] }
 				var mapindex = cga.GetMapIndex().index3
 
 				var go = () => {
@@ -79,7 +79,7 @@ var thisobj = {
 		{
 			intro: '4.然后再到城内[106.190]的地点找樵夫弗伦（凌晨及白天出现）换取树苗。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '树苗？', npcpos : [106, 191] }
+				var obj = { act: 'item', target: '树苗？', npcpos: [106, 191] }
 				var mapindex = cga.GetMapIndex().index3
 
 				var go = () => {
@@ -104,7 +104,7 @@ var thisobj = {
 		{
 			intro: '5.利用白天时再把树苗交给种植家阿姆罗斯（134，36） 交给他之后就可以换取到水色的花。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '水色的花？', npcpos : [134, 36] }
+				var obj = { act: 'item', target: '水色的花？', npcpos: [134, 36] }
 				var mapindex = cga.GetMapIndex().index3
 
 				var go = () => {
@@ -129,7 +129,7 @@ var thisobj = {
 		{
 			intro: '6.换到花之后再把他交给弗伦后就可以再换到木柴。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '木材？', npcpos : [106, 191] }
+				var obj = { act: 'item', target: '木材？', npcpos: [106, 191] }
 				var mapindex = cga.GetMapIndex().index3
 
 				var go = () => {
@@ -154,7 +154,7 @@ var thisobj = {
 		{
 			intro: '7.前往法兰城艾文蛋糕店与蛋糕店的艾文对话，交出【木材？】获得【艾文的饼干】。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '艾文的饼干', npcpos : [12, 5] }
+				var obj = { act: 'item', target: '艾文的饼干', npcpos: [12, 5] }
 				var mapindex = cga.GetMapIndex().index3
 
 				var go = () => {
@@ -175,7 +175,7 @@ var thisobj = {
 		{
 			intro: '8.返回法兰城（106.191）处与樵夫弗伦对话，交出【艾文的饼干】获得【樵夫推荐信】。',
 			workFunc: (cb2) => {
-				var obj = { act: 'item', target: '樵夫推荐信', npcpos : [106, 191] }
+				var obj = { act: 'item', target: '樵夫推荐信', npcpos: [106, 191] }
 				var mapindex = cga.GetMapIndex().index3
 
 				var go = () => {
@@ -200,7 +200,7 @@ var thisobj = {
 		{
 			intro: '9.前往法兰城职业介绍所（195.50）与樵夫荷拉巴斯（7.11）对话即可就职樵夫，任务完结。',
 			workFunc: (cb2) => {
-				var obj = { act: 'job', target: thisobj.data.job.job}
+				var obj = { act: 'job', target: thisobj.data.job.job }
 				cga.askNpcForObj(obj, () => {
 					cb2(true)
 				})
@@ -243,7 +243,7 @@ var thisobj = {
 		// 删除伐木体验，这个技能除本任务外，没有其它用处
 		forgetSkill: (cb) => {
 			var skill = cga.skill.getSkill('伐木体验')
-			var obj = { act: 'forget', target: skill.name, npcpos : skill.npcpos }
+			var obj = { act: 'forget', target: skill.name, npcpos: skill.npcpos }
 			cga.travel.falan.toStone('E2', () => {
 				cga.travel.autopilot(skill.npcMap, () => {
 					cga.askNpcForObj(obj, () => {
@@ -254,6 +254,8 @@ var thisobj = {
 		}
 	},
 	doTask: (param, cb) => {
+		// 单人即可完成，战斗改为逃跑
+		cga.loadBattleConfig('战斗赶路')
 		// 接受外部传入的参数
 		thisobj.param = param
 		var task = cga.task.Task(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements)

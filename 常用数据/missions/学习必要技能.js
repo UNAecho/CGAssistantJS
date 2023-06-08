@@ -13,9 +13,9 @@ var thisobj = {
 				}
 				console.log('检测到你的目标职业【' + thisobj.data.jobObj.job + '】需要学习【' + targetSkill + '】')
 				cga.askNpcForObj({
-					act : 'skill', 
-					target : targetSkill,
-				},() => {
+					act: 'skill',
+					target: targetSkill,
+				}, () => {
 					setTimeout(() => {
 						cb2('restart stage');
 					}, 2000);
@@ -64,6 +64,8 @@ var thisobj = {
 		}
 	},
 	doTask: (param, cb) => {
+		// 单人即可完成，战斗改为逃跑
+		cga.loadBattleConfig('战斗赶路')
 		// 接受外部传入的参数
 		thisobj.param = param
 		thisobj.data.jobObj = cga.job.getJob(thisobj.param.job)

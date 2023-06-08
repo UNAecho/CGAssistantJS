@@ -67,7 +67,7 @@ var thisobj = {
 			workFunc: (cb2) => {
 
 				var go = (cb3) => {
-					var obj = { act: 'item', target: '猎人推荐信', npcpos : [49, 77] }
+					var obj = { act: 'item', target: '猎人推荐信', npcpos: [49, 77] }
 					cga.askNpcForObj(obj, () => {
 						cb3(true)
 					})
@@ -91,13 +91,9 @@ var thisobj = {
 		{
 			intro: '4.前往伊尔村装备店（35.25）与猎人强提（13.16）对话即可就职猎人，任务完结。',
 			workFunc: (cb2) => {
-				var obj = { act: 'job', target: thisobj.data.job.job, npcpos : thisobj.data.job.npcpos }
-				cga.travel.toVillage(thisobj.data.job.npcMainMap, () => {
-					cga.travel.autopilot(thisobj.data.job.npcMap, () => {
-						cga.askNpcForObj(obj, () => {
-							cb2(true)
-						})
-					})
+				var obj = { act: 'job', target: thisobj.data.job.job }
+				cga.askNpcForObj(obj, () => {
+					cb2(true)
 				})
 			}
 		},
@@ -122,7 +118,7 @@ var thisobj = {
 	func: {// 任务自定义函数
 		forgetSkill: (cb) => {
 			var skill = cga.skill.getSkill('狩猎体验')
-			var obj = { act: 'forget', target: skill.name, npcpos : skill.npcpos }
+			var obj = { act: 'forget', target: skill.name, npcpos: skill.npcpos }
 			cga.travel.toVillage(skill.npcMainMap, () => {
 				cga.travel.autopilot(skill.npcMap, () => {
 					cga.askNpcForObj(obj, () => {
@@ -133,6 +129,8 @@ var thisobj = {
 		}
 	},
 	doTask: (param, cb) => {
+		// 单人即可完成，战斗改为逃跑
+		cga.loadBattleConfig('战斗赶路')
 		// 接受外部传入的参数
 		thisobj.param = param
 		var task = cga.task.Task(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements)
