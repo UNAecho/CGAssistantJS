@@ -1,9 +1,7 @@
 var fs = require('fs');
 var Async = require('async');
 var updateConfig = require('./../公共模块/修改配置文件');
-var teamMode = require('./../公共模块/组队模式');
 var configMode = require('./../公共模块/读取战斗配置');
-var supplyMode = require('./../公共模块/智能回补');
 var update = require('../公共模块/修改配置文件');
 
 var cga = global.cga;
@@ -340,6 +338,8 @@ var task = cga.task.Task('琥珀之卵4', [
 						if(!thisobj.spawnOfAmber4.fuckBoss){
 							console.log('全员都持有【觉醒的文言抄本】，本次任务跳过击杀BOSS环节。')
 						}
+						// 记录已经组好队了（完成第0步）
+						thisobj.spawnOfAmber4.taskStep = 0
 
 						update.update_config({ spawnOfAmber4: thisobj.spawnOfAmber4 }, true, () => {
 							cga.disbandTeam(() => {
@@ -957,25 +957,12 @@ var thisobj = {
 	},
 	translate : (pair)=>{
 
-		if (pair.field == 'sellStore') {
-			pair.field = '是否卖石';
-			pair.value = pair.value == 1 ? '卖石' : '不卖石';
-			pair.translated = true;
-			return true;
-		}
-
 		if (pair.field == 'spawnOfAmber4') {
 			pair.field = '是否自动做' + thisobj.taskName;
 			pair.value = pair.value.flag ? '做' : '不做';
 			pair.translated = true;
 			return true;
 		}
-
-		if (supplyMode.translate(pair))
-			return true;
-
-		if (teamMode.translate(pair))
-			return true;
 
 		if (configMode.translate(pair))
 			return true;
