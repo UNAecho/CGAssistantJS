@@ -151,16 +151,6 @@ var thisobj = {
 			}
 		}
 
-		// 如果主插件烧声望，强行修改回补蓝量为最低得意技耗魔
-		if (configTable && configTable.mainPlugin == '烧声望' && (commonJob == '传教士' || commonJob == '咒术师')){
-			// 消去百分比读取，防止数值配置minMp被短路
-			thisobj.minMpPercent = undefined
-			thisobj.minMpValue = 5
-			// 修改configTable仅是为了在translate给控制台显示被修改后的回补最小蓝量信息，注意此时如果将configTable写入磁盘，将改变原有文件配置(最小蓝量变为得意技耗蓝)。
-			configTable.minMp = thisobj.minMpValue
-			console.log('发现主插件为【'+configTable.mainPlugin+'】，'+'强行修改最低回补蓝量为:【' + thisobj.minMpValue+'】')
-		}
-		
 		if(thisobj.minMpPercent === undefined && thisobj.minMpValue === undefined){
 			console.error('读取配置：回补蓝量失败！');
 			return false;
