@@ -9158,6 +9158,7 @@ module.exports = function(callback){
 									// 防止shareinfo的speaker又把称号刷掉
 									setTimeout(cga.ChangeNickName,2000,doneNick)
 									// 防止小号还没有检测队长是否done，队长那边已经把队伍解散了
+									console.log('队伍合格，队员组成:',shareInfoObj.teammates)
 									setTimeout(cb,leaerKickMeTimeout + 2000,shareInfoObj)
 									return
 								}
