@@ -312,7 +312,7 @@ var task = cga.task.Task('琥珀之卵4', [
 				// i转职保证书和i觉醒的文言抄本的min:0的作用是为了一次性在cga.buildCustomerTeam中实现组队以及统计任务道具持有情况
 				// 这样可以在任务期间不需要另行花费时间来统计BOSS战是否登出。
 				let cusObj = {
-					'check': {'#620018': { min: 0 },'r输出': { sum: 4 }, 'r治疗': { sum: 1 }, 'r小号': { sum: 0 } },
+					'check': {'#620018': { min: 0 },'r输出': { sum: 3 }, 'r治疗': { sum: 1 }, 'r小号': { sum: 1 } },
 					'part': thisobj.spawnOfAmber4.part,
 					'leaderPos': [thisobj.spawnOfAmber4.leaderX, thisobj.spawnOfAmber4.leaderY],
 					'leaderFilter': thisobj.spawnOfAmber4.leaderFilter,
