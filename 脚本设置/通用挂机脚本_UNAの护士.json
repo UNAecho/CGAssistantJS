@@ -20,6 +20,7 @@
         "UNAの格斗2",
         "UNAの战斧2",
         "UNAの战斧3"],
+    "needPerfectTrainSkill": true,
     "sellStore": 1,
     "battleArea": 1,
     "layerLevel": 1,

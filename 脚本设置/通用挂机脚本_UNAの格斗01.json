@@ -22,6 +22,7 @@
     "leaderX": 143,
     "leaderY": 109,
     "timeout": 180000,
+    "needPerfectTrainSkill": false,
     "sellStore": 1,
     "autoRing": {
         "flag": true,

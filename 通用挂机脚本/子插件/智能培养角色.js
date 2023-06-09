@@ -52,7 +52,7 @@ var thisobj = {
 			targetObj.missionName = '单人开全部传送'
 		}
 
-		// 转职保证书、刷声望。声望小于（不包含）敬畏的寂静时，需要转职刷声望
+		// 转职保证书、刷声望。声望小于（不包含）敬畏的寂静时，需要转职刷声望。这里暂时使用脚本跳转的方式，因为逻辑太复杂，没有做解耦
 		if(thisobj.finalJob.jobType == '战斗系' && playerInfo.level >= 80 && curJobObj.reputationLv < 13){
 			console.log('你是战斗系，并且声望小于敬畏的寂静，开始进入烧声望环节。包括【转职保证书】【烧声望】【传咒驯互转】3个环节')
 			setTimeout(()=>{

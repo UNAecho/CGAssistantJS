@@ -37,6 +37,7 @@
         "leaderY": 109,
         "leaderFilter": "egg"
     },
+    "needPerfectTrainSkill": false,
     "sellStore": 1,
     "autoRing": {
         "flag": false,

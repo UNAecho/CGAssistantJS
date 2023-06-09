@@ -17,6 +17,7 @@
     "teammates": [         
         "UNAの格斗1",
         "UNAの剑士"],
+    "needPerfectTrainSkill": true,
     "sellStore": 1,
     "battleArea": 1,
     "layerLevel": 1,

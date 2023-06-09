@@ -1145,7 +1145,7 @@ var thisobj = {
 					if (saveObj.flag) {
 						setTimeout(stage1_1, 500, cb2);
 					} else {
-						setTimeout(stage1Final, 500, cb3);
+						setTimeout(stage1Final, 500, cb2);
 					}
 					return false;
 				}

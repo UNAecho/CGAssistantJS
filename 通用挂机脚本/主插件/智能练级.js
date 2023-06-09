@@ -1,10 +1,11 @@
 /**
  * UNAecho开发笔记：
  * 2023年，为了将所有角色的全自动培养整合成一条龙无人监管流程，特此开发本模块
- * 【智能练级】【智能回补】【智能组队】【智能卖石】为绑定模块，必须同时使用，其他模块并不兼容
+ * 【智能练级】【智能回补】【智能组队】【智能卖石】【智能培养角色】为绑定模块，必须同时使用，其他模块并不兼容
  * 核心逻辑：
- * 	1、读取练级
- * TODO 练级的muster如果运行时就已经在集合地，直接跳过
+ * 1、人物会自动根据自己的队内职责进行汇报，由队长设置每队的成员数量分配，如3输出1治疗1小号。
+ * 2、练级地点，在初期按照人物等级自动适配。而当组队进入战斗时，会有战斗时的playerthink来根据全员10个单位（5人5宠物）来重新规划练级区域。保证战场上最低等级的单位在最适合的区域练级
+ * 3、2023.6.9整合了自动做承认之戒、自动做转职保证书、刷声望、自动传咒驯互转模块。
  * 
  * 
  * 回补逻辑：playerthink中发现ctx.result为supply之后，直接调用智能回补模块，补完后重新进入loop
@@ -21,6 +22,7 @@ var configMode = require('../公共模块/读取战斗配置');
 var update = require('../公共模块/修改配置文件');
 
 var spawnOfAmber4Mode = require('./转职保证书');
+var transferMode = require('./传咒驯互转');
 
 var cga = global.cga;
 var configTable = global.configTable;
@@ -1112,7 +1114,7 @@ var thisobj = {
 					if (saveObj.flag) {
 						setTimeout(stage1_1, 500, cb2);
 					} else {
-						setTimeout(stage1Final, 500, cb3);
+						setTimeout(stage1Final, 500, cb2);
 					}
 					return false;
 				}
@@ -1127,6 +1129,7 @@ var thisobj = {
 			supplyMode.inputcb,
 			teamMode.inputcb,
 			spawnOfAmber4Mode.inputcb,
+			transferMode.inputcb,
 			stage0,
 			stage1,
 		], cb);

@@ -24,6 +24,7 @@
     ],
     "timeout" : 180000,
     "battleArea": 0,
+    "needPerfectTrainSkill": true,
     "sellStore": 1,
     "layerLevel": 1,
     "minHp": "25%",
