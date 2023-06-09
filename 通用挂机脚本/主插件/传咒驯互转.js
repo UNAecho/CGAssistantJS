@@ -26,7 +26,7 @@ var loop = ()=>{
 		return
 	}
 
-	callSubPluginsAsync('prepare', ()=>{
+	thisobj.bankObj.prepare(()=>{
 
 		if(cga.needSupplyInitial()){
 			cga.travel.toHospital(loop,false,false)
@@ -60,6 +60,8 @@ var loop = ()=>{
 }
 
 var thisobj = {
+	// 自动存取魔币
+	bankObj : require('../子插件/自动存取魔币.js'),
 	getDangerLevel : ()=>{
 		return 0;
 	},
