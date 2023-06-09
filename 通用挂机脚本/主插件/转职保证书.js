@@ -657,7 +657,12 @@ var task = cga.task.Task('琥珀之卵4', [
 											[211, 117],
 										], (r)=>{
 											cga.TurnTo(212, 116);
-											cga.AsyncWaitNPCDialog(()=>{
+											cga.AsyncWaitNPCDialog((err,dlg)=>{
+												if(dlg && dlg.message.indexOf('放我一马') != -1){
+													console.log('无法进入祭坛，可能是打BOSS时掉线，重新进入的。但其他人进度可能参差不齐，这里需要回滚，重新执行任务。')
+													rollBack(cb2, 'jump', 0)
+													return
+												}
 												cga.ClickNPCDialog(32, -1);
 												cga.AsyncWaitNPCDialog(()=>{
 													cga.ClickNPCDialog(1, -1);
