@@ -3,6 +3,7 @@ var Async = require('async');
 var updateConfig = require('./../公共模块/修改配置文件');
 
 var cga = global.cga;
+var rootdir = cga.getrootdir()
 var configTable = global.configTable;
 
 var jump = ()=>{
@@ -52,7 +53,7 @@ var loop = ()=>{
 			console.log('称号没满，准备转职为:传教士')
 			missionName = '就职传教士'
 		}
-		let missionObj = require(__dirname + '/常用数据/missions/' + missionName + '.js');
+		let missionObj = require(rootdir + '/常用数据/missions/' + missionName + '.js');
 		missionObj.doTask({}, () => {
 			jump()
 		})
