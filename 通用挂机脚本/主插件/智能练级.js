@@ -841,10 +841,15 @@ var loop = () => {
 		return
 	}
 
-	teamMode.muster(() => {
-		teamMode.wait_for_teammates_filter(() => {
-			cga.disbandTeam(loop)
+	// 以前是先组队，再执行子插件的prepare
+	// 现在考虑到子插件可能包含自动培养角色，会用到转职、烧声望等功能，需要去其它地方组队，所以改为先prepare再看看是否还需要练级
+	callSubPluginsAsync('prepare', () => {
+		teamMode.muster(() => {
+			teamMode.wait_for_teammates_filter(() => {
+				cga.disbandTeam(loop)
+			})
 		})
+
 	})
 }
 

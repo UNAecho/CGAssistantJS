@@ -226,8 +226,6 @@ var jump = ()=>{
 }
 
 var loop = ()=>{
-	let playerinfo = cga.GetPlayerInfo();
-
 	thisobj.bankObj.prepare(()=>{
 		if(cga.needSupplyInitial({})){
 			supplyMode.func(loop);
@@ -236,12 +234,6 @@ var loop = ()=>{
 		if(supplycount == 0){
 			setTimeout(getPercentage, 2000, loop);
 			return
-		}
-		
-		let petIndex = playerinfo.petid
-		if(petIndex != -1){
-			console.log('当前职业不是驯兽师，取消掉出战宠物来烧技能。')
-			cga.ChangePetState(petIndex, 0);
 		}
 		cga.travel.falan.toStone('C', (r)=>{
 			cga.travel.autopilot('灵堂',()=>{
@@ -282,7 +274,14 @@ var thisobj = {
 		cb(null)
 		return
 	},
-	execute : ()=>{		
+	execute : ()=>{
+		// 脚本开始就收宠物
+		let petIndex = cga.GetPlayerInfo().petid
+		if(petIndex != -1){
+			console.log('当前职业不是驯兽师，取消掉出战宠物来烧技能。')
+			cga.ChangePetState(petIndex, 0);
+		}
+
 		playerThinkTimer();
 		cga.registerMoveThink(moveThink);
 		checkSkill(loop);
