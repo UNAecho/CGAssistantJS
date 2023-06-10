@@ -640,9 +640,7 @@ var task = cga.task.Task('琥珀之卵4', [
 						});
 						return;
 					}
-	
-					
-	
+
 					cga.travel.newisland.toStone('X', ()=>{
 						cga.walkList([
 							[165, 153],
@@ -797,6 +795,14 @@ var task = cga.task.Task('琥珀之卵4', [
 		workFunc: function(cb2){
 			
 			var go = () => {
+				if(cga.needSupplyInitial({  })){
+					cga.travel.falan.toCastleHospital(()=>{
+						setTimeout(()=>{
+							cb2('restart stage');
+						}, 3000);
+					});
+					return;
+				}
 				let bookCnt = cga.getItemCount('转职保证书')
 
 				if(bookCnt > 0){
