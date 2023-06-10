@@ -9018,7 +9018,7 @@ module.exports = function(callback){
 		// 如果不输入，则默认允许任何人进队
 		let nameFilter= cusObj.nameFilter
 		var blacklist = {}
-		var blacklistTimeout = Math.floor(Math.random() * (180000 - 5000 + 1) + 60000);
+		var blacklistTimeout = Math.floor(Math.random() * (180000 - 5000 + 1) + 180000);
 		// 队员监听队长是否踢自己
 		const leaderReg = new RegExp(/你被队长“(.+)”请出队伍/)
 		// 监听队长踢自己的超时时间，超过就判断队伍是否合格
