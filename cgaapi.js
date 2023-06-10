@@ -8637,6 +8637,7 @@ module.exports = function(callback){
 			}else{
 				throw new Error('暗号类型错误，请检查')
 			}
+			console.log('队员',teams[identifier.indexOf(regObj[3])].name,'更新',translateDict[regObj[1]],regObj[2],'的值【',regObj[4],'】')
 		}
 		/**
 		 * type : i,#,t,m,r等缩写
@@ -8809,13 +8810,14 @@ module.exports = function(callback){
 				let teams = cga.getTeamPlayers();
 				if(checkKeys.length < teams.length){
 					console.log('队员信息中，人数统计缺失，',delay/1000,'秒后重新进入mainLogic..')
+					console.log("🚀 ~ file: cgaapi.js:8810 ~ check ~ teammate_info:", teammate_info)
 					// 队员缺失，重置统计信息
 					teammate_info = {}
 					// 缓存信息也清除
 					nickCache = {}
 					// 如果人员缺失，那么信息收集齐全的flag要重置。
 					allDoneStr = ''
-					setTimeout(mainLogic, delay);
+					setTimeout(mainLogic, isleader ? delay : 0);
 					return
 				}
 				for (let i = 0; i < reqSequence.length; i++) {
@@ -8840,6 +8842,7 @@ module.exports = function(callback){
 								delete nickCache[checkKeys[k]]
 							}else{
 								console.log('队员信息中【' + checkKeys[k] + '】数据缺失，但该名队员还在队伍中，保留其数据，',delay/1000,'秒后重新进入mainLogic..')
+								console.log(teammate_info[checkKeys[k]])
 							}
 							setTimeout(mainLogic, isleader ? delay : 1500);
 							return
@@ -9015,11 +9018,11 @@ module.exports = function(callback){
 		// 如果不输入，则默认允许任何人进队
 		let nameFilter= cusObj.nameFilter
 		var blacklist = {}
-		var blacklistTimeout = Math.floor(Math.random() * (180000 - 5000 + 1) + 5000);
+		var blacklistTimeout = Math.floor(Math.random() * (180000 - 5000 + 1) + 60000);
 		// 队员监听队长是否踢自己
 		const leaderReg = new RegExp(/你被队长“(.+)”请出队伍/)
 		// 监听队长踢自己的超时时间，超过就判断队伍是否合格
-		const leaerKickMeTimeout = 90000
+		const leaerKickMeTimeout = 10000
 		let mainLogic = ()=>{
 			if(isLeader){
 				var check = (shareInfoObj, cusObj) => {
@@ -9232,6 +9235,7 @@ module.exports = function(callback){
 									setTimeout(retry, 1000, cb);
 									return false
 								}
+								console.log('cga.waitSysMsgTimeout返回true，继续监听..')
 								return true
 							},leaerKickMeTimeout)// 监控队长是否踢自己，如果被踢则将队长加入黑名单，一段时间之内不再加入其队伍
 							return
