@@ -9019,7 +9019,7 @@ module.exports = function(callback){
 		// 队员监听队长是否踢自己
 		const leaderReg = new RegExp(/你被队长“(.+)”请出队伍/)
 		// 监听队长踢自己的超时时间，超过就判断队伍是否合格
-		const leaerKickMeTimeout = 10000
+		const leaerKickMeTimeout = 90000
 		let mainLogic = ()=>{
 			if(isLeader){
 				var check = (shareInfoObj, cusObj) => {
