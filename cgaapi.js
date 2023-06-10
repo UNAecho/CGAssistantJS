@@ -9201,6 +9201,7 @@ module.exports = function(callback){
 							// 猜测：当玩家说话过于频繁，特别是脚本密集的新城记录点，可能会遗漏队长踢人的信息。
 							// 建议将地点选在玩家说话少的地方运行。
 							cga.waitSysMsgTimeout((err,sysMsg)=>{
+								console.log('cga.waitSysMsgTimeout返回err:',err)
 								if(err && !sysMsg){
 									console.log('队长没有踢自己，判断队伍是否合格..')
 									let teamplayers = cga.getTeamPlayers();
