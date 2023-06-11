@@ -452,62 +452,55 @@ var task = cga.task.Task('琥珀之卵4', [
 			}
 
 			thisobj.bankObj.prepare(()=>{
-				var go =()=>{
-					cga.walkList([
-						[131, 61],
-						], ()=>{
-							cga.TurnTo(131, 59);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(32, 0);
-								cga.AsyncWaitNPCDialog((err, dlg)=>{
-									if(dlg && dlg.message.indexOf('还不快点') == -1)
-									{
-										cga.ClickNPCDialog(32, 0);
-										cga.AsyncWaitNPCDialog(()=>{
+				healObj.func(()=>{
+					var go =()=>{
+						cga.walkList([
+							[131, 61],
+							], ()=>{
+								cga.TurnTo(131, 59);
+								cga.AsyncWaitNPCDialog(()=>{
+									cga.ClickNPCDialog(32, 0);
+									cga.AsyncWaitNPCDialog((err, dlg)=>{
+										if(dlg && dlg.message.indexOf('还不快点') == -1)
+										{
+											cga.ClickNPCDialog(32, 0);
+											cga.AsyncWaitNPCDialog(()=>{
+												cga.ClickNPCDialog(1, 0);
+												zhanglaozhizheng(cb2);
+											});
+										} else {
 											cga.ClickNPCDialog(1, 0);
 											zhanglaozhizheng(cb2);
-										});
-									} else {
-										cga.ClickNPCDialog(1, 0);
-										zhanglaozhizheng(cb2);
-									}
+										}
+									});
+								});
+							});
+					}
+	
+					configMode.manualLoad('战斗赶路')
+	
+					var XY = cga.GetMapXY();
+					var mapindex = cga.GetMapIndex().index3
+					if(mapindex == 59714 && XY.x > 120 && XY.x < 146 && XY.y > 58 && XY.y < 80){
+						if(cga.getTeamPlayers().length){
+							goodToGoZLZZ(cb2);
+						}else{
+							go()
+						}
+					}else{
+						cga.travel.newisland.toStone('X', ()=>{
+							cga.walkList([
+							[130, 50, '盖雷布伦森林'],
+							[246, 76, '路路耶博士的家'],
+							], ()=>{
+								cga.WalkTo(3, 10);
+								cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
+									go()
 								});
 							});
 						});
-				}
-
-				if(cga.needSupplyInitial({  })){
-					cga.travel.falan.toCastleHospital(()=>{
-						setTimeout(()=>{
-							cb2('restart stage');
-						}, 3000);
-					});
-					return;
-				}
-
-				configMode.manualLoad('战斗赶路')
-
-				var XY = cga.GetMapXY();
-				var mapindex = cga.GetMapIndex().index3
-				if(mapindex == 59714 && XY.x > 120 && XY.x < 146 && XY.y > 58 && XY.y < 80){
-					if(cga.getTeamPlayers().length){
-						goodToGoZLZZ(cb2);
-					}else{
-						go()
 					}
-				}else{
-					cga.travel.newisland.toStone('X', ()=>{
-						cga.walkList([
-						[130, 50, '盖雷布伦森林'],
-						[246, 76, '路路耶博士的家'],
-						], ()=>{
-							cga.WalkTo(3, 10);
-							cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
-								go()
-							});
-						});
-					});
-				}
+				})
 			})
 		}
 	},
@@ -641,40 +634,33 @@ var task = cga.task.Task('琥珀之卵4', [
 		workFunc: function(cb2){
 			let go = ()=>{
 				thisobj.bankObj.prepare(()=>{
-					if(cga.needSupplyInitial({  })){
-						cga.travel.falan.toCastleHospital(()=>{
-							setTimeout(()=>{
-								cb2('restart stage');
-							}, 3000);
-						});
-						return;
-					}
-
-					cga.travel.newisland.toStone('X', ()=>{
-						cga.walkList([
-							[165, 153],
-						], (r)=>{
-							cga.TurnTo(165, 154);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(32, -1);
+					healObj.func(()=>{
+						cga.travel.newisland.toStone('X', ()=>{
+							cga.walkList([
+								[165, 153],
+							], (r)=>{
+								cga.TurnTo(165, 154);
 								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(8, -1);
-									cga.AsyncWaitMovement({map:['梅布尔隘地'], delay:1000, timeout:10000}, ()=>{
-										cga.walkList([
-											[211, 117],
-										], (r)=>{
-											cga.TurnTo(212, 116);
-											cga.AsyncWaitNPCDialog((err,dlg)=>{
-												if(dlg && dlg.message.indexOf('放我一马') != -1){
-													console.log('无法进入祭坛，可能是打BOSS时掉线，重新进入的。但其他人进度可能参差不齐，这里需要回滚，重新执行任务。')
-													rollBack(cb2, 'jump', 0)
-													return
-												}
-												cga.ClickNPCDialog(32, -1);
-												cga.AsyncWaitNPCDialog(()=>{
-													cga.ClickNPCDialog(1, -1);
-													cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
-														cb2(r);
+									cga.ClickNPCDialog(32, -1);
+									cga.AsyncWaitNPCDialog(()=>{
+										cga.ClickNPCDialog(8, -1);
+										cga.AsyncWaitMovement({map:['梅布尔隘地'], delay:1000, timeout:10000}, ()=>{
+											cga.walkList([
+												[211, 117],
+											], (r)=>{
+												cga.TurnTo(212, 116);
+												cga.AsyncWaitNPCDialog((err,dlg)=>{
+													if(dlg && dlg.message.indexOf('放我一马') != -1){
+														console.log('无法进入祭坛，可能是打BOSS时掉线，重新进入的。但其他人进度可能参差不齐，这里需要回滚，重新执行任务。')
+														rollBack(cb2, 'jump', 0)
+														return
+													}
+													cga.ClickNPCDialog(32, -1);
+													cga.AsyncWaitNPCDialog(()=>{
+														cga.ClickNPCDialog(1, -1);
+														cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
+															cb2(r);
+														});
 													});
 												});
 											});
@@ -683,7 +669,7 @@ var task = cga.task.Task('琥珀之卵4', [
 								});
 							});
 						});
-					});
+					})
 				})
 			}
 
@@ -804,14 +790,6 @@ var task = cga.task.Task('琥珀之卵4', [
 		workFunc: function(cb2){
 			
 			var go = () => {
-				if(cga.needSupplyInitial({  })){
-					cga.travel.falan.toCastleHospital(()=>{
-						setTimeout(()=>{
-							cb2('restart stage');
-						}, 3000);
-					});
-					return;
-				}
 				let bookCnt = cga.getItemCount('转职保证书')
 
 				if(bookCnt > 0){
@@ -819,15 +797,17 @@ var task = cga.task.Task('琥珀之卵4', [
 					cb2(true)
 					return
 				}
-
-				cga.walkList([
-					[130, 50, '盖雷布伦森林'],
-					], ()=>{
-						var obj = { act: 'item', target: '转职保证书', npcpos : [245, 73] }
-						cga.askNpcForObj(obj, () => {
-							cb2(true)
-						})
-					});
+				
+				healObj.func(()=>{
+					cga.walkList([
+						[130, 50, '盖雷布伦森林'],
+						], ()=>{
+							var obj = { act: 'item', target: '转职保证书', npcpos : [245, 73] }
+							cga.askNpcForObj(obj, () => {
+								cb2(true)
+							})
+						});
+				})
 			}
 
 
@@ -971,6 +951,8 @@ var thisobj = {
 	teammates : null,
 	// 自动存取魔币
 	bankObj : require('../子插件/自动存取魔币.js'),
+	// 自动存取魔币
+	healObj : require('../公共模块/治疗和招魂.js'),
 	// 人物职业以及声望信息
 	job:cga.job.getJob(),
 	// 任务相关flag
