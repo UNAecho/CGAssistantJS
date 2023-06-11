@@ -9028,7 +9028,7 @@ module.exports = function(callback){
 		// 队员监听队长是否踢自己
 		const leaderReg = new RegExp(/你被队长“(.+)”请出队伍/)
 		// 监听队长踢自己的超时时间，超过就判断队伍是否合格
-		const leaerKickMeTimeout = 10000
+		const leaerKickMeTimeout = 4000
 		let mainLogic = ()=>{
 			if(isLeader){
 				var check = (shareInfoObj, cusObj) => {
@@ -10270,6 +10270,15 @@ module.exports = function(callback){
 		}, 1000);
 	}
 
+	/**
+	 * UNAecho: 此API有一个潜在bug，会出现明明有timeout的前提下，不会超时，导致程序一直阻塞。
+	 * 猜测是底层API:cga.AsyncWaitChatMsg的超时实现有bug。
+	 * 经过测试，超时时间在大于等于4000毫秒的时候，会出现非常严重的不稳定情况，4000秒时可能会等待20才会超时，甚至更长。
+	 * 
+	 * 【注意】由于看不到cga.AsyncWaitChatMsg的源码，请慎用此API
+	 * @param {*} cb 
+	 * @param {*} timeout 
+	 */
 	cga.waitSysMsgTimeout = (cb, timeout)=>{
 		cga.AsyncWaitChatMsg((err, r)=>{
 
