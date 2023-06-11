@@ -109,6 +109,12 @@ var goodToGoZLZZ = (cb)=>{
 			return;
 		}
 
+		if(cga.GetMapName() == '？？？'){
+			console.log('刷长老之证过程中，迷宫过期，重新回到新刷出的迷宫中继续..')
+			setTimeout(goodToGoZLZZ,1000,cb)
+			return;
+		}
+
 		let cnt = cga.getItemCount('长老之证')
 		// 实时播报进度
 		if(cntCache != cnt){
@@ -307,10 +313,11 @@ var task = cga.task.Task('琥珀之卵4', [
 
 			cga.travel.newisland.toStone('X', ()=>{
 				let doneNick = 'done'
-				// i转职保证书和i觉醒的文言抄本的min:0的作用是为了一次性在cga.buildCustomerTeam中实现组队以及统计任务道具持有情况
+				// i转职保证书和i觉醒的文言抄本的sum: -1的作用是为了一次性在cga.buildCustomerTeam中实现组队以及统计任务道具持有情况。sum: -1是不设数量限制的情况。
 				// 这样可以在任务期间不需要另行花费时间来统计BOSS战是否登出。
+				// 小号尝试2个是否能安全稳定挂机，如果不能，再改为1个
 				let cusObj = {
-					'check': {'#620018': { min: 0 },'r输出': { sum: 3 }, 'r治疗': { sum: 1 }, 'r小号': { sum: 1 } },
+					'check': {'#620018': { sum: -1 },'r输出': { sum: 3 }, 'r治疗': { sum: 2 }, 'r小号': { sum: 1 } },
 					'part': thisobj.spawnOfAmber4.part,
 					'leaderPos': [thisobj.spawnOfAmber4.leaderX, thisobj.spawnOfAmber4.leaderY],
 					'leaderFilter': thisobj.spawnOfAmber4.leaderFilter,
@@ -516,8 +523,10 @@ var task = cga.task.Task('琥珀之卵4', [
 			}
 
 			var sayshit = ()=>{
+				console.log('等待被传送回盖雷布伦森林..')
 				// 无论是否持有7个长老之证，最终目标都是被传送至盖雷布伦森林
-				cga.waitForLocation({mapname : '盖雷布伦森林'}, ()=>{
+				cga.waitForLocation({mapindex : 59500}, ()=>{
+					console.log('被传送回盖雷布伦森林，记录任务进度..')
 					setTimeout(save, 3000, cb2)
 				});
 

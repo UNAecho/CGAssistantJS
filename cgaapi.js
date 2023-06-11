@@ -256,7 +256,7 @@ module.exports = function(callback){
 				return
 			}
 
-			if(msg == '注销回到传送点。')
+			if(msg.indexOf('传送点') != -1)
 			{
 				//保存登出回城的地点到配置文件
 				var config = cga.loadPlayerConfig();
@@ -9017,6 +9017,12 @@ module.exports = function(callback){
 		let memberCnt= cusObj.memberCnt
 		// 如果不输入，则默认允许任何人进队
 		let nameFilter= cusObj.nameFilter
+
+		// 明确指出不需要某种item，在挂上leaderFilter来招募队员时，与!号一起，拼接在leaderFilter的后面。多数用于告知不再需要某r职责。如：不再需要输出/治疗/小号等
+		let noNeedStr = ''
+		// 队员使用，监测队长是否明确不需要自己的职责。需要配合cga.role.battleRoleArr使用
+		const noNeedExp = new RegExp(/(?<=\!)(r\d)*/)
+		// 黑名单相关
 		var blacklist = {}
 		var blacklistTimeout = Math.floor(Math.random() * (180000 - 5000 + 1) + 300000);
 		// 队员监听队长是否踢自己
@@ -9028,6 +9034,8 @@ module.exports = function(callback){
 				var check = (shareInfoObj, cusObj) => {
 					// 清空上一次踢人的黑名单
 					blacklist = {}
+					// 重置不需要的职责，因为队员可能是全新的人员，职责可能有变动
+					noNeedStr = ''
 					// 统计对象
 					let statObj = {}
 					// 不满足check条件的原因
@@ -9051,6 +9059,19 @@ module.exports = function(callback){
 												reason = '当前key【' + key + '】总和【' + statObj[key].sum +'】由于队员【' + i +'】的value【' +value +'】加入，已超出全队总和阈值【' +cusObj.check[k].sum + '】，将此队员加入黑名单'
 												console.log(reason)
 												blacklist[i] = Date.now()
+												// 如果是职责数量超过预设值，则接下来招募时，称号体现出拒绝某职责的队员
+												if(k[0] == 'r'){
+													let roleIndex = cga.role.battleRoleArr.indexOf(key)
+													// 如果cga.role.battleRoleArr职责表中有这种职责，并且noNeedStr中没有记录过，则记录。以免重复记录职责
+													if(roleIndex != -1){
+														if(noNeedStr.indexOf(k[0] + roleIndex) == -1){
+															noNeedStr = noNeedStr.concat(k[0] + roleIndex)
+														}
+														console.log('职责【'+key+'】数量已经超过预设值，在招募队员时，称号会体现出拒绝【'+key+'】职责')
+													}else{
+														throw new Error('错误，cga.role.battleRoleArr中未储存职责:',key)
+													}
+												}
 												continue
 											}else{
 												statObj[key].sum += value
@@ -9142,11 +9163,14 @@ module.exports = function(callback){
 						setTimeout(wait, randomTime);
 						return
 					}
+					// 招募队员的称号，如果有需要的职责，则与!拼接，形成类似'bus!r0r1'的称号，告知不需要某种职业。
+					// 如果没有不需要的职责，则退化成leaderFilter
+					let hc = noNeedStr == '' ? leaderFilter : leaderFilter.concat('!').concat(noNeedStr)
 
 					// 挂上标记，队员才能识别队长。设置延迟，防止其他称号覆盖
-					if (cga.GetPlayerInfo().nick != leaderFilter) {
+					if (cga.GetPlayerInfo().nick != hc) {
 						setTimeout(() => {
-							cga.ChangeNickName(leaderFilter)
+							cga.ChangeNickName(hc)
 						}, 2000);
 					}
 
@@ -9258,7 +9282,19 @@ module.exports = function(callback){
 								&& (!leaderFilter || u.nick_name.indexOf(leaderFilter) != -1)
 								&& ((!blacklist.hasOwnProperty(u.unit_name) || (curTime - blacklist[u.unit_name] > blacklistTimeout)))
 							) {
+								// 由于(curTime - blacklist[u.unit_name] > blacklistTimeout)，判定为黑名单已超时，所以将不能加入队伍的黑名单中，去掉该队长的名字。
 								delete blacklist[u.unit_name]
+								// 检查一下队长是否有不需要的职责，看看是不是自己。如果是，则不加入此队。
+								let matchObj = u.nick_name.match(noNeedExp)
+								if(matchObj){
+									let scriptConfigObj = cga.LoadScriptConfigFile()
+									let roleIndex = cga.role.battleRoleArr.indexOf(scriptConfigObj.roleObj.role)
+									if(matchObj[0].indexOf('r'+roleIndex) != -1){
+										console.log('队长【'+u.unit_name+'】'+'不需要自己的职责【'+scriptConfigObj.roleObj.role+'】，放弃加入队伍。')
+										return false
+									}
+								}
+								
 								return true;
 							}
 							return false
@@ -13002,6 +13038,29 @@ module.exports = function(callback){
 	 */
 	cga.skill.getSlotRemain = () => {
 		return cga.GetPlayerInfo().skillslots - cga.skill.getSlotSum()
+	}
+
+	/**
+	 * 读取人物自己的脚本配置，由于比较常用，封装一个API使用
+	 */
+	cga.LoadScriptConfigFile = () => {
+		var json = null
+		try
+		{
+			var rootdir = cga.getrootdir()
+			var configPath = rootdir+'\\脚本设置';
+			var configName = configPath+'\\通用挂机脚本_'+cga.FileNameEscape(cga.GetPlayerInfo().name)+'.json';
+			var json = fs.readFileSync(configName, 'utf8');
+			
+			if(typeof json != 'string' || !json.length)
+				throw new Error('配置文件格式错误');
+		}catch(e){
+			if(e.code != 'ENOENT'){
+				console.log('role error:' + e)
+			}
+		}
+
+		return JSON.parse(json)
 	}
 
 	/**
