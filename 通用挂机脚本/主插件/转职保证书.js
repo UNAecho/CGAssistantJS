@@ -452,7 +452,7 @@ var task = cga.task.Task('琥珀之卵4', [
 			}
 
 			thisobj.bankObj.prepare(()=>{
-				healObj.func(()=>{
+				thisobj.healObj.func(()=>{
 					var go =()=>{
 						cga.walkList([
 							[131, 61],
@@ -634,7 +634,7 @@ var task = cga.task.Task('琥珀之卵4', [
 		workFunc: function(cb2){
 			let go = ()=>{
 				thisobj.bankObj.prepare(()=>{
-					healObj.func(()=>{
+					thisobj.healObj.func(()=>{
 						cga.travel.newisland.toStone('X', ()=>{
 							cga.walkList([
 								[165, 153],
@@ -797,8 +797,8 @@ var task = cga.task.Task('琥珀之卵4', [
 					cb2(true)
 					return
 				}
-				
-				healObj.func(()=>{
+
+				thisobj.healObj.func(()=>{
 					cga.walkList([
 						[130, 50, '盖雷布伦森林'],
 						], ()=>{
