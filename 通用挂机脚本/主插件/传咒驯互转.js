@@ -15,12 +15,12 @@ var jump = ()=>{
 // 假循环，只是为了写法一致。本loop仅执行一次。
 var loop = ()=>{
 
-	let job = cga.job.getJob()
+	let jobObj = cga.job.getJob()
 
 	cga.SayWords('欢迎使用【UNAの脚本】全自动保证书+转职+刷声望流程，当前正在进行：【'+configTable.mainPlugin+'】阶段。', 0, 3, 1);
 
 	// 声望第13阶段是敬畏的寂静
-	if(job.reputationLv > 12 && (!thisobj.needPerfectTrainSkill || (thisobj.needPerfectTrainSkill && cga.findPlayerSkill('完美调教术')))){
+	if(jobObj.reputationLv > 12 && (!thisobj.needPerfectTrainSkill || (thisobj.needPerfectTrainSkill && cga.findPlayerSkill('完美调教术')))){
 		setTimeout(()=>{
 			updateConfig.update_config({'mainPlugin' : '智能练级'})
 		},5000)
@@ -35,7 +35,7 @@ var loop = ()=>{
 		}
 
 		let missionName = null
-		if(job.reputationLv > 12){
+		if(jobObj.reputationLv > 12){
 			if(thisobj.needPerfectTrainSkill){
 				console.log('称号满但没有完美调教术，那么进行传咒驯互转的最后一站:转职驯兽')
 				missionName = '就职驯兽师'
@@ -46,7 +46,7 @@ var loop = ()=>{
 				},5000)
 				return
 			}
-		}else if(job == '传教士'){
+		}else if(jobObj.job == '传教士'){
 			console.log('称号没满，准备转职为:咒术师')
 			missionName = '就职咒术师'
 		}else{
