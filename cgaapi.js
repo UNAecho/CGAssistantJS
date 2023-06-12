@@ -5132,11 +5132,16 @@ module.exports = function(callback){
 			}
 			
 			if(curMap == '艾尔莎岛'){
-				cga.walkList([
-				stone == 'X' ? [140, 105] : [158, 94],
-				], ()=>{
-					cga.travel.newisland.toStoneInternal(stone, cb);
-				});
+				// 如果已经在艾尔莎岛，X位置不再使用cga.walkList走到传送石位置。
+				if(stone == 'X'){
+					cb(true);
+				}else{
+					cga.walkList([
+						[158, 94],
+						], ()=>{
+							cga.travel.newisland.toStoneInternal(stone, cb);
+						});
+					}
 				return;
 			}
 		}
@@ -9238,6 +9243,8 @@ module.exports = function(callback){
 										cga.ChangeNickName(doneNick)
 										cb(shareInfoObj)
 									}else{// 队伍不合格，重新进入retry
+										console.log("🚀 ~ file: cgaapi.js:9242 ~ cga.waitSysMsgTimeout ~ teamplayers.length:", teamplayers.length)
+										console.log("🚀 ~ file: cgaapi.js:9242 ~ cga.waitSysMsgTimeout ~ teamplayers[0].nick:", teamplayers[0].nick)
 										console.log('队伍不合格，重新进入retry')
 										setTimeout(retry, 1000, cb);
 									}

@@ -454,27 +454,10 @@ var task = cga.task.Task('琥珀之卵4', [
 			thisobj.bankObj.prepare(()=>{
 				thisobj.healObj.func(()=>{
 					var go =()=>{
-						cga.walkList([
-							[131, 61],
-							], ()=>{
-								cga.TurnTo(131, 59);
-								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(32, 0);
-									cga.AsyncWaitNPCDialog((err, dlg)=>{
-										if(dlg && dlg.message.indexOf('还不快点') == -1)
-										{
-											cga.ClickNPCDialog(32, 0);
-											cga.AsyncWaitNPCDialog(()=>{
-												cga.ClickNPCDialog(1, 0);
-												zhanglaozhizheng(cb2);
-											});
-										} else {
-											cga.ClickNPCDialog(1, 0);
-											zhanglaozhizheng(cb2);
-										}
-									});
-								});
-							});
+						let obj = {act : 'msg', target : '长老之证', npcpos : [131, 60]}
+						cga.askNpcForObj(obj,()=>{
+							zhanglaozhizheng(cb2);
+						})
 					}
 	
 					configMode.manualLoad('战斗赶路')
@@ -505,7 +488,7 @@ var task = cga.task.Task('琥珀之卵4', [
 		}
 	},
 	{//4
-		intro: '4.集齐7个【长老之证】后返回？？？，由持有7个【长老之证】的队员与荷特普(167.102)对话2次，选“是”交出【长老之证】并传送至盖雷布伦森林。',
+		intro: '4.集齐7个【长老之证】后返回？？？，由持有7个【长老之证】的队员与荷特普(131.60)对话2次，选“是”交出【长老之证】并传送至盖雷布伦森林。',
 		workFunc: function(cb2,index){
 
 			let save = (cb3)=>{
@@ -515,54 +498,25 @@ var task = cga.task.Task('琥珀之卵4', [
 				})
 			}
 
-			var sayshit = ()=>{
-				console.log('等待被传送回盖雷布伦森林..')
-				// 无论是否持有7个长老之证，最终目标都是被传送至盖雷布伦森林
-				cga.waitForLocation({mapindex : 59500}, ()=>{
-					console.log('被传送回盖雷布伦森林，记录任务进度..')
-					setTimeout(save, 3000, cb2)
-				});
-
-				if(cga.getItemCount('长老之证') >= 7){
-					console.log('长老之证已集齐7个，回去跟影子对话进行任务下一阶段');
-					cga.TurnTo(131, 60);
-					cga.AsyncWaitNPCDialog(()=>{
-						cga.ClickNPCDialog(32, 0);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(4, 0);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(1, 0);
-							});
-						});
-					});
-				} else {
-					console.log('有队友集齐7个长老之证，等待蹭车传送回盖雷布伦森林');
-				}
-			}
+			let obj = {act : 'map', target : 59500, npcpos : [131, 60], waitLocation: '？？？'}
 			
 			if(thisobj.isLeader){
 				var walkShit = ()=>{
 					if(cga.GetMapName() == '？？？')
 					{
-						cga.walkList([
-						[131, 61],
-						[130, 61],
-						[131, 61],
-						[130, 61],
-						[131, 61],
-						], (r)=>{
-							sayshit();
-						});
+						cga.askNpcForObj(obj,()=>{
+							setTimeout(save, 3000, cb2)
+						})
 						return;
 					}
 					walkMazeBack(walkShit);
 				}
 				walkMazeBack(walkShit);				
 				return;
-			}
-			else
-			{
-				cga.waitForLocation({mapname : '？？？', pos:[131, 60]}, sayshit);
+			}else{
+				cga.askNpcForObj(obj,()=>{
+					setTimeout(save, 3000, cb2)
+				})
 				return;
 			}
 		}
@@ -570,62 +524,42 @@ var task = cga.task.Task('琥珀之卵4', [
 	{//5
 		intro: '5.黄昏或夜晚时至神殿·伽蓝与荷特普(92.138)对话。',
 		workFunc: function(cb2,index){
+			let obj = {act : 'msg', target : '异界的神', npcpos : [92, 138]}
+
 			cga.travel.newisland.toStone('X', ()=>{
 				cga.walkList([
 					[201, 96, '神殿　伽蓝'],
 					[91, 138],
 				], (r)=>{
 					cga.task.waitForNPC('荷特普', ()=>{
-						cga.turnTo(92, 138);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(32, -1);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(32, -1);
-								cga.AsyncWaitNPCDialog(()=>{
-									cga.ClickNPCDialog(32, -1);
-									cga.AsyncWaitNPCDialog(()=>{
-										cga.ClickNPCDialog(1, -1);
-										setTimeout(()=>{
-											thisobj.spawnOfAmber4.taskStep = index
-											update.update_config({ spawnOfAmber4: thisobj.spawnOfAmber4 }, true, () => {
-												setTimeout(cb2, 1000, true);
-											})
-										}, 3000);
-									});
-								});
-							});
-						});
+						cga.askNpcForObj(obj,()=>{
+							setTimeout(()=>{
+								thisobj.spawnOfAmber4.taskStep = index
+								update.update_config({ spawnOfAmber4: thisobj.spawnOfAmber4 }, true, () => {
+									setTimeout(cb2, 1000, true);
+								})
+							}, 3000);
+						})
 					});
 				});
 			});
 		}
 	},
 	{//6
-		intro: '6.前往艾夏岛冒险者旅馆(102.115)与安洁可(55.32)对话，获得【逆十字】。',
+		intro: '6.前往艾夏岛冒险者旅馆(102.115)与安洁可(56, 31)对话，获得【逆十字】。',
 		workFunc: function(cb2){
 			
 			if(cga.getItemCount('逆十字') > 0){
 				cb2(true);
 				return;
 			}
+
+			let obj = {act : 'item', target : '逆十字', npcpos : [56, 31]}
 			
 			cga.travel.newisland.toPUB(()=>{
-				cga.walkList([
-					[56, 32],
-				], (r)=>{
-					cga.cleanInventory(1, ()=>{
-						cga.turnTo(56, 31);
-						cga.AsyncWaitNPCDialog(()=>{
-							cga.ClickNPCDialog(32, -1);
-							cga.AsyncWaitNPCDialog(()=>{
-								cga.ClickNPCDialog(1, -1);
-								setTimeout(()=>{
-									cb2(true);
-								}, 1000);
-							});
-						});
-					});					
-				});
+				cga.askNpcForObj(obj,()=>{
+					cb2(true);
+				})
 			});
 		}
 	},
