@@ -9491,6 +9491,9 @@ module.exports = function(callback){
 		比如，如果想在NPC问【你愿意吗？】的时候回答【否】，那么obj.neg可以输入"愿意"、"你愿意吗"等切片
 	 * [obj.pos] : 可选选项，2维int型数组。仅在obj.act = "map"时生效，人物需要等待被NPC传送至pos这个坐标，函数才结束
 	 * [obj.say] : 可选选项，string类型。人物会在与NPC交互的时候说话，因为有的NPC是需要说出对应的话才会有反应的
+	 * [obj.notalk] : 可选选项，function类型。自定义函数，如果不想让某个条件的队员与NPC对话，在此函数返回true。
+	 * 比如，长老之证的阴影，如果持有7个队员与阴影正在对话时，其它队员同时与阴影对话的话，自己的对话框会被挤掉。
+	 * 将长老之证的少于7的人return true，即可实现让其不与NPC对话。可以减少互相覆盖的概率。
 	 * 
 	 * 【开发提醒】由于宠物学习技能时的【是】【否】界面属于特殊弹窗，cga.AsyncWaitNPCDialog无法捕获，故这里没有宠物相关功能的实现。
 	 * 更新，有空可以参考cga.parsePetSkillStoreMsg制作
@@ -9514,6 +9517,9 @@ module.exports = function(callback){
 		}
 		if(obj.hasOwnProperty('waitLocation') && typeof obj.waitLocation != 'string' && typeof obj.waitLocation != 'number'){
 			throw new Error('obj.map必须为String或Number类型')
+		}
+		if(obj.hasOwnProperty('notalk') && typeof obj.notalk != 'function'){
+			throw new Error('obj.notalk必须为function类型')
 		}
 		if(obj.hasOwnProperty('npcpos') && (!Array.isArray(obj.npcpos) || obj.npcpos.length != 2)){
 			throw new Error('obj.npcpos如果传入，必须为Int型数组，长度为2')
@@ -9734,7 +9740,12 @@ module.exports = function(callback){
 						cga.SayWords(obj.say, 0, 3, 1);
 					}, 500);
 				}else{
-					cga.turnTo(npcpos[0], npcpos[1])
+					// 如果传入了notalk函数，return true的情况下不与NPC对话，只监测结果。
+					if(obj.hasOwnProperty('notalk') && obj.notalk()){
+						console.log('notalk函数不允许自己与NPC对话..')
+					}else{
+						cga.turnTo(npcpos[0], npcpos[1])
+					}
 				}
 				cga.AsyncWaitNPCDialog(dialogHandler);
 				setTimeout(retry, 3500, cb);
@@ -9762,13 +9773,41 @@ module.exports = function(callback){
 
 		let go = (cb) =>{
 
+			// 队员等待函数，因为队员需要等待队长把自己带到obj.waitLocation地图中，再执行逻辑
+			let memberWait = (cb) =>{
+				let waitObj = {}
+				if(typeof obj.waitLocation == 'string'){
+					waitObj.mapname = obj.waitLocation
+				}else if(typeof obj.waitLocation == 'number'){
+					waitObj.mapindex = obj.waitLocation
+				}else{
+					if(!isLeader()){
+						throw new Error('此次是组队模式，必须传入队员等待专用的waitLocation值，否则队员行为会发生异常')
+					}
+				}
+	
+				cga.waitForLocation(waitObj, ()=>{
+					console.log('检测到队长已经带队至NPC目标地图..')
+					cb(null)
+				})
+				return
+			}
+			// 判断此次act是否需要特殊走路引导，如就职、学技能等
 			let tmpObj = null
 			if(obj.act == 'job' || obj.act == 'promote'){
 				tmpObj = cga.job.getJob(obj.target)
 			}else if(obj.act == 'skill'){
 				tmpObj = cga.skill.getSkill(obj.target)
-			}else{
-				walkToNPC(obj.npcpos,cb)
+			}else{// 如果没有特殊走路引导，进入队长队员判断
+				// 队长带队
+				if(isLeader()){
+					walkToNPC(obj.npcpos,cb)
+					return
+				}
+				// 队员等待队长带队至指定地图
+				memberWait(()=>{
+					walkToNPC(obj.npcpos,cb)
+				})
 				return
 			}
 
@@ -9906,19 +9945,7 @@ module.exports = function(callback){
 					})
 				})
 			}else{
-				let waitObj = {}
-				if(typeof obj.waitLocation == 'string'){
-					waitObj.mapname = obj.waitLocation
-				}else if(typeof obj.waitLocation == 'number'){
-					waitObj.mapindex = obj.waitLocation
-				}else{
-					if(!isLeader()){
-						throw new Error('此次是组队模式，必须传入队员等待专用的waitLocation值，否则队员行为会发生异常')
-					}
-				}
-
-				cga.waitForLocation(waitObj, ()=>{
-					console.log('检测到队长已经带队至NPC目标地图..')
+				memberWait(()=>{
 					searchFunc((npcpos)=>{
 						walkToNPC(npcpos,cb)
 					})

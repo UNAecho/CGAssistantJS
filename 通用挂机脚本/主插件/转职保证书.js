@@ -87,6 +87,9 @@ var walkMazeBack = (cb)=>{
 var goodToGoZLZZ = (cb)=>{
 	// 长老之证数量，用于定时打印log。
 	let cntCache = 0
+	// 守墓者的黑名单，如果有其它玩家与其交战，则短时间内无法与其开战。
+	// 设置一个黑名单，规定在一定时间内不与其尝试对话发生战斗。防止一群人在一个NPC面前无限等待，浪费时间
+	let blackList = {}
 
 	var findObj = (cb3)=>{
 		var objs = cga.getMapObjects();
@@ -109,13 +112,14 @@ var goodToGoZLZZ = (cb)=>{
 			return;
 		}
 
-		if(cga.GetMapName() == '？？？'){
+		let cnt = cga.getItemCount('长老之证')
+
+		if(cga.GetMapName() == '？？？' && cnt > 0){
 			console.log('刷长老之证过程中，迷宫过期，重新回到新刷出的迷宫中继续..')
 			setTimeout(goodToGoZLZZ,1000,cb)
 			return;
 		}
 
-		let cnt = cga.getItemCount('长老之证')
 		// 实时播报进度
 		if(cntCache != cnt){
 			cntCache = cnt
@@ -144,23 +148,36 @@ var goodToGoZLZZ = (cb)=>{
 		});			
 	};
 	
-	var retryNpc = (result)=>{
+	var retryNpc = (result) => {
 		cga.TurnTo(result.xpos, result.ypos);
-		cga.AsyncWaitNPCDialog((err, dlg)=>{
-			if(dlg && dlg.message && (dlg.message.indexOf('已死的主人') >= 0 || dlg.message.indexOf('呼呼呼呼呼') >= 0 || dlg.message.indexOf('嘻嘻嘻嘻嘻嘻') >= 0)){
+		cga.AsyncWaitNPCDialog((err, dlg) => {
+			if (dlg && dlg.message && (dlg.message.indexOf('已死的主人') >= 0 || dlg.message.indexOf('呼呼呼呼呼') >= 0 || dlg.message.indexOf('嘻嘻嘻嘻嘻嘻') >= 0)) {
 				setTimeout(battleAgain, 1000);
-			}
-			else
-			{
+			} else if (dlg && dlg.message && dlg.message.indexOf('回头见') >= 0) {
+				console.log('x:',result.xpos,'y:',result.xpos,'的守墓者处于CD中')
+				blackList[result.xpos + '_' + result.ypos] = Date.now()
+				setTimeout(search, 1000);
+			} else {
 				setTimeout(retryNpc, 5000, result);
 			}
 		});
 	}
 
 	var search = ()=>{
-		var blackList = [];
 		cga.searchMap((units) => {
-			return units.find(u => u.unit_name == '守墓员' && u.type == 1 && u.model_id != 0) || cga.GetMapName() == '？？？'
+			return units.find((u) => {
+				if(u.unit_name == '守墓员' && u.type == 1 && u.model_id != 0){
+					console.log('发现守墓员..')
+					// 设置找到的守墓者如果在黑名单中，一定时间内不找他战斗
+					if(Date.now() - blackList[u.xpos + '_' + u.ypos] < 300000){
+						console.log('x:',u.xpos,'y:',u.xpos,'的守墓者处于CD中，无视它，继续搜索..')
+						return false
+					}
+					// 黑名单时间超时，去掉此NPC
+					delete blackList[u.xpos + '_' + u.ypos]
+					return true
+				}
+			}) || cga.GetMapName() == '？？？'
 		}, (err, result) => {
 			
 			if(cga.GetMapName() == '？？？'){
@@ -498,7 +515,12 @@ var task = cga.task.Task('琥珀之卵4', [
 				})
 			}
 
-			let obj = {act : 'map', target : 59500, npcpos : [131, 60], waitLocation: '？？？'}
+			let obj = {act : 'map', target : 59500, npcpos : [131, 60], waitLocation: '？？？', notalk :()=>{
+				if(cga.getItemCount('长老之证') < 7){
+					return true
+				}
+				return false
+			}}
 			
 			if(thisobj.isLeader){
 				var walkShit = ()=>{
