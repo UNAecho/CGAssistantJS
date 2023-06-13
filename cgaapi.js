@@ -9749,11 +9749,14 @@ module.exports = function(callback){
 					if(obj.hasOwnProperty('notalk') && obj.notalk()){
 						console.log('notalk函数不允许自己与NPC对话..')
 					}else{
-						cga.turnTo(npcpos[0], npcpos[1])
+						// 有时候，队长还没在NPC面前调整好位置，队员先与NPC对话直接令全队地图改变了，导致队长walklist报错。这里加一个与NPC对话的小延迟。
+						setTimeout(() => {
+							cga.turnTo(npcpos[0], npcpos[1])
+						}, cga.getTeamPlayers().length ? 1000 : 0);
 					}
 				}
 				cga.AsyncWaitNPCDialog(dialogHandler);
-				setTimeout(retry, 3500, cb);
+				setTimeout(retry, 4000, cb);
 				return
 			}
 
