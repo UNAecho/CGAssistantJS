@@ -9704,6 +9704,11 @@ module.exports = function(callback){
 					cb("ok")
 					return
 				}
+				console.log("🚀 ~ file: cgaapi.js:9704 ~ retry ~ obj.target:", obj.target)
+				console.log("🚀 ~ file: cgaapi.js:9704 ~ retry ~ cga.GetMapName():", cga.GetMapName())
+				console.log("🚀 ~ file: cgaapi.js:9704 ~ retry ~ cga.GetMapIndex().index3:", cga.GetMapIndex().index3)
+				console.log("🚀 ~ file: cgaapi.js:9704 ~ retry ~ obj.pos:", obj.pos)
+				console.log("🚀 ~ file: cgaapi.js:9704 ~ retry ~ !obj.pos:", !obj.pos)
 				if(obj.act == "item" && cga.findItem(obj.target) != -1){
 					repeatFlag = false
 					setTimeout(retry, 500, cb);
@@ -10916,6 +10921,23 @@ module.exports = function(callback){
 			forwardEntryTile : 13996,
 			backEntryTile : 13997,
 			backTopPosList : [[11, 17,'']],// TODO坐标不对，确认坐标
+		},
+		/**
+		 * 琥珀之卵4，刷长老之证的海底墓场外苑迷宫
+		 * 【注意】这是一个闭环迷宫，从index的59714的122, 69的传送水晶进入1层，会从顶层的传送水晶出来，回到index为59714的142, 69处。
+		 * 也就是出口和入口是同一个地图，不同的pos，很特殊。
+		 */
+		'海底墓场外苑' : {
+			entryMap : 59714,
+			exitMap : 59714,
+			posList : [[122, 69]],
+			xLimit : [122,122],
+			yLimit : [69,69],
+			prefix:'海底墓场外苑第',
+			suffix:'地带',
+			forwardEntryTile : 17967,//0x462F
+			backEntryTile : 17966,//0x462E
+			backTopPosList : [],
 		},
 		/**
 		 * 如果你做完半山6【地狱的回响】，和大祭司对话进入的小岛，最后在破冰面下面进入的地狱入口是这个。
