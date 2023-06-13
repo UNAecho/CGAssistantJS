@@ -60,6 +60,7 @@ var walkMazeForward = (cb)=>{
 			return '海底墓场外苑第'+(layerIndex + 1)+'地带';
 		},
 		entryTileFilter : (e)=>{
+			// 楼层+1是0x462F，楼层-1是0x462E
 			return e.colraw == 0x462F;
 		}
 	});
@@ -204,6 +205,7 @@ var goodToGoZLZZ = (cb)=>{
 			if(result && result.unit_name == '守墓员'){
 				retryNpc(result);
 			} else {
+				console.log('没看见守墓员，执行walkMazeForward..')
 				walkMazeForward(search);
 			}
 		});
@@ -212,6 +214,11 @@ var goodToGoZLZZ = (cb)=>{
 	loadBattleConfig()
 
 	if(thisobj.isLeader){
+		if(cga.GetMapName().indexOf('海底墓场外苑') != -1){
+			console.log('已经在海底墓场外苑了，直接进入search..')
+			search()
+			return
+		}
 		findObj((obj)=>{
 			cga.walkList([
 				[obj.mapx, obj.mapy, '海底墓场外苑第1地带']
@@ -482,6 +489,22 @@ var task = cga.task.Task('琥珀之卵4', [
 
 			if(cga.getInventoryEmptySlotCount() < 3){
 				console.log('【UNAecho脚本警告】你背包的空闲格子少于3个，长老之证是3个1组，想打满7个，需要3个背包空位。如果全队人都不满足此条件，将会出现在海底无限与NPC交战。请清理背包！')
+			}
+
+			var map = cga.GetMapName();
+
+			if(map.indexOf('海底墓场外苑') != -1){
+				if(cga.getTeamPlayers().length){
+					goodToGoZLZZ(cb2);
+					return
+				}
+			}else if(map == '？？？'){
+				if(cga.getTeamPlayers().length){
+					goodToGoZLZZ(cb2);
+				}else{
+					zhanglaozhizheng(cb2);
+				}
+				return
 			}
 
 			thisobj.bankObj.prepare(()=>{

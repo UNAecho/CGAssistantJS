@@ -25,7 +25,10 @@ var checkSkill = (cb)=>{
 		cga.askNpcForObj({
 			act : 'skill', 
 			target : needLearn,
-		},cb)
+		},()=>{
+			// 学完技能要回调，因为下面还有读取战斗配置的逻辑
+			checkSkill(cb)
+		})
 		return
 	}
 
