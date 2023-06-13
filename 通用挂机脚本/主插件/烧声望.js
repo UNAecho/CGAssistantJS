@@ -18,7 +18,7 @@ var checkSkill = (cb)=>{
 		needLearn = '气绝回复'
 
 	}else if(thisobj.job.job == '咒术师' && !cga.findPlayerSkill('石化魔法')){
-		console.log('没找到气绝回复，去法兰城学习')
+		console.log('没找到石化魔法，去法兰城学习')
 		needLearn = '石化魔法'
 	}
 	if(needLearn != null){

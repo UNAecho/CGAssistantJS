@@ -1192,7 +1192,7 @@ const skillInfos = [
 		fieldCost : 1,
 		npcMainMap : '法兰城',
 		npcMap : '法兰城',
-		npcpos : [120, 56],
+		npcpos : [120, 64],
 		description : '石化敌方单体',
 		notes : '进入石化状态不能行动，被攻击时受到伤害降低。技能等级影响行动数与成功率',
 		remark : '',

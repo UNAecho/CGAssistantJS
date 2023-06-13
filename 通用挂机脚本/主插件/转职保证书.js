@@ -112,6 +112,14 @@ var goodToGoZLZZ = (cb)=>{
 			return;
 		}
 
+		if(cga.getTeamPlayers().length != thisobj.spawnOfAmber4.teammates.length){
+			console.log('队伍人数与组建时不相等，可能有人掉线，回去等待其加入')
+			walkMazeBack(()=>{
+				zhanglaozhizheng(cb)
+			})
+			return
+		}
+
 		let cnt = cga.getItemCount('长老之证')
 
 		if(cga.GetMapName() == '？？？' && cnt > 0){
@@ -183,6 +191,14 @@ var goodToGoZLZZ = (cb)=>{
 			if(cga.GetMapName() == '？？？'){
 				goodToGoZLZZ(cb);
 				return;
+			}
+
+			if(cga.getTeamPlayers().length != thisobj.spawnOfAmber4.teammates.length){
+				console.log('队伍人数与组建时不相等，可能有人掉线，回去等待其加入')
+				walkMazeBack(()=>{
+					zhanglaozhizheng(cb)
+				})
+				return
 			}
 			
 			if(result && result.unit_name == '守墓员'){
