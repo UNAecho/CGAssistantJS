@@ -57,11 +57,22 @@ var walkMazeForward = (cb)=>{
 		cb(err);
 	}, {
 		layerNameFilter : (layerIndex)=>{
-			return '海底墓场外苑第'+(layerIndex + 1)+'地带';
+			return thisobj.maze.prefix+(layerIndex + 1)+thisobj.maze.suffix;
 		},
-		entryTileFilter : (e)=>{
-			// 楼层+1是0x462F，楼层-1是0x462E
-			return e.colraw == 0x462F;
+		entryTileFilter : (e)=>{// 逻辑：如果走到迷宫最后一层还是没找到，由于迷宫出入口是一张地图。那就出迷宫，重新从入口进入，再次寻找
+			let objs = e.objs
+			if(e.colraw == 0){
+				for (let i = 0; i < objs.length; i++) {
+					// 顶层出口，回到？？？地图。一般是出现没找到守墓者的情况
+					if(objs[i].cell == 3 && e.colraws.matrix[objs[i].mapy][objs[i].mapx] == thisobj.maze.backEntryTile){
+						console.log('地图中存在后退楼梯，判定传送石为出口')
+						return true
+					}
+				}
+			}else if(e.colraw == thisobj.maze.forwardEntryTile){// 楼层+1的楼梯是0x462F，楼层-1是0x462E
+				return true
+			}
+			return false
 		}
 	});
 }
@@ -560,8 +571,14 @@ var task = cga.task.Task('琥珀之卵4', [
 							[130, 50, '盖雷布伦森林'],
 							[246, 76, '路路耶博士的家'],
 							], ()=>{
-								cga.WalkTo(3, 10);
-								cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
+								cga.walkList([
+									[3, 10, '？？？']
+								], (err)=>{
+									if(err && err.message == 'Unexcepted map changed.'){
+										console.log('进入？？？失败，可能由于掉线或其他原因导致长老之证流程未完成，任务卡住。回滚任务进度，重新执行..')
+										rollBack(cb2, 'jump', 0)
+										return
+									}
 									go()
 								});
 							});
@@ -978,6 +995,8 @@ var thisobj = {
 	healObj : require('../公共模块/治疗和招魂.js'),
 	// 人物职业以及声望信息
 	job:cga.job.getJob(),
+	// 海底墓场外苑迷宫信息
+	maze : cga.mazeInfo['海底墓场外苑'],
 	// 任务相关flag
 	callZLZZ : false,
 	getDangerLevel : ()=>{
