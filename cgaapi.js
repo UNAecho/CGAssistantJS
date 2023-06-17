@@ -8817,7 +8817,6 @@ module.exports = function(callback){
 				let teams = cga.getTeamPlayers();
 				if(checkKeys.length < teams.length){
 					console.log('队员信息中，人数统计缺失，',delay/1000,'秒后重新进入mainLogic..')
-					console.log("🚀 ~ file: cgaapi.js:8810 ~ check ~ teammate_info:", teammate_info)
 					// 队员缺失，重置统计信息
 					teammate_info = {}
 					// 缓存信息也清除
@@ -9245,8 +9244,6 @@ module.exports = function(callback){
 										cga.ChangeNickName(doneNick)
 										cb(shareInfoObj)
 									}else{// 队伍不合格，重新进入retry
-										console.log("🚀 ~ file: cgaapi.js:9242 ~ cga.waitSysMsgTimeout ~ teamplayers.length:", teamplayers.length)
-										console.log("🚀 ~ file: cgaapi.js:9242 ~ cga.waitSysMsgTimeout ~ teamplayers[0].nick:", teamplayers[0].nick)
 										console.log('队伍不合格，重新进入retry')
 										setTimeout(retry, 1000, cb);
 									}
@@ -13318,6 +13315,20 @@ module.exports = function(callback){
 		setTimeout(cga.battle.waitBossBattle, 1500, roomIndex , cb);
 		return
 	}
+
+	/**
+	 * UNAecho: 游戏角色对象
+	 */
+	cga.character = {}
+
+	/**
+	 * UNAecho: 定义一些角色的静态信息，特殊时候有用。比如打UD时分辨性别。
+	 * 信息来自于cga.GetMapUnits()等API
+	 */
+	cga.characterInfo = {
+		105252 : {}
+	}
+
 
 	return cga;
 }
