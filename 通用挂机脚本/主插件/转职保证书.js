@@ -131,6 +131,9 @@ var goodToGoZLZZ = (cb)=>{
 	// 设置一个黑名单，规定在一定时间内不与其尝试对话发生战斗。防止一群人在一个NPC面前无限等待，浪费时间
 	let blackList = {}
 
+	// 如果角色没有搜索到守墓者，尝试在迷宫中使用cga.getRandomMazePos来获取视野范围外的坐标点（API内已去重）尝试探索。如果超过此次数，则去下一层继续寻找
+	let retryCnt = 3
+	
 	var findObj = (cb3)=>{
 		var objs = cga.getMapObjects();
 		var pos = cga.GetMapXY();
@@ -244,7 +247,31 @@ var goodToGoZLZZ = (cb)=>{
 			if(result && result.unit_name == '守墓员'){
 				retryNpc(result);
 			} else {
-				console.log('没看见守墓员，执行walkMazeForward..')
+				// 尝试次数耗尽前，使用cga.getRandomMazePos来随机探索视野之外的坐标，以此搜索NPC
+				if(retryCnt > 0){
+					console.log('迷宫轮廓已经探明，探索墙壁轮廓时，没看见守墓员。现在开始获取视野之外的点，继续探索守墓员。')
+					console.log('剩余探索次数:',retryCnt,'探索次数耗尽后，将进入下一层继续重复此逻辑')
+
+					// 消耗1次搜索次数，开始尝试随机探索
+					retryCnt -= 1
+
+					let outOfView = Object.values(cga.getRandomMazePos())
+					if(outOfView.length){
+						let randomPos = outOfView[Math.floor(Math.random() * outOfView.length + 1)]
+						console.log('本次获取到的视野之外的点:',randomPos)
+						cga.walkList([
+							[randomPos.x, randomPos.y]
+						], search);
+						return
+					}else{
+						console.log('【注意】没找到视野之外的坐标点，建议debug查看问题')
+					}
+				}
+				console.log('已经尝试数次探索视野之外的点，但没发现可攻击的守墓员，调用walkMazeForward进入下一层继续探索..')
+
+				// 复原尝试次数
+				retryCnt = 3
+
 				walkMazeForward(search);
 			}
 		});
@@ -672,6 +699,28 @@ var task = cga.task.Task('琥珀之卵4', [
 	{//7
 		intro: '7.前往梅布尔隘地，持有【琥珀之卵】、【逆十字】与祭坛守卫(211.116)对话进入？？？。',
 		workFunc: function(cb2){
+			let talkToNPC = ()=>{
+				cga.walkList([
+					[211, 117],
+				], (r)=>{
+					cga.TurnTo(212, 116);
+					cga.AsyncWaitNPCDialog((err,dlg)=>{
+						if(dlg && dlg.message.indexOf('放我一马') != -1){
+							console.log('无法进入祭坛，可能是打BOSS时掉线，重新进入的。但其他人进度可能参差不齐，这里需要回滚，重新执行任务。')
+							rollBack(cb2, 'jump', 0)
+							return
+						}
+						cga.ClickNPCDialog(32, -1);
+						cga.AsyncWaitNPCDialog(()=>{
+							cga.ClickNPCDialog(1, -1);
+							cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
+								cb2(r);
+							});
+						});
+					});
+				});
+			}
+			
 			let go = ()=>{
 				thisobj.bankObj.prepare(()=>{
 					thisobj.healObj.func(()=>{
@@ -685,25 +734,7 @@ var task = cga.task.Task('琥珀之卵4', [
 									cga.AsyncWaitNPCDialog(()=>{
 										cga.ClickNPCDialog(8, -1);
 										cga.AsyncWaitMovement({map:['梅布尔隘地'], delay:1000, timeout:10000}, ()=>{
-											cga.walkList([
-												[211, 117],
-											], (r)=>{
-												cga.TurnTo(212, 116);
-												cga.AsyncWaitNPCDialog((err,dlg)=>{
-													if(dlg && dlg.message.indexOf('放我一马') != -1){
-														console.log('无法进入祭坛，可能是打BOSS时掉线，重新进入的。但其他人进度可能参差不齐，这里需要回滚，重新执行任务。')
-														rollBack(cb2, 'jump', 0)
-														return
-													}
-													cga.ClickNPCDialog(32, -1);
-													cga.AsyncWaitNPCDialog(()=>{
-														cga.ClickNPCDialog(1, -1);
-														cga.AsyncWaitMovement({map:['？？？'], delay:1000, timeout:10000}, ()=>{
-															cb2(r);
-														});
-													});
-												});
-											});
+											talkToNPC()
 										});
 									});
 								});
@@ -715,7 +746,12 @@ var task = cga.task.Task('琥珀之卵4', [
 
 			loadBattleConfig()
 
-			go()
+			var map = cga.GetMapName();
+			if(map == '梅布尔隘地'){
+				talkToNPC()
+			}else{
+				go()
+			}
 		}
 	},
 	{//8

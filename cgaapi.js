@@ -8659,6 +8659,7 @@ module.exports = function(callback){
 			}
 			teammate_info[playerInfo.name].lv = playerInfo.level
 			teammate_info[playerInfo.name][translateDict[type]][name] = res
+			// console.log('写入自身的信息，',teammate_info)
 			return res
 		}
 
@@ -8800,10 +8801,11 @@ module.exports = function(callback){
 			let delay = 5000
 			if(flag === false){
 				clearTimeout(speakerMeter)
-				console.log('check结果为false，恢复原称号，清除缓存',delay/1000,'秒后重新进入cga.shareTeammateInfo..')
+				console.log('check结果为false，清除缓存',delay/1000,'秒后重新进入cga.shareTeammateInfo..')
 				setTimeout(()=>{
 					nickCache = {}
-					cga.ChangeNickName(originNick)
+					// 不再恢复原称号，因为会和一些外层调用的API发生称号修改冲突，导致外层判断出现失误
+					// cga.ChangeNickName(originNick)
 					cga.shareTeammateInfo(memberCnt, reqSequence, cb)
 					return
 				}, delay);
@@ -8871,9 +8873,9 @@ module.exports = function(callback){
 					teammate_info['teammates'] = teammates
 				}
 				// 此API出口
-				// 复原昵称时，等待2秒，防止其他队员没有读取完毕，这边就改昵称了。
+				// 缓冲2秒。并不再恢复原称号，因为会和一些外层调用的API发生称号修改冲突，导致外层判断出现失误
 				setTimeout(() => {
-					cga.ChangeNickName(originNick)
+					// cga.ChangeNickName(originNick)
 					cb(teammate_info)
 				}, 2000);
 				return
@@ -9704,34 +9706,29 @@ module.exports = function(callback){
 					cb("ok")
 					return
 				}
-				console.log("🚀 ~ file: cgaapi.js:9704 ~ retry ~ obj.target:", obj.target)
-				console.log("🚀 ~ file: cgaapi.js:9704 ~ retry ~ cga.GetMapName():", cga.GetMapName())
-				console.log("🚀 ~ file: cgaapi.js:9704 ~ retry ~ cga.GetMapIndex().index3:", cga.GetMapIndex().index3)
-				console.log("🚀 ~ file: cgaapi.js:9704 ~ retry ~ obj.pos:", obj.pos)
-				console.log("🚀 ~ file: cgaapi.js:9704 ~ retry ~ !obj.pos:", !obj.pos)
 				if(obj.act == "item" && cga.findItem(obj.target) != -1){
 					repeatFlag = false
-					setTimeout(retry, 500, cb);
+					setTimeout(retry, 1000, cb);
 					return
 				}else if(obj.act == "map" && (obj.target == cga.GetMapName() || obj.target == cga.GetMapIndex().index3) && (!obj.pos || (cga.GetMapXY().x == obj.pos[0] && cga.GetMapXY().y == obj.pos[1]))){
 					repeatFlag = false
-					setTimeout(retry, 500, cb);
+					setTimeout(retry, 1000, cb);
 					return
 				}else if(obj.act == "skill" && (cga.findPlayerSkill(obj.target))){
 					repeatFlag = false
-					setTimeout(retry, 500, cb);
+					setTimeout(retry, 1000, cb);
 					return
 				}else if(obj.act == "forget" && (!cga.findPlayerSkill(obj.target))){
 					repeatFlag = false
-					setTimeout(retry, 500, cb);
+					setTimeout(retry, 1000, cb);
 					return
 				}else if(obj.act == "job" && cga.job.getJob(obj.target).job == cga.job.getJob().job){
 					repeatFlag = false
-					setTimeout(retry, 500, cb);
+					setTimeout(retry, 1000, cb);
 					return
 				}else if(obj.act == "promote" && cga.job.getJob().jobLv >= obj.target){
 					repeatFlag = false
-					setTimeout(retry, 500, cb);
+					setTimeout(retry, 1000, cb);
 					return
 				}
 
@@ -10533,6 +10530,19 @@ module.exports = function(callback){
 		}
 		
 		setTimeout(cga.waitForMultipleLocation, 1000, arr);
+	}
+
+	/**
+	 * UNAecho : 视野距离，多数用于人物探索地图。取人物对目标坐标的2条垂线距离最大值
+	 * projection : n. 预测;推断;设想;投射;放映;投影;放映的影像;投影图;突起物;（嗓音或声音的）发送，传送，放开;（思想感情的）体现，形象化
+	 * @param {number} x 起始X坐标
+	 * @param {number} y 起始Y坐标
+	 * @param {number} targetX 目标X坐标
+	 * @param {number} targetY 目标Y坐标
+	 * @returns
+	 */
+	cga.projectDistance = (x, y, targetX,targetY) => {
+		return Math.max(Math.abs(targetX - x) , Math.abs(targetY - y));
 	}
 
 	/**
@@ -11609,13 +11619,11 @@ module.exports = function(callback){
 	 * 3、初次迭代，计算以自己为中心，曼哈顿距离大于24(x,y均大于12)的点作为目标点进行移动
 	 * 4、进入迭代，每次取第3步最近的坐标。如果候选集走完，则重新回到第1步，来刷新当前地图状态。
 	 * 
-	 * 由于上面第4步每次迭代，是选取目标地点作为下一次迭代的中心，这么做有3个弊端：
-	 * 1、会选到墙外的0点，这种点无法到达，而这种点很多。
-	 * 2、当1说的情况出现时，迭代中会以墙外点作为下一次计算曼哈顿距离大于24的点，这样会导致目标过于随机
-	 * 3、目标过于随机，人物会经常重复走已探索过的区域。
-	 * 4、由于随机，极端情况下甚至无法走出迷宫。
+	 * 由于上面第4步每次迭代，是选取目标地点作为下一次迭代的中心，这么做有弊端：
+	 * 1、目标过于随机，人物会经常重复走已探索过的区域。
+	 * 2、由于1的原因，极端情况下甚至无法走出迷宫。
 	 * 
-	 * 但也有优点，速度快，性能较优。
+	 * 但也有优点，可以获取封闭区域，因为算法扩散至墙壁会终止扩散。而且速度快。
 	 * 
 	 * 现在，重新一个新的地图探索逻辑：
 	 * 
@@ -11784,6 +11792,131 @@ module.exports = function(callback){
 				cb(new Error('无法找到符合条件的对象'));
 			});
 		});
+	}
+	/**
+	 * UNAecho: 生成某一点的视野范围内的坐标，多数用于查看人物所能看见的视野坐标。
+	 * 比如探索迷宫时，可以大致知道人物能看到哪里。
+	 * @param {*} viewDistance 视野范围，默认12
+	 * @param {*} start 起点坐标，可以是cga.GetMapXY()返回的Obj类型，也可以是2维数组[123,456]类型
+	 * @returns {Object} 返回一个object,数据结构为
+	 * {x:
+	 * 	{y:1}
+	 * }
+	 * 如果object.x.y==1的话，证明角色可以看到这个xy的坐标视野。
+	 */
+	cga.generateViewPoints = (viewDistance = 12 , start)=>{
+		let viewPoints = {}
+		let centre = {}
+		if(Object.prototype.toString.call(start) == '[object Object]'){
+			centre.x = start.x
+			centre.y = start.y
+		}else if(start instanceof Array){
+			centre.x = start[0]
+			centre.y = start[1]
+		}
+		
+		for (let i = -1 * viewDistance; i <= viewDistance; i++) {
+			for (let j = -1 * viewDistance; j <= viewDistance; j++) {
+				if(i == 0 && j == 0){
+					continue
+				}
+				if(viewPoints.hasOwnProperty(start.x + i)){
+					viewPoints[start.x + i][start.y + j] = 1
+				}else{
+					viewPoints[start.x + i] = {}
+					viewPoints[start.x + i][start.y + j] = 1
+				}
+			}
+		}
+		return viewPoints
+	}
+
+	cga.getRandomMazePos = (minDistance = 12) => {
+		// 坐标偏移矩阵
+		let xShift = [-1,0,1]
+		let yShift = [-1,0,1]
+
+		/**
+		 * 地图碰撞矩阵
+		 * 注意：
+		 * 1、此矩阵的xy和游戏坐标xy是相反的。
+		 * 2、而cga.buildMapCollisionRawMatrix中，传送石的值其实是0，也就是可以行走
+		 * 3、cga.buildMapCollisionMatrix是cga.buildMapCollisionRawMatrix经过处理后的API，无论是楼梯还是传送石，matrix数组中的xy对应的值都是1，也就是不可行走
+		 * 这为判断提供了方便，因为对于此API，不管是楼梯还是传送石都需要规避。
+		 */
+		let collisionMatrix = cga.buildMapCollisionMatrix(true);
+		let start = cga.GetMapXY();
+
+		let foundedPoints = {}
+		foundedPoints[start.x + '_' + start.y] = start;
+
+		let findByNextPoints = (centre) => {
+			let nextPoints = [];
+			let push = (p) => {
+				if (p.x > collisionMatrix.x_bottom && p.x < collisionMatrix.x_size && p.y > collisionMatrix.y_bottom && p.y < collisionMatrix.y_size) {
+					if (collisionMatrix.matrix[p.y][p.x] === 0) {
+						let key = p.x + '_' + p.y;
+						if (!foundedPoints[key]) {
+							foundedPoints[key] = p;
+							nextPoints.push(p);
+						}
+					}
+				}
+			};
+
+			for (let i = 0; i < xShift.length; i++) {
+				for (let j = 0; j < yShift.length; j++) {
+					if(i == 0 && j == 0){
+						continue
+					}
+					push({x: centre.x + xShift[i], y: centre.y + yShift[j]});
+				}
+			}
+			nextPoints.forEach(findByNextPoints);
+		};
+
+		// 缓存点
+		let pointCache = null
+		// 最终结果
+		let resultPoints = {}
+		/**
+		 * UNAecho:剔除大量坐标中，相互距离小于minDistance的点
+		 * 比如当minDistance = 12时，站在点[1,2]是可以看到[12,13]坐标的物体。
+		 * 如果在探索地图的时候，[1,2]或者[12,13]，我们保留1个即可，因为不论走到哪一个位置，都能看到对方。
+		 * 如果有大量的坐标密集地等待探索，那么就会发生不断在一个已经探索过的地方反复走重复的路（无效走路过多，因为待走的坐标都很密集）
+		 * 此方法利用一个缓存点pointCache和一个结果集，来实现只保留距离大于minDistance的点。（有点类似支持向量机margin的味道）
+		 * @param {*} minDistance 视野距离，默认12
+		 * @param {*} points 待剔除的候选集
+		 * @returns 
+		 */
+		let removeDuplicate = (points,minDistance = 12) => {
+			// 先遍历，剔除掉与缓存点距离小于minDistance的点。
+			let tmpPoints = points.filter((p)=>{
+				// 如果上一次缓存已经被清除，此点将成为下一个缓存点
+				if(pointCache === null){
+					pointCache = p
+				}
+				if(cga.projectDistance(pointCache.x, pointCache.y, p.x, p.y) < minDistance){
+					return false
+				}
+				return true
+			})
+			// 如果缓存坐标不是人物站立的坐标，则加入候选集。
+			if(pointCache.x != start.x || pointCache.y != start.y){
+				resultPoints[pointCache.x + '_' + pointCache.y] = pointCache
+			}
+			// 剔除完毕，清除缓存点
+			pointCache = null
+			// 如果递归至所有点已经遍历完毕，算法结束。时间复杂度O(n = points.length)
+			if(tmpPoints.length == 0){
+				return resultPoints
+			}
+			// 如果没有遍历全部点，则将剔除后的结果集递归至next
+			return removeDuplicate(tmpPoints,minDistance)
+		}
+		
+		findByNextPoints(start);
+		return removeDuplicate(Object.values(foundedPoints),minDistance)
 	}
 	
 	/**
