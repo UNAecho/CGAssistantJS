@@ -238,7 +238,8 @@ var loop = ()=>{
 			setTimeout(getPercentage, 2000, loop);
 			return
 		}
-		cga.travel.falan.toStone('C', (r)=>{
+
+		let go = ()=>{
 			cga.travel.autopilot('灵堂',()=>{
 				playerThinkInterrupt.hasInterrupt();//restore interrupt state
 				console.log('playerThink on');
@@ -250,8 +251,14 @@ var loop = ()=>{
 					cga.freqMove(0);
 				});
 			})
-		});
-
+		}
+		
+		let mapindex = cga.GetMapIndex().index3
+		if(mapindex == 1531 || mapindex == 11015){
+			go()
+		}else{
+			cga.travel.falan.toStone('C', go);
+		}
 	});
 }
 
