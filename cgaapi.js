@@ -13320,12 +13320,25 @@ module.exports = function(callback){
 	 * UNAecho: 游戏角色对象
 	 */
 	cga.character = {}
+	
+	/**
+	 * UNAecho: 游戏中不同角色所持武器对model_id的偏差修正
+	 * 详细的说明，请参考cga.character.info的注释文档
+	 */
+	cga.character.weaponBias = {
+		'斧': -2,
+		'弓': -1,
+		'无': 0,
+		'剑': 1,
+		'杖': 2,
+		'枪': 3
+	}
 
 	/**
 	 * UNAecho: 定义一些角色的静态信息，特殊时候有用。比如打UD时分辨性别。
 	 * 信息来自于cga.GetMapUnits()等API
 	 */
-	cga.characterInfo = {
+	cga.character.info = {
 		105252 : {}
 	}
 
