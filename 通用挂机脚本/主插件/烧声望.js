@@ -252,6 +252,13 @@ var loop = ()=>{
 				});
 			})
 		}
+
+		// 在昵称中写一下称号状态，方便查看
+		let nickname = cga.GetPlayerInfo().nickname
+		let curReputation = cga.job.getJob().reputation
+		if(nickname != curReputation){
+			cga.ChangeNickName(curReputation)
+		}
 		
 		let mapindex = cga.GetMapIndex().index3
 		if(mapindex == 1531 || mapindex == 11015){
