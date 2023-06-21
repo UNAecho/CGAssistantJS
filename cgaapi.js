@@ -6979,9 +6979,9 @@ module.exports = function(callback){
 			}
 		}
 
-		// // 采集系3转以后可以直接传送小岛，将传送flag置为true。注意：此小岛怪物仅60级，和半山5的小岛不是一个地方。
+		// // 采集系3转以后可以直接传送小岛。注意：此小岛index和半山5的小岛index不是一个地图，怪物仅60级。
 		// if(category == '采集系' && jobLevel > 2){
-		// 	config["mission"]["传送小岛"] = true
+		// 	config["mission"]["传送小岛"] = false
 		// }
 
 		// 检查称号
@@ -9610,7 +9610,7 @@ module.exports = function(callback){
 				return;
 			}
 			else if(dlg && dlg.options == 2){
-				// 职业导师对话列表，就职、专职、晋级
+				// 职业导师对话列表，就职、转职、晋级
 				if(dlg.type == 2){
 					// 就职
 					if(obj.act == 'job'){
@@ -9620,7 +9620,7 @@ module.exports = function(callback){
 							cga.ClickNPCDialog(0, actNumber);
 							cga.AsyncWaitNPCDialog(dialogHandler);
 							return;
-						}else{
+						}else{// 转职
 							actNumber = 1
 							cga.ClickNPCDialog(0, actNumber);
 							cga.AsyncWaitNPCDialog(dialogHandler);
@@ -9699,7 +9699,24 @@ module.exports = function(callback){
 
 		let askAndCheck = (npcpos,cb)=>{
 			var retry = (cb)=>{
+				// 如果判断已经完成此次API的逻辑，进入调用cb环节
 				if(!repeatFlag){
+					// 如果是就职或者转职，晋级任务的状态需要重置。但战斗系5转和UD则不用，一生做一次即可全程有效
+					if(obj.act == 'job'){
+						cga.refreshMissonStatus({
+							"树精长老的末日" : false ,
+							"挑战神兽" : false ,
+							"诅咒的迷宫" : false ,
+							"誓言之花" : false ,
+							"咖哩任务" : false ,
+							"起司的任务" : false ,
+							"魔法大学" : false ,
+						},()=>{
+							cb("ok")
+						})
+						return
+					}
+					// 其它情况则直接调用cb
 					cb("ok")
 					return
 				}
@@ -13317,13 +13334,13 @@ module.exports = function(callback){
 	}
 
 	/**
-	 * UNAecho: 游戏角色对象
+	 * UNAecho: 游戏角色对象，用于提取或保存一些常用的静态信息，或开发一些常用的API
 	 */
 	cga.character = {}
 	
 	/**
 	 * UNAecho: 游戏中不同角色所持武器对model_id的偏差修正
-	 * 详细的说明，请参考cga.character.info的注释文档
+	 * 详细的说明，请参考characterInfo.js的注释文档
 	 */
 	cga.character.weaponBias = {
 		'斧': -2,
