@@ -423,7 +423,7 @@ var task = cga.task.Task('琥珀之卵4', [
 				// 这样可以在任务期间不需要另行花费时间来统计BOSS战是否登出。
 				// 小号尝试2个是否能安全稳定挂机，如果不能，再改为1个
 				let cusObj = {
-					'check': {'#620018': { sum: -1 },'r输出': { sum: 3 }, 'r治疗': { sum: 1 }, 'r小号': { sum: 2 } },
+					'check': {'#620018': { sum: -1 },'r输出': { sum: 4 }, 'r治疗': { sum: 1 }, 'r小号': { sum: 2 } },
 					'part': thisobj.spawnOfAmber4.part,
 					'leaderPos': [thisobj.spawnOfAmber4.leaderX, thisobj.spawnOfAmber4.leaderY],
 					'leaderFilter': thisobj.spawnOfAmber4.leaderFilter,
