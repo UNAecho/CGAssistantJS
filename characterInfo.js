@@ -64,7 +64,7 @@ var saveCharacterInfo = {
             // 玩家自定义的颜色别称，例如露比、小红帽，此值可由自己的主观，自行编辑。
             customer_color: baseObj.customer_color,
             // 角色数据来源的地图上玩家游戏名称，无作用，仅debug使用
-            unit_name: baseObj.unit_name,
+            from_user: baseObj.from_user,
             // 人工验证的flag。初始化为false，如果人工检测数据无误后，手动在文件中将此FLAG置为true，后续脚本即可以此为基础，给其它hasCheck为false的数据进行修正、更新。
             hasCheck: false,
         }
@@ -112,15 +112,18 @@ var saveCharacterInfo = {
                 if (!contentObj.hasOwnProperty(obj.model_id)) {
                     saveCharacterInfo.update(obj.model_id, {
                         character_name: '',
-                        customer_name: '',
+                        customer_name: [],
                         sex: -1,
                         color: -1,
-                        customer_color: '',
-                        unit_name: obj.unit_name,
+                        customer_color: [],
+                        from_user: [obj.unit_name],
                         hasCheck: false,
                     },-1,'')
                 } else {
                     // console.log('在玩家信息中',obj.model_id,'已经有数据记录，跳过信息采集，使用推断来更新其数据')
+                    if(contentObj[obj.model_id].from_user.indexOf(obj.unit_name) == -1){
+                        contentObj[obj.model_id].from_user.push(obj.unit_name)
+                    }
                 }
             }
         });
