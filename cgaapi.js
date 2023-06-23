@@ -8150,30 +8150,32 @@ module.exports = function(callback){
 	/**
 	 * UNAecho : 队长队员通用加队API，可设定超时范围。
 	 * 寻找队伍并加入（双方必须在附近1x1范围），并判断队员是否与预期相符。
-	 * @param {Array} teammates 队伍成员信息，数据结构为String数组，必须为队员名称。
+	 * @param {Object} obj API所需参数，具体如下：
+	 * 
+	 * @param {Array} obj.teammates 队伍成员信息，数据结构为String数组，必须为队员名称。
 	 * 【注意】队长的判定是teammates第一个人的名字
-	 * @param {int} timeout 超时时间，以毫秒为单位。如果填0则视为无限等待。
-	 * @param {Array} pos 可选，队长站立坐标，如果传入，必须为int型数组，长度必须为2。全队会先走至合适的位置，再进行组队逻辑
+	 * @param {int} obj.timeout 超时时间，以毫秒为单位。如果填0则视为无限等待。
+	 * @param {Array} obj.pos 可选，队长站立坐标，如果传入，必须为int型数组，长度必须为2。全队会先走至合适的位置，再进行组队逻辑
 	 * @param {*} cb 回调函数，所有队员齐全则传入'ok'，如果不满足条件或没有队伍，会等待至超时，调用cb并传入'timeout'
 	 */
-	cga.buildTeam = (teammates, timeout, pos, cb) => {
+	cga.buildTeam = (obj, cb) => {
 		// 由于cga.waitTeammates判定组队ready延迟2秒return，所以本API需要至少3秒延迟。
 		// 如果延迟为0，则视为无限等待
-		if (timeout > 0 && timeout < 2000) {
-			timeout = 3000
+		if (obj.hasOwnProperty('timeout') && obj.timeout > 0 && obj.timeout < 2000) {
+			obj.timeout = 3000
 		}
 
-		if(pos){
-			if (!pos instanceof Array) {
+		if(obj.hasOwnProperty('pos')){
+			if (!obj.pos instanceof Array) {
 				throw new Error('pos如果传入，类型必须为Array')
 			}
-			if (pos.length != 2) {
+			if (obj.pos.length != 2) {
 				throw new Error('pos如果传入，则必须是长度为2的int型Array')
 			}
 		}
 
 		var playerInfo = cga.GetPlayerInfo();
-		var isLeader = teammates[0] == playerInfo.name ? true : false
+		var isLeader = obj.teammates[0] == playerInfo.name ? true : false
 		var mapXY = cga.GetMapXY();
 		var start = Date.now()
 		// 两个队伍信息的临时变量
@@ -8183,7 +8185,7 @@ module.exports = function(callback){
 		// 队员专用，检查其他队员是否与预期成员相符
 		const checkOthers = () => {
 			tmpTeam = cga.getTeamPlayers();
-			if (tmpTeam.length < teammates.length) {
+			if (tmpTeam.length < obj.teammates.length) {
 				// console.log('人数不足，checkOthers返回false')
 				return false
 			}
@@ -8194,8 +8196,8 @@ module.exports = function(callback){
 				 * cga.getTeamPlayers()是根据地图上的单位获取信息的，游戏出现BUG时(看不到附近的玩家、NPC等)会导致cga.getTeamPlayers()出现返回队员的信息是全0的情况
 				 * 也就是hp、maxhp等信息全0，导致逻辑无法进行。所以这里遇到异常数据（以maxhp==0为异常判断，maxhp > 0是正常数据）时，直接跳过，防止逻辑异常
 				 */
-				if (tmpTeam[t].maxhp > 0 && teammates.indexOf(tmpTeam[t].name) == -1) {
-					console.log('队员:',tmpTeam[t].name,'与预期队伍:', teammates ,'不匹配，checkOthers返回false')
+				if (tmpTeam[t].maxhp > 0 && obj.teammates.indexOf(tmpTeam[t].name) == -1) {
+					console.log('队员:',tmpTeam[t].name,'与预期队伍:', obj.teammates ,'不匹配，checkOthers返回false')
 					return false
 				}
 			}
@@ -8209,13 +8211,13 @@ module.exports = function(callback){
 				console.log('已等待' + Math.floor((currentTime.getTime() - start) / 1000) + '秒')
 			}
 
-			if (timeout > 0 && (currentTime.getTime() - start) >= timeout) {
+			if (obj.timeout > 0 && (currentTime.getTime() - start) >= obj.timeout) {
 				cb('timeout')
 				return
 			}
 
 			if (isLeader) {
-				cga.waitTeammates(teammates, (r, lateList) => {
+				cga.waitTeammates(obj.teammates, (r, lateList) => {
 					if (r) {
 						cb('ok')
 						return
@@ -8233,7 +8235,7 @@ module.exports = function(callback){
 					cb('ok')
 					return
 				} else if (!curTeam.length) {
-					cga.addTeammate(teammates[0], (r) => {
+					cga.addTeammate(obj.teammates[0], (r) => {
 						if (r && checkOthers()) {
 							cb('ok')
 							return
@@ -8254,23 +8256,23 @@ module.exports = function(callback){
 		}
 
 		// 如果没有传入pos，则直接进入retry
-		if(!pos){
+		if(!obj.pos){
 			retry()
 			return
 		}
 
 		if(isLeader){
-			if(mapXY.x == pos[0] && mapXY.y == pos[1]){
+			if(mapXY.x == obj.pos[0] && mapXY.y == obj.pos[1]){
 				retry()
 			}else{
 				cga.walkList([
-					pos
+					obj.pos
 				], () => {
 					retry()
 				});
 			}
 		}else{
-			var memberPos = cga.getRandomSpace(pos[0], pos[1]);
+			var memberPos = cga.getRandomSpace(obj.pos[0], obj.pos[1]);
 			if(mapXY.x == memberPos[0] && mapXY.y == memberPos[1]){
 				retry()
 			}else{
@@ -10760,6 +10762,19 @@ module.exports = function(callback){
 	 * 2、第二个独立迷宫：入口为第10层缓步台固定地图，主体为11-19层迷宫，出口为BOSS房间。BOSS房间为固定index地图；
 	 * 如果迷宫重置，则被传送至迷宫入口第10层。
 	 * 3、这两个迷宫完全独立，拥有自己的刷新时间。只是外观上看起来名字一样。类似的情况还有【半山腰】等地图。
+	 * 
+	 * 部分属性解释：
+	 * entryMap: 迷宫入口水晶所在的地图，如诅咒的迷宫所在的地图是芙蕾雅
+	 * exitMap:迷宫出口所在地图，如布满青苔的洞窟出口是叹息之森林（树精长老任务相关）
+	 * posList:迷宫入口所在水晶的推荐检测坐标，如诅咒的迷宫出现的位置是随机的，可以自定义几个坐标，让脚本遍历走这几个位置去寻找水晶
+	 * 走到这些位置，脚本会自动检索附近的入口水晶 TODO：如果出现多个迷宫的入口水晶，可能会进错，需要添加类似五转地洞那里的黑名单规则
+	 * xLimit:迷宫出现位置的x范围，坐标0对应的值是x的下限，1是上限
+	 * yLimit:迷宫出现位置的y范围，坐标0对应的值是y的下限，1是上限
+	 * prefix:迷宫楼层的名称前缀，所有迷宫前缀+楼层+后缀。以诅咒的迷宫举例，前缀为【诅咒之迷宫地下】。【注意】许多API都是利用前缀来判断角色当前在哪个迷宫里。
+	 * suffix:迷宫楼层的名称后缀，所有迷宫前缀+楼层+后缀。以诅咒的迷宫举例，后缀为【楼】
+	 * forwardEntryTile:在cga.buildMapCollisionRawMatrix()及其同类API中，其属性matrix矩阵对应的xy数值。此数值代表迷宫中的楼梯功能是楼层+1
+	 * backEntryTile:同forwardEntryTile，只不过此值对应的是楼层-1
+	 * backTopPosList:迷宫出口水晶所在的坐标，用于返回迷宫。如黑龙的顶层不是固定的，可以由此坐标返回黑龙的顶层
 	 */
 	cga.mazeInfo = {
 		/**
@@ -10775,7 +10790,7 @@ module.exports = function(callback){
 			suffix:'楼',
 			forwardEntryTile : 13997,
 			backEntryTile : 13996,
-			backTopPosList : [[99, 191,'']],
+			backTopPosList : [[98, 191,'']],// 此值发生过修改，原来是99，现在是98。不确定此值是否也像入口一样变动
 		},
 		'废墟' : {
 			entryMap : 27101,

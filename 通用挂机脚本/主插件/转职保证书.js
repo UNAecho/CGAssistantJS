@@ -1007,7 +1007,7 @@ var loop = ()=>{
 								})
 								return
 							}else{
-								console.log('未到达满称号，开始转职刷声望')
+								console.log('转职保证书已完成，跳转至传咒驯互转..')
 								setTimeout(jump, 3000);
 								return
 							}

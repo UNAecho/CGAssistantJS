@@ -96,7 +96,7 @@ var getPercentage = (cb) =>{
 
 							if (jobObj.reputationLv > 12){
 								console.log('称号已达敬畏的寂静或以上，烧声望脚本结束')
-								jump(true)
+								jump()
 							}
 							if (originInfo === null){
 								originInfo = {
@@ -106,7 +106,7 @@ var getPercentage = (cb) =>{
 							}else{
 								if(originInfo.reputation == jobObj.reputation && originInfo.percentage == per){
 									console.log('声望【无】进展，该去做保证书任务了')
-									jump(false)
+									jump()
 									return
 								}else{
 									console.log('originInfo.reputation:'+originInfo.reputation)
@@ -218,13 +218,12 @@ var playerThinkTimer = ()=>{
 }
 
 
-var jump = (isDone=false)=>{
+var jump = ()=>{
 	// 恢复出战宠物
 	// 详细逻辑请看cga.findbattlepet()注释
 	cga.ChangePetState(cga.findbattlepet(), cga.PET_STATE_BATTLE);
-	let scriptName = isDone ? '智能练级' : '转职保证书'
 	setTimeout(()=>{
-		updateConfig.update_config({'mainPlugin' : scriptName})
+		updateConfig.update_config({'mainPlugin' : '转职保证书'})
 	},5000)
 }
 

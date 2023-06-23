@@ -20,7 +20,7 @@ var loop = ()=>{
 	cga.SayWords('欢迎使用【UNAの脚本】全自动保证书+转职+刷声望流程，当前正在进行：【'+configTable.mainPlugin+'】阶段。', 0, 3, 1);
 
 	// 声望第13阶段是敬畏的寂静
-	if(jobObj.reputationLv > 12 && (!thisobj.needPerfectTrainSkill || (thisobj.needPerfectTrainSkill && cga.findPlayerSkill('完美调教术')))){
+	if(jobObj.reputationLv > 13 && (!thisobj.needPerfectTrainSkill || (thisobj.needPerfectTrainSkill && cga.findPlayerSkill('完美调教术')))){
 		setTimeout(()=>{
 			updateConfig.update_config({'mainPlugin' : '智能练级'})
 		},5000)
