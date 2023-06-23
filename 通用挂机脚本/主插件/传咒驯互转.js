@@ -35,7 +35,7 @@ var loop = ()=>{
 		}
 
 		let missionName = null
-		if(jobObj.reputationLv > 12){
+		if(jobObj.reputationLv > 13){
 			if(thisobj.needPerfectTrainSkill){
 				console.log('称号满但没有完美调教术，那么进行传咒驯互转的最后一站:转职驯兽')
 				missionName = '就职驯兽师'

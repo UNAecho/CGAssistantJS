@@ -113,7 +113,7 @@ var autoRing = (cb) => {
 		delete thisobj.autoRing.teammates
 		update.update_config({ autoRing: thisobj.autoRing }, true, () => {
 			teamMode = require('../公共模块/智能组队');
-			thisobj.workType = 'train'
+			thisobj.worktype = 'train'
 
 			// 改为逃跑
 			configMode.manualLoad('战斗赶路')
@@ -265,7 +265,7 @@ var autoRing = (cb) => {
 		// 覆盖智能组队的teamMode，为了修改playerThink中的teamMode.think逻辑。在任务结束后，记得还原
 		teamMode = taskTeamMode
 		// 修改ctx传给回补提醒的思考方式
-		thisobj.workType = 'task'
+		thisobj.worktype = 'task'
 		// playerThink on开始前，先读取战斗配置。
 		configMode.func('节能模式');
 
@@ -516,7 +516,7 @@ var playerThink = () => {
 			return item.pos >= 0 && item.pos < 8;
 		}),
 		result: null,
-		workType: thisobj.workType,
+		worktype: thisobj.worktype,
 	}
 
 	teamMode.think(ctx);
@@ -855,7 +855,7 @@ var loop = () => {
 
 var thisobj = {
 	// 当前正在进行的功能，目前支持train练级和task任务2种模式
-	workType: 'train',
+	worktype: 'train',
 	// 注意：如果新增练级地点，这里的危险等级要添加，否则监听回补那里getDangerLevel为0时，根本不鸟你
 	getDangerLevel: () => {
 		var map = cga.GetMapName();

@@ -24,7 +24,7 @@ var thisobj = {
 	think : (ctx)=>{
 		// 智能练级中，可能会穿插任务，任务模式也在使用think模块，需要特殊处理。
 		// 暂定任务模式为受伤才回补。血量蓝量降低，均不触发回补提醒
-		if(ctx.hasOwnProperty('workType') && ctx.workType == 'task'){
+		if(ctx.hasOwnProperty('worktype') && ctx.worktype == 'task'){
 			if(cga.GetPlayerInfo().health > 0){
 				cga.SayWords('任务途中人物受伤，需要回补!', 0, 3, 1);
 				ctx.result = 'supply';
