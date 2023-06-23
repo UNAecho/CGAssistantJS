@@ -327,7 +327,7 @@ var autoRing = (cb) => {
 		// 如果没过栅栏，开始等待队伍人齐
 		cga.travel.autopilot('主地图', () => {
 			// 任务超时时间稍微设置长点，5分钟
-			cga.buildTeam(thisobj.autoRing.teammates, 300000, [53, 47], (r) => {
+			cga.buildTeam({teammates : thisobj.autoRing.teammates, timeout:300000, pos : [53, 47]}, (r) => {
 				if (r && r == 'ok') {
 					cga.travel.autopilot(27101, () => {
 						// 在本任务cga.buildCustomerTeam中，已经规定了必须有1人是没有承认之戒的。

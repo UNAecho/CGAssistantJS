@@ -296,7 +296,7 @@ var goodToGoZLZZ = (cb)=>{
 }
 
 var zhanglaozhizheng = (cb)=>{
-	cga.buildTeam(thisobj.spawnOfAmber4.teammates, 300000, [131, 66], (r) => {
+	cga.buildTeam({teammates : thisobj.spawnOfAmber4.teammates, timeout:300000, pos : [131, 66]}, (r) => {
 		if (r && r == 'ok') {
 			goodToGoZLZZ(cb);
 			return
@@ -395,7 +395,7 @@ var goodToGoZDZ = (cb)=>{
 }
 
 var zudangzhe = (cb)=>{
-	cga.buildTeam(thisobj.spawnOfAmber4.teammates, 300000, [213, 166], (r) => {
+	cga.buildTeam({teammates : thisobj.spawnOfAmber4.teammates, timeout:300000, pos : [213, 166]}, (r) => {
 		if (r && r == 'ok') {
 			goodToGoZDZ(cb);
 			return
