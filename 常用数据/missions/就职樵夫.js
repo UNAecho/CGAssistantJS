@@ -236,7 +236,7 @@ var thisobj = {
 			return (cga.job.getJob().job == '樵夫') ? true : false;
 		},
 	],
-	data: {// 任务静态数据，可自定义，方便使用
+	data: {// 任务数据，可自定义，方便使用
 		job: cga.job.getJob('樵夫')
 	},
 	func: {// 任务自定义函数

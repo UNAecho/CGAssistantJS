@@ -47,7 +47,7 @@ var thisobj = {
 	},
 	think : (ctx)=>{// playerthink步骤时候取消低忠诚出战
 		if (ctx.petinfo != null && ctx.petinfo.loyality < thisobj.minLoyality){
-			cga.ChangePetState(ctx.petinfo.index, 1)
+			cga.ChangePetState(ctx.petinfo.index, cga.PET_STATE_READY)
 			var tempmsg = '【UNA脚本警告】:出战宠物低于设置最低【'+thisobj.minLoyality+'】忠诚，取消宠物出战防止宠物逃跑。'
 			console.log(tempmsg)
 			setTimeout(() => {

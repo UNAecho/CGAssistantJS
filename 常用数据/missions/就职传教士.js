@@ -99,7 +99,7 @@ var thisobj = {
 			return (cga.findPlayerSkill('强力补血魔法') && cga.job.getJob().job == '传教士') ? true : false;
 		},
 	],
-	data: {// 任务静态数据，可自定义，方便使用
+	data: {// 任务数据，可自定义，方便使用
 		job: cga.job.getJob('传教士')
 	},
 	func: {// 任务自定义函数

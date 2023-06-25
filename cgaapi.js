@@ -625,6 +625,8 @@ module.exports = function(callback){
 			result = '阿巴尼斯村'
 		}else if(mapindex >= 4400 && mapindex <= 4499){
 			result = '魔法大学'
+		}else if(mapindex >= 16512 && mapindex <= 16513){// TODO 双超学习房间
+			result = '静谧之间'
 		}else if(mapindex >= 27001 && mapindex <= 27999){
 			result = '曙光骑士团营地'
 		}else if(mapindex >= 1000 && mapindex <= 32830){
@@ -2279,6 +2281,10 @@ module.exports = function(callback){
 				'灵堂':11015,
 				'镜中的豪宅  阁楼':21011,
 				'气功弹':'气功弹',
+				'东门':'东门',
+				'西门':'西门',
+				'南门':'南门',
+				'北门':'北门',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -2708,6 +2714,9 @@ module.exports = function(callback){
 				'气功弹':[[(cb)=>{
 					cga.travel.autopilot(1400,cb)
 				}, null, 1400],[15, 6, 1401],[15, 57]],
+				'东门':[[281, 88, 100],],
+				'西门':[[22, 87, 100],],
+				'南门':[[153, 241, 100],],
 			},
 			walkReverse:{
 				// 拿潘食品店
@@ -2914,7 +2923,9 @@ module.exports = function(callback){
 				'村长的家':2312,
 				'村长的家 2楼':2313,
 				'民家':2320,//民家，学强力风刃魔法
-				'传送石':2399
+				'传送石':2399,
+				'出口':'北门',
+				'北门':'北门',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -2939,6 +2950,8 @@ module.exports = function(callback){
 				2313:[[49, 81, 2312],[6, 14, 2313],],
 				// 传送石
 				2399:[[49, 81, 2312],[8, 10, 2399],],
+				// 北门
+				'北门':[[52, 55, 100],],
 			},
 			walkReverse:{
 				// 装备品店
@@ -2983,6 +2996,8 @@ module.exports = function(callback){
 				'伊尔':33219,
 				'港湾管理处':33214,
 				'往阿凯鲁法栈桥':40001,
+				'出口':'北门',
+				'北门':'北门',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -3076,6 +3091,8 @@ module.exports = function(callback){
 						})
 					}
 				},
+				// 北门
+				'北门':[[45, 31, 100]]
 			},
 			walkReverse:{
 				// 装备店
@@ -3135,6 +3152,8 @@ module.exports = function(callback){
 				'民家' : 2420,
 				'南希的家' : 2421,
 				'传送石':2499,
+				'北门':'北门',
+				'东门':'东门',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -3151,6 +3170,10 @@ module.exports = function(callback){
 				2421:[[31, 54, 2421],],
 				// 传送石
 				2499:[[56, 48, 2412],[22, 9, 2499],],
+				// 北门
+				'北门':[[59, 31, 100],],
+				// 东门
+				'东门':[[66, 64, 100],],
 			},
 			walkReverse:{
 				// 杂货店
@@ -3184,7 +3207,9 @@ module.exports = function(callback){
 				'荷特尔咖哩店' : 2120,
 				'民家' : 2121,
 				'村长家的小房间' : 2198,
-				'传送石':2199
+				'传送石':2199,
+				'出口':'东门',
+				'东门':'东门'
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -3207,6 +3232,8 @@ module.exports = function(callback){
 				2198:[[40, 36, 2112],[18, 10, 2198],],
 				// 传送石
 				2199:[[40, 36, 2112],[18, 10, 2198],[8, 2, 2199],],
+				// 东门
+				'东门':[[67, 46, 100],],
 			},
 			walkReverse:{
 				// 装备品店
@@ -3251,7 +3278,9 @@ module.exports = function(callback){
 				'民家' : 3220,
 				// 诱拐任务相关
 				'老夫妇的家' : 3221,
-				'传送石':3299
+				'传送石':3299,
+				'北门' : '北门',
+				'东门' : '东门',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -3276,6 +3305,10 @@ module.exports = function(callback){
 				3214:[[50, 63, 3212],[10, 15, 3214],],
 				// 传送石
 				3299:[[50, 63, 3212],[10, 15, 3214],[5, 3, 3299],],
+				// 北门
+				'北门':[[59, 45, 300],],
+				// 东门
+				'东门':[[79, 76, 300],],
 			},
 			walkReverse:{
 				// 装备品店
@@ -3322,6 +3355,8 @@ module.exports = function(callback){
 				'传送石':3099,
 				'井的底部':5005,
 				'希尔薇亚的家':5006,
+				'出口':'南门',
+				'南门':'南门',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -3360,6 +3395,8 @@ module.exports = function(callback){
 							cga.AsyncWaitMovement({map:'井的底部', delay:1000, timeout:5000}, cb);
 						});
 				}, null, 5005],[18, 14, 5006]],
+				// 南门
+				'南门':[[47, 77, 300],],
 			},
 			walkReverse:{
 				// 装备品店
@@ -3412,6 +3449,9 @@ module.exports = function(callback){
 				// 起司的任务相关
 				'民家' : 4020,
 				'传送石':4099,
+				'东门':'东门',
+				'西门':'西门',
+				'北门':'北门',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -3440,6 +3480,9 @@ module.exports = function(callback){
 				4013:[[58, 43, 4012],[15, 16, 4013],],
 				// 传送石
 				4099:[[58, 43, 4012],[13, 7, 4099],],
+				'东门':[[71, 18, 400],],
+				'西门':[[24, 40, 400],],
+				'北门':[[31, 27, 400],],
 			},
 			walkReverse:{
 				// 杂货店
@@ -3610,6 +3653,8 @@ module.exports = function(callback){
 				},
 				'民家' : 4320,
 				'传送石':4399,
+				'出口':'南门',
+				'南门':'南门',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -3634,6 +3679,8 @@ module.exports = function(callback){
 				4320:[[40, 30, 4320],],
 				// 传送石
 				4399:[[36, 54, 4312],[6, 5, 4313],[9, 9, 4399],],
+				// 南门
+				'南门':[[37, 71, 402],],
 			},
 			walkReverse:{
 				// 酒吧
@@ -4157,6 +4204,28 @@ module.exports = function(callback){
 				59895:[[102, 44, 59850],],
 			},
 		},
+		'静谧之间':{// TODO 超补和超回复的房间信息
+			mainName : '静谧之间',
+			mainindex : 16512,
+			minindex : 16512,
+			maxindex : 16513,
+			mapTranslate:{
+				'主地图' : 16512,
+				'咒缚之帐' : 16513,
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				16512:[],
+				// 咒缚之帐
+				16513:[[26, 12, 16513],],
+			},
+			walkReverse:{
+				// 主地图
+				16512:[],
+				// 咒缚之帐
+				16513:[[14, 27, 16512],],
+			},
+		},
 	}
 /**
  * UNA: 写了一个全自动导航的API，可以在城镇地图中任意一个地方去另一个任意的地方，无需登出。
@@ -4225,6 +4294,24 @@ module.exports = function(callback){
 		}
 		
 		try {
+			// 目标路径信息
+			var targetPath = info.walkForward[targetindex]
+			/**
+			 * 如果目标是自定义地点，有2种情况：
+			 * 1、自定义地点为切换至某地图，则targetindex取路径倒数第1个list的mapindex或mapname。实际上逻辑与正常一致，只不过目标地图可能不是此villageName之下的地图。如：从法兰城出东门到芙蕾雅。
+			 * 2、自定义地点为切换至某地图并走到某地点，则targetindex取路径倒数第2个list的mapindex或mapname，因为倒数第一个list是不切换地图的。
+			 */
+			if(typeof targetindex == 'string'){
+				if(targetPath[targetPath.length - 1].length == 2){
+					customerPos = targetPath[targetPath.length - 1]
+					targetindex = targetPath[targetPath.length - 2][2]
+				}else if(targetPath[targetPath.length - 1].length == 3){
+					targetindex = targetPath[targetPath.length - 1][2]
+				}else{
+					throw new Error('walkForward数据错误，路径walklist数组长度必须为2或者3')
+				}
+			}
+
 			// 如果运行时，自己在队伍中，且是队员
 			let teamplayers = cga.getTeamPlayers();
 			if(teamplayers.length && teamplayers[0].name != cga.GetPlayerInfo().name){
@@ -4235,15 +4322,7 @@ module.exports = function(callback){
 				});
 				return
 			}
-
-			// 目标路径信息
-			var targetPath = info.walkForward[targetindex]
-			// 如果目标是自定义地点，更改targetindex为倒数第二个index，因为倒数第一个list是不切换地图的。
-			if(typeof targetindex == 'string'){
-				var walkListlength = info.walkForward[targetindex].length
-				customerPos = info.walkForward[targetindex][walkListlength - 1]
-				targetindex = info.walkForward[targetindex][walkListlength - 2][2]
-			}
+			
 			// 自动导航路径
 			var tmplist = null
 			// 主逻辑分歧点
@@ -4296,6 +4375,12 @@ module.exports = function(callback){
 			// 递归逻辑
 			cga.walkList(
 				tmplist, ()=>{
+					// 如果自定义选择了非此主地图区域内的地图，如法兰城西门，需要判断是否还需要递归，否则会出现在野外调用报错（找不到mainmap）
+					if(cga.GetMapIndex().index3 == targetindex){
+						cb(null)
+						return
+					}
+					// 正常在村镇内逻辑
 					cga.travel.autopilot(targetMap,cb)
 				});
 		} catch (error) {
@@ -6314,6 +6399,7 @@ module.exports = function(callback){
 					// taskIndex：外部传入，告知执行完obj()之后，回到任务的哪个index
 					obj((taskIndex)=>{
 						if(typeof taskIndex == 'number'){
+							console.log('打断任务后，被要求重新执行第'+taskIndex+'步')
 							this.doNext(taskIndex, cb2);
 						}else{
 							console.log('打断任务之后没有传入任务再次进行的步骤,任务结束。执行this.doTask()的callback')
@@ -6340,7 +6426,7 @@ module.exports = function(callback){
 				*/
 				this.taskMoveThinkInterrupt.requestInterrupt(() => {
 					if (cga.isInNormalState()) {
-						console.log('状态为平常，且尝试打断walklist。只有当人物处于非直线行走时才触发打断。')
+						console.log('游戏状态为正常（非切图非战斗），尝试打断walklist。只有当人物处于非直线行走时才触发打断。')
 						doCallBack(obj,cb2)
 						return true;
 					}
@@ -6429,9 +6515,13 @@ module.exports = function(callback){
 					objThis.interruptTask(index,obj,cb)
 					return
 				} else if( r == 'playerThink on'){
-					objThis.taskPlayerThinkInterrupt.hasInterrupt();//restore interrupt state
-					console.log('taskPlayerThink on');
-					objThis.playerThinkRunning = true
+					if(objThis.playerThinkRunning){
+						console.log('taskPlayerThink is running');
+					}else{
+						objThis.taskPlayerThinkInterrupt.hasInterrupt();//restore interrupt state
+						console.log('taskPlayerThink on');
+						objThis.playerThinkRunning = true
+					}
 				} else if( r == 'jump' && typeof obj == 'number'){
 					console.log('第'+(index+1)+'阶段请求跳转至第'+(obj+1)+'阶段');
 					objThis.doNext(obj, cb);
@@ -9701,6 +9791,11 @@ module.exports = function(callback){
 
 		let askAndCheck = (npcpos,cb)=>{
 			var retry = (cb)=>{
+				// 地图判断的时候，可能涉及到BOSS战的切图，这里加入cga.isInNormalState()，等战斗结束再判断
+				if(!cga.isInNormalState()){
+					setTimeout(retry, 1000, cb);
+					return
+				}
 				// 如果判断已经完成此次API的逻辑，进入调用cb环节
 				if(!repeatFlag){
 					// 如果是就职或者转职，晋级任务的状态需要重置。但战斗系5转和UD则不用，一生做一次即可全程有效
@@ -10549,6 +10644,50 @@ module.exports = function(callback){
 	}
 
 	/**
+	 * UNAecho:一个简单的等待地图切换API
+	 * @param {String|Number} map 地图切片名称或地图index。
+	 * 例1：想等待进入诅咒之迷宫地下1楼，输入任意切片名称，可输入【诅咒】【之迷宫】【1楼】等等。
+	 * 例2：想等待进入某个index，输入任意int型index，参见cga.GetMapIndex().index3。
+	 * 因为简单，且无超时时间，调用时请注意
+	 * @param {*} cb 
+	 */
+	cga.waitForMap = (map, cb) => {
+		if (typeof map == 'string' && cga.GetMapName().indexOf(map) >= 0) {
+			console.log('cga.waitForMap:已抵达名字带有【', map, '】的地图')
+			cb('ok')
+			return
+		} else if (typeof map == 'number' && cga.GetMapIndex().index3 == map) {
+			console.log('cga.waitForMap:已抵达index【', map, '】的地图')
+			cb('ok')
+			return
+		}
+		setTimeout(cga.waitForMap, 1500, map, cb);
+	}
+
+	/**
+	 * UNAecho:一个简单的地图判断封装，判断角色是否在当前地图中
+	 * @param {String|Number} map 地图名称或地图index。
+	 * @param {Boolean} fuzzy 是否模糊查询，如诅咒之迷宫，输入【诅咒】或者【迷宫】也返回true。
+	 */
+	cga.isInMap = (map,fuzzy=false) => {
+		if (typeof map == 'string') {
+			let curMap = cga.GetMapName()
+			if(fuzzy && curMap.indexOf(map) != -1){
+				console.log('cga.isInMap:已在【', map, '】地图中')
+				return true
+			}else if(curMap == map){
+				console.log('cga.isInMap:已在【', map, '】地图中')
+				return true
+			}
+			return false
+		} else if (typeof map == 'number' && cga.GetMapIndex().index3 == map) {
+			console.log('cga.isInMap:已在mapindex【', map, '】地图中')
+			return true
+		}
+		return false
+	}
+
+	/**
 	 * UNAecho : 视野距离，多数用于人物探索地图。取人物对目标坐标的2条垂线距离最大值
 	 * projection : n. 预测;推断;设想;投射;放映;投影;放映的影像;投影图;突起物;（嗓音或声音的）发送，传送，放开;（思想感情的）体现，形象化
 	 * @param {number} x 起始X坐标
@@ -10764,6 +10903,7 @@ module.exports = function(callback){
 	 * 3、这两个迷宫完全独立，拥有自己的刷新时间。只是外观上看起来名字一样。类似的情况还有【半山腰】等地图。
 	 * 
 	 * 部分属性解释：
+	 * name: 迷宫名称，需要与cga.mazeInfo的key保持一致。
 	 * entryMap: 迷宫入口水晶所在的地图，如诅咒的迷宫所在的地图是芙蕾雅
 	 * exitMap:迷宫出口所在地图，如布满青苔的洞窟出口是叹息之森林（树精长老任务相关）
 	 * posList:迷宫入口所在水晶的推荐检测坐标，如诅咒的迷宫出现的位置是随机的，可以自定义几个坐标，让脚本遍历走这几个位置去寻找水晶
@@ -10781,6 +10921,7 @@ module.exports = function(callback){
 		 * 出口是个BOSS房间，可以选择跟勇者开战，或者和BOSS阴影开战。可能是个任务。我记得法兰城有两个并排在别墅区站着，让你抓什么东西
 		 */
 		'诅咒之迷宫' : {
+			name : '诅咒之迷宫',
 			entryMap : '芙蕾雅',
 			exitMap : '炼金术师的工作室',
 			posList : [[263, 149], [284, 140], [295, 127]],
@@ -10793,6 +10934,7 @@ module.exports = function(callback){
 			backTopPosList : [[98, 191,'']],// 此值发生过修改，原来是99，现在是98。不确定此值是否也像入口一样变动
 		},
 		'废墟' : {
+			name : '废墟',
 			entryMap : 27101,
 			exitMap : 44707,
 			posList : [[44,22]],
@@ -10805,6 +10947,7 @@ module.exports = function(callback){
 			backTopPosList : [[15, 16,'']],
 		},
 		'布满青苔的洞窟' : {
+			name : '布满青苔的洞窟',
 			entryMap : '芙蕾雅',
 			exitMap : '叹息之森林',
 			posList : [[380,353]],
@@ -10832,6 +10975,7 @@ module.exports = function(callback){
 		 * 注意：一个队伍只能一个人点击NPC对话并获得石像。暂时不知道什么用处。
 		 */
 		'蜥蜴洞穴上层' : {
+			name : '蜥蜴洞穴上层',
 			entryMap : '蜥蜴洞穴',
 			exitMap : '蜥蜴最下层',// index30401
 			posList : [[17,4]],
@@ -10854,6 +10998,7 @@ module.exports = function(callback){
 		 * 3、巨型蜥蜴：和石碑ABCD一样，无论说话、点击都没有反应。待研究。
 		 */
 		'蜥蜴洞穴下层' : {
+			name : '蜥蜴洞穴下层',
 			entryMap : '蜥蜴最下层',
 			exitMap : '蜥蜴洞穴最下层',// index30403
 			posList : [[13,3]],
@@ -10877,6 +11022,7 @@ module.exports = function(callback){
 		 * 另一种想法是，如果顶层数字并不确定，可能许多脚本的逻辑是走到顶层再走回来，这也可能是大家都在出口出练级的原因
 		 */
 		'黑龙沼泽' : {
+			name : '黑龙沼泽',
 			entryMap : '肯吉罗岛',
 			exitMap : 30404,// 出口房间名称就叫【黑龙沼泽】，容易混淆，改用index记录
 			posList : [[424,345]],
@@ -10906,6 +11052,7 @@ module.exports = function(callback){
 		 * 曙光2/强化丘比特任务相关
 		 */
 		'旧日迷宫' : {
+			name : '旧日迷宫',
 			entryMap : '迷宫入口',
 			exitMap : 44711,// 出口房间名称就叫【旧日之地】，容易混淆，改用index记录
 			posList : [[9,5]],
@@ -10937,6 +11084,7 @@ module.exports = function(callback){
 		 * 6、BOSS一般是强、超石磨血，单火打残血补刀。
 		 */
 		'旧日之塔' : {
+			name : '旧日之塔',
 			entryMap : '旧日之塔入口',
 			exitMap : '旧日之塔顶层',// index 44713
 			posList : [[9,5]],
@@ -10953,6 +11101,7 @@ module.exports = function(callback){
 		 * 注意通往山顶的路是没有经验的！但是烧技能却可以，恶心的设定。
 		 */
 		'通往山顶的路' : {
+			name : '通往山顶的路',
 			entryMap : '小岛',
 			exitMap : '半山腰',
 			posList : [[64,45]],
@@ -10970,6 +11119,7 @@ module.exports = function(callback){
 		 * 也就是出口和入口是同一个地图，不同的pos，很特殊。
 		 */
 		'海底墓场外苑' : {
+			name : '海底墓场外苑',
 			entryMap : 59714,
 			exitMap : 59714,
 			posList : [[122, 69]],
@@ -10986,6 +11136,7 @@ module.exports = function(callback){
 		 * 非常好走，几乎不会遇敌，单人逃跑即可！
 		 */
 		'地狱入口' : {
+			name : '地狱入口',
 			entryMap : '圣山内部',
 			exitMap : '地狱入口',// index57473
 			posList : [[19,7]],
@@ -10996,6 +11147,22 @@ module.exports = function(callback){
 			forwardEntryTile : 17957,
 			backEntryTile : 17956,
 			backTopPosList : [[11, 17,'']],// TODO坐标不对，确认坐标
+		},
+		/**
+		 * 战斗二转，神兽迷宫
+		 */
+		'贝兹雷姆的迷宫' : {
+			name : '贝兹雷姆的迷宫',
+			entryMap : 16510,
+			exitMap : 16511,
+			posList : [[25,7]],
+			xLimit : [25,25],
+			yLimit : [7,7],
+			prefix:'贝兹雷姆的迷宫',
+			suffix:'楼',
+			forwardEntryTile : 12000,
+			backEntryTile : 12002,
+			backTopPosList : [[26, 72,'']],
 		},
 	}
 
@@ -11268,6 +11435,25 @@ module.exports = function(callback){
 			}
 		})
 
+		// 如果运行时，自己在队伍中，且是队员
+		let teamplayers = cga.getTeamPlayers();
+		if(teamplayers.length && teamplayers[0].name != cga.GetPlayerInfo().name){
+
+			if(typeof targetMap == 'number' && targetMap >= 90){
+				console.log('cga.walkRandomMazeAuto:监测到你是队员，且输入楼层大于90层以上，推测是想到达迷宫顶层而非走出迷宫。')
+				console.log('cga.walkRandomMazeAuto()判断，抵达终点时，与你目前的判断逻辑（生命值监测、道具监测等）无异，可直接调用callback退出cga.walkRandomMazeAuto()。')
+				cb('ok')
+				return
+			}
+
+			let waitMap = typeof targetMap == 'number' ? mazeInfo.prefix + targetMap + mazeInfo.suffix : targetMap
+			console.log('cga.walkRandomMazeAuto:监测到你是队员，等待队长将自己带到指定地点:', waitMap)
+			cga.waitForMap(waitMap,()=>{
+				cb('ok')
+			})
+			return
+		}
+		
 		const regexLayer = (str)=>{
 			var regex = str.match(/([^\d]*)(\d+)([^\d]*)/);
 			var layerIndex = 0;
@@ -11392,6 +11578,10 @@ module.exports = function(callback){
 	 * 1、string：可输入楼层名称，或者入口、出口名称，如：'黑龙沼泽9区'，或者'半山腰'，或者'小岛'。可自动从迷宫中前进或后退至迷宫的入口/指定楼层/出口。
 	 * 2、number：可输入楼层数字(1-99)、mapindex3数字(仅限出入口这种index固定的地图)。可自动从迷宫中前进或后退至迷宫的入口/指定楼层/出口。
 	 * 
+	 * 特殊用法：由于targetMap输入数字可以抵达指定楼层。但如果输入数字比迷宫最大层数还大，导致脚本以为进入下一层，其实是走出迷宫的话，脚本会自动返回迷宫。
+	 * 那么此性质可以用来自动抵达迷宫最大层数，像黑龙顶层练级，或神兽回迷宫顶层刷鳞片等等。
+	 * 因为迷宫的输入数字范围为1-99，而没有迷宫真的有99层，所以可以用数字99来走至迷宫最大层数的水晶出口处。注意是可以抵达迷宫水晶出口处，而非顶层的楼梯处，使用起来更方便。
+	 * 
 	 * @param {*} cb 
 	 * @returns 
 	 */
@@ -11457,6 +11647,25 @@ module.exports = function(callback){
 		let map = cga.GetMapName();
 		let mapIndex = cga.GetMapIndex().index3
 		let mazeInfo = cga.mazeInfo[mazeName]
+
+		// 如果运行时，自己在队伍中，且是队员
+		let teamplayers = cga.getTeamPlayers();
+		if(teamplayers.length && teamplayers[0].name != cga.GetPlayerInfo().name){
+
+			if(typeof targetMap == 'number' && targetMap >= 90){
+				console.log('cga.findAndWalkMaze:监测到你是队员，且输入楼层大于90层以上，推测是想到达迷宫顶层而非走出迷宫。')
+				console.log('cga.findAndWalkMaze()判断，抵达终点时，与你目前的判断逻辑（生命值监测、道具监测等）无异，可直接调用callback退出cga.walkRandomMazeAuto()。')
+				cb('ok')
+				return
+			}
+
+			let waitMap = typeof targetMap == 'number' ? mazeInfo.prefix + targetMap + mazeInfo.suffix : targetMap
+			console.log('cga.findAndWalkMaze:监测到你是队员，等待队长将自己带到指定地点:', waitMap)
+			cga.waitForMap(waitMap,()=>{
+				cb('ok')
+			})
+			return
+		}
 		
 		if(map == targetMap || mapIndex == targetMap){
 			console.log('已经在目标地图中，API结束。')

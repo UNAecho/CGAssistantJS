@@ -197,7 +197,7 @@ var thisobj = {
 			return (cga.job.getJob().job == '驯兽师') ? true : false;
 		}
 	],
-	data: {// 任务静态数据，可自定义，方便使用
+	data: {// 任务数据，可自定义，方便使用
 		job: cga.job.getJob('驯兽师')
 	},
 	func: {// 任务自定义函数

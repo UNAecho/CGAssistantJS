@@ -29,7 +29,7 @@ var thisobj = {
 			return false
 		},
 	],
-	data: {// 任务静态数据，可自定义，方便使用
+	data: {// 任务数据，可自定义，方便使用
 		battleTypeSkills: ['调教', '气绝回复', '抗石化', '抗昏睡', '抗混乱',],
 		productTypeSkills: ['调教', '治疗',],
 	},
