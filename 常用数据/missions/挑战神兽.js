@@ -172,10 +172,12 @@ var thisobj = {
 			intro: '5.由静谧之间(index 16512)（26.12）处进入咒缚之帐(index 16513)与邪灵鸟人（14.14）对话2次，任务完结。',
 			workFunc: function (cb2) {
 				cga.disbandTeam(() => {
-					cga.travel.autopilot('咒缚之帐', () => {
-						let obj = { act: 'msg', target: '再睡一阵子', npcpos: [14, 14] }
-						cga.askNpcForObj(obj, () => {
-							cb2(true)
+					thisobj.func.dropUseless(['刀的饰物','魔族的水晶','誓言之证'],() => {
+						cga.travel.autopilot('咒缚之帐', () => {
+							let obj = { act: 'msg', target: '再睡一阵子', npcpos: [14, 14] }
+							cga.askNpcForObj(obj, () => {
+								cb2(true)
+							})
 						})
 					})
 				})
@@ -213,7 +215,21 @@ var thisobj = {
 	func: {// 任务自定义函数
 		bankObj: require('../../通用挂机脚本/子插件/自动存取魔币.js'),
 		healObj: require('../../通用挂机脚本/公共模块/治疗和招魂.js'),
-		configMode: require('../../通用挂机脚本/公共模块/读取战斗配置.js')
+		configMode: require('../../通用挂机脚本/公共模块/读取战斗配置.js'),
+		dropUseless: (items, cb) => {
+			let itemname = items.shift()
+			if (itemname) {
+				let item = cga.findItem(itemname)
+				if (item != -1) {
+					console.log('丢弃【', itemname, '】，如果想要保留，请在脚本中将其去除。')
+					cga.DropItem(item);
+				}
+				setTimeout(thisobj.func.dropUseless, 1500, items, cb);
+				return
+			}
+			cb(null)
+			return
+		}
 	},
 	taskPlayerThink: () => {
 		if (!cga.isInNormalState()) {

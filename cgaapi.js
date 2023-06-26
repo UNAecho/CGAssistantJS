@@ -6358,13 +6358,13 @@ module.exports = function(callback){
 	 * @param {*} taskPlayerThink 
 	 * @returns 
 	 */
-	cga.task.TaskWithThink = function(name, stages, requirements, taskPlayerThink){
-		
+	cga.task.TaskWithThink = function (name, stages, requirements, taskPlayerThink) {
+
 		this.name = name;
 		this.stages = stages;
 		this.requirements = requirements
 		this.taskPlayerThink = taskPlayerThink
-		
+
 		this.anyStepDone = true;
 		this.playerThinkRunning = false
 		/**
@@ -6382,43 +6382,43 @@ module.exports = function(callback){
 
 			if (this.taskMoveThinkInterrupt.hasInterrupt())
 				return false;
-		
+
 			if (arg == 'freqMoveMapChanged') {
 				this.taskPlayerThinkInterrupt.requestInterrupt();
 				return false;
 			}
-		
+
 			return true;
 		}
 
 		// 打断后所执行的逻辑。多数情况是：执行一个func()，然后回到任务的某一阶段。
-		this.interruptTask = (obj,cb2)=>{
-			let doCallBack = (obj,cb2)=>{
-				if(typeof obj == 'function'){
+		this.interruptTask = (obj, cb2) => {
+			let doCallBack = (obj, cb2) => {
+				if (typeof obj == 'function') {
 					// 执行打断时提供的func，并传入上次打断时的任务index，方便得知任务进行到哪一步了。
 					// taskIndex：外部传入，告知执行完obj()之后，回到任务的哪个index
-					obj((taskIndex)=>{
-						if(typeof taskIndex == 'number'){
-							console.log('打断任务后，被要求重新执行第'+taskIndex+'步')
+					obj((taskIndex) => {
+						if (typeof taskIndex == 'number') {
+							console.log('打断任务后，被要求重新执行第' + taskIndex + '步')
 							this.doNext(taskIndex, cb2);
-						}else{
+						} else {
 							console.log('打断任务之后没有传入任务再次进行的步骤,任务结束。执行this.doTask()的callback')
 							this.doNext(this.stages.length, cb2);
 						}
 						return
 					})
-				}else{
+				} else {
 					console.log('打断任务之后没有传入cb,任务结束。执行this.doTask()的callback')
 					this.doNext(this.stages.length, cb2);
 					return
 				}
 			}
 
-			if(this.taskPlayerThinkInterrupt.hasInterrupt()){
+			if (this.taskPlayerThinkInterrupt.hasInterrupt()) {
 				console.log('objThis.taskPlayerThinkInterrupt.hasInterrupt')
-				doCallBack(obj,cb2)
+				doCallBack(obj, cb2)
 				return
-			}else{
+			} else {
 				/**	
 				 * UNAecho:cga.walklist有一个bug，当角色一直走直线时，即便是cga.moveThink()返回false，也不会打断走路。
 				 * 只有当角色出现拐弯、斜向走路时，才会打断walklist。
@@ -6427,7 +6427,7 @@ module.exports = function(callback){
 				this.taskMoveThinkInterrupt.requestInterrupt(() => {
 					if (cga.isInNormalState()) {
 						console.log('游戏状态为正常（非切图非战斗），尝试打断walklist。只有当人物处于非直线行走时才触发打断。')
-						doCallBack(obj,cb2)
+						doCallBack(obj, cb2)
 						return true;
 					}
 					return false;
@@ -6436,8 +6436,8 @@ module.exports = function(callback){
 		}
 
 		this.playerThinkTimer = () => {
-			if(!this.playerThinkTimerRunning){
-				console.log('由于任务结束，任务：'+this.name+' 的playerThinkTimer已关闭。');
+			if (!this.playerThinkTimerRunning) {
+				console.log('由于任务结束，任务：' + this.name + ' 的playerThinkTimer已关闭。');
 				return
 			}
 			if (this.playerThinkRunning) {
@@ -6445,106 +6445,106 @@ module.exports = function(callback){
 				if (obj === false) {
 					console.log('taskPlayerThink off');
 					this.playerThinkRunning = false;
-				}else if(typeof obj == 'function'){
+				} else if (typeof obj == 'function') {
 					console.log('taskPlayerThink off and do function');
 					this.playerThinkRunning = false;
-					this.interruptTask(obj,this.taskCallback)
+					this.interruptTask(obj, this.taskCallback)
 				}
 			}
-		
+
 			setTimeout(this.playerThinkTimer, 1500);
 		}
 
-		this.isDone = function(index){
-			for(var i = this.requirements.length - 1; i >= index; --i){
-				if(typeof this.requirements[i] == 'function' && this.requirements[i]())
+		this.isDone = function (index) {
+			for (var i = this.requirements.length - 1; i >= index; --i) {
+				if (typeof this.requirements[i] == 'function' && this.requirements[i]())
 					return true;
 			}
 			return false;
 		}
-		
-		this.isDoneSingleStep = function(index){
-			if(typeof this.requirements[index] == 'function' && this.requirements[index]())
+
+		this.isDoneSingleStep = function (index) {
+			if (typeof this.requirements[index] == 'function' && this.requirements[index]())
 				return true;
 			return false;
 		}
-		
-		this.doNext = function(index, cb){
-			if(index >= this.stages.length){
-				console.log('任务：'+this.name+' 已完成！');
+
+		this.doNext = function (index, cb) {
+			if (index >= this.stages.length) {
+				console.log('任务：' + this.name + ' 已完成！');
 				// 关闭playerThinkTimer
 				this.playerThinkTimerRunning = false
-				if(cb)
+				if (cb)
 					cb(true);
 			} else {
 				this.doStage(index, cb);
 			}
 		}
-	
-		this.doStage = function(index, cb){
-			if(this.anyStepDone){
-				if(this.isDone(index)){
-					console.log('第'+(index+1)+'/'+stages.length+'阶段已完成，跳过。');
-					this.doNext(index+1, cb);
+
+		this.doStage = function (index, cb) {
+			if (this.anyStepDone) {
+				if (this.isDone(index)) {
+					console.log('第' + index + '/' + stages.length + '阶段已完成，跳过。');
+					this.doNext(index + 1, cb);
 					return;
 				}
 			} else {
-				if(this.isDoneSingleStep(index)){
-					console.log('第'+(index+1)+'/'+stages.length+'阶段已完成，跳过。');
-					this.doNext(index+1, cb);
+				if (this.isDoneSingleStep(index)) {
+					console.log('第' + index + '/' + stages.length + '阶段已完成，跳过。');
+					this.doNext(index + 1, cb);
 					return;
 				}
 			}
-			console.log('开始执行第'+(index+1)+'阶段：');
+			console.log('开始执行第' + index + '阶段：');
 			console.log(this.stages[index].intro);
 			var objThis = this;
-			objThis.stages[index].workFunc(function(r,obj){
-				if(r === false || r instanceof Error){
-					if(cb)
+			objThis.stages[index].workFunc(function (r, obj) {
+				if (r === false || r instanceof Error) {
+					if (cb)
 						cb(r);
 					return;
 				}
-				if(r === true || r === null){
-					console.log('第'+(index+1)+'阶段执行完成。');
+				if (r === true || r === null) {
+					console.log('第' + index + '阶段执行完成。');
 					objThis.doNext(index + 1, cb);
-				} else if( r == 'restart stage' ){
-					console.log('第'+(index+1)+'阶段请求重新执行。');
+				} else if (r == 'restart stage') {
+					console.log('第' + index + '阶段请求重新执行。');
 					objThis.doNext(index, cb);
-				} else if( r == 'task interrupt' ){
-					console.log('第'+(index+1)+'阶段请求中断任务。');
-					objThis.interruptTask(index,obj,cb)
+				} else if (r == 'task interrupt') {
+					console.log('第' + index + '阶段请求中断任务。');
+					objThis.interruptTask(index, obj, cb)
 					return
-				} else if( r == 'playerThink on'){
-					if(objThis.playerThinkRunning){
+				} else if (r == 'playerThink on') {
+					if (objThis.playerThinkRunning) {
 						console.log('taskPlayerThink is running');
-					}else{
+					} else {
 						objThis.taskPlayerThinkInterrupt.hasInterrupt();//restore interrupt state
 						console.log('taskPlayerThink on');
 						objThis.playerThinkRunning = true
 					}
-				} else if( r == 'jump' && typeof obj == 'number'){
-					console.log('第'+(index+1)+'阶段请求跳转至第'+(obj+1)+'阶段');
+				} else if (r == 'jump' && typeof obj == 'number') {
+					console.log('第' + index + '阶段请求跳转至第' + obj + '阶段');
 					objThis.doNext(obj, cb);
-				} else  {
-					throw new Error('无效参数r:',r);
+				} else {
+					throw new Error('无效参数r:', r);
 				}
-			// 注意这里UNAecho添加了index参数进入任务的workFunc中，与cb同级别。目的是为了stage中可以拿到当前index的参数，判断当前task的进度。
-			},index);
+				// 注意这里UNAecho添加了index参数进入任务的workFunc中，与cb同级别。目的是为了stage中可以拿到当前index的参数，判断当前task的进度。
+			}, index);
 		}
 
-		this.doTask = function(cb){
-			console.log('任务：'+this.name+' 开始执行，共'+this.stages.length+'阶段。');
+		this.doTask = function (cb) {
+			console.log('任务：' + this.name + ' 开始执行，共' + this.stages.length + '阶段。');
 
 			this.taskCallback = cb
-			
+
 			// 如果任务自定义了属于任务自己的playerthink，则开启监听
-			if(typeof this.taskPlayerThink == 'function'){
-				console.log('任务：'+this.name+' 包含自定义playerthink，将在适当的时候运行..');
+			if (typeof this.taskPlayerThink == 'function') {
+				console.log('任务：' + this.name + ' 包含自定义playerthink，将在适当的时候运行..');
 				this.playerThinkTimerRunning = true
 				this.playerThinkTimer()
 			}
 
-			this.doStage( (typeof this.jumpToStep != 'undefined') ? this.jumpToStep : 0, this.taskCallback);
+			this.doStage((typeof this.jumpToStep != 'undefined') ? this.jumpToStep : 0, this.taskCallback);
 		}
 
 		// 注册打断walklist的方法
