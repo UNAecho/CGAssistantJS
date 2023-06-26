@@ -34,7 +34,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	}
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false
 	
-	var task = cga.task.Task('树精长老的末日', [
+	var task = cga.task.Task('树精长老', [
 	{//0
 		intro: '1.任务准备',
 		workFunc: function(cb2){
@@ -282,7 +282,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	);
 	configMode.func('节能模式')
 	task.doTask(()=>{
-		var minssionObj = {"树精长老的末日" : true}
+		var minssionObj = {"树精长老" : true}
 		cga.refreshMissonStatus(minssionObj)
 	});
 });

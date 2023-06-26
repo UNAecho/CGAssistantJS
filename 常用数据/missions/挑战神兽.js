@@ -176,7 +176,9 @@ var thisobj = {
 						cga.travel.autopilot('咒缚之帐', () => {
 							let obj = { act: 'msg', target: '再睡一阵子', npcpos: [14, 14] }
 							cga.askNpcForObj(obj, () => {
-								cb2(true)
+								cga.refreshMissonStatus({'挑战神兽' : true},()=>{
+									cb2(true)
+								})
 							})
 						})
 					})
@@ -341,7 +343,10 @@ var thisobj = {
 		var task = cga.task.TaskWithThink(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements, thisobj.taskPlayerThink)
 		// 此任务的锚点清晰，无需落盘辅助记录任务进度
 		// task.anyStepDone = false;
-		task.doTask(cb)
+		// 任务初始化，刷新角色的晋级任务状态
+		cga.refreshMissonStatus(null,()=>{
+			task.doTask(cb)
+		})
 		return
 	},
 };

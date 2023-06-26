@@ -1,5 +1,5 @@
 var thisobj = {
-	taskName: '树精长老的末日',
+	taskName: '树精长老',
 	taskStages: [
 		{
 			intro: '0.任务准备。',
@@ -97,7 +97,8 @@ var thisobj = {
 					 */
 					thisobj.func.dropUseless(['艾里克的大剑','磨刀石'],() => {
 						// 如果已经一转以上，则视为陪打，结束任务。
-						if (cga.job.getJob().jobLv > 0) {
+						// 由于任务初始化执行了cga.refreshMissonStatus，所以cga.loadPlayerConfig().mission必然有数据支撑逻辑判断。
+						if (cga.loadPlayerConfig().mission[thisobj.taskName]) {
 							console.log('你已经一转或以上，结束任务。')
 							cb2('jump', thisobj.taskStages.length)
 							return
@@ -137,7 +138,9 @@ var thisobj = {
 					cga.travel.autopilot('村长的家', () => {
 						let obj = { act: 'msg', target: '会长', npcpos: [16, 7] }
 						cga.askNpcForObj(obj, () => {
-							cb2(true)
+							cga.refreshMissonStatus({'树精长老' : true},()=>{
+								cb2(true)
+							})
 						})
 					})
 				})
@@ -258,7 +261,11 @@ var thisobj = {
 		var task = cga.task.TaskWithThink(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements, thisobj.taskPlayerThink)
 		// 此任务的锚点清晰，无需落盘辅助记录任务进度
 		// task.anyStepDone = false;
-		task.doTask(cb)
+
+		// 任务初始化，刷新角色的晋级任务状态
+		cga.refreshMissonStatus(null,()=>{
+			task.doTask(cb)
+		})
 		return
 	},
 };

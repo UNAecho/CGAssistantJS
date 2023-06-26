@@ -7009,7 +7009,7 @@ module.exports = function(callback){
 	 * @param {object} missionObj 需要更新的任务对象，
 	 * key 为 任务string名称，请注意输入的任务名称要全项目统一，不然会出现检测出错的情况。如【树精长老】和【树精】【一转】等会被认为是不同的任务。
 	 * value 为任务状态，类型任意。true为已完成，false为未完成。int为任务完成的步骤标记，或者string自定义，你自己认识就好。
-	 * example : missionObj = {"树精长老的末日" : true ,"挑战神兽" : true ,"神之召唤" : 2 ,"洛伊夫的净化" : "收集徽记" ,}
+	 * example : missionObj = {"树精长老" : true ,"挑战神兽" : true ,"神之召唤" : 2 ,"洛伊夫的净化" : "收集徽记" ,}
 	 * @param {*} cb 回调
 	 * @returns 
 	 * 
@@ -7024,7 +7024,7 @@ module.exports = function(callback){
 		var jobLevel = getprofessionalInfos.getJobLevel(playerInfo.job)
 
 		// 晋级任务
-		const battleMission = ['树精长老的末日', '挑战神兽', '诅咒的迷宫', '誓言之花', '洛伊夫的净化', ]
+		const battleMission = ['树精长老', '挑战神兽', '诅咒的迷宫', '誓言之花', '洛伊夫的净化', ]
 		const productMission = ['咖哩任务', '起司的任务', '魔法大学', '誓言之花', ]
 
 		var config = cga.loadPlayerConfig();
@@ -7089,6 +7089,8 @@ module.exports = function(callback){
 				}
 			}
 		}
+
+		console.log('cga.refreshMissonStatus开始写入个人配置..')
 		// 写入状态并调用callback，函数结束。
 		cga.savePlayerConfig(config, cb);
 		return
@@ -9801,7 +9803,7 @@ module.exports = function(callback){
 					// 如果是就职或者转职，晋级任务的状态需要重置。但战斗系5转和UD则不用，一生做一次即可全程有效
 					if(obj.act == 'job'){
 						cga.refreshMissonStatus({
-							"树精长老的末日" : false ,
+							"树精长老" : false ,
 							"挑战神兽" : false ,
 							"诅咒的迷宫" : false ,
 							"誓言之花" : false ,

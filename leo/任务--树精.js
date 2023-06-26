@@ -40,7 +40,7 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 	
 	cga.isTeamLeader = (teammates[0] == playerinfo.name || teammates.length == 0) ? true : false;
 	
-	var task = cga.task.Task('树精长老的末日', [
+	var task = cga.task.Task('树精长老', [
 	{//0
 		intro: '1.前往维诺亚村医院（61.53）与佣兵艾里克（7.5）对话，选“是”获得【火把】。',
 		workFunc: function(cb2){
