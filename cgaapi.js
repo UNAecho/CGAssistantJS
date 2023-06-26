@@ -8255,7 +8255,7 @@ module.exports = function(callback){
 			obj.timeout = 3000
 		}
 
-		if(obj.hasOwnProperty('pos')){
+		if(obj.pos){
 			if (!obj.pos instanceof Array) {
 				throw new Error('pos如果传入，类型必须为Array')
 			}
@@ -10083,6 +10083,7 @@ module.exports = function(callback){
 			}
 			// 如果NPC周围1x1均无法抵达，尝试检测隔墙的空闲位置，例如驯兽师导师
 			if(spaceList === null){
+				console.log('NPC周围1x1均无法抵达，尝试检测隔墙的空闲位置，例如驯兽师导师')
 				spaceList = cga.getRandomSpaceThroughWall(npcpos[0],npcpos[1])
 			}
 
@@ -12248,6 +12249,10 @@ module.exports = function(callback){
 					return result
 				}
 			}
+		}
+
+		if(pos.length > 1 && !result.length){
+			throw new Error('NPC周围有1格以上的空间可站立，但这些空间并不相连。cga.get2RandomSpace()判定为只有一格可与其进行对话')
 		}
 
 		return null

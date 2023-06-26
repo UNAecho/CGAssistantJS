@@ -4,14 +4,11 @@ var thisobj = {
 		{
 			intro: '0.任务准备。',
 			workFunc: function (cb2) {
-				setTimeout(() => {
-					thisobj.func.bankObj.prepare(() => {
-						thisobj.func.healObj.func(() => {
-							cb2(true)
-						})
+				thisobj.func.bankObj.prepare(() => {
+					thisobj.func.healObj.func(() => {
+						cb2(true)
 					})
-
-				}, 2000);
+				})
 			}
 		},
 		{
@@ -129,7 +126,7 @@ var thisobj = {
 				}
 				// 输入99层，利用API特殊性质，抵达迷宫出口水晶处刷鳞片
 				cga.findAndWalkMaze(thisobj.data.maze.name, 99, () => {
-					if(thisobj.data.isTeamLeader){
+					if (thisobj.data.isTeamLeader) {
 						let xy = cga.GetMapXY()
 						cga.freqMove(cga.getRandomSpaceDir(xy.x, xy.y))
 					}
@@ -146,15 +143,17 @@ var thisobj = {
 				cga.buildTeam({ teammates: thisobj.param.teammates, timeout: 60000, pos: [26, 64] }, (r) => {
 					if (r && r == 'ok') {
 
-						let obj = {act : 'map', target : 16512, npcpos : [26, 25], waitLocation: 16511, notalk :()=>{
-							// 仅队长对话
-							if(!thisobj.data.isTeamLeader){
-								return true
+						let obj = {
+							act: 'map', target: 16512, npcpos: [26, 25], waitLocation: 16511, notalk: () => {
+								// 仅队长对话
+								if (!thisobj.data.isTeamLeader) {
+									return true
+								}
+								return false
 							}
-							return false
-						}}
+						}
 
-						cga.askNpcForObj(obj,()=>{
+						cga.askNpcForObj(obj, () => {
 							cb2(true)
 						})
 
@@ -172,9 +171,9 @@ var thisobj = {
 		{
 			intro: '5.由静谧之间(index 16512)（26.12）处进入咒缚之帐(index 16513)与邪灵鸟人（14.14）对话2次，任务完结。',
 			workFunc: function (cb2) {
-				cga.disbandTeam(()=>{
+				cga.disbandTeam(() => {
 					cga.travel.autopilot('咒缚之帐', () => {
-						let obj = {act : 'msg', target : '再睡一阵子', npcpos : [14, 14], waitLocation: 16513}
+						let obj = { act: 'msg', target: '再睡一阵子', npcpos: [14, 14] }
 						cga.askNpcForObj(obj, () => {
 							cb2(true)
 						})
