@@ -983,6 +983,16 @@ var task = cga.task.Task('琥珀之卵4', [
 
 var loop = ()=>{
 	cga.SayWords('欢迎使用【UNAの脚本】全自动保证书+转职+刷声望流程，当前正在进行：【'+configTable.mainPlugin+'】阶段。', 0, 3, 1);
+	// 如果并不是带打账号，且已经有保证书，则跳过保证书环节，进入传咒驯互转
+	if(thisobj.spawnOfAmber4.aim == '一次性' || cga.getItemCount('转职保证书') > 0){
+		console.log('你已经有【转职保证书】了，并且不是带过任务的账号。跳过保证书环节，进入传咒驯互转。')
+		// 万一角色有脏数据，这里借用rollback来清洗一下，再跳转脚本
+		rollBack(()=>{
+			setTimeout(jump, 3000);
+		})
+		return
+	}
+
 	task.doTask(()=>{
 		if(thisobj.job.job == '暗黑骑士' || thisobj.job.job == '教团骑士'){
 			console.log('暗黑骑士和教团骑士无法通过保证书刷称号，直接进入陪打循环。')

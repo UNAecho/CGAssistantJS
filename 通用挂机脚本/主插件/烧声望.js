@@ -94,9 +94,10 @@ var getPercentage = (cb) =>{
 
 							console.log('职业：【'+jobObj.job+'】，称号：【'+jobObj.reputation+'】，进度：【'+reputationState+'】，需要使用【'+skillcount+'】次得意技，或回补【'+supplycount+'】次才能升级至下一称号')
 
-							if (jobObj.reputationLv > 12){
-								console.log('称号已达敬畏的寂静或以上，烧声望脚本结束')
+							if (jobObj.reputationLv > 13){
+								console.log('称号已达无尽星空，烧声望脚本结束')
 								jump()
+								return
 							}
 							if (originInfo === null){
 								originInfo = {
