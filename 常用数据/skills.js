@@ -617,7 +617,7 @@ const skillInfos = [
 		cost : 4400,
 		fieldCost : 1,
 		npcMainMap : '奇利村',
-		npcMap : '索奇亚岛狮子之穴',
+		npcMap : 23603,
 		npcpos : [20, 14],
 		description : '在攻击时除了损伤敌方以外还追加状态异常的攻击',
 		notes : '只有空手才能使用；限定格斗士、士兵学习',

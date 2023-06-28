@@ -153,6 +153,7 @@ module.exports = function(callback){
 		const info = cga.GetMapXY();
 		info.indexes = cga.GetMapIndex();
 		info.name = cga.GetMapName();
+		info.index3 = info.indexes.index3;// index3最常用，加入方便调用
 		return info;
 	};
 	
@@ -6484,13 +6485,13 @@ module.exports = function(callback){
 		this.doStage = function (index, cb) {
 			if (this.anyStepDone) {
 				if (this.isDone(index)) {
-					console.log('第' + index + '/' + stages.length + '阶段已完成，跳过。');
+					console.log('第' + index + '/' + (stages.length > 0 ? stages.length - 1 : 0)+ '阶段已完成，跳过。');
 					this.doNext(index + 1, cb);
 					return;
 				}
 			} else {
 				if (this.isDoneSingleStep(index)) {
-					console.log('第' + index + '/' + stages.length + '阶段已完成，跳过。');
+					console.log('第' + index + '/' + (stages.length > 0 ? stages.length - 1 : 0) + '阶段已完成，跳过。');
 					this.doNext(index + 1, cb);
 					return;
 				}
@@ -8602,9 +8603,13 @@ module.exports = function(callback){
 	 * i:item名称，询问全体队员是否持有某种道具，队员返回道具数量
 	 * #:与i相同，但询问的是道具id，队员返回道具数量
 	 * t:称号持有清空，询问全体队员是否拥有某种称号，队员返回0表示没有，1表示有
-	 * m:任务完成情况，记录在【个人配置中】。队员返回任务完成情况，0表示没完成，1表示已完成
+	 * m:任务完成情况，记录在【个人配置中】。队员返回任务完成情况，0表示没完成，1表示已完成。
 	 * 例：['i承认之戒','#491677','t背叛者','m小岛之谜']
 	 * 表示分别询问队员道具【承认之戒】、道具id【491677】、称号【背叛者】持有情况，以及任务【小岛之谜】是否已完成
+	 * 
+	 * 【注意】使用传递信息名称的字节数，最多支持12（含）字节，剩下4字节用来表示回应队长和被询问信息的回答。
+	 * 全角字符最多支持6(含)个字，半角字符最多支持12(含)个字。
+	 * 也是由于此原因，【树精长老的末日】全项目更名为【树精长老】。
 	 * 
 	 * @param {*} cb 回调函数，全员信息收集完毕后制作成object，调用cb并将object传入
 	 * @returns 
@@ -9791,10 +9796,32 @@ module.exports = function(callback){
 			}
 		}
 
+		let checkBattleFailed = ()=>{
+			let teamplayers = cga.getTeamPlayers()
+			// 如果是单人，并且血量已经是1，判断战斗失败
+			if(!teamplayers.length){
+				return cga.GetPlayerInfo().hp == 1
+			}
+			// 如果是组队的情况，sum所有血量为1的队友，如果sum等于队员数，则判断战斗失败
+			let failCnt = 0
+			for (let i = 0; i < teamplayers.length; i++) {
+				if(teamplayers[i].maxhp > 0 && teamplayers[i].hp == 1){
+					failCnt++
+					console.log('队员',teamplayers[i].name,'体力为1')
+				}
+			}
+
+			return failCnt == teamplayers.length
+		}
+
 		let askAndCheck = (npcpos,cb)=>{
-			var retry = (cb)=>{
+			// 监测与NPC对话是否有战斗
+			let battleFlag = false
+
+			let retry = (cb)=>{
 				// 地图判断的时候，可能涉及到BOSS战的切图，这里加入cga.isInNormalState()，等战斗结束再判断
 				if(!cga.isInNormalState()){
+					battleFlag = true
 					setTimeout(retry, 1000, cb);
 					return
 				}
@@ -9859,10 +9886,13 @@ module.exports = function(callback){
 					if(obj.hasOwnProperty('notalk') && obj.notalk()){
 						console.log('notalk函数不允许自己与NPC对话..')
 					}else{
+						if(battleFlag && checkBattleFailed()){
+							throw new Error('战斗失败，全队血量为1，请检查队伍整体战斗力，或战斗配置')
+						}
 						// 有时候，队长还没在NPC面前调整好位置，队员先与NPC对话直接令全队地图改变了，导致队长walklist报错。这里加一个与NPC对话的小延迟。
 						setTimeout(() => {
 							cga.turnTo(npcpos[0], npcpos[1])
-						}, cga.getTeamPlayers().length ? 1000 : 0);
+						}, cga.getTeamPlayers().length ? 1500 : 0);
 					}
 				}
 				cga.AsyncWaitNPCDialog(dialogHandler);
@@ -10044,11 +10074,9 @@ module.exports = function(callback){
 
 			// 制作好3种导航函数之后，顺序执行
 			// 但要区分是队长还是队员
-			var map = cga.GetMapName();
-			var mapindex = cga.GetMapIndex().index3
 
 			if(isLeader()){
-				if(map == tmpObj.npcMap || mapindex == tmpObj.npcMap){
+				if(cga.isInMap(tmpObj.npcMap)){
 					console.log('已经在目标地图，跳过赶路模块')
 					searchFunc((npcpos)=>{
 						walkToNPC(npcpos,cb)
@@ -10128,7 +10156,7 @@ module.exports = function(callback){
 					})
 				}
 			}
-
+			
 			// NPC周围只有1格可站立。cga.getRandomSpace返回是1维数组，cga.get2RandomSpace返回是2维数组
 			if(typeof spaceList[0] == 'number'){
 				console.log('NPC周围只有1格，改为cga.getRandomSpace来计算。')
@@ -12283,8 +12311,8 @@ module.exports = function(callback){
 				if(i + j == 0){
 					continue
 				}
-				
-				if(walls.matrix[y + j][x + i] == 0 && cga.isPathAvailable(XY.x, XY.y, x + i, y + j)){
+				// (x == x + i && y == y + j ) 意思是必须与NPC处于一条轴上，不允许斜着对话，因为并不是在1x1的范围内对话，斜着无法触发NPC。
+				if(walls.matrix[y + j][x + i] == 0 && (x == x + i || y == y + j ) && cga.isPathAvailable(XY.x, XY.y, x + i, y + j)){
 					return [x + i,y + j]
 				}
 			}

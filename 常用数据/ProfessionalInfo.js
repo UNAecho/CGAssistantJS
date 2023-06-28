@@ -69,8 +69,8 @@ const Professions = [
 		],
 		titles: ['见习格斗士', '格斗士', '格斗专家', '格斗家师范', '格斗王', '斗圣'],
 		category: '物理系',
-        npcMainMap: '其它',
-		npcMap: '师范的房间',
+        npcMainMap: '奇利村',
+		npcMap: 23603,
 		tutorwalk:[
 			[7, 6, 3214],
 			[7, 1, 3212],

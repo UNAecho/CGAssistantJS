@@ -40,7 +40,7 @@ var loop = ()=>{
 				console.log('称号满但没有完美调教术，那么进行传咒驯互转的最后一站:转职驯兽')
 				missionName = '就职驯兽师'
 			}else{
-				console.log('称号阶段大于12，并且不需要完美调教术，结束此脚本')
+				console.log('称号阶段大于13，并且不需要完美调教术，结束此脚本')
 				setTimeout(()=>{
 					updateConfig.update_config({'mainPlugin' : '智能练级'})
 				},5000)
