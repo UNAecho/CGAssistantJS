@@ -10,71 +10,71 @@
  */
 const reputationList = [
 	{
-		reputation: '恶人',
+		reputation: '恶人',// index 0
 		min: -4999,// 无下限，自定义为-4999
 		max: -4000,// 原为-3000
 	}, 
 	{
-		reputation: '忌讳的人',
+		reputation: '忌讳的人',// index 1
 		min: -3999,// 原为-2999
 		max: -3000,// 原为-2000
 	}, 
 	{
-		reputation: '受挫折的人',
+		reputation: '受挫折的人',// index 2
 		min: -2999,// 原为-1999
 		max: -2000,// 原为-1000
 	}, 
 	{
-		reputation: '无名的旅人',
+		reputation: '无名的旅人',// index 3
 		min: -1999,// 原为-999
 		max: 1999,
 	}, {
-		reputation: '路旁的落叶',
+		reputation: '路旁的落叶',// index 4
 		min: 2000,
 		max: 4999,
 	}, {
-		reputation: '水面上的小草',
+		reputation: '水面上的小草',// index 5
 		min: 5000,
 		max: 9999,
 	},{
 		// 晋级条件
-		reputation: '呢喃的歌声',
+		reputation: '呢喃的歌声',// index 6
 		min: 10000,
 		max: 19999,
 	},{
-		reputation: '地上的月影',
+		reputation: '地上的月影',// index 7
 		min: 20000,
 		max: 32999,
 	},{
-		reputation: '奔跑的春风',
+		reputation: '奔跑的春风',// index 8
 		min: 33000,
 		max: 49999,
 	},{
 		// 晋级条件
-		reputation: '苍之风云',
+		reputation: '苍之风云',// index 9
 		min: 50000,
 		max: 69999,
 	},{
-		reputation: '摇曳的金星',
+		reputation: '摇曳的金星',// index 10
 		min: 70000,
 		max: 99999,
 	},{
 		// 晋级条件
-		reputation: '欢喜的慈雨',
+		reputation: '欢喜的慈雨',// index 11
 		min: 100000,
 		max: 129999,
 	},{
-		reputation: '蕴含的太阳',
+		reputation: '蕴含的太阳',// index 12
 		min: 130000,
 		max: 159999,
 	},{
 		// 晋级条件
-		reputation: '敬畏的寂静',
+		reputation: '敬畏的寂静',// index 13
 		min: 160000,
 		max: 199999,
 	},{
 		// 晋级条件
-		reputation: '无尽星空',
+		reputation: '无尽星空',// index 14
 		min: 200000,
 		max: 999999,
 	},
@@ -84,66 +84,66 @@ const reputationList = [
  */
 const productReputationList = [
 	{
-		reputation: '恶人',
+		reputation: '恶人',// index 0
 		min: -1,
 		max: -3000,
 	}, 
 	{
-		reputation: '忌讳的人',
+		reputation: '忌讳的人',// index 1
 		min: -2999,
 		max: -2000,
 	}, 
 	{
-		reputation: '受挫折的人',
+		reputation: '受挫折的人',// index 2
 		min: -1999,
 		max: -1000,
 	}, 
 	{
-		reputation: '无名的旅人',
+		reputation: '无名的旅人',// index 3
 		min: -999,
 		max: 1999,
 	}, {
-		reputation: '迈步前进者',
+		reputation: '迈步前进者',// index 4
 		min: 2000,
 		max: 3999,
 	}, {
-		reputation: '追求技巧的人',
+		reputation: '追求技巧的人',// index 5
 		min: 4000,
 		max: 5999,
 	},{
-		reputation: '刻于新月之铭',
+		reputation: '刻于新月之铭',// index 6
 		min: 6000,
 		max: 8999,
 	},{
-		reputation: '掌上的明珠',
+		reputation: '掌上的明珠',// index 7
 		min: 9000,
 		max: 12999,
 	},{
-		reputation: '敬虔的技巧',
+		reputation: '敬虔的技巧',// index 8
 		min: 13000,
 		max: 18999,
 	},{
-		reputation: '踏入神的领域',
+		reputation: '踏入神的领域',// index 9
 		min: 19000,
 		max: 26999,
 	},{
-		reputation: '贤者',
+		reputation: '贤者',// index 10
 		min: 27000,
 		max: 36999,
 	},{
-		reputation: '神匠',
+		reputation: '神匠',// index 11
 		min: 37000,
 		max: 46999,
 	},{
-		reputation: '摘星的技巧',
+		reputation: '摘星的技巧',// index 12
 		min: 47000,
 		max: 56999,
 	},{
-		reputation: '万物创造者',
+		reputation: '万物创造者',// index 13
 		min: 57000,
 		max: 69999,
 	},{
-		reputation: '持石之贤者',
+		reputation: '持石之贤者',// index 14
 		min: 70000,
 		max: 999999,
 	},

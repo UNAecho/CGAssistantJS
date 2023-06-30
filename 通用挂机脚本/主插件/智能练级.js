@@ -931,6 +931,9 @@ var thisobj = {
 		if (configMode.translate(pair))
 			return true;
 
+		if (transferMode.translate(pair))
+			return true;
+
 		return false;
 	},
 	loadconfig: (obj) => {
@@ -1134,7 +1137,6 @@ var thisobj = {
 			supplyMode.inputcb,
 			teamMode.inputcb,
 			spawnOfAmber4Mode.inputcb,
-			transferMode.inputcb,
 			stage0,
 			stage1,
 		], cb);

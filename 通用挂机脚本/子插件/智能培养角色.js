@@ -1,4 +1,5 @@
 var fs = require('fs');
+var Async = require('async');
 
 var cga = global.cga;
 var configTable = global.configTable;
@@ -8,6 +9,7 @@ const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.j
 const professionalArray = getprofessionalInfos.Professions
 // 学习必要技能任务对象，用于获取需要学习的任务技能，统一静态变量，防止多处数据不统一。
 const learnSkillMission = require(rootdir + '/常用数据/missions/学习必要技能.js');
+var transferMode = require('../主插件/传咒驯互转');
 
 var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 
@@ -52,13 +54,25 @@ var thisobj = {
 			targetObj.missionName = '单人开全部传送'
 		}
 
-		// 战斗系的转职保证书、刷声望。声望小于【无尽星空】时，需要转职刷声望。这里暂时使用脚本跳转的方式，因为逻辑太复杂，没有做解耦
+		/**
+		 * 进入转职保证书、传咒驯互转、烧声望循环的前提条件：角色在2转或以下（防止将高阶职业误转）、角色培养目标职业是战斗系、大于80级（方便战斗）、声望小于无尽星空。
+		 * 这里暂时使用脚本跳转的方式，因为逻辑太复杂，没有做解耦
+		 * 
+		 * 如果满足了前提条件，还有2种情况判断：
+		 * 1、当前职业与目标职业一致，但是声望小于奔跑的春风。因为刷满声望最终开始练级的时候，是从声望33000，也就是奔跑的春风最低数值开始的。
+		 * 也就是说，在不进行离线写入、不与阿梅对话的情况下，由于无法分辨当前角色是否刷满声望，使用【当前职业与目标职业一致，并且声望小于奔跑的春风】来判断该号是否进入刷声望环节。
+		 * 2、当前职业与目标职业不一致，并且不是驯兽师（驯兽师要靠练级刷，因为技能比称号更难刷满）的情况，需要进入刷声望环节。
+		 */
 		if(thisobj.finalJob.jobType == '战斗系' && playerInfo.level >= 80 && curJobObj.reputationLv < 14){
-			console.log('你是战斗系，并且声望小于无尽星空，开始进入烧声望环节。包括【转职保证书】【烧声望】【传咒驯互转】3个环节')
-			setTimeout(()=>{
-				updateConfig.update_config({'mainPlugin' : '转职保证书'})
-			},2000)
-			return
+			if(curJobObj.jobLv > 2){
+				console.log('【UNAecho脚本警告】你目标职业是战斗系，并且声望没有刷满。但你已经3转或以上，保险起见，禁止脚本转职，如果需要烧声望，请手动转职一次，再运行脚本。')
+			}else if((thisobj.finalJob.job == curJobObj.job && curJobObj.reputationLv < 8) || (thisobj.finalJob.job != curJobObj.job && curJobObj.job != '驯兽师')){
+				console.log('你的角色培养目标是战斗系职业，并且声望小于无尽星空，开始进入烧声望环节。包含【转职保证书】【烧声望】【传咒驯互转】3个部分')
+				setTimeout(()=>{
+					updateConfig.update_config({'mainPlugin' : '转职保证书'})
+				},2000)
+				return
+			}
 		}
 
 		// 如果没有职业切换需求，开始检查技能情况
@@ -98,13 +112,10 @@ var thisobj = {
 		// 如果其他模块已经读取了目标职业，则直接使用
 		if (configTable.finalJob) {
 			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
-			return true
-		}
-
-		if (typeof obj.finalJob == 'number') {
+		}else if (typeof obj.finalJob == 'number') {
 			configTable.finalJob = professionalArray[obj.finalJob].name;
 			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
-		} else {
+		} else if (typeof obj.finalJob == 'string'){
 			configTable.finalJob = obj.finalJob;
 			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
 		}
@@ -113,39 +124,51 @@ var thisobj = {
 			return false;
 		}
 
+		if (!transferMode.loadconfig(obj))
+			return false;
+
 		return true;
 	},
 	inputcb: (cb) => {
 
-		if (configTable.finalJob) {
-			console.log('【智能培养角色】其他模块已经定义了目标职业，这里直接跳过输入')
-			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
-			cb(null)
-			return
-		}
+		var stage1 = (cb2) => {
 
-		var sayString = '【战斗配置插件】请选择角色的最终要练什么职业:';
-		for (var i in professionalArray) {
-			if (i != 0)
-				sayString += ', ';
-			sayString += '(' + (parseInt(i) + 1) + ')' + professionalArray[i].name;
-		}
-		cga.sayLongWords(sayString, 0, 3, 1);
-		cga.waitForChatInput((msg, index) => {
-			if (index !== null && index >= 1 && professionalArray[index - 1]) {
-				configTable.finalJob = professionalArray[index - 1].name;
+			if (configTable.finalJob) {
+				console.log('【智能培养角色】其他模块已经定义了目标职业，这里直接跳过输入')
 				thisobj.finalJob = cga.job.getJob(configTable.finalJob)
-
-				var sayString2 = '当前已选择:[' + thisobj.finalJob.job + ']。';
-				cga.sayLongWords(sayString2, 0, 3, 1);
-
-				cb(null);
-
-				return false;
+				cb2(null)
+				return
 			}
 
-			return true;
-		});
+			var sayString = '【战斗配置插件】请选择角色的最终要练什么职业:';
+			for (var i in professionalArray) {
+				if (i != 0)
+					sayString += ', ';
+				sayString += '(' + (parseInt(i) + 1) + ')' + professionalArray[i].name;
+			}
+			cga.sayLongWords(sayString, 0, 3, 1);
+			cga.waitForChatInput((msg, index) => {
+				if (index !== null && index >= 1 && professionalArray[index - 1]) {
+					configTable.finalJob = professionalArray[index - 1].name;
+					thisobj.finalJob = cga.job.getJob(configTable.finalJob)
+	
+					var sayString2 = '当前已选择:[' + thisobj.finalJob.job + ']。';
+					cga.sayLongWords(sayString2, 0, 3, 1);
+	
+					cb2(null);
+	
+					return false;
+				}
+	
+				return true;
+			});
+		}
+
+		Async.series([
+			stage1,
+			transferMode.inputcb,
+		], cb);
+
 	}
 }
 

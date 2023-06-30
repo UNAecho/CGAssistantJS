@@ -296,7 +296,7 @@ var thisobj = {
 		let petIndex = cga.GetPlayerInfo().petid
 		if(petIndex != -1){
 			console.log('当前职业不是驯兽师，取消掉出战宠物来烧技能。')
-			cga.ChangePetState(petIndex, 0);
+			cga.ChangePetState(petIndex, cga.PET_STATE_READY);
 		}
 
 		playerThinkTimer();

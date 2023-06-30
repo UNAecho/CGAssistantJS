@@ -77,10 +77,12 @@ var thisobj = {
 		return false;
 	},
 	loadconfig : (obj)=>{
-
 		if(typeof obj.needPerfectTrainSkill != 'boolean'){
 			console.error('读取配置:传咒驯互转失败！必须指定角色是否需要学习完美调教术，关系到烧声望最后保留的是何种职业。')
 			return false;
+		}else{
+			configTable.needPerfectTrainSkill = obj.needPerfectTrainSkill;
+			thisobj.needPerfectTrainSkill = obj.needPerfectTrainSkill;
 		}
 		
 		return true;
@@ -88,6 +90,14 @@ var thisobj = {
 	inputcb : (cb)=>{
 
 		var stage0 = (cb) =>{
+
+			if(configTable.hasOwnProperty('needPerfectTrainSkill') && typeof configTable.needPerfectTrainSkill == 'boolean'){
+				console.log('【传咒驯互转】其它配置已经获取到完美驯兽术的需求开关，跳过输入。')
+				thisobj.needPerfectTrainSkill = configTable.needPerfectTrainSkill
+				cb(null)
+				return
+			}
+
 			var sayString = '【传咒驯互转插件】请输入你是否需要完美调教术，如果需要，则烧声望模块会最终转职成驯兽师。0不需要1需要:';
 
 			cga.sayLongWords(sayString, 0, 3, 1);
