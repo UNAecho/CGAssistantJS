@@ -72,6 +72,12 @@ var teamModeArray = [
 				cusObj.check['r小号'] = { sum: thisobj.object.roleMaxCount['小号'] }
 			}
 
+			// 如果队长开启了自动帮做战斗系晋级任务，则将相关任务纳入统计
+			if(thisobj.object.autoPromoteTask){
+				cusObj.check['m树精长老'] = { sum: -1 }
+				cusObj.check['m挑战神兽'] = { sum: -1 }
+			}
+
 			cga.buildCustomerTeam(cusObj, (r) => {
 				cga.checkTeamAllDone(doneNick, () => {
 					afterShare(r, cb)
@@ -804,6 +810,49 @@ var battleAreaArray = [
 			return map == '半山腰';
 		}
 	},
+	{
+		name: '树精长老',
+		doTask: (cb) => {
+			let missionObj = require(rootdir + '/常用数据/missions/' + '树精长老' + '.js');
+			missionObj.doTask({teammates : thisobj.object.area.teammates}, cb)
+			return
+		},
+	},
+	{
+		name: '挑战神兽',
+		doTask: (cb) => {
+			// 由于神兽只能2个人打，做任务前，先取队伍前2个人做任务，其余的人重新回到集散地等待下一班车。
+			let rank = null
+			let myname = cga.GetPlayerInfo().name
+			let taskTeammates = []
+			// 如果队伍人数大于2
+			if(thisobj.object.area.teammates.length > 2){
+				for (let i = 0; i < thisobj.object.area.teammates.length; i++) {
+					if(thisobj.object.area.teammates[i] == myname){
+						rank = i
+					}
+					if(i < 2){
+						taskTeammates.push(thisobj.object.area.teammates[i])
+					}
+				}
+				console.log('【挑战神兽】最多允许2名队员，原队伍:',thisobj.object.area.teammates,'需要从前开始截断，仅剩2人:',taskTeammates)
+			}else if(thisobj.object.area.teammates.length > 0 && thisobj.object.area.teammates.length <= 2){// 如果队伍人数满足1-2人
+				taskTeammates = thisobj.object.area.teammates
+			}else{// 队伍人数错误
+				throw new Error('组队任务错误，teammates:',thisobj.object.area.teammates)
+			}
+
+			// 队伍前2个人做任务，其余人返回集散地等下一班车
+			if(rank < 2){
+				let missionObj = require(rootdir + '/常用数据/missions/' + '挑战神兽' + '.js');
+				missionObj.doTask({teammates : taskTeammates}, cb)
+			}else{
+				console.log('你的队伍顺序大于2，回到集散地重新等待下一班车...')
+				setTimeout(cb, 1000);
+			}
+			return
+		},
+	},
 ]
 
 var cga = global.cga;
@@ -813,6 +862,8 @@ var configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战�
 var update = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
 // 如果练级地点发生改变，且已经落盘完毕，则将此flag打在人物昵称上
 const areaChangedFlag = 'areaChanged'
+// 判定读取到teamModeArray中的对象，是否为任务对象的依据（根据name判断）
+const taskArr = ['树精长老','挑战神兽']
 
 // 如果obj有key则增加数值，如果没有则初始化为value
 var objUtil = (obj, key, value) => {
@@ -844,8 +895,23 @@ var thisobj = {
 	muster: (cb) => {
 		thisobj.object.muster(cb);
 	},
-	isBuildTeamReady: () => {
-		return Object.prototype.toString.call(thisobj.object.battleAreaObj) == '[object Object]' ? true : false
+	isTaskTeamReady: () => {// 判断此次组队是否是做任务
+		return (Object.prototype.toString.call(thisobj.object.battleAreaObj) == '[object Object]' && taskArr.includes(thisobj.object.battleAreaObj.name))? true : false
+	},
+	isBuildTeamReady: () => {// 判断此次组队是否是练级Object（thisobj.object.battleAreaObj是否读取到了object），并且不是任务
+		return (Object.prototype.toString.call(thisobj.object.battleAreaObj) == '[object Object]' && !thisobj.isTaskTeamReady())? true : false
+	},
+	doTask: (cb) => {// 对外暴露的做任务模块
+		thisobj.object.battleAreaObj.doTask(()=>{
+			// 任务完毕，清空缓存的各种信息
+			update.delete_config(['area'], true, () => {
+				thisobj.object.battleAreaObj = null
+				thisobj.object.area = null
+
+				console.log('智能组队：任务结束，清除缓存信息..')
+				setTimeout(cb, 3000);
+			})
+		});
 	},
 	musterWithBuildTeam: (cb) => {
 		// 如果有更改队伍的昵称没有清除掉，则清除
@@ -873,6 +939,11 @@ var thisobj = {
 		var minLv = 160
 		var camp = true
 		var island = true
+
+		// 是否做树精长老
+		var tree = false
+		// 是否做挑战神兽
+		var monster = false
 
 		var areaObj = {}
 
@@ -912,6 +983,12 @@ var thisobj = {
 				}
 				if (shareInfoObj[p].mission['传送小岛'] == '0') {
 					island = false
+				}
+				if (shareInfoObj[p].mission['树精长老'] == '0') {
+					tree = true
+				}
+				if (shareInfoObj[p].mission['挑战神兽'] == '0') {
+					monster = true
 				}
 				// 注意，此for循环不可使用break，因为要遍历最小等级
 				if (shareInfoObj[p].lv < minLv) {
@@ -988,6 +1065,22 @@ var thisobj = {
 		} else if (island && minLv > 138) {// 半山判定，由于是去迷宫出口练级，所以layer依然是0
 			battleArea = '通往山顶的路'
 		}
+
+		/**
+		 *  如果队内存在以下情况，则自动全员帮忙做战斗系晋级任务：
+		 * 1、开启自动做战斗系晋级任务的功能（thisobj.object.autoPromoteTask = true）
+		 * 2、全员至少80级
+		 * 3、队内至少1人没有做过树精或神兽任务
+		 * */ 
+
+		if(thisobj.object.autoPromoteTask && minLv >= 80){
+			if(tree){
+				battleArea = '树精长老', layer = 0
+			}else if(monster){
+				battleArea = '挑战神兽', layer = 0
+			}
+		}
+
 		// 将所有信息填入返回对象
 		areaObj.map = battleArea
 		areaObj.layer = layer
@@ -1178,6 +1271,13 @@ var thisobj = {
 		}
 		if (pair.field == 'timeout') {
 			pair.field = '等待队员超时时间(毫秒)';
+			pair.value = pair.value;
+			pair.translated = true;
+			return true;
+		}
+		if (pair.field == 'autoPromoteTask') {
+			pair.field = '是否自动做战斗系进阶任务';
+			pair.value = pair.value;
 			pair.translated = true;
 			return true;
 		}
@@ -1290,6 +1390,19 @@ var thisobj = {
 		} else {
 			configTable.timeout = obj.timeout;
 			thisobj.object.timeout = obj.timeout;
+		}
+
+		if(typeof obj.autoPromoteTask == 'boolean'){
+			configTable.autoPromoteTask = obj.autoPromoteTask ? '做' : '不做';
+			thisobj.object.autoPromoteTask = obj.autoPromoteTask;
+		}else if(typeof obj.autoPromoteTask == 'string'){
+			configTable.autoPromoteTask = obj.autoPromoteTask;
+			thisobj.object.autoPromoteTask = ['做','不做'].includes(obj.autoPromoteTask) ? (obj.autoPromoteTask == '做' ? true : false) : null;
+		}
+
+		if(thisobj.object.autoPromoteTask === undefined || thisobj.object.autoPromoteTask === null){
+			console.error('读取配置：战斗系晋级任务失败！autoPromoteTask的值必须为true或者false，或者【做】【不做】');
+			return false;
 		}
 
 		return true;
@@ -1508,8 +1621,32 @@ var thisobj = {
 				return true;
 			});
 		}
+
+		var stage8 = (cb2) => {
+			var sayString = '【智能组队】【战斗系晋级任务插件】请输入是否自动带小号做树精长老的末日、挑战神兽任务。0不做，1做。（推荐做，可以节约大量手动做任务的时间）【注意】:开启此功能，要求队长有单人带1个小号在神兽迷宫中长时间刷鳞片的战斗力，否则将会陷入无限失败的局面。】';
+
+			cga.sayLongWords(sayString, 0, 3, 1);
+			cga.waitForChatInput((msg, index) => {
+				if (index !== null && (index == 0 || index == 1)) {
+					let value = index == 1 ? '做' : '不做';
+
+					sayString = '当前已选择: [' + value + ']';
+					cga.sayLongWords(sayString, 0, 3, 1);
+
+					configTable.autoPromoteTask = value
+					thisobj.object.autoPromoteTask = index == 1
+
+					setTimeout(cb2, 500);
+
+					return false;
+				}
+
+				return true;
+			});
+		}
+
 		// stage2-4仅队长需要执行，所以在stage1中判断是否执行
-		Async.series([stage0, stage1, stage5, stage6, stage7], cb);
+		Async.series([stage0, stage1, stage5, stage6, stage7,stage8], cb);
 	}
 }
 

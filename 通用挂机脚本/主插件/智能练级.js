@@ -825,6 +825,15 @@ var loop = () => {
 		}
 	}
 
+	// 如果判断任务队伍已就绪
+	if (teamMode.isTaskTeamReady()) {
+		callSubPluginsAsync('prepare', () => {
+			teamMode.doTask(loop)
+		});
+		return
+	}
+
+	// 如果判断练级队伍已就绪
 	if (teamMode.isBuildTeamReady()) {
 		callSubPluginsAsync('prepare', () => {
 			teamMode.musterWithBuildTeam(() => {

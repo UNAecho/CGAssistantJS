@@ -146,6 +146,19 @@ var thisobj = {
 				})
 			}
 		},
+		{
+			intro: '7.晋级。',
+			workFunc: function (cb2) {
+				let jobObj = cga.job.getJob()
+				if(jobObj.jobLv > 1){
+					console.log('你至少为1转以上，任务结束。')
+					return
+				}
+				cga.askNpcForObj({ act: 'promote', target: jobObj.name, npcpos: jobObj.npcpos }, () => {
+					cb2(true)
+				})
+			}
+		},
 	],
 	taskRequirements: [//任务阶段是否完成
 		function () {
@@ -165,6 +178,9 @@ var thisobj = {
 		},
 		function () {
 			return (cga.getItemCount('生命之花') >= 1) ? true : false;
+		},
+		function () {
+			return false;
 		},
 		function () {
 			return false;
