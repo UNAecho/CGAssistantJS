@@ -21,7 +21,7 @@
     "leaderFilter": "bus",
     "leaderX": 143,
     "leaderY": 109,
-    "timeout": 180000,
+    "timeout": 180000,"autoPromoteTask":true,
     "spawnOfAmber4": {
         "flag": true,
         "part": "队员",

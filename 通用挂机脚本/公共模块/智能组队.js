@@ -1393,15 +1393,10 @@ var thisobj = {
 		}
 
 		if(typeof obj.autoPromoteTask == 'boolean'){
-			configTable.autoPromoteTask = obj.autoPromoteTask ? '做' : '不做';
+			configTable.autoPromoteTask = obj.autoPromoteTask
 			thisobj.object.autoPromoteTask = obj.autoPromoteTask;
-		}else if(typeof obj.autoPromoteTask == 'string'){
-			configTable.autoPromoteTask = obj.autoPromoteTask;
-			thisobj.object.autoPromoteTask = ['做','不做'].includes(obj.autoPromoteTask) ? (obj.autoPromoteTask == '做' ? true : false) : null;
-		}
-
-		if(thisobj.object.autoPromoteTask === undefined || thisobj.object.autoPromoteTask === null){
-			console.error('读取配置：战斗系晋级任务失败！autoPromoteTask的值必须为true或者false，或者【做】【不做】');
+		}else{
+			console.error('读取配置：战斗系晋级任务失败！autoPromoteTask的值必须为true或者false（代表做或者不做）');
 			return false;
 		}
 
@@ -1628,13 +1623,13 @@ var thisobj = {
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, index) => {
 				if (index !== null && (index == 0 || index == 1)) {
-					let value = index == 1 ? '做' : '不做';
+					let flag = index == 1 ? true : false;
 
-					sayString = '当前已选择: [' + value + ']';
+					sayString = '当前已选择: [' + (flag ? '做':'不做') + ']';
 					cga.sayLongWords(sayString, 0, 3, 1);
 
-					configTable.autoPromoteTask = value
-					thisobj.object.autoPromoteTask = index == 1
+					configTable.autoPromoteTask = flag
+					thisobj.object.autoPromoteTask = flag
 
 					setTimeout(cb2, 500);
 
