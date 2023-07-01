@@ -27,6 +27,15 @@ var loop = ()=>{
 		return
 	}
 
+	// 判断转职保证书是否持有
+	if(cga.getItemCount('转职保证书') == 0){
+		console.log('你没有转职保证书，转职后声望会归零。现在跳转至转职保证书任务')
+		setTimeout(()=>{
+			updateConfig.update_config({'mainPlugin' : '转职保证书'})
+		},5000)
+		return
+	}
+
 	thisobj.bankObj.prepare(()=>{
 
 		if(cga.needSupplyInitial()){
