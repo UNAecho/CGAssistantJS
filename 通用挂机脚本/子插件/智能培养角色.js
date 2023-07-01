@@ -61,12 +61,12 @@ var thisobj = {
 		 * 如果满足了前提条件，还有2种情况判断：
 		 * 1、当前职业与目标职业一致，但是声望小于奔跑的春风。因为刷满声望最终开始练级的时候，是从声望33000，也就是奔跑的春风最低数值开始的。
 		 * 也就是说，在不进行离线写入、不与阿梅对话的情况下，由于无法分辨当前角色是否刷满声望，使用【当前职业与目标职业一致，并且声望小于奔跑的春风】来判断该号是否进入刷声望环节。
-		 * 2、当前职业与目标职业不一致，并且不是驯兽师（驯兽师要靠练级刷，因为技能比称号更难刷满）的情况，需要进入刷声望环节。
+		 * 2、当前职业与目标职业不一致，并且不是驯兽师（驯兽师要靠练级刷，因为技能比称号更难刷满）的情况；或者无论是什么职业，手中没有转职保证书，而当前职业并不是目标职业时，需要进入刷声望环节。
 		 */
 		if(thisobj.finalJob.jobType == '战斗系' && playerInfo.level >= 80 && curJobObj.reputationLv < 14){
 			if(curJobObj.jobLv > 2){
 				console.log('【UNAecho脚本警告】你目标职业是战斗系，并且声望没有刷满。但你已经3转或以上，保险起见，禁止脚本转职，如果需要烧声望，请手动转职一次，再运行脚本。')
-			}else if((thisobj.finalJob.job == curJobObj.job && curJobObj.reputationLv < 8) || (thisobj.finalJob.job != curJobObj.job && curJobObj.job != '驯兽师')){
+			}else if((thisobj.finalJob.job == curJobObj.job && curJobObj.reputationLv < 8) || (thisobj.finalJob.job != curJobObj.job && (curJobObj.job != '驯兽师' || cga.getItemCount('转职保证书') == 0))){
 				console.log('你的角色培养目标是战斗系职业，并且声望小于无尽星空，开始进入烧声望环节。包含【转职保证书】【烧声望】【传咒驯互转】3个部分')
 				setTimeout(()=>{
 					updateConfig.update_config({'mainPlugin' : '转职保证书'})
