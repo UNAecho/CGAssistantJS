@@ -95,7 +95,7 @@ var thisobj = {
 					 * 
 					 * 没有啥用，丢弃。
 					 */
-					thisobj.func.dropUseless(['艾里克的大剑','磨刀石'],() => {
+					thisobj.func.dropUseless(['艾里克的大剑', '磨刀石'], () => {
 						// 如果已经一转以上，则视为陪打，结束任务。
 						// 由于任务初始化执行了cga.refreshMissonStatus，所以cga.loadPlayerConfig().mission必然有数据支撑逻辑判断。
 						if (cga.loadPlayerConfig().mission[thisobj.taskName]) {
@@ -136,12 +136,36 @@ var thisobj = {
 			workFunc: function (cb2) {
 				cga.travel.toVillage('维诺亚村', () => {
 					cga.travel.autopilot('村长的家', () => {
-						let obj = { act: 'msg', target: '会长', npcpos: [16, 7] }
-						cga.askNpcForObj(obj, () => {
-							cga.refreshMissonStatus({'树精长老' : true},()=>{
-								cb2(true)
-							})
-						})
+						// 这里如果曾经交过生命之花，但未晋级时，会卡住，因为村长会说和任务之前一样的话【大自然】【土地】等等
+						cga.walkList([
+							[15, 8],
+						], () => {
+							cga.turnTo(16, 7);
+							cga.AsyncWaitNPCDialog((err, dlg) => {
+								if (dlg) {
+									if (dlg.message.indexOf('大自然') != -1 && cga.getItemCount('生命之花') >= 1) {
+										console.log('你已经交过生命之花了，具备晋级资格，丢弃【生命之花】，任务结束。')
+
+										let item = cga.findItem('生命之花')
+										if (item != -1) {
+											cga.DropItem(item);
+										}
+
+										cga.refreshMissonStatus({ '树精长老': true }, () => {
+											cb2(true)
+										})
+										return
+									} else if (dlg.message.indexOf('给我') != -1) {
+										cga.ClickNPCDialog(4, 0);
+										cga.AsyncWaitNPCDialog(() => {
+											cga.refreshMissonStatus({ '树精长老': true }, () => {
+												cb2(true)
+											})
+										});
+									}
+								}
+							});
+						});
 					})
 				})
 			}
@@ -150,7 +174,7 @@ var thisobj = {
 			intro: '7.晋级。',
 			workFunc: function (cb2) {
 				let jobObj = cga.job.getJob()
-				if(jobObj.jobLv > 1){
+				if (jobObj.jobLv > 1) {
 					console.log('你至少为1转以上，任务结束。')
 					return
 				}
@@ -279,7 +303,7 @@ var thisobj = {
 		// task.anyStepDone = false;
 
 		// 任务初始化，刷新角色的晋级任务状态
-		cga.refreshMissonStatus(null,()=>{
+		cga.refreshMissonStatus(null, () => {
 			task.doTask(cb)
 		})
 		return
