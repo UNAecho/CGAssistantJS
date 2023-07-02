@@ -821,33 +821,13 @@ var battleAreaArray = [
 	{
 		name: '挑战神兽',
 		doTask: (cb) => {
-			// 由于神兽只能2个人打，做任务前，先取队伍前2个人做任务，其余的人重新回到集散地等待下一班车。
-			let rank = null
+			// 检查候选人列表中是否有自己，有则做任务，没有则回到集散地，等待下一班车
 			let myname = cga.GetPlayerInfo().name
-			let taskTeammates = []
-			// 如果队伍人数大于2
-			if(thisobj.object.area.teammates.length > 2){
-				for (let i = 0; i < thisobj.object.area.teammates.length; i++) {
-					if(thisobj.object.area.teammates[i] == myname){
-						rank = i
-					}
-					if(i < 2){
-						taskTeammates.push(thisobj.object.area.teammates[i])
-					}
-				}
-				console.log('【挑战神兽】最多允许2名队员，原队伍:',thisobj.object.area.teammates,'需要从前开始截断，仅剩2人:',taskTeammates)
-			}else if(thisobj.object.area.teammates.length > 0 && thisobj.object.area.teammates.length <= 2){// 如果队伍人数满足1-2人
-				taskTeammates = thisobj.object.area.teammates
-			}else{// 队伍人数错误
-				throw new Error('组队任务错误，teammates:',thisobj.object.area.teammates)
-			}
-
-			// 队伍前2个人做任务，其余人返回集散地等下一班车
-			if(rank < 2){
+			if(thisobj.object.area.teammates.includes(myname)){
 				let missionObj = require(rootdir + '/常用数据/missions/' + '挑战神兽' + '.js');
-				missionObj.doTask({teammates : taskTeammates}, cb)
+				missionObj.doTask({teammates : thisobj.object.area.teammates}, cb)
 			}else{
-				console.log('你的队伍顺序大于2，回到集散地重新等待下一班车...')
+				console.log('你不在挑战神兽的候选集中，可能是前面有其它小号占了位置，回到集散地，等待下一班车...')
 				setTimeout(cb, 1000);
 			}
 			return
@@ -1078,6 +1058,21 @@ var thisobj = {
 				battleArea = '树精长老', layer = 0
 			}else if(monster){
 				battleArea = '挑战神兽', layer = 0
+				/**
+				 * 神兽需要对成员进行裁剪，必须为2人，满足以下条件其一即可入队：
+				 * 1、你是带队队长
+				 * 2、你是队员，但没做过任务，且当前候选人列表人数小于2
+				 */
+				let newTeam = []
+				for (let i = 0; i < areaObj.teammates.length; i++) {
+					if(i == 0 || (newTeam.length < 2 && shareInfoObj[areaObj.teammates[i]].mission['挑战神兽'] == '0')){
+						console.log('你【满足】神兽入队条件：是队长，或者没做过挑战神兽任务，且任务的候选人数小于2')
+						newTeam.push(areaObj.teammates[i])
+						continue
+					}
+					console.log('你【不满足】神兽入队条件：是队长，或者没做过挑战神兽任务，且任务的候选人数小于2')
+				}
+				areaObj.teammates = newTeam
 			}
 		}
 

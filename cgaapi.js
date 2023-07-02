@@ -7989,17 +7989,26 @@ module.exports = function(callback){
 	 */
 	cga.kickPlayer = (kickArr, cb)=>{
 		console.log('踢人名单:',kickArr)
+
+		// 由于cga.waitSysMsg经常会出现超时或者监测信息丢失的bug，现改为用人数监测踢人结果。如果踢前踢后人数有变化，则视为踢人成功。
+		let tmpLen = cga.getTeamPlayers().length
+
 		let kick = ()=>{
 			let name = kickArr.shift()
 			// 如果列表中还有没踢完的人
 			if(name){
-				cga.waitSysMsg((r)=>{
-					if(r.indexOf('被你请出队伍') != -1 || r.indexOf('离开') != -1){
+				let waitForKick = ()=>{
+					if(tmpLen != cga.getTeamPlayers().length){
 						setTimeout(kick, 1000);
-						return false
+						return
 					}
-					return true
-				})
+					setTimeout(waitForKick, 1000);
+					return
+				}
+
+				// 踢之前，先打开监测
+				waitForKick()
+				// 开始踢人
 				console.log('开始踢人..')
 				cga.DoRequest(cga.REQUEST_TYPE_KICKTEAM);
 				cga.AsyncWaitNPCDialog((err, dlg)=>{
@@ -8245,8 +8254,21 @@ module.exports = function(callback){
 	 * 寻找队伍并加入（双方必须在附近1x1范围），并判断队员是否与预期相符。
 	 * @param {Object} obj API所需参数，具体如下：
 	 * 
-	 * @param {Array} obj.teammates 队伍成员信息，数据结构为String数组，必须为队员名称。
-	 * 【注意】队长的判定是teammates第一个人的名字
+	 * @param {Array} obj.teammates 队伍成员信息，数据结构为String数组，但可以实现固定组队与自由组队
+	 * 1、固定组队：数组的元素必须为String，且均为队员名称。长度必须为1-5
+	 * 2、自由组队：与固定组队相同，但是从第2个名称开始，数组元素可以为null，代表不限制除队长以外的人加入队伍。长度必须为1-5
+	 * 
+	 * 【注意】
+	 * 1、判断是否是队长：teammates第一个人的名字
+	 * 2、一旦数组中出现null值，则转化为自由组队，除了队长，所有队员名称均无效。
+	 * 3、自由组队目前有bug，不建议使用。具体内容是：出现并发情况时，无法准确地判定队伍是否人数正确。
+	 * 原因是：在递归等待时，队长出现人数判定的失误。
+	 * 比如2名队员，其中1名队员加入队伍时，队长刚好retry递归开始运行，判定人数合格。但队长在关闭组队开关前，另一名队员刚好加入。
+	 * 此时队伍人数就比预定要多
+	 * 
+	 * 因为觉得自由组队的创意不错，所以保留了这个自由组队的逻辑。
+	 * 
+	 * TODO: 想办法修复，在此之前，请尽量使用固定组队。
 	 * @param {int} obj.timeout 超时时间，以毫秒为单位。如果填0则视为无限等待。
 	 * @param {Array} obj.pos 可选，队长站立坐标，如果传入，必须为int型数组，长度必须为2。全队会先走至合适的位置，再进行组队逻辑
 	 * @param {*} cb 回调函数，所有队员齐全则传入'ok'，如果不满足条件或没有队伍，会等待至超时，调用cb并传入'timeout'
@@ -8282,6 +8304,16 @@ module.exports = function(callback){
 				// console.log('人数不足，checkOthers返回false')
 				return false
 			}
+			// 这里要使用等于而不是大于等于，因为无法在多人加入队伍的瞬间判定人数是否正确。如果用大于等于，会出现人数多于要求人数，但API返回true的bug
+			if(obj.teammates.includes(null)){
+				if(tmpTeam.length == obj.teammates.length){
+					console.log('当前为自由组队，除队长【',obj.teammates[0],'】以外，均不监测其它队员。当前队伍满足条件，checkOthers返回true。')
+					return true
+				}else{
+					console.log('当前为自由组队，除队长【',obj.teammates[0],'】以外，均不监测其它队员。当前队伍不满足条件，checkOthers返回false。')
+					return false
+				}
+			}
 
 			for (let t = 0; t < tmpTeam.length; t++) {
 				/**
@@ -8310,18 +8342,56 @@ module.exports = function(callback){
 			}
 
 			if (isLeader) {
-				cga.waitTeammates(obj.teammates, (r, lateList) => {
-					if (r) {
-						cb('ok')
+				if(obj.teammates.includes(null)){
+					// console.log('cga.buildTeam:检测到当前为自由组队，仅判断队长名称是否符合预期，队员名称全部忽略，只判断人数是否足够')
+					let curTeam = cga.getTeamPlayers()
+					// 人数足够，但还要修整人数。原因：比如在1秒内同时加入队伍的人，而队伍人数是有要求的，像神兽必须为2人。所以需要踢掉一部分。
+					if(curTeam.length >= obj.teammates.length){
+						// 人数满足，关闭组队
+						cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
+
+						// 延迟一段时间再执行逻辑，更加稳定
+						setTimeout(() => {
+							let kickArr = []
+							for (let i = 0; i < curTeam.length; i++) {
+								if(i < obj.teammates.length){
+									continue
+								}
+								kickArr.push(curTeam[i].name)
+							}
+							// 如果真有需要踢的人
+							if(kickArr.length){
+								cga.kickPlayer(kickArr,()=>{
+									cb('ok')
+								})
+								return
+							}
+							// 如果没有需要踢的人，正常结束
+							cb('ok')
+							return
+						}, 1500);
 						return
 					}
 					// 间隔报迟到队员
-					if (lateList && currentTime.getSeconds() % 10 == 0) {
-						console.log('迟到队员:', lateList)
+					if (currentTime.getSeconds() % 10 == 0) {
+						console.log('自由组队，人数还缺:', obj.teammates.length - cga.getTeamPlayers().length)
 					}
-					setTimeout(retry, 1000);
+					setTimeout(retry,1000)
 					return
-				})
+				}else{
+					cga.waitTeammates(obj.teammates, (r, lateList) => {
+						if (r) {
+							cb('ok')
+							return
+						}
+						// 间隔报迟到队员
+						if (lateList && currentTime.getSeconds() % 10 == 0) {
+							console.log('迟到队员:', lateList)
+						}
+						setTimeout(retry, 1000);
+						return
+					})
+				}
 			} else {
 				curTeam = cga.getTeamPlayers();
 				if (curTeam.length && checkOthers()) {
@@ -8329,11 +8399,18 @@ module.exports = function(callback){
 					return
 				} else if (!curTeam.length) {
 					cga.addTeammate(obj.teammates[0], (r) => {
-						if (r && checkOthers()) {
-							cb('ok')
-							return
-						}
-						setTimeout(retry, 1000);
+						/**
+						 * 自由组队时，当1秒内2名或以上队员同时加入队伍中时，在加入之后的瞬间，无法判断队伍人数，因为在自己的脚本内存中，人数都是2。
+						 * 这里加一个延迟，因为队长会在人数满足之后，踢掉多余的人。
+						 * 注意这个延迟要比队长的踢人判定延迟大一些，否则会计算人数失误
+						 */
+						setTimeout(() => {
+							if (r && checkOthers()) {
+								cb('ok')
+								return
+							}
+							setTimeout(retry, 1000);
+						}, 2000);
 					})
 					return
 				}
@@ -8341,6 +8418,9 @@ module.exports = function(callback){
 				return
 			}
 		}
+
+		// 逻辑开始前，全队打开队伍开关
+		cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, true);
 
 		// 如果已经在队伍中，直接进入retry
 		if(cga.getTeamPlayers().length){
@@ -9261,7 +9341,7 @@ module.exports = function(callback){
 						let randomTime = Math.floor(Math.random() * (10000 - 3000) + 3000)
 						console.log('检测到有其他司机【' + leader.unit_name + '】在等待拼车，暂时停止招人，' + randomTime /1000 + '秒后重新判断..')
 						// 挂上标记，队员才能识别队长
-						if (cga.GetPlayerInfo().nick == leaderFilter) {
+						if (cga.GetPlayerInfo().nick.indexOf(leaderFilter) != -1) {
 							console.log('去掉leaderFilter，防止队员进入')
 							cga.ChangeNickName('')
 						}
@@ -13219,16 +13299,10 @@ module.exports = function(callback){
 	cga.job = {}
 
 	// 获取本地职业数据。
-	cga.job.loadJobData = () => {
-		const getprofessionalInfos = require('./常用数据/ProfessionalInfo.js');
-		return getprofessionalInfos
-	}
+	cga.job.jobData = require('./常用数据/ProfessionalInfo.js')
 
 	// 获取本地职业声望数据。
-	cga.job.loadReputationData = () => {
-		const reputationInfos = require('./常用数据/reputation.js');
-		return reputationInfos
-	}
+	cga.job.reputationData = require('./常用数据/reputation.js')
 	/**
 	 * UNAecho:获取职业数据，如果输入职业名称，获取对应职业数据。如果不输入，则获取当前职业数据。
 	 * 可输入任意职业称号来代表对应职业。如【见习弓箭手】【王宫弓箭手】都是一个效果。
@@ -13237,7 +13311,7 @@ module.exports = function(callback){
 	 */
 	cga.job.getJob = (input) =>{
 		var jobObj = null
-		var data = cga.job.loadJobData().Professions
+		var data = cga.job.jobData.Professions
 		var playerInfo = cga.GetPlayerInfo()
 		var searchJobName = null
 
@@ -13267,7 +13341,7 @@ module.exports = function(callback){
 			throw new Error('错误，职业数据库中暂无【' + searchJobName + '】职业信息，请添加')
 		}
 
-		var reputationData = cga.job.loadReputationData()
+		var reputationData = cga.job.reputationData
 		var titles = playerInfo.titles
 		if(jobObj.jobType == '战斗系'){
 			reputationData = reputationData.reputationList
