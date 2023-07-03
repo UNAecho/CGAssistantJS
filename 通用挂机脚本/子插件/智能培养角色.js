@@ -72,7 +72,7 @@ var thisobj = {
 			}
 			// 安全起见，2转以后的角色不参与烧声望流程，以防误转。
 			if(curJobObj.jobLv > 2){
-				console.log('【UNAecho脚本警告】你目标职业是战斗系，并且声望没有刷满。但你已经3转或以上，保险起见，禁止脚本转职，如果需要烧声望，请手动转职一次，再运行脚本。')
+				console.log('【UNAecho脚本警告】你目标职业是战斗系，但你已经3转或以上，保险起见，禁止脚本转职，如果需要烧声望，请手动转职一次，再运行脚本。')
 			}else if(thisobj.finalJob.job != curJobObj.job && cga.getItemCount('转职保证书') == 0){// 如果不是目标职业，必须去拿一份转职保证书。因为你终究是要去转成目标职业的
 				transfer()
 				return

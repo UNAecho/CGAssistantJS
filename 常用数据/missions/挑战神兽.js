@@ -26,7 +26,10 @@ var thisobj = {
 									return
 								} else if (r && r == 'timeout') {// 如果超时，则结束任务。
 									console.log('等待队员超时，结束任务。')
-									cb2('jump', thisobj.taskStages.length)
+									// 任务道具也一并丢弃
+									thisobj.func.dropUseless(['贝兹雷姆之钥'], () => {
+										cb2('jump', thisobj.taskStages.length)
+									})
 									return
 								} else {
 									throw new Error('cga.buildTeam返回类型错误')
