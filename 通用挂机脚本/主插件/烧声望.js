@@ -96,6 +96,10 @@ var getPercentage = (cb) =>{
 
 							if (jobObj.reputationLv > 13){
 								console.log('称号已达无尽星空，烧声望脚本结束')
+
+								// 跳转前，在昵称中写一下称号状态，方便查看
+								cga.ChangeNickName(cga.job.getJob().reputation)
+
 								jump()
 								return
 							}
