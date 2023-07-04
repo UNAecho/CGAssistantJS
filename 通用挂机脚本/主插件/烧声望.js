@@ -89,11 +89,8 @@ var getPercentage = (cb) =>{
 							// 制定接下来的烧声望计划
 							let reputationState = (per == null? '读取失败' : (per * 100).toString() + '%')
 							let jobObj = cga.job.getJob()
-							let skillcount = reputationInfos.skillCount(jobObj.reputation,per)
-							supplycount = Math.ceil(skillcount / Math.floor(playerInfo.maxmp / skillcast))
 
-							console.log('职业：【'+jobObj.job+'】，称号：【'+jobObj.reputation+'】，进度：【'+reputationState+'】，需要使用【'+skillcount+'】次得意技，或回补【'+supplycount+'】次才能升级至下一称号')
-
+							// 如果到达满称号，则不再继续烧
 							if (jobObj.reputationLv > 13){
 								console.log('称号已达无尽星空，烧声望脚本结束')
 
@@ -103,6 +100,13 @@ var getPercentage = (cb) =>{
 								jump()
 								return
 							}
+							
+							// 称号没满，开始烧声望
+							let skillcount = reputationInfos.skillCount(jobObj.reputation,per)
+							supplycount = Math.ceil(skillcount / Math.floor(playerInfo.maxmp / skillcast))
+
+							console.log('职业：【'+jobObj.job+'】，称号：【'+jobObj.reputation+'】，进度：【'+reputationState+'】，需要使用【'+skillcount+'】次得意技，或回补【'+supplycount+'】次才能升级至下一称号')
+
 							if (originInfo === null){
 								originInfo = {
 									reputation : jobObj.reputation,

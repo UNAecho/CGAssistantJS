@@ -1066,11 +1066,11 @@ var thisobj = {
 				let newTeam = []
 				for (let i = 0; i < areaObj.teammates.length; i++) {
 					if(i == 0 || (newTeam.length < 2 && shareInfoObj[areaObj.teammates[i]].mission['挑战神兽'] == '0')){
-						console.log('你【满足】神兽入队条件：是队长，或者没做过挑战神兽任务，且任务的候选人数小于2')
+						console.log('【' + areaObj.teammates[i] + '】【满足】神兽入队条件：是队长，或者没做过挑战神兽任务，且任务的候选人数小于2')
 						newTeam.push(areaObj.teammates[i])
 						continue
 					}
-					console.log('你【不满足】神兽入队条件：是队长，或者没做过挑战神兽任务，且任务的候选人数小于2')
+					console.log('【' + areaObj.teammates[i] + '】【不满足】神兽入队条件：是队长，或者没做过挑战神兽任务，且任务的候选人数小于2')
 				}
 				areaObj.teammates = newTeam
 			}
