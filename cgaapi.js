@@ -7895,7 +7895,12 @@ module.exports = function(callback){
 		return obj;
 	}
 
-	//获取队伍成员详细信息
+	/**
+	 * UNAecho: 获取队伍成员详细信息。
+	 * 并将GetMapUnits()的model_id加入到结果信息中，以此来辨别角色的人物信息。如性别、武器持有状态、官方汉化名称等。
+	 * 数据依据：cga.GetPlayerInfo()中的image_id，就是cga.GetMapUnits()中的model_id。二者是相同值。
+	 * @returns 
+	 */
 	cga.getTeamPlayers = ()=>{
 		var teaminfo = cga.GetTeamPlayerInfo();
 		var units = cga.GetMapUnits();
@@ -7904,6 +7909,7 @@ module.exports = function(callback){
 		
 			for(var j in units){
 				if(units[j].type == 8 && units[j].unit_id == teaminfo[i].unit_id){
+					teaminfo[i].model_id = units[j].model_id;
 					teaminfo[i].name = units[j].unit_name;
 					teaminfo[i].nick = units[j].nick_name;
 					teaminfo[i].xpos = units[j].xpos;
@@ -7914,6 +7920,7 @@ module.exports = function(callback){
 				}
 			}
 			if(playerinfo.unitid == teaminfo[i].unit_id){
+				teaminfo[i].model_id = playerinfo.image_id;
 				teaminfo[i].name = playerinfo.name;
 				teaminfo[i].nick = playerinfo.nick;
 				teaminfo[i].level = playerinfo.level;
