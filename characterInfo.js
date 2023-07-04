@@ -28,6 +28,11 @@
  * 
  * 目前处于数据收集阶段，需要手工去游戏的创建角色那里修正人物的落盘信息。修正并且检查完毕后，需要给hasCheck字段设为true，程序会根据此flag来修正这个人物的其它信息。
  * 
+ * 【UNAecho开发提醒】
+ * 本脚本的所有数据依赖于cga.GetMapUnits()的获取，而此API【不会获取自己的信息】，也就是运行脚本的那个游戏角色的数据，不会出现在落盘文件当中。这是个不好的设定，但没办法。
+ * 如果想测试数据的准确性，请使用多个账号反复运行、验证。
+ * 
+ * 此外，cga.GetPlayerInfo()中的image_id，就是cga.GetMapUnits()中的model_id。二者是相同值。也就是说，你可以使用GetPlayerInfo搭配此脚本收集的数据，判断你是哪个角色，性别、颜色以及武器形态等。
  */
 var fs = require('fs');
 var path = require('path');
@@ -49,7 +54,7 @@ try {
 
 //定义静态对象
 var saveCharacterInfo = {
-    update : (model_id,baseObj,color,weapon) => {
+    update : (model_id,baseObj,color,cusColor,weapon) => {
         contentObj[model_id] = {
             // 角色官方中文名称
             character_name: baseObj.character_name,
@@ -62,7 +67,7 @@ var saveCharacterInfo = {
             // 角色颜色的index，以创建角色时右箭头的顺序为准。从1开始，4（包含）结束。
             color: color,
             // 玩家自定义的颜色别称，例如露比、小红帽，此值可由自己的主观，自行编辑。
-            customer_color: baseObj.customer_color,
+            customer_color: cusColor,
             // 角色数据来源的地图上玩家游戏名称，无作用，仅debug使用
             from_user: baseObj.from_user,
             // 人工验证的flag。初始化为false，如果人工检测数据无误后，手动在文件中将此FLAG置为true，后续脚本即可以此为基础，给其它hasCheck为false的数据进行修正、更新。
@@ -88,8 +93,7 @@ var saveCharacterInfo = {
                         let modelId = (modelIdInt + (i - baseObj.color) * 6 + cga.character.weaponBias[weapons[j]]).toString()
                         // 如果文件中没有此model_id数据，则进入初始化，开始写入第一份数据。
                         if (!contentObj.hasOwnProperty(modelId)) {
-    
-                            saveCharacterInfo.update(modelId,baseObj,i,weapons[j])
+                            saveCharacterInfo.update(modelId,baseObj,i,[],weapons[j])
                             
                             // console.log('根据model_id:', key, '，character_name:', baseObj.character_name, 'weapon', baseObj.weapon, 'sex', baseObj.sex, 'color:', baseObj.color, 'unit_name:', baseObj.unit_name)
                             // console.log('推断出model_id:', modelId, '，character_name:', baseObj.character_name, 'weapon', baseObj.weapon, 'sex', baseObj.sex, 'color:', baseObj.color, 'unit_name:', baseObj.unit_name)
@@ -98,7 +102,7 @@ var saveCharacterInfo = {
                                 console.log('model_id:', modelId,'已经人工验证过，不需要更新')
                                 continue
                             }
-                            saveCharacterInfo.update(modelId,baseObj,i,weapons[j])
+                            saveCharacterInfo.update(modelId,baseObj,i,(i == baseObj.color ? baseObj.customer_color : []),weapons[j])
                         }
                     }
                 }
@@ -118,7 +122,7 @@ var saveCharacterInfo = {
                         customer_color: [],
                         from_user: [obj.unit_name],
                         hasCheck: false,
-                    },-1,'')
+                    },-1,[],'')
                 } else {
                     // console.log('在玩家信息中',obj.model_id,'已经有数据记录，跳过信息采集，使用推断来更新其数据')
                     if(contentObj[obj.model_id].from_user.indexOf(obj.unit_name) == -1){
