@@ -118,13 +118,12 @@ var getPercentage = (cb) =>{
 									jump()
 									return
 								}else{
-									console.log('originInfo.reputation:'+originInfo.reputation)
-									console.log('reputation:'+jobObj.reputation)
-									console.log('originInfo.percentage:'+originInfo.percentage)
-									console.log('per:'+per)
-									console.log('originInfo.reputation == reputation && originInfo.percentage == per:' + (originInfo.title == title && originInfo.percentage == per))
-									console.log(originInfo.reputation == jobObj.reputation)
-									console.log(originInfo.percentage == per)
+									// console.log('originInfo.reputation:'+originInfo.reputation)
+									// console.log('reputation:'+jobObj.reputation)
+									// console.log('originInfo.percentage:'+originInfo.percentage)
+									// console.log('per:'+per)
+									// console.log(originInfo.reputation == jobObj.reputation)
+									// console.log(originInfo.percentage == per)
 									console.log('声望【有】进展，继续烧声望')
 									originInfo.reputation = jobObj.reputation
 									originInfo.percentage = per
