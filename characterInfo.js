@@ -82,7 +82,7 @@ var saveCharacterInfo = {
         keys.forEach(key => {
             let modelIdInt = parseInt(key)
             // 如果确定了model_id和武器类型，就可以推断出这个角色的所有model_id
-            if (contentObj[key].weapon != '' && contentObj[key].color != -1 && typeof cga.character.weaponBias[contentObj[key].weapon] == 'number' && contentObj[key].hasCheck === true) {
+            if (contentObj[key].weapon != '' && contentObj[key].color > 0 && typeof cga.character.weaponBias[contentObj[key].weapon] == 'number' && contentObj[key].hasCheck === true) {
                 console.log('发现人工验证数据:', contentObj[key], '以此为基准，推断出其它缺失以及修正不正确的采集数据')
                 // 基础信息，以此为推断基础，推测出其它model_id的角色信息。
                 let baseObj = contentObj[key]
@@ -105,14 +105,14 @@ var saveCharacterInfo = {
                             // console.log('推断出model_id:', modelId, '，character_name:', baseObj.character_name, 'weapon', baseObj.weapon, 'sex', baseObj.sex, 'color:', baseObj.color, 'unit_name:', baseObj.unit_name)
                         } else {// 如果此model_id数据已经存在，尝试更新、修正数据
                             if (contentObj[modelId].hasCheck) {
-                                console.log('model_id:', modelId, '已经人工验证过，不需要更新')
+                                // console.log('model_id:', modelId, '已经人工验证过，不需要更新')
                                 continue
                             }
                             saveCharacterInfo.update(modelId, baseObj, {
                                 color : i,
                                 weapon : weapons[j],
-                                cusColor : (i == baseObj.color ? baseObj.customer_color : []),
-                                from_user : (i == baseObj.color ? baseObj.from_user : []),
+                                cusColor : (i == baseObj.color ? baseObj.customer_color : (contentObj[modelId].customer_color.length ? contentObj[modelId].customer_color : [])),
+                                from_user : (i == baseObj.color ? contentObj[modelId].from_user : (contentObj[modelId].from_user.length ? contentObj[modelId].from_user : [])),
                             })
                         }
                     }

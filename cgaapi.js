@@ -13690,13 +13690,32 @@ module.exports = function(callback){
 		'杖': 2,
 		'枪': 3
 	}
+	
+	cga.character.characterInfo = require('./常用数据/characterInfo.json')
 
 	/**
-	 * UNAecho: 定义一些角色的静态信息，特殊时候有用。比如打UD时分辨性别。
-	 * 信息来自于cga.GetMapUnits()等API
+	 * UNAecho: 获取角色静态信息，在特殊场合可能会有用。比如打UD时分辨性别。
+	 * 所有数据来自于cga.GetMapUnits()的结果进行整理收集。可参考characterInfo.js脚本了解详细逻辑
 	 */
-	cga.character.info = {
-		105252 : {}
+	/**
+	 * UNAecho: 获取角色静态信息，在特殊场合可能会有用。比如打UD时分辨性别。
+	 * 所有数据来自于cga.GetMapUnits()的结果进行整理收集。可参考characterInfo.js脚本了解详细逻辑
+	 * @param {*} input 角色的model_id，来源于cga.GetMapUnits()的model_id，或者cga.GetPlayerInfo()的image_id
+	 * 输入此ID，可获取角色的静态信息，如官方汉化名称、性别、颜色、手拿何种武器等。
+	 * @returns 
+	 */
+	cga.character.getCharacterInfo = (input = null) => {
+		let data = cga.character.characterInfo
+		let model_id = input === null ? cga.GetPlayerInfo().image_id : input
+		const sex = { 0 : '女', 1 : '男'}
+
+		if(data.hasOwnProperty(model_id)){
+			// console.log('cga.character.getCharacterInfo:名称【'+data[model_id].character_name+'】，性别【'+sex[data[model_id].sex]+'】，颜色【'+data[model_id].color+'】，武器【'+data[model_id].weapon+'】')
+			return data[model_id]
+		}else{
+			console.warn('错误，当前数据不包含model_id:',model_id,'请使用characterInfo.js脚本在地图上更多收集数据，并根据逻辑进行人工鉴定，方可作为数据的依赖。')
+			return null
+		}
 	}
 
 
