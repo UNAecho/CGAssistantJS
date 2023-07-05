@@ -54,22 +54,22 @@ try {
 
 //定义静态对象
 var saveCharacterInfo = {
-    update : (model_id,baseObj,color,cusColor,weapon) => {
+    update: (model_id, baseObj, predictObj) => {
         contentObj[model_id] = {
             // 角色官方中文名称
             character_name: baseObj.character_name,
             // 玩家自定义的人物别称，例如露比、小红帽等，此值可自行填写。
             customer_name: baseObj.customer_name,
-            // 此model_id使用的武器类型
-            weapon: weapon,
             // 角色性别
             sex: baseObj.sex,
             // 角色颜色的index，以创建角色时右箭头的顺序为准。从1开始，4（包含）结束。
-            color: color,
+            color: predictObj.color,
             // 玩家自定义的颜色别称，例如露比、小红帽，此值可由自己的主观，自行编辑。
-            customer_color: cusColor,
+            customer_color: predictObj.cusColor,
+            // 此model_id使用的武器类型
+            weapon: predictObj.weapon,
             // 角色数据来源的地图上玩家游戏名称，无作用，仅debug使用
-            from_user: baseObj.from_user,
+            from_user: predictObj.from_user,
             // 人工验证的flag。初始化为false，如果人工检测数据无误后，手动在文件中将此FLAG置为true，后续脚本即可以此为基础，给其它hasCheck为false的数据进行修正、更新。
             hasCheck: false,
         }
@@ -83,7 +83,8 @@ var saveCharacterInfo = {
             let modelIdInt = parseInt(key)
             // 如果确定了model_id和武器类型，就可以推断出这个角色的所有model_id
             if (contentObj[key].weapon != '' && contentObj[key].color != -1 && typeof cga.character.weaponBias[contentObj[key].weapon] == 'number' && contentObj[key].hasCheck === true) {
-                console.log('发现人工验证数据:',contentObj[key],'以此为基准，推断出其它缺失以及修正不正确的采集数据')
+                console.log('发现人工验证数据:', contentObj[key], '以此为基准，推断出其它缺失以及修正不正确的采集数据')
+                // 基础信息，以此为推断基础，推测出其它model_id的角色信息。
                 let baseObj = contentObj[key]
                 // 人物颜色，每个人物固定4个颜色。每个颜色对应6个model_id。
                 for (let i = 1; i < 5; i++) {
@@ -91,18 +92,28 @@ var saveCharacterInfo = {
                     let weapons = Object.keys(cga.character.weaponBias)
                     for (let j = 0; j < weapons.length; j++) {
                         let modelId = (modelIdInt + (i - baseObj.color) * 6 + cga.character.weaponBias[weapons[j]]).toString()
-                        // 如果文件中没有此model_id数据，则进入初始化，开始写入第一份数据。
+                        // 如果文件中没有此model_id数据，则进入初始化，开始写入推断出的同角色其它颜色以及武器形态的数据。
                         if (!contentObj.hasOwnProperty(modelId)) {
-                            saveCharacterInfo.update(modelId,baseObj,i,[],weapons[j])
-                            
+                            saveCharacterInfo.update(modelId, baseObj, {
+                                color: i,
+                                weapon: weapons[j],
+                                cusColor: (i == baseObj.color ? baseObj.customer_color : []),
+                                from_user: (i == baseObj.color ? baseObj.from_user : []),
+                            })
+
                             // console.log('根据model_id:', key, '，character_name:', baseObj.character_name, 'weapon', baseObj.weapon, 'sex', baseObj.sex, 'color:', baseObj.color, 'unit_name:', baseObj.unit_name)
                             // console.log('推断出model_id:', modelId, '，character_name:', baseObj.character_name, 'weapon', baseObj.weapon, 'sex', baseObj.sex, 'color:', baseObj.color, 'unit_name:', baseObj.unit_name)
-                        }else{// 如果此model_id数据已经存在，尝试更新、修正数据
-                            if(contentObj[modelId].hasCheck){
-                                console.log('model_id:', modelId,'已经人工验证过，不需要更新')
+                        } else {// 如果此model_id数据已经存在，尝试更新、修正数据
+                            if (contentObj[modelId].hasCheck) {
+                                console.log('model_id:', modelId, '已经人工验证过，不需要更新')
                                 continue
                             }
-                            saveCharacterInfo.update(modelId,baseObj,i,(i == baseObj.color ? baseObj.customer_color : []),weapons[j])
+                            saveCharacterInfo.update(modelId, baseObj, {
+                                color : i,
+                                weapon : weapons[j],
+                                cusColor : (i == baseObj.color ? baseObj.customer_color : []),
+                                from_user : (i == baseObj.color ? baseObj.from_user : []),
+                            })
                         }
                     }
                 }
@@ -111,21 +122,23 @@ var saveCharacterInfo = {
         })
         // 然后根据外部传入的数据，尝试新增数据
         content.forEach(obj => {
-            // 判断是否是玩家角色
+            // 判断是否是玩家角色,如是，则记录初始化数据。
             if (obj.valid == 2 && obj.type == 8 && (obj.flags & 256) == 256) {
                 if (!contentObj.hasOwnProperty(obj.model_id)) {
                     saveCharacterInfo.update(obj.model_id, {
                         character_name: '',
                         customer_name: [],
                         sex: -1,
-                        color: -1,
-                        customer_color: [],
-                        from_user: [obj.unit_name],
                         hasCheck: false,
-                    },-1,[],'')
+                    }, {
+                        color : -1,
+                        weapon : '',
+                        cusColor : [],
+                        from_user : [obj.unit_name],
+                    })
                 } else {
                     // console.log('在玩家信息中',obj.model_id,'已经有数据记录，跳过信息采集，使用推断来更新其数据')
-                    if(contentObj[obj.model_id].from_user.indexOf(obj.unit_name) == -1){
+                    if (contentObj[obj.model_id].from_user.indexOf(obj.unit_name) == -1) {
                         contentObj[obj.model_id].from_user.push(obj.unit_name)
                     }
                 }
