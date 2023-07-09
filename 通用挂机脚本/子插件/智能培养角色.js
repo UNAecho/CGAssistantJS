@@ -82,7 +82,34 @@ var thisobj = {
 			}
 		}
 
-		// 如果没有职业切换需求，开始检查技能情况
+		// 如果满足目标职业的晋级条件
+		if(thisobj.finalJob.job == curJobObj.job && ((curJobObj.jobType == '战斗系' && curJobObj.jobLv < 5) || (curJobObj.jobType == '生产系' && curJobObj.jobLv < 4))){
+			let promoteObj = cga.job.promoteInfo[curJobObj.jobLv]
+			if(curJobObj.reputationLv >= promoteObj.reputationLv){
+				console.log('你的声望【'+curJobObj.reputation+'】满足晋级要求。')
+				/**
+				 * 如果此职业：
+				 * 1、没有技能等级限制
+				 * 2、有等级限制，且此技能等级大于等于要求
+				 * 则去晋级。
+				 */
+				if(!thisobj.finalJob.skill.length || (thisobj.finalJob.skill.length && thisobj.finalJob.skill.some(s=>{
+					let skillObj = cga.findPlayerSkill(s)
+					return skillObj && skillObj.lv >= promoteObj.skillLv
+				}))){
+					cga.askNpcForObj({ act: 'promote', target: thisobj.finalJob.job, npcpos: jobObj.npcpos }, () => {
+						thisobj.prepare(cb)
+					})
+					return
+				}else{
+					console.log('你不满足晋级需求，',thisobj.finalJob.skill,'中必须满足其中1个技能大于等于',promoteObj.skillLv,'级')
+				}
+			}else{
+				console.log('你不满足晋级需求，声望不够。')
+			}
+		}
+		
+		// 如果没有职业晋级或切换需求，开始检查技能情况
 		if (!targetObj.hasOwnProperty('missionName')) {
 			let needLearn = learnSkillMission.func.needLearn(thisobj.finalJob.job)
 			if (needLearn != null && cga.skill.ableToLearn(needLearn) == 'able to learn') {

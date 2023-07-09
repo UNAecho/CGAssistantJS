@@ -188,19 +188,6 @@ var thisobj = {
 				})
 			}
 		},
-		{
-			intro: '6.晋级。',
-			workFunc: function (cb2) {
-				let jobObj = cga.job.getJob()
-				if(jobObj.jobLv > 2){
-					console.log('你至少为2转以上，任务结束。')
-					return
-				}
-				cga.askNpcForObj({ act: 'promote', target: jobObj.name, npcpos: jobObj.npcpos }, () => {
-					cb2(true)
-				})
-			}
-		},
 	],
 	taskRequirements: [//任务阶段是否完成
 		function () {// 0.任务准备。
@@ -220,9 +207,6 @@ var thisobj = {
 			return (cga.travel.switchMainMap() == '静谧之间') ? true : false;
 		},
 		function () {// 5.由静谧之间（26.12）处进入咒缚之帐与邪灵鸟人（14.14）对话2次，任务完结。
-			return false;
-		},
-		function () {// 6.晋级。
 			return false;
 		},
 	],
