@@ -817,7 +817,7 @@ var loop = () => {
 		}
 	}
 
-	if (cga.needSupplyInitial()) {
+	if (cga.needSupplyInitial({ })) {
 		var supplyObject = getSupplyObject(map, mapindex);
 		if (supplyObject) {
 			supplyObject.func(loop, '人物未组队，自行在loop中回补。');

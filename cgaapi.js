@@ -618,6 +618,8 @@ module.exports = function(callback){
 			result = '加纳村'
 		}else if(mapindex >= 4000 && mapindex <= 4099){
 			result = '杰诺瓦镇'
+		}else if(mapindex >= 4100 && mapindex <= 4199){
+			result = '阿斯提亚镇'
 		}else if([4201,4230,14018].indexOf(mapindex) >= 0){
 			result = '夜晚蒂娜村'
 		}else if(mapindex >= 4200 && mapindex <= 4299){
@@ -3512,6 +3514,64 @@ module.exports = function(callback){
 				4099:[[14, 6, 4012],],
 			},
 		},
+		'阿斯提亚镇':{// UD（开启者/时空之门）任务相关。
+			mainName : '阿斯提亚镇',
+			mainindex : 4100,
+			minindex : 4100,
+			maxindex : 4199,
+			stoneNPCpos: null,
+			mapTranslate:{
+				'主地图' : 4100,
+				'阿斯提亚镇' : 4100,
+				'神殿' : {
+					4130:'阿斯提亚镇进入神殿的第一个房间',
+					4141:'阿斯提亚镇回复之间对称房间，暂时没发现有什么用',
+					4143:'其它任务（非UD任务）相关',
+					4144:'空房间，暂时没发现有什么用',
+					4145:'其它任务（非UD任务）相关',
+				},
+				'回复之间' : 4140,
+				'医院' : 4140,
+				'大厅' : 4142,
+				'出口':'南门',
+				'南门':'南门',
+			},
+			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				4100:[],
+				// 神殿
+				4130:[[101, 72, 4130],],
+				// 回复之间
+				4140:[[101, 72, 4130],[25, 11, 4140],],
+				// 神殿
+				4141:[[101, 72, 4130],[25, 32, 4141],],
+				// 大厅
+				4142:[[101, 72, 4130],[20, 22, 4142],],
+				// 神殿
+				4143:[[101, 72, 4130],[20, 22, 4142],[19, 0, 4143],],
+				// 神殿
+				4144:[[101, 72, 4130],[20, 22, 4142],[20, 47, 4144],],
+				// 神殿
+				4145:[[101, 72, 4130],[20, 22, 4142],[19, 0, 4143],[12, 4, 4145],],
+				'南门':[[61, 130, 14016],],
+			},
+			walkReverse:{
+				// 神殿
+				4130:[[8, 23, 4100],],
+				// 回复之间
+				4140:[[5, 9, 4130],],
+				// 神殿
+				4141:[[3, 18, 4130],],
+				// 大厅
+				4142:[[9, 23, 4130],],
+				// 神殿
+				4143:[[13, 25, 4142],],
+				// 神殿
+				4144:[[15, 4, 4142],],
+				// 神殿
+				4145:[[16, 5, 4143],],
+			},
+		},
 		'蒂娜村':{
 			mainName : '蒂娜村',
 			mainindex : 4200,
@@ -4399,7 +4459,7 @@ module.exports = function(callback){
 	 * @param {*} returnToMainMap 补给后是否回到当前区域的主地图(例：里堡补完回到法兰城地图)，默认为true，回到主地图
 	 * @returns 
 	 */
-	cga.travel.toHospital = (cb, isPro = false, returnToMainMap = true)=>{
+	cga.travel.toHospital = (cb, isPro = false, returnToMainMap = true) => {
 		// 不需要补血则跳过
 		if(!cga.needSupplyInitial({  })){
 			cga.travel.autopilot('主地图',()=>{
@@ -4442,6 +4502,7 @@ module.exports = function(callback){
 			3210,
 			3010,
 			4010,
+			4140,// 阿斯提亚镇回复之间，UD任务相关
 			4210,
 			4310,
 			4410,
@@ -4450,7 +4511,7 @@ module.exports = function(callback){
 		] 
 		if (hospitalList.indexOf(mapindex) == -1){
 			cga.travel.autopilot('医院',()=>{
-				cga.travel.toHospital(cb, isPro)
+				cga.travel.toHospital(cb, isPro,returnToMainMap)
 			})
 			return
 		}
@@ -4478,6 +4539,9 @@ module.exports = function(callback){
 		}else if(villageName == '杰诺瓦镇'){
 			tmplist.push(isPro == true ? [15, 9] : [10, 5])
 			tmpTurnDir = isPro == true ? 6 : 0
+		}else if(villageName == '阿斯提亚镇'){
+			tmplist.push([17, 9])
+			tmpTurnDir = 0
 		}else if(villageName == '夜晚蒂娜村'){
 
 		}else if(villageName == '蒂娜村'){
@@ -4506,11 +4570,11 @@ module.exports = function(callback){
 				cga.turnDir(tmpTurnDir)
 				setTimeout(() => {
 					if(returnToMainMap){
-						if (cb) cb(null)
-					}else{
 						cga.travel.autopilot('主地图',()=>{
 							if (cb) cb(null)
 						})
+					}else{
+						if (cb) cb(null)
 					}
 				}, 5000);
 				return
@@ -5929,6 +5993,7 @@ module.exports = function(callback){
 		//console.log(list);
 		
 		if(cga.isMoveThinking){
+			console.log('由于冲突，未运行的walkList:',list);
 			throw new Error('发现严重错误：已有walkList在运行中');
 		}
 
@@ -8314,10 +8379,10 @@ module.exports = function(callback){
 			// 这里要使用等于而不是大于等于，因为无法在多人加入队伍的瞬间判定人数是否正确。如果用大于等于，会出现人数多于要求人数，但API返回true的bug
 			if(obj.teammates.includes(null)){
 				if(tmpTeam.length == obj.teammates.length){
-					console.log('当前为自由组队，除队长【',obj.teammates[0],'】以外，均不监测其它队员。当前队伍满足条件，checkOthers返回true。')
+					console.log('当前为自由组队，除队长【',obj.teammates[0],'】以外，均不检查其它队员是否在名单中出现。当前队伍满足条件，checkOthers返回true。')
 					return true
 				}else{
-					console.log('当前为自由组队，除队长【',obj.teammates[0],'】以外，均不监测其它队员。当前队伍不满足条件，checkOthers返回false。')
+					console.log('当前为自由组队，除队长【',obj.teammates[0],'】以外，均不检查其它队员是否在名单中出现。当前队伍不满足条件，checkOthers返回false。')
 					return false
 				}
 			}
@@ -8441,6 +8506,12 @@ module.exports = function(callback){
 			return
 		}
 
+		// 如果传入了危险等级，则需要读取逃跑策略。避免因为为了组队而走动导致遇敌，却按照组队的战斗策略导致阵亡。
+		if(obj.dangerLevel > 0){
+			console.log('由于传入了危险等级:',obj.dangerLevel,'读取逃跑类的战斗配置，防止因组队导致遇敌而阵亡。')
+			cga.loadBattleConfig('生产赶路')
+		}
+		
 		if(isLeader){
 			if(mapXY.x == obj.pos[0] && mapXY.y == obj.pos[1]){
 				retry()
@@ -8453,7 +8524,8 @@ module.exports = function(callback){
 			}
 		}else{
 			var memberPos = cga.getRandomSpace(obj.pos[0], obj.pos[1]);
-			if(mapXY.x == memberPos[0] && mapXY.y == memberPos[1]){
+			// 如果已经站好位，或者已经在pos的1x1范围内，则跳过走路
+			if((mapXY.x == memberPos[0] && mapXY.y == memberPos[1]) || cga.isAroundPos(obj.pos)){
 				retry()
 			}else{
 				cga.walkList([
@@ -8691,8 +8763,9 @@ module.exports = function(callback){
 	 * #:与i相同，但询问的是道具id，队员返回道具数量
 	 * t:称号持有清空，询问全体队员是否拥有某种称号，队员返回0表示没有，1表示有
 	 * m:任务完成情况，记录在【个人配置中】。队员返回任务完成情况，0表示没完成，1表示已完成。
-	 * 例：['i承认之戒','#491677','t背叛者','m小岛之谜']
-	 * 表示分别询问队员道具【承认之戒】、道具id【491677】、称号【背叛者】持有情况，以及任务【小岛之谜】是否已完成
+	 * p:职业相关信息，记录在【来自于cga.job.getJob()】。队员返回指定的查询属性数值。
+	 * 例：['i承认之戒','#491677','t背叛者','m小岛之谜','p职业等级']
+	 * 表示分别询问队员道具【承认之戒】、道具id【491677】、称号【背叛者】持有情况，任务【小岛之谜】是否已完成，以及当前职业等级数字（1转为1，2转为2）
 	 * 
 	 * 【注意】使用传递信息名称的字节数，最多支持12（含）字节，剩下4字节用来表示回应队长和被询问信息的回答。
 	 * 全角字符最多支持6(含)个字，半角字符最多支持12(含)个字。
@@ -8736,9 +8809,10 @@ module.exports = function(callback){
 			"t" : "title",
 			"m" : "mission",
 			"r" : "role",
+			"p" : "profession",
 		}
-		const reqReg = new RegExp(/([zjfma]{1})([i#tmr])([\d\u4e00-\u9fa5]+)/)
-		const resReg = new RegExp(/([i#tmr])([\d\u4e00-\u9fa5]+)([zjfma]{1})([\d\u4e00-\u9fa5]+)/)
+		const reqReg = new RegExp(/([zjfma]{1})([i#tmrp])([\d\u4e00-\u9fa5]+)/)
+		const resReg = new RegExp(/([i#tmrp])([\d\u4e00-\u9fa5]+)([zjfma]{1})([\d\u4e00-\u9fa5]+)/)
 
 		//检查的func集合
 		const reqAct = {
@@ -8800,6 +8874,14 @@ module.exports = function(callback){
 				}
 				return res
 			},
+			"profession" : (input)=>{
+				let jobObj = cga.job.getJob();
+				if(input == '职业等级'){
+					return jobObj.jobLv
+				}else{
+					throw new Error('未支持的查询参数:',input);
+				}
+			},
 		}
 
 		const resAct = (regObj, teams)=>{
@@ -8808,7 +8890,7 @@ module.exports = function(callback){
 				return
 			}
 			if(!teammate_info[teams[identifier.indexOf(regObj[3])].name]){
-				teammate_info[teams[identifier.indexOf(regObj[3])].name] = {lv : teams[identifier.indexOf(regObj[3])].level}	
+				teammate_info[teams[identifier.indexOf(regObj[3])].name] = {lv : teams[identifier.indexOf(regObj[3])].level}
 			}
 
 			Object.keys(reqAct).forEach((k)=>{
@@ -8825,14 +8907,16 @@ module.exports = function(callback){
 				teammate_info[teams[identifier.indexOf(regObj[3])].name]["mission"][regObj[2]] = regObj[4]
 			}else if(regObj[1] == "r"){
 				teammate_info[teams[identifier.indexOf(regObj[3])].name]["role"][regObj[2]] = regObj[4]
+			}else if(regObj[1] == "p"){
+				teammate_info[teams[identifier.indexOf(regObj[3])].name]["profession"][regObj[2]] = regObj[4]
 			}else{
 				throw new Error('暗号类型错误，请检查')
 			}
 			console.log('队员',teams[identifier.indexOf(regObj[3])].name,'更新',translateDict[regObj[1]],regObj[2],'的值【',regObj[4],'】')
 		}
 		/**
-		 * type : i,#,t,m,r等缩写
-		 * name : 查询的信息名称，如承认之戒、传送小岛、输出、治疗、小号、开启者等等
+		 * type : i,#,t,m,r,p等缩写
+		 * name : 查询的信息名称，如承认之戒、传送小岛、输出、治疗、小号、开启者、职业等级等等
 		 */
 		var answer = (type,name)=>{
 			let res = reqAct[translateDict[type]](name)
@@ -9146,12 +9230,13 @@ module.exports = function(callback){
 					cb(null)
 					return
 				}
-				// 由于cga.getRandomSpace不是真随机，所以对于同一个坐标，每次计算结果都是一样的
-				let targetPos = cga.getRandomSpace(leaderPos[0], leaderPos[1]);
-				if(XY.x == targetPos[0] && XY.y == targetPos[1]){
+				// 如果已经在队长1x1范围，则跳过走路。
+				if(cga.isAroundPos(leaderPos)){
 					cb(null)
 					return
 				}
+				// 由于cga.getRandomSpace不是真随机，所以对于同一个坐标，每次计算结果都是一样的
+				let targetPos = cga.getRandomSpace(leaderPos[0], leaderPos[1]);
 				cga.walkList([targetPos], cb);
 				return
 			}
@@ -9798,15 +9883,22 @@ module.exports = function(callback){
 			else if(dlg && dlg.options == 2){
 				// 职业导师对话列表，就职、转职、晋级
 				if(dlg.type == 2){
+					let curJobObj = cga.job.getJob()
 					// 就职
 					if(obj.act == 'job'){
-						let curJobObj = cga.job.getJob()
 						if(curJobObj.curJob == '游民'){
 							actNumber = 0
 							cga.ClickNPCDialog(0, actNumber);
 							cga.AsyncWaitNPCDialog(dialogHandler);
 							return;
 						}else{// 转职
+							// 如果战斗系转战斗系没有转职保证书，则禁止转职。防止声望归零
+							let targetJobObj = cga.job.getJob(obj.target)
+							if(!targetJobObj){
+								throw new Error('目标职业【'+obj.target+'】不存在数据库中')
+							}else if(curJobObj.jobType == '战斗系' && targetJobObj.jobType == '战斗系' && cga.getItemCount('转职保证书') == 0){
+								throw new Error('你是战斗系转战斗系，但背包里没有【转职保证书】')
+							}
 							actNumber = 1
 							cga.ClickNPCDialog(0, actNumber);
 							cga.AsyncWaitNPCDialog(dialogHandler);
@@ -10122,7 +10214,21 @@ module.exports = function(callback){
 						[281, 88,'芙蕾雅'],
 					], cb)
 				}
-			} else {
+			}else if(tmpObj.npcMap == 23603){// 格斗士
+				walkFunc = (cb)=>{
+					cga.travel.autopilot('东门', () => {
+						cga.walkList([
+							[318, 336],// 防止走路在石头中卡住
+							[356, 334, '角笛大风穴'],
+							[133, 26, '索奇亚'],
+							[380, 324, 23600],
+						], ()=>{
+							let obj = { act: 'map', target: tmpObj.npcMap, npcpos: [23, 23] }
+							cga.askNpcForObj(obj, cb)
+						})
+					})
+				}
+			}else {
 				walkFunc = (cb)=>{
 					cga.travel.autopilot(tmpObj.npcMap, cb)
 				}
@@ -10200,7 +10306,7 @@ module.exports = function(callback){
 			}
 			// 如果NPC周围1x1均无法抵达，尝试检测隔墙的空闲位置，例如驯兽师导师
 			if(spaceList === null){
-				console.log('NPC周围1x1均无法抵达，尝试检测隔墙的空闲位置，例如驯兽师导师')
+				console.log('NPC pos:',npcpos,'，周围1x1均无法抵达，尝试检测隔墙的空闲位置，例如驯兽师导师')
 				spaceList = cga.getRandomSpaceThroughWall(npcpos[0],npcpos[1])
 			}
 
@@ -12274,6 +12380,70 @@ module.exports = function(callback){
 		findByNextPoints(start);
 		return removeDuplicate(Object.values(foundedPoints),minDistance)
 	}
+
+	/**
+	 * UNAecho:获取一格(x,y)周围1x1区域的xy坐标范围
+	 * 比如输入[2,7],返回[[1,3],[6,8]]。
+	 * 
+	 * 【注意】此API优先考虑效率，所以并不会判断墙壁、坐标是否可以抵达、返回坐标范围是否超出地图边界。
+	 * @param {Array} pos 
+	 * @returns Array<Array<number>> 长度为2的二维数组，0是x轴范围数组，1是轴范围数组。范围数组：0是左区间，1是右区间
+	 * [[1,3],[6,8]]代表x轴范围为1-3，y轴范围6-8。
+	 */
+	cga.getPosAroundRange = (pos) => {
+		if (!pos instanceof Array || pos.length != 2) {
+			throw new Error('参数错误，pos必须为长度为2的int型数组')
+		}
+
+		return [[pos[0] - 1, pos[0] + 1], [pos[1] - 1, pos[1] + 1]];
+	}
+
+	/**
+	 * UNAecho:判断人物是否处于参数坐标的1x1范围内
+	 * 不包含人物与参数坐标重叠，因为这样无法与参数坐标的单位进行互动（如NPC对话、玩家加入队伍）重叠时，返回false。
+	 * @param {Array|Object} posObj 目标坐标，必传，长度为2的int型数组，或者是包含mapindex的key与一维int型数组填充的二维数组组成的Object
+	 * Object数据格式举例：UD任务中，多次出现与NPC对话导致队员离队，此时需要判断人物是否在指定mapindex的各个NPC周围。
+	 * {
+        24003:[[11, 75],[111, 34],],
+        24004:[[9, 17],[135, 78],],
+        24005:[[16, 82],[82, 43]],
+        }
+	 * 在这些坐标的1x1附近，cga.isAroundPos会返回true。
+	 * @param {Object} xy 检测坐标，数据结构与cga.GetMapXY()返回结果一致。可以自定义。如果不传，默认使用人物当前坐标
+	 * @returns 
+	 */
+	cga.isAroundPos = (posObj, xy = null) => {
+		if (!posObj instanceof Array || (typeof posObj[0] == 'number' && posObj.length != 2) || (Object.prototype.toString.call(posObj) == '[object Object]' && Object.keys(posObj).length == 0)) {
+			throw new Error('参数错误，pos必须为长度为2的int型一维数组；或者是Object，key是地图index，value是一维int型数组填充的二维数组')
+		}
+		if (xy == null) {
+			xy = cga.GetMapXY();
+		}
+		// 如果pos是一维数组，仅检测1个坐标
+		if (typeof posObj[0] == 'number') {
+			let range = cga.getPosAroundRange(posObj)
+			return xy.x >= range[0][0] && xy.x <= range[0][1] && xy.y >= range[1][0] && xy.y <= range[1][1] && !(xy.x == posObj[0] && xy.y == posObj[1])
+		} else if (Object.prototype.toString.call(posObj) == '[object Object]') {// 如果pos是二维数组，需要检测多个坐标
+			let mapindex = cga.GetMapIndex().index3
+
+			if(!posObj[mapindex]){
+				console.log('posObj没有当前地图坐标:',mapindex,'返回false')
+				return false
+			}
+			
+			let mapindexes = Object.keys(posObj)
+
+			return mapindexes.some(index =>{
+				return posObj[index].some(p =>{
+					let range = cga.getPosAroundRange(p)
+					// 人物处于范围内，并且不与p的坐标重叠（重叠就没法与NPC对话了）
+					return xy.x >= range[0][0] && xy.x <= range[0][1] && xy.y >= range[1][0] && xy.y <= range[1][1] && !(xy.x == p[0] && xy.y == p[1])
+				})
+			})
+		} else {
+			throw new Error('参数错误，pos:', posObj)
+		}
+	}
 	
 	/**
 	 * UNAecho:获取一格(x,y)周围1x1区域内的空闲地形格子
@@ -13310,6 +13480,25 @@ module.exports = function(callback){
 
 	// 获取本地职业声望数据。
 	cga.job.reputationData = require('./常用数据/reputation.js')
+
+	/**
+	 * UNAecho:职业晋级所需的技能和声望等级表。
+	 * key代表当前职业等级，也就是cga.job.getJob().jobLv。
+	 * value代表这个职业等级想要晋升下一级，所需的得意技要求和声望要求。
+	 * 
+	 * skillLv:要晋级，必要的得意技等级。
+	 * reputationLv:要晋级，声望最少需要的等级。
+	 * 【注意】部分职业没有得意技要求，仅满足声望即可。例如咒术师。
+	 * 如果想获取职业得意技列表，可参考ProfessionalInfo.js中的skill数组。
+	 */
+	cga.job.promoteInfo = {
+		0:{skillLv:4, reputationLv:6},
+		1:{skillLv:6, reputationLv:9},
+		2:{skillLv:8, reputationLv:11},
+		3:{skillLv:10, reputationLv:13},
+		4:{skillLv:10, reputationLv:14},
+	}
+
 	/**
 	 * UNAecho:获取职业数据，如果输入职业名称，获取对应职业数据。如果不输入，则获取当前职业数据。
 	 * 可输入任意职业称号来代表对应职业。如【见习弓箭手】【王宫弓箭手】都是一个效果。
@@ -13707,13 +13896,13 @@ module.exports = function(callback){
 	cga.character.getCharacterInfo = (input = null) => {
 		let data = cga.character.characterInfo
 		let model_id = input === null ? cga.GetPlayerInfo().image_id : input
-		const sex = { 0 : '女', 1 : '男'}
+		// const sex = { 0 : '女', 1 : '男'}
 
 		if(data.hasOwnProperty(model_id)){
 			// console.log('cga.character.getCharacterInfo:名称【'+data[model_id].character_name+'】，性别【'+sex[data[model_id].sex]+'】，颜色【'+data[model_id].color+'】，武器【'+data[model_id].weapon+'】')
 			return data[model_id]
 		}else{
-			console.warn('错误，当前数据不包含model_id:',model_id,'请使用characterInfo.js脚本在地图上更多收集数据，并根据逻辑进行人工鉴定，方可作为数据的依赖。')
+			// console.warn('错误，当前数据不包含model_id:',model_id,'请使用characterInfo.js脚本在地图上更多收集数据，并根据逻辑进行人工鉴定，方可作为数据的依赖。')
 			return null
 		}
 	}

@@ -889,14 +889,16 @@ var task = cga.task.Task('琥珀之卵4', [
 				}
 
 				thisobj.healObj.func(()=>{
-					cga.walkList([
-						[130, 50, '盖雷布伦森林'],
-						], ()=>{
-							var obj = { act: 'item', target: '转职保证书', npcpos : [245, 73] }
-							cga.askNpcForObj(obj, () => {
-								cb2(true)
-							})
-						});
+					cga.travel.newisland.toStone('X', ()=>{
+						cga.walkList([
+							[130, 50, '盖雷布伦森林'],
+							], ()=>{
+								var obj = { act: 'item', target: '转职保证书', npcpos : [245, 73] }
+								cga.askNpcForObj(obj, () => {
+									cb2(true)
+								})
+							});
+					})
 				})
 			}
 

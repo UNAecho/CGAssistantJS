@@ -76,6 +76,7 @@ var teamModeArray = [
 			if(thisobj.object.autoPromoteTask){
 				cusObj.check['m树精长老'] = { sum: -1 }
 				cusObj.check['m挑战神兽'] = { sum: -1 }
+				cusObj.check['p职业等级'] = { sum: -1 }
 			}
 
 			cga.buildCustomerTeam(cusObj, (r) => {
@@ -917,6 +918,7 @@ var thisobj = {
 	},
 	switchArea: (shareInfoObj, units) => {
 		var minLv = 160
+		var minJobLv = 5
 		var camp = true
 		var island = true
 
@@ -952,7 +954,7 @@ var thisobj = {
 		} else if (shareInfoObj) {// 队内没有缓存信息的情况
 			areaObj.teammates = shareInfoObj.teammates
 
-			// 检查高级练级地点的通行许可
+			// 检查是否需要去高级练级地点，或者做任务。
 			for (var p in shareInfoObj) {
 				// 跳过组队信息的key
 				if (p == 'teammates') {
@@ -970,9 +972,14 @@ var thisobj = {
 				if (shareInfoObj[p].mission['挑战神兽'] == '0') {
 					monster = true
 				}
-				// 注意，此for循环不可使用break，因为要遍历最小等级
+				// 注意，此for循环不可使用break，因为要遍历最小等级与最小职业等级
 				if (shareInfoObj[p].lv < minLv) {
 					minLv = shareInfoObj[p].lv
+				}
+				// 注意，此for循环不可使用break，因为要遍历最小等级与最小职业等级
+				let jobLv = parseInt(shareInfoObj[p].profession)
+				if (jobLv < minJobLv) {
+					minJobLv = jobLv
 				}
 			}
 		} else {// 无队内信息情况，一般是单人练级才会进入此逻辑
@@ -1057,22 +1064,33 @@ var thisobj = {
 			if(tree){
 				battleArea = '树精长老', layer = 0
 			}else if(monster){
-				battleArea = '挑战神兽', layer = 0
 				/**
 				 * 神兽需要对成员进行裁剪，必须为2人，满足以下条件其一即可入队：
 				 * 1、你是带队队长
 				 * 2、你是队员，但没做过任务，且当前候选人列表人数小于2
+				 * 3、你已经1转（职业等级大于0）
 				 */
 				let newTeam = []
 				for (let i = 0; i < areaObj.teammates.length; i++) {
-					if(i == 0 || (newTeam.length < 2 && shareInfoObj[areaObj.teammates[i]].mission['挑战神兽'] == '0')){
-						console.log('【' + areaObj.teammates[i] + '】【满足】神兽入队条件：是队长，或者没做过挑战神兽任务，且任务的候选人数小于2')
+					if(i == 0 || (newTeam.length < 2 && shareInfoObj[areaObj.teammates[i]].mission['挑战神兽'] == '0' && parseInt(shareInfoObj[areaObj.teammates[i]].profession['职业等级']) > 0)){
+						console.log('【' + areaObj.teammates[i] + '】【满足】神兽入队条件：1、是队长，2、没做过挑战神兽任务，且已经1转，任务的候选人数小于2')
 						newTeam.push(areaObj.teammates[i])
 						continue
 					}
-					console.log('【' + areaObj.teammates[i] + '】【不满足】神兽入队条件：是队长，或者没做过挑战神兽任务，且任务的候选人数小于2')
+					console.log('【' + areaObj.teammates[i] + '】【不满足】神兽入队条件：1、是队长，2、没做过挑战神兽任务，且已经1转，任务的候选人数小于2')
 				}
-				areaObj.teammates = newTeam
+				/**
+				 * 如果队伍满足挑战神兽的条件，即进入挑战神兽。否则即便队伍中有人没有做过挑战神兽，依然无视，不做此任务。
+				 * 此逻辑诞生的原因：
+				 * 当队伍中有人1转，且没做过挑战神兽，触发此挑战神兽的任务逻辑；
+				 * 此时整个队伍需要先判定队伍中没有没有人满足与队长组成挑战神兽的2人队伍，如果能，则此2人去做任务，其它人员等待下一班车。
+				 * 
+				 * 如果没有人满足条件，则正常练级。如：虽然有人没有做过挑战神兽，但是又由于得意技没有到4级，无法晋级。只能先练级，烧技能。等待【智能培养角色】脚本自动去晋级。
+				 * */ 
+				if(newTeam.length == 2){
+					battleArea = '挑战神兽', layer = 0
+					areaObj.teammates = newTeam
+				}
 			}
 		}
 
