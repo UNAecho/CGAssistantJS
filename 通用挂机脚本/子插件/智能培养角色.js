@@ -85,8 +85,9 @@ var thisobj = {
 		// 如果满足目标职业的晋级条件
 		if(thisobj.finalJob.job == curJobObj.job && ((curJobObj.jobType == '战斗系' && curJobObj.jobLv < 5) || (curJobObj.jobType == '生产系' && curJobObj.jobLv < 4))){
 			let promoteObj = cga.job.promoteInfo[curJobObj.jobLv]
-			if(curJobObj.reputationLv >= promoteObj.reputationLv){
-				console.log('你的声望【'+curJobObj.reputation+'】满足晋级要求。')
+			// 如果完成了对应的进阶任务，且声望足够，则初步判定可能需要晋级，进入判断得意技是否达标的逻辑。
+			if(curJobObj.reputationLv >= promoteObj.reputationLv && promoteObj.mission[curJobObj.jobType].some(m=>{return config[m]})){
+				console.log('你完成了晋级必要的任务，且声望【'+curJobObj.reputation+'】满足晋级要求。')
 				/**
 				 * 如果此职业：
 				 * 1、没有技能等级限制
@@ -105,7 +106,7 @@ var thisobj = {
 					console.log('你不满足晋级需求，',thisobj.finalJob.skill,'中必须满足其中1个技能大于等于',promoteObj.skillLv,'级')
 				}
 			}else{
-				console.log('你不满足晋级需求，声望不够。')
+				console.log('你不满足晋级需求，声望不够，或没有完成相应的晋级任务:',promoteObj.mission[curJobObj.jobType])
 			}
 		}
 		

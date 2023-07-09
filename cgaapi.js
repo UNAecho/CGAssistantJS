@@ -13492,11 +13492,11 @@ module.exports = function(callback){
 	 * 如果想获取职业得意技列表，可参考ProfessionalInfo.js中的skill数组。
 	 */
 	cga.job.promoteInfo = {
-		0:{skillLv:4, reputationLv:6},
-		1:{skillLv:6, reputationLv:9},
-		2:{skillLv:8, reputationLv:11},
-		3:{skillLv:10, reputationLv:13},
-		4:{skillLv:10, reputationLv:14},
+		0: { skillLv: 4, reputationLv: 6, mission: { '战斗系': ['树精长老'], '生产系': ['树精长老', '咖哩任务'], } },
+		1: { skillLv: 6, reputationLv: 9, mission: { '战斗系': ['挑战神兽'], '生产系': ['起司的任务'], } },
+		2: { skillLv: 8, reputationLv: 11, mission: { '战斗系': ['诅咒的迷宫'], '生产系': ['魔法大学'], } },
+		3: { skillLv: 10, reputationLv: 13, mission: { '战斗系': ['誓言之花'], '生产系': ['誓言之花'], } },
+		4: { skillLv: 10, reputationLv: 14, mission: { '战斗系': ['洛伊夫的净化'], '生产系': null, } },
 	}
 
 	/**
