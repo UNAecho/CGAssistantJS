@@ -97,7 +97,7 @@ var thisobj = {
 					let skillObj = cga.findPlayerSkill(s)
 					return skillObj && skillObj.lv >= promoteObj.skillLv
 				}))){
-					cga.askNpcForObj({ act: 'promote', target: thisobj.finalJob.job, npcpos: jobObj.npcpos }, () => {
+					cga.askNpcForObj({ act: 'promote', target: thisobj.finalJob.job, npcpos: thisobj.finalJob.job.npcpos }, () => {
 						thisobj.prepare(cb)
 					})
 					return
