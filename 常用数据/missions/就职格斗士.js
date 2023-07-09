@@ -216,7 +216,10 @@ var thisobj = {
 
 				cga.disbandTeam(() => {
 					if (cga.findPlayerSkill('混乱攻击')) {
-						cb2(true)
+						// 如果持有混乱攻击，推测为打手。回到入口23600大厅。
+						cga.askNpcForObj({ act: 'map', target: 23600 ,npcpos: [14, 7]}, () => {
+							cb2(true)
+						})
 						return
 					}
 
@@ -312,6 +315,7 @@ var thisobj = {
 			// 记录被收回的宠物，打完绿先生需要复原
 			thisobj.data.petIndex = ctx.petinfo.index
 			cga.ChangePetState(ctx.petinfo.index, cga.PET_STATE_READY)
+			console.log('宠物已回收不出战..')
 		}
 
 		if (ctx.teamplayers.length != thisobj.param.teammates.length) {

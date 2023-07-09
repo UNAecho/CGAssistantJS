@@ -31,11 +31,7 @@ const Professions = [
 		titles: ['见习暗黑骑士', '暗黑骑士', '高阶暗黑骑士', '暗黑领主', '暗黑之魂', '漆黑之影'],
 		category: '物理系',
 		npcMainMap: '法兰城',
-		npcMap: '主地图',
-		tutorwalk:[
-			CE,
-			[194, 191],
-			],
+		npcMap: 1000,
 		npcpos : [195, 191],
 	}, {
 		name: '盗贼',
@@ -50,9 +46,6 @@ const Professions = [
 		category: '物理系',
 		npcMainMap: '哥拉尔镇',
 		npcMap: 47003,
-		tutorwalk:[
-			[13, 9],
-			],
 		npcpos : [13, 8],
 	}, {
 		name: '格斗士',
@@ -71,16 +64,6 @@ const Professions = [
 		category: '物理系',
         npcMainMap: '奇利村',
 		npcMap: 23603,
-		tutorwalk:[
-			[7, 6, 3214],
-			[7, 1, 3212],
-			[1, 8, '奇利村'],
-			[79, 76, '索奇亚'],
-			[356, 334, '角笛大风穴'],
-			[133, 26, '索奇亚'],
-			[380, 324, '大厅'],
-			[22, 23],
-			],
 		npcpos : [20, 16],
 	}, {
 		name: '弓箭手',
@@ -100,12 +83,15 @@ const Professions = [
 		category: '物理系',
         npcMainMap: '法兰城',
 		npcMap: '弓箭手公会',
-		tutorwalk:[
-			CS,
-			[190, 133, '弓箭手公会'],
-			[7, 5]
-			],
 		npcpos : [6, 4],
+	}, {
+		name: '剑士',
+		skill:[],
+		titles: ['见习剑士', '剑士', '王宫剑士', '剑术师范', '剑术大师', '剑圣'],
+		category: '物理系',
+        npcMainMap: '法兰城',
+		npcMap: 1401,
+		npcpos : [18, 10],
 	}, {
 		/**
 		 * 曙光营地指挥部里的教团骑士职业房间index：27015的6,9处NPC可以对话选择用20000魔币交换一个护身符
@@ -126,33 +112,24 @@ const Professions = [
 		category: '物理系',
         npcMainMap: '曙光骑士团营地',
 		npcMap: 27015,
-		tutorwalk:[
-			[10, 5]
-			],
 		npcpos : [11, 5],
 	}, {
 		name: '骑士',
-		skill:'护卫',
+		skill:['护卫'],
 		titles: ['见习骑士', '骑士', '王宫骑士', '近卫骑士', '枪术大师', '枪圣'],
 		category: '物理系',
         npcMainMap: '法兰城',
 		npcMap: 27015,
-		tutorwalk:[
-			[41, 50, '里谢里雅堡 1楼'],
-			[74, 19, '里谢里雅堡 2楼'],
-			[67, 71, '客房'],
-			[10, 4]
-			],
 		npcpos : [11, 4],
 	}, {
 		name: '忍者',
-		skill:'暗杀',
+		skill:['暗杀'],
 		titles: ['初级忍者', '中级忍者', '上级忍者', '影', '忍术大师', '鬼'],
 		category: '物理系',
         npcMainMap: '其它'
 	}, {
 		name: '士兵',
-		skill:'',
+		skill:[],
 		titles: ['见习士兵', '士兵', '王宫士兵', '士兵长', '重战士', '指挥官'],
 		category: '物理系',
         npcMainMap: '法兰城',
@@ -160,7 +137,7 @@ const Professions = [
 		npcpos : [81, 22],
 	}, {
 		name: '舞者',
-		skill:'',
+		skill:[],
 		titles: ['见习舞者', '串场艺人', '舞者', '超级巨星', '天王巨星', '舞圣'],
 		category: '物理系',
         npcMainMap: '其它'
@@ -190,14 +167,6 @@ const Professions = [
 			[20, 23]
 			],
 		npcpos : [20, 22],
-	}, {
-		name: '剑士',
-		skill:'',
-		titles: ['见习剑士', '剑士', '王宫剑士', '剑术师范', '剑术大师', '剑圣'],
-		category: '物理系',
-        npcMainMap: '法兰城',
-		npcMap: 1401,
-		npcpos : [18, 10],
 	}, {
 		name: '传教士',
 		skill:[
@@ -254,7 +223,7 @@ const Professions = [
 		npcpos : [17, 9],
 	}, {
 		name: '魔术师',
-		skill:'',
+		skill:[],
 		titles: ['见习魔术师', '魔术师', '王宫魔法师', '魔导士', '大魔术师', '狂魔导师'],
 		category: '魔法系',
         npcMainMap: '其它',
@@ -422,7 +391,7 @@ const Professions = [
 		npcpos : [10, 4],
 	}, {
 		name: '饲养师',
-		skill:'宠物强化',
+		skill:['宠物强化'],
 		titles: ['见习饲养师', '饲养师', '王宫饲养师', '高级饲养师', '饲养大师', '星之饲养师'],
 		category: '魔物系',
         npcMainMap: '法兰城',
@@ -435,7 +404,7 @@ const Professions = [
 		npcpos : [13, 9],
 	}, {
 		name: '驯兽师',
-		skill:'调教',
+		skill:['调教'],
 		titles: ['见习驯兽师', '驯兽师', '王宫驯兽师', '驯兽师范', '驯兽大师', '兽王'],
 		category: '魔物系',
         npcMainMap: '法兰城',
@@ -449,7 +418,7 @@ const Professions = [
 	},{
 		category: '制造系',
 		name: '制鞋工',
-		skill:'制鞋',
+		skill:['制鞋'],
 		titles: ['制鞋学徒', '制鞋工', '资深制鞋师傅', '御用制鞋师', '制鞋名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -465,7 +434,7 @@ const Professions = [
 	},{
 		category: '制造系',
 		name: '造斧工',
-		skill:'造斧',
+		skill:['造斧'],
 		titles: ['造斧学徒', '造斧工', '资深造斧师傅', '御用造斧师', '造斧名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -482,7 +451,7 @@ const Professions = [
 		category: '制造系',
 		name: '造弓工',
 		titles: ['造弓学徒', '造弓工', '资深造弓师傅', '御用造弓师', '造弓名师'],
-		skill:'造弓',
+		skill:['造弓'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
 		tutorwalk:[
@@ -497,7 +466,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '造盾工',
-		skill:'造盾',
+		skill:['造盾'],
 		titles: ['造盾学徒', '造盾工', '资深造盾师傅', '御用造盾师', '造盾名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -523,7 +492,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '裁缝工',
-		skill:'制衣服',
+		skill:['制衣服'],
 		titles: ['裁缝学徒', '裁缝工', '资深裁缝师傅', '御用裁缝师', '裁缝名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -549,7 +518,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '长袍工',
-		skill:'制长袍',
+		skill:['制长袍'],
 		titles: ['长袍学徒', '长袍工', '资深长袍师傅', '御用长袍师傅', '长袍名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -575,7 +544,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '厨师',
-		skill:'料理',
+		skill:['料理'],
 		titles: ['料理学徒', '厨师', '资深大厨师', '御用厨师', '料理铁人'],
         npcMainMap: '伊尔村',
 		npcMap: '旧金山酒吧',
@@ -596,7 +565,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '铠甲工',
-		skill:'造铠',
+		skill:['造铠'],
 		titles: ['铠甲学徒', '铠甲工', '资深铠甲师傅', '御用铠甲师', '铠甲名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -620,7 +589,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '帽子工',
-		skill:'制帽子',
+		skill:['制帽子'],
 		titles: ['帽子学徒', '帽子工', '资深帽子师傅', '御用帽子师', '帽子名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -646,7 +615,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '头盔工',
-		skill:'造头盔',
+		skill:['造头盔'],
 		titles: ['头盔学徒', '头盔工', '资深头盔师傅', '御用头盔师', '头盔名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -672,7 +641,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '投掷武器工',
-		skill:'造投掷武器',
+		skill:['造投掷武器'],
 		titles: ['投掷武器学徒', '投掷武器工', '资深投掷武器师傅', '御用投掷武器师', '投掷武器名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -698,7 +667,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '小刀工',
-		skill:'造小刀',
+		skill:['造小刀'],
 		titles: ['小刀学徒', '小刀工', '资深小刀师傅', '御用小刀师', '小刀名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -724,7 +693,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '药剂师',
-		skill:'制药',
+		skill:['制药'],
 		titles: ['实习药剂师', '药剂师', '资深药剂大师', '御用药剂师', '炼金术士'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: 2311,
@@ -746,7 +715,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '造枪工',
-		skill:'造枪',
+		skill:['造枪'],
 		titles: ['造枪学徒', '造枪工', '资深造枪师傅', '御用造枪师', '造枪名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -772,7 +741,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '造杖工',
-		skill:'造杖',
+		skill:['造杖'],
 		titles: ['造杖学徒', '造杖工', '资深造杖师傅', '御用造杖师', '造杖名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -798,7 +767,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '制靴工',
-		skill:'制长靴',
+		skill:['制长靴'],
 		titles: ['制靴学徒', '制靴工', '资深制靴师傅', '御用制靴师', '制靴名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -824,7 +793,7 @@ const Professions = [
 	}, {
 		category: '制造系',
 		name: '铸剑工',
-		skill:'铸剑',
+		skill:['铸剑'],
 		titles: ['铸剑学徒', '铸剑工', '资深铸剑师傅', '御用铸剑师', '铸剑名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
@@ -848,7 +817,7 @@ const Professions = [
 	}, {
 		name: '防具修理工',
 		category: '服务系',
-		skill:'防具修理',
+		skill:['防具修理'],
 		titles: ['防具修理学徒', '防具修理工', '资深防具修理师', '御用防具修理师', '修理防具专家'],
         npcMainMap: '法兰城',
 		npcMap: '米克尔工房',
@@ -864,7 +833,7 @@ const Professions = [
 	}, {
 		name: '护士',
 		category: '服务系',
-		skill:'急救',
+		skill:['急救'],
 		titles: ['实习护士', '护士', '资深护士', '护士长', '护理专家', '白衣天使'],
         npcMainMap: '法兰城',
 		npcMap: 1507,
@@ -886,7 +855,7 @@ const Professions = [
 	}, {
 		name: '鉴定师',
 		category: '服务系',
-		skill:'鉴定',
+		skill:['鉴定'],
 		titles: ['鉴定学徒', '鉴定士', '资深鉴定师傅', '御用鉴定师', '鉴定专家'],
         npcMainMap: '法兰城',
 		npcMap: '强哥杂货店',
@@ -906,7 +875,7 @@ const Professions = [
 	}, {
 		name: '武器修理工',
 		category: '服务系',
-		skill:'武器修理',
+		skill:['武器修理'],
 		titles: ['武器修理学徒', '武器修理工', '资深武器修理师', '御用武器修理师', '修理武器专家'],
         npcMainMap: '法兰城',
 		npcMap: '米克尔工房',
@@ -922,19 +891,19 @@ const Professions = [
 	}, {
 		name: '仙人',
 		category: '服务系',
-		skill:'变身',
+		skill:['变身'],
 		titles: ['道童', '道士', '半仙', '仙人', '歌仙'],
         npcMainMap: '哥拉尔镇'
 	}, {
 		category: '服务系',
 		name: '侦探',
-		skill:'变装',
+		skill:['变装'],
 		titles: ['见习侦探', '侦探', '名侦探', '大侦探', '超级侦探'],
         npcMainMap: '法兰城'
 	}, {
 		name: '医生',
 		category: '服务系',
-		skill:'治疗',
+		skill:['治疗'],
 		titles: ['实习医师','医师','资深医师','御医','超级医生','神医'],
         npcMainMap: '法兰城',
 		npcMap: 1111,
@@ -954,7 +923,7 @@ const Professions = [
 	}, {
 		category: '采集系',
 		name: '矿工',
-		skill:'挖掘',
+		skill:['挖掘'],
 		titles: ['见习矿工', '矿工', '资深矿工', '御用矿工', '超级矿工'],
 		npcMainMap: '圣拉鲁卡村',
 		npcMap: '村长的家 2楼',
@@ -974,7 +943,7 @@ const Professions = [
 	}, {
 		category: '采集系',
 		name: '猎人',
-		skill:'狩猎',
+		skill:['狩猎'],
 		titles: ['见习猎人', '猎人', '资深猎人', '御用猎人', '超级猎人'],
         npcMainMap: '伊尔村',
 		npcMap: '装备店',
@@ -995,7 +964,7 @@ const Professions = [
 	}, {
 		category: '采集系',
 		name: '樵夫',
-		skill:'伐木',
+		skill:['伐木'],
 		titles: ['见习樵夫', '樵夫', '资深樵夫', '御用樵夫', '超级樵夫'],
 		npcMainMap: '法兰城',
 		npcMap: '职业介绍所',
@@ -1016,7 +985,7 @@ const Professions = [
 	}, {
 		name: '游民',
 		category: '初始系',
-		skill:[''],
+		skill:[],
 		titles: ['游民'],
         npcMainMap: '法兰城'
 	}
