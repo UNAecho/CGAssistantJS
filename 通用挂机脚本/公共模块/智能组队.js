@@ -620,7 +620,7 @@ var battleAreaArray = [
 		walkTo: (cb) => {
 			cga.walkList([
 				[36, 87, '肯吉罗岛'],
-				[471, 203],
+				[465, 198],
 			], cb);
 		},
 		isMusterMap: (map, mapXY) => {

@@ -627,6 +627,12 @@ var loop = () => {
 	var isleader = cga.isTeamLeaderEx();
 
 	if (isleader && teamMode.is_enough_teammates()) {
+		// 如果队伍符合预期，但是是任务队伍。直接执行任务，不能进入子插件的prepare环节，否则可能会出现登出的情况
+		if (teamMode.isTaskTeamReady()) {
+			teamMode.doTask(loop)
+			return
+		}
+
 		// 播报练级效率与练级路上的敌人数据分布
 		teamMode.getEfficiency()
 		if (Object.keys(teamMode.statInfo).length > 0) {
@@ -787,6 +793,12 @@ var loop = () => {
 
 		return
 	} else if (!isleader) {
+		// 如果队伍符合预期，但是是任务队伍。直接执行任务，不能进入子插件的prepare环节，否则可能会出现登出的情况
+		if (teamMode.isTaskTeamReady()) {
+			teamMode.doTask(loop)
+			return
+		}
+		
 		// 播报练级效率与练级路上的敌人数据分布
 		teamMode.getEfficiency()
 		if (Object.keys(teamMode.statInfo).length > 0) {
