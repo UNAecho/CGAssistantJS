@@ -50,7 +50,7 @@ var thisobj = {
 		}
 
 		// 生产系自行开启所有传送，至少40级才能过海，最好再高级一点，否则40级容易被飞
-		if(!targetObj.hasOwnProperty('missionName') && playerInfo.level >= 70 && curJobObj.jobType == '生产系' && !config.allstonedone){
+		if (!targetObj.hasOwnProperty('missionName') && playerInfo.level >= 70 && curJobObj.jobType == '生产系' && !config.allstonedone) {
 			targetObj.missionName = '单人开全部传送'
 		}
 
@@ -63,53 +63,82 @@ var thisobj = {
 		 * 也就是说，在不进行离线写入、不与阿梅对话的情况下，由于无法分辨当前角色是否刷满声望，使用【当前职业与目标职业一致，并且声望小于奔跑的春风】来判断该号是否进入刷声望环节。
 		 * 2、当前职业与目标职业不一致，并且不是驯兽师（驯兽师要靠练级刷，因为技能比称号更难刷满）的情况；或者无论是什么职业，手中没有转职保证书，而当前职业并不是目标职业时，需要进入刷声望环节。
 		 */
-		if(thisobj.finalJob.jobType == '战斗系' && playerInfo.level >= 80){
-			let transfer = ()=>{
+		if (thisobj.finalJob.jobType == '战斗系' && playerInfo.level >= 80) {
+			let transfer = () => {
 				console.log('你的角色培养目标是战斗系职业，并且声望小于无尽星空，开始进入烧声望环节。包含【转职保证书】【烧声望】【传咒驯互转】3个部分')
-				setTimeout(()=>{
-					updateConfig.update_config({'mainPlugin' : '转职保证书'})
-				},2000)
+				setTimeout(() => {
+					updateConfig.update_config({ 'mainPlugin': '转职保证书' })
+				}, 2000)
 			}
 			// 安全起见，2转以后的角色不参与烧声望流程，以防误转。
-			if(curJobObj.jobLv > 2){
+			if (curJobObj.jobLv > 2) {
 				console.log('【UNAecho脚本警告】你目标职业是战斗系，但你已经3转或以上，保险起见，禁止脚本转职，如果需要烧声望，请手动转职一次，再运行脚本。')
-			}else if(thisobj.finalJob.job != curJobObj.job && cga.getItemCount('转职保证书') == 0){// 如果不是目标职业，必须去拿一份转职保证书。因为你终究是要去转成目标职业的
+			} else if (thisobj.finalJob.job != curJobObj.job && cga.getItemCount('转职保证书') == 0) {// 如果不是目标职业，必须去拿一份转职保证书。因为你终究是要去转成目标职业的
 				transfer()
 				return
-			}else if(thisobj.finalJob.job == curJobObj.job && curJobObj.reputationLv < 8){// 如果不是刚转完目标职业（声望小于奔跑的春风，肯定不是无尽星空转来的）
+			} else if (thisobj.finalJob.job == curJobObj.job && curJobObj.reputationLv < 8) {// 如果不是刚转完目标职业（声望小于奔跑的春风，肯定不是无尽星空转来的）
 				transfer()
 				return
 			}
 		}
 
 		// 如果满足目标职业的晋级条件
-		if(thisobj.finalJob.job == curJobObj.job && ((curJobObj.jobType == '战斗系' && curJobObj.jobLv < 5) || (curJobObj.jobType == '生产系' && curJobObj.jobLv < 4))){
+		if (thisobj.finalJob.job == curJobObj.job && ((curJobObj.jobType == '战斗系' && curJobObj.jobLv < 5) || (curJobObj.jobType == '生产系' && curJobObj.jobLv < 4))) {
+			console.log('你没有达到职业的顶级，进入晋级判定..')
 			let promoteObj = cga.job.promoteInfo[curJobObj.jobLv]
 			// 如果完成了对应的进阶任务，且声望足够，则初步判定可能需要晋级，进入判断得意技是否达标的逻辑。
-			if(curJobObj.reputationLv >= promoteObj.reputationLv && promoteObj.mission[curJobObj.jobType].some(m=>{return config[m]})){
-				console.log('你完成了晋级必要的任务，且声望【'+curJobObj.reputation+'】满足晋级要求。')
+			if (promoteObj.mission[curJobObj.jobType].some(m => { return config.mission[m] })) {
+				console.log('你完成了晋级必要的任务:', promoteObj.mission[curJobObj.jobType])
 				/**
-				 * 如果此职业：
-				 * 1、没有技能等级限制
-				 * 2、有等级限制，且此技能等级大于等于要求
-				 * 则去晋级。
+				 * 职业技能的晋级合格要求，以下二者选其一，满足即可通过：
+				 * 1、该职业没有得意技，或没有技能等级的限制
+				 * 2、有技能等级限制，且此技能等级大于等于要求
 				 */
-				if(!thisobj.finalJob.skill.length || (thisobj.finalJob.skill.length && thisobj.finalJob.skill.some(s=>{
+				if (!thisobj.finalJob.skill.length || (thisobj.finalJob.skill.length && thisobj.finalJob.skill.some(s => {
 					let skillObj = cga.findPlayerSkill(s)
 					return skillObj && skillObj.lv >= promoteObj.skillLv
-				}))){
-					cga.askNpcForObj({ act: 'promote', target: thisobj.finalJob.job, npcpos: thisobj.finalJob.npcpos }, () => {
-						thisobj.prepare(cb)
-					})
-					return
-				}else{
-					console.log('你不满足晋级需求，',thisobj.finalJob.skill,'中必须满足其中1个技能大于等于',promoteObj.skillLv,'级')
+				}))) {
+					console.log('你满足目标职业【' + thisobj.finalJob.job + '】的得意技', thisobj.finalJob.skill, '要求')
+					// 判断声望，如果满足，则晋级。
+					if (curJobObj.reputationLv >= promoteObj.reputationLv) {
+						console.log('当前声望【' + curJobObj.reputation + '】满足晋级要求。')
+						cga.askNpcForObj({ act: 'promote', target: thisobj.finalJob.job, npcpos: thisobj.finalJob.npcpos }, () => {
+							thisobj.prepare(cb)
+						})
+						return
+					} else {// 如果声望不满足，则去刷新。刷新后，满足则晋级，不满足就退出
+						console.log('当前声望【' + curJobObj.reputation + '】不满足晋级要求。')
+						if (!thisobj.hasRefreshReputation) {
+							cga.refreshReputation(() => {
+								thisobj.hasRefreshReputation = true
+								if (cga.job.getJob().reputationLv >= promoteObj.reputationLv) {
+									console.log('刷新后，满足晋级条件，去晋级..')
+									cga.askNpcForObj({ act: 'promote', target: thisobj.finalJob.job, npcpos: thisobj.finalJob.npcpos }, () => {
+										// 重置状态
+										thisobj.hasRefreshReputation = false
+
+										thisobj.prepare(cb)
+									})
+									return
+								} else {
+									console.log('刷新后，不满足晋级条件，退出晋级模块')
+									thisobj.prepare(cb)
+								}
+							})
+							return
+						}
+						console.log('已经与刷新NPC(阿蒙、阿姆等)对过话，依然不满足声望，退出晋级模块')
+						// 重置状态
+						thisobj.hasRefreshReputation = false
+					}
+				} else {
+					console.log('你不满足晋级需求，', thisobj.finalJob.skill, '中必须满足其中1个技能大于等于', promoteObj.skillLv, '级')
 				}
-			}else{
-				console.log('你不满足晋级需求，声望不够，或没有完成相应的晋级任务:',promoteObj.mission[curJobObj.jobType])
+			} else {
+				console.log('你不满足晋级需求，需要完成列表', promoteObj.mission[curJobObj.jobType], '的其中之一。')
 			}
 		}
-		
+
 		// 如果没有职业晋级或切换需求，开始检查技能情况
 		if (!targetObj.hasOwnProperty('missionName')) {
 			let needLearn = learnSkillMission.func.needLearn(thisobj.finalJob.job)
@@ -147,10 +176,10 @@ var thisobj = {
 		// 如果其他模块已经读取了目标职业，则直接使用
 		if (configTable.finalJob) {
 			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
-		}else if (typeof obj.finalJob == 'number') {
+		} else if (typeof obj.finalJob == 'number') {
 			configTable.finalJob = professionalArray[obj.finalJob].name;
 			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
-		} else if (typeof obj.finalJob == 'string'){
+		} else if (typeof obj.finalJob == 'string') {
 			configTable.finalJob = obj.finalJob;
 			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
 		}
@@ -186,15 +215,15 @@ var thisobj = {
 				if (index !== null && index >= 1 && professionalArray[index - 1]) {
 					configTable.finalJob = professionalArray[index - 1].name;
 					thisobj.finalJob = cga.job.getJob(configTable.finalJob)
-	
+
 					var sayString2 = '当前已选择:[' + thisobj.finalJob.job + ']。';
 					cga.sayLongWords(sayString2, 0, 3, 1);
-	
+
 					cb2(null);
-	
+
 					return false;
 				}
-	
+
 				return true;
 			});
 		}

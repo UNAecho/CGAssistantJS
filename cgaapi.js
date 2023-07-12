@@ -7163,6 +7163,26 @@ module.exports = function(callback){
 	}
 
 	/**
+	 * UNAecho: 与刷新称号的NPC对话，获得与目前声望相符的称号
+	 * @param {*} cb 
+	 */
+	cga.refreshReputation = (cb) => {
+		let villageName = cga.travel.switchMainMap()
+		if (villageName == '法兰城') {
+			cga.travel.falan.toStone('E2', () => {
+				cga.walkList([
+					[230, 82],
+				], () => {
+					cga.turnDir(2);
+					setTimeout(cb, 2000);
+				});
+			});
+		} else {
+			throw new Error('当前区域的主地图未知，无法刷新称号')
+		}
+	}
+
+	/**
 	 * UNAecho:获取读取战斗信息等CGA全部配置的模块，由于十分常用，现在加入cgaapi中
 	 */
 	cga.getCGAconfigMode = () => {
