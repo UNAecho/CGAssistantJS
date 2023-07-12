@@ -86,7 +86,7 @@ var thisobj = {
 		if (thisobj.finalJob.job == curJobObj.job && ((curJobObj.jobType == '战斗系' && curJobObj.jobLv < 5) || (curJobObj.jobType == '生产系' && curJobObj.jobLv < 4))) {
 			console.log('你没有达到职业的顶级，进入晋级判定..')
 			let promoteObj = cga.job.promoteInfo[curJobObj.jobLv]
-			// 如果完成了对应的进阶任务，且声望足够，则初步判定可能需要晋级，进入判断得意技是否达标的逻辑。
+			// 如果完成了对应的进阶任务，则初步判定可能需要晋级，进入判断得意技是否达标的逻辑。
 			if (promoteObj.mission[curJobObj.jobType].some(m => { return config.mission[m] })) {
 				console.log('你完成了晋级必要的任务:', promoteObj.mission[curJobObj.jobType])
 				/**
@@ -113,7 +113,8 @@ var thisobj = {
 								thisobj.hasRefreshReputation = true
 								if (cga.job.getJob().reputationLv >= promoteObj.reputationLv) {
 									console.log('刷新后，满足晋级条件，去晋级..')
-									cga.askNpcForObj({ act: 'promote', target: thisobj.finalJob.job, npcpos: thisobj.finalJob.npcpos }, () => {
+									// 注意act为promote时，target需要传目标职业等级，number类型。
+									cga.askNpcForObj({ act: 'promote', target: curJobObj.jobLv + 1, npcpos: thisobj.finalJob.npcpos }, () => {
 										// 重置状态
 										thisobj.hasRefreshReputation = false
 

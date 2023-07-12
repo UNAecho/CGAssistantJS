@@ -9848,16 +9848,13 @@ module.exports = function(callback){
 		const dialogHandler = (err, dlg)=>{
 			var actNumber = -1
 			if(dlg && dlg.options == 0){
-				// TODO 这里等到获取晋级时options是0，type是多少之后，再去掉
-				console.log("🚀 ~ file: cgaapi.js:9474 ~ dialogHandler ~ dlg:", dlg)
-				// 转职确认画面，5000金币，需要点击【好的】(cga.ClickNPCDialog(0, 0))，【算了】cga.ClickNPCDialog(0, 1)
+				// 转职、晋级确认画面，需要消耗一定数量的金币，选项：【好的】(cga.ClickNPCDialog(0, 0))，【算了】cga.ClickNPCDialog(0, 1)
+				// UNAecho:已经确定，无论是转职还是晋级，options都是0，type都是2。
 				if(dlg.type == 2){
 					actNumber = 0
 					cga.ClickNPCDialog(0, actNumber);
 					cga.AsyncWaitNPCDialog(dialogHandler);
 					return;
-				}else if(dlg.type == 999){// TODO晋级时options是0，那么type是多少
-					
 				}
 				/**
 				 * 列表对话，多数用于学技能NPC的第一句话：
