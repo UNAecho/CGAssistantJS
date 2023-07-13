@@ -10021,6 +10021,8 @@ module.exports = function(callback){
 					setTimeout(retry, 1000, cb);
 					return
 				}
+				console.log("🚀 ~ file: cgaapi.js:10066 ~ retry ~ obj.target:", obj.target)
+				console.log("🚀 ~ file: cgaapi.js:10066 ~ retry ~ cga.job.getJob().jobLv:", cga.job.getJob().jobLv)
 				// 如果判断已经完成此次API的逻辑，进入调用cb环节
 				if(!repeatFlag){
 					// 如果是就职或者转职，晋级任务的状态需要重置。但战斗系5转和UD则不用，一生做一次即可全程有效
