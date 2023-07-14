@@ -5987,6 +5987,12 @@ module.exports = function(callback){
 		}, cb回调)
 
 	*/
+	/**
+	* 
+	* UNAecho开发提醒：cga.walkList有一个严重bug，就是在同一个地图不同的坐标之间传送（如：UD圣坛地图，[24, 76, '圣坛', 24, 71]）这种坐标时，会出现没切换坐标前就提前执行callback的情况。
+	* 这会导致你传给cga.walkList的callback会提前执行，如果callback中含有坐标类的API，会直接导致报错(因为无法抵达。)
+	* 使用cga.walkList时，要注意此事
+	 */
 	cga.walkList = (list, cb)=>{
 		
 		//console.log('初始化寻路列表');
@@ -9691,12 +9697,12 @@ module.exports = function(callback){
 					continue
 				}
 				
-				var memberNick = curTeamplayers[t].nick
+				var memberNick = curTeamplayers[t].nick.match(reg)
 				if(!memberNick){
 					continue
 				}
 
-				memberNick.match(reg).forEach((n)=>{
+				memberNick.forEach((n)=>{
 					// 如果解析的3位字符串不以zjfma为开头，则跳过
 					if(identifier.indexOf(n[0]) == -1)
 						return
@@ -9844,6 +9850,8 @@ module.exports = function(callback){
 		let repeatFlag = true
 		// 如果是与npc说话，则turnto只需要一次
 		let turnToFlag = true
+		// console打印信息的防刷屏flag
+		let mute = false
 
 		const dialogHandler = (err, dlg)=>{
 			var actNumber = -1
@@ -10325,7 +10333,7 @@ module.exports = function(callback){
 			}
 			// 如果NPC周围1x1均无法抵达，尝试检测隔墙的空闲位置，例如驯兽师导师
 			if(spaceList === null){
-				console.log('NPC pos:',npcpos,'，周围1x1均无法抵达，尝试检测隔墙的空闲位置，例如驯兽师导师')
+				// console.log('NPC pos:',npcpos,'，周围1x1均无法抵达，尝试检测隔墙的空闲位置，例如驯兽师导师')
 				spaceList = cga.getRandomSpaceThroughWall(npcpos[0],npcpos[1])
 			}
 
@@ -10335,8 +10343,16 @@ module.exports = function(callback){
 				if (isLeader()){
 					// 单人或者队长最终站位
 					tmpArr.push(arr1)
-					// 如果是队长，并且在带队，那么需要把队友拉到NPC周围
+					// 
+					// 新增：
+					/**
+					 * 如果是队长，并且在带队，那么需要把队友拉到NPC周围
+					 * 由于类似UD传送水晶，队长在水晶附近走来回走的次数较少，导致队员会小概率被甩到NPC1x1以外的位置
+					 * 这里多加一些队长在NPC1x1内来回走的逻辑，使队员平稳落在NPC1x1内的位置
+					 */
 					if(cga.getTeamPlayers().length){
+						tmpArr.push(arr2)
+						tmpArr.push(arr1)
 						tmpArr.push(arr2)
 						tmpArr.push(arr1)
 						tmpArr.push(arr2)
@@ -10367,6 +10383,16 @@ module.exports = function(callback){
 						askAndCheck(npcpos,cb)
 					})
 				}
+			}
+			// 如果是队员：目标NPC的附近无法抵达，可能是有墙阻隔。需要等待队长将自己带至无阻隔位置，再继续逻辑。
+			// 如果是队长：不处理，后续代码会抛出异常。因为队长必须有逻辑支持他抵达NPC附近，否则逻辑无法进行
+			if(!isLeader() && spaceList === null){
+				if(!mute){
+					console.log('你是队员，且NPC',npcpos,'无法抵达。等待队长将自己带至可抵达NPC的位置再继续逻辑..')
+					mute = true
+				}
+				setTimeout(walkToNPC, 1000,npcpos,cb);
+				return
 			}
 			
 			// NPC周围只有1格可站立。cga.getRandomSpace返回是1维数组，cga.get2RandomSpace返回是2维数组

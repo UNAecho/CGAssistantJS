@@ -17,7 +17,11 @@ var thisobj = {
 								if (r && r == 'ok') {
 									// 修改称号，通知其它单位将自己纳入统计范畴
 									cga.ChangeNickName(thisobj.data.taskNick)
-									setTimeout(thisobj.func.waitForStart, 1000, cb2);
+									setTimeout(thisobj.func.waitForStart, 1000, () => {
+										cga.disbandTeam(() => {
+											cb2(true)
+										})
+									});
 									return
 								} else {
 									throw new Error('cga.buildTeam返回类型错误')
@@ -165,13 +169,18 @@ var thisobj = {
 			}
 		},
 		{
+			/**
+			 * UNAecho开发提醒：cga.walkList有一个严重bug，就是在同一个地图不同的坐标之间传送（如：[24, 76, '圣坛', 24, 71]）这种坐标时，会出现没切换坐标前就提前执行callback的情况。
+			 * 这会导致你传给cga.walkList的callback会提前执行，如果callback中含有坐标类的API，会直接导致报错(因为无法抵达。)
+			 * 使用cga.walkList时，要注意此事
+			 */
 			intro: '5.第1层组队，并获取蜡烛。',
 			workFunc: function (cb2) {
 				// 获取蜡烛对象
 				let mapindex = cga.GetMapIndex().index3
 				let candleObj = thisobj.data.sexObj.candle[mapindex][thisobj.data.sex]
 
-				let obj = { act: 'item', target: candleObj.before, npcpos: thisobj.data.sexObj.layer1ItemNpcPos[thisobj.data.sex] }
+				let obj = { act: 'item', target: candleObj.before, npcpos: thisobj.data.sexObj.layer1ItemNpcPos[thisobj.data.sex], waitLocation: 24003 }
 
 				let go = () => {
 					// 任务战斗模式
@@ -218,41 +227,28 @@ var thisobj = {
 		{
 			intro: '6.第1层换蜡烛，并进入下一层',
 			workFunc: function (cb2) {
-				let mapindex = cga.GetMapIndex().index3
-				// 进入下一层的对话obj
-				let obj = { act: 'map', target: mapindex + 1, npcpos: thisobj.data.sexObj.layer1NpcPos[thisobj.data.sex], waitLocation: mapindex }
-
-				let go = () => {
-					// 任务战斗模式
-					if (thisobj.data.soloTravel) {
-						thisobj.func.configMode.manualLoad('战斗赶路');
-					} else {
-						thisobj.func.configMode.func('节能模式');
-					}
-					// 开启任务playerThink
-					cb2('playerThink on')
-
-					if (thisobj.data.isTeamLeader) {
-						cga.walkList(thisobj.func.getPath(thisobj.func.checkStatus()), () => {
-							cga.askNpcForObj(obj, () => {
-								cb2(true)
-							})
-						});
-					} else {
-						cga.askNpcForObj(obj, () => {
-							cb2(true)
-						})
-					}
+				// 任务战斗模式
+				if (thisobj.data.soloTravel) {
+					thisobj.func.configMode.manualLoad('战斗赶路');
+				} else {
+					thisobj.func.configMode.func('节能模式');
 				}
-				go()
+				// 开启任务playerThink
+				cb2('playerThink on')
+
+				// 进入下一层的对话obj
+				let obj = { act: 'map', target: 24004, npcpos: thisobj.data.sexObj.layer1NpcPos[thisobj.data.sex], waitLocation: 24003 }
+
+				setTimeout(thisobj.func.layerLogic, 3000, obj, () => {
+					cb2(true)
+				});
 			}
 		},
 		{
 			intro: '7.第2层换蜡烛，并进入下一层',
 			workFunc: function (cb2) {
-				let mapindex = cga.GetMapIndex().index3
 				// 进入下一层的对话obj
-				let obj = { act: 'map', target: mapindex + 1, npcpos: thisobj.data.sexObj.layer2NpcPos[thisobj.data.sex], waitLocation: mapindex }
+				let obj = { act: 'map', target: 24005, npcpos: thisobj.data.sexObj.layer2NpcPos[thisobj.data.sex], waitLocation: 24004 }
 
 				let go = () => {
 					// 任务战斗模式
@@ -264,28 +260,37 @@ var thisobj = {
 					// 开启任务playerThink
 					cb2('playerThink on')
 
-					if (thisobj.data.isTeamLeader) {
-						cga.walkList(thisobj.func.getPath(thisobj.func.checkStatus()), () => {
-							cga.askNpcForObj(obj, () => {
-								cb2(true)
-							})
-						});
-					} else {
-						cga.askNpcForObj(obj, () => {
-							cb2(true)
-						})
-					}
+					setTimeout(thisobj.func.layerLogic, 3000, obj, () => {
+						cb2(true)
+					});
 				}
-				go()
+
+				// 单人模式不组队
+				if (thisobj.data.soloTravel) {
+					go()
+					return
+				}
+
+				cga.buildTeam({ teammates: thisobj.param.teammates, timeout: 60000, pos: thisobj.data.sexObj.layer2TeamPos[thisobj.data.sex], dangerLevel: 2 }, (r) => {
+					if (r && r == 'ok') {
+						go()
+						return
+					} else if (r && r == 'timeout') {// 如果超时，则结束任务。
+						console.log('等待队员超时，结束任务。')
+						return
+					} else {
+						throw new Error('cga.buildTeam返回类型错误')
+					}
+				})
 			}
 		},
 		{
 			intro: '8.第3层换蜡烛，之后与传送水晶对话，抵达阿尔杰斯的慈悲。',
 			workFunc: function (cb2) {
 				console.log('【UNAecho脚本提示：】此楼层有特殊交换蜡烛的地点(男[56,60],女[54,62])，可节约路程。但考虑脚本的稳定运行，依然使用传统地点交易蜡烛。')
-				let mapindex = cga.GetMapIndex().index3
+
 				// 进入下一层的对话obj
-				let obj = { act: 'map', target: 24002, npcpos: thisobj.data.sexObj.layer3NpcPos[thisobj.data.sex], waitLocation: mapindex }
+				let obj = { act: 'map', target: 24002, npcpos: thisobj.data.sexObj.layer3NpcPos[thisobj.data.sex], waitLocation: 24005 }
 
 				let go = () => {
 					// 任务战斗模式
@@ -297,19 +302,28 @@ var thisobj = {
 					// 开启任务playerThink
 					cb2('playerThink on')
 
-					if (thisobj.data.isTeamLeader) {
-						cga.walkList(thisobj.func.getPath(thisobj.func.checkStatus()), () => {
-							cga.askNpcForObj(obj, () => {
-								cb2(true)
-							})
-						});
-					} else {
-						cga.askNpcForObj(obj, () => {
-							cb2(true)
-						})
-					}
+					setTimeout(thisobj.func.layerLogic, 3000, obj, () => {
+						cb2(true)
+					});
 				}
-				go()
+
+				// 单人模式不组队
+				if (thisobj.data.soloTravel) {
+					go()
+					return
+				}
+
+				cga.buildTeam({ teammates: thisobj.param.teammates, timeout: 60000, pos: thisobj.data.sexObj.layer3TeamPos[thisobj.data.sex], dangerLevel: 2 }, (r) => {
+					if (r && r == 'ok') {
+						go()
+						return
+					} else if (r && r == 'timeout') {// 如果超时，则结束任务。
+						console.log('等待队员超时，结束任务。')
+						return
+					} else {
+						throw new Error('cga.buildTeam返回类型错误')
+					}
+				})
 			}
 		},
 		{
@@ -322,6 +336,9 @@ var thisobj = {
 			}
 		},
 		{
+			/**
+			 * UNAecho:经测试，一队5个人，1个大号格斗，4个小号100级左右攻人，全力合击等级最高的单位，可auto打过UD。仅供参考。
+			 */
 			intro: '10.选择真正需要完成UD人物的人物，进行自由组队，不限男女。与犹大（15.8）对话进入战斗。',
 			workFunc: function (cb2) {
 				let obj = { act: 'map', target: 24000, npcpos: thisobj.data.sexObj.bossPos[thisobj.data.sex], waitLocation: 24001 }
@@ -386,9 +403,10 @@ var thisobj = {
 						}
 					})
 					return
-				}else{
+				} else {
 					console.log('你未指定打BOSS的队员，手动组队并击败BOSS后，脚本自动继续..')
-					cga.waitForMap(obj.target,()=>{
+					// cga.loadBattleConfig('BOSS合击')
+					cga.waitForMap(obj.target, () => {
 						cb2(true)
 					})
 				}
@@ -398,7 +416,24 @@ var thisobj = {
 		{
 			intro: '11.战斗胜利后传送至开启者之间，与布鲁梅尔（17.9）对话获得称号“开启者”并传送回圣餐之间，任务完结。',
 			workFunc: function (cb2) {
-				let obj = { act: 'map', target: 24007, npcpos: [17, 9] }
+				// 任务NPC
+				let obj1 = { act: 'map', target: 24007, npcpos: [17, 9] }
+				// 香蒂的房间
+				let obj2 = { act: 'map', target: 5013, npcpos: [27, 13] }
+				// 香蒂
+				let obj3 = { act: 'map', target: 24007, npcpos: [10, 6] }
+				// 朵葡
+				let obj4 = { act: 'map', target: 24007, npcpos: [10, 7] }
+				// 香蒂的房间返回任务房间NPC
+				let obj5 = { act: 'map', target: 24000, npcpos: [8, 4] }
+
+				cga.disbandTeam(() => {
+					cga.askNpcForObj(obj1, () => {
+						thisobj.func.dropUseless(['破损的刀刃','魔族的水晶','誓言之证'],() => {
+							cb2(true)
+						})
+					})
+				})
 			}
 		},
 	],
@@ -488,6 +523,7 @@ var thisobj = {
 				24004: { 0: { before: 18497, after: 18493 }, 1: { before: 18493, after: 18497 } },
 				24005: { 0: { before: 18494, after: 18498 }, 1: { before: 18498, after: 18494 } },
 			},
+			dir : {0: 6, 1: 2},
 			// 男女行走路径，分为换蜡烛前与换蜡烛后。其中第一层24003还包含获取蜡烛的路径
 			path: {
 				24003: {
@@ -663,7 +699,7 @@ var thisobj = {
 			}
 			// 队长给出交易信号，才开始交易逻辑
 			let teamplayers = cga.getTeamPlayers()
-			if (teamplayers && teamplayers[0].nick_name.indexOf(thisobj.data.tradeStr) == -1) {
+			if (teamplayers && teamplayers[0].nick && teamplayers[0].nick.indexOf(thisobj.data.tradeStr) == -1) {
 				setTimeout(thisobj.func.waitForTradeCandle, 1000, cb)
 				return
 			}
@@ -678,9 +714,17 @@ var thisobj = {
 				}
 			}
 
+			let dir = cga.GetPlayerInfo().direction
+
 			// thisobj.data.sex非0即1。
 			// 男性逻辑
 			if (thisobj.data.sex) {
+				// 锁定朝向，不然坐标对上也不能交易
+				if(dir != thisobj.data.sexObj.dir[thisobj.data.sex]){
+					cga.turnDir(thisobj.data.sexObj.dir[thisobj.data.sex])
+					setTimeout(thisobj.func.waitForTradeCandle, 1000, cb)
+					return;
+				}
 				cga.waitTrade(stuffs, null, (results) => {
 					if (results && results.success == true) {
 						cb(true);
@@ -690,6 +734,12 @@ var thisobj = {
 					}
 				}, 5000);
 			} else {// 女性逻辑
+				// 锁定朝向，不然坐标对上也不能交易
+				if(dir != thisobj.data.sexObj.dir[thisobj.data.sex]){
+					cga.turnDir(thisobj.data.sexObj.dir[thisobj.data.sex])
+					setTimeout(thisobj.func.waitForTradeCandle, 1000, cb)
+					return;
+				}
 				let xy = cga.GetMapXY()
 				let playerunit = cga.findPlayerUnit(u => {
 					// 如果对方称号中含有我想要的蜡烛id，并且与自己隔岸相望，则判断是可以交易的对象。
@@ -698,7 +748,8 @@ var thisobj = {
 					}
 				});
 				if (playerunit != null) {
-					cga.positiveTrade(playername, stuffs, undefined, result => {
+					console.log('找到交换蜡烛的对象【'+playerunit.unit_name+'】')
+					cga.positiveTrade(playerunit.unit_name, stuffs, undefined, result => {
 						if (result && result.success == true) {
 							cb(true);
 						} else {
@@ -725,6 +776,23 @@ var thisobj = {
 				}
 				return null
 			}
+
+			// 组队模式，需要遍历全队昵称
+			let status = null
+			let teamplayers = cga.getTeamPlayers()
+			for (let i = 0; i < teamplayers.length; i++) {
+				for (let j = 0; j < keys.length; j++) {
+					if (teamplayers[i].nick && teamplayers[i].nick.indexOf(candleObj[keys[j]]) != -1) {
+						if (status == null) {
+							status = keys[j]
+						} else if (status != null && status != keys[j]) {
+							return null
+						}
+					}
+				}
+			}
+
+			return status
 		},
 		// 获取需要继续走的路径。part:需要指定是before还是after。分别代表换蜡烛的前后
 		getPath: (part) => {
@@ -739,6 +807,50 @@ var thisobj = {
 			}
 			// 如果抵达传送水晶前，没有门需要走，由于返回结果需要给walklist运行，所以返回空数组而不是null
 			return []
+		},
+		/**
+		 * 由于圣坛1层拿蜡烛独立进行，剩下圣坛123层的逻辑都是一样的：
+		 * 1、换蜡烛前，赶路，队长走至换蜡烛地点，通知队员打开交易模式；队员等待队长通知打开交易模式，交换蜡烛。
+		 * 2、换蜡烛后，赶路，走至传送石，对话，进入下一个地图
+		 * 
+		 * 所以抽象出一个通用的方法，传入需要的参数即可
+		 * @param {*} obj 与cga.askNpcForObj需要用的obj类型。
+		 * @param {*} cb 
+		 */
+		layerLogic: (obj, cb) => {
+			let status = thisobj.func.checkStatus()
+			if (status == null) {
+				setTimeout(thisobj.func.layerLogic, 1000, obj, cb);
+				return
+			} else if (status == 'before') {
+				if (thisobj.data.isTeamLeader) {
+					cga.walkList(thisobj.func.getPath(status), () => {
+						// 由于playerthink实时刷新称号，所以直接取自己的称号加上交易信号即可完成对队员的交易提醒动作。
+						cga.ChangeNickName(cga.GetPlayerInfo().nick + thisobj.data.tradeStr)
+						thisobj.func.waitForTradeCandle(() => {
+							setTimeout(thisobj.func.layerLogic, 5000, obj, cb);
+						})
+					});
+				} else {
+					thisobj.func.waitForTradeCandle(() => {
+						setTimeout(thisobj.func.layerLogic, 5000, obj, cb);
+					})
+				}
+			} else if (status == 'after') {
+				if (thisobj.data.isTeamLeader) {
+					cga.walkList(thisobj.func.getPath(status), () => {
+						cga.askNpcForObj(obj, () => {
+							cb(true)
+						})
+					});
+				} else {
+					cga.askNpcForObj(obj, () => {
+						cb(true)
+					})
+				}
+			} else {
+				throw new Error('状态错误,status只能为null,before,after这3种情况')
+			}
 		}
 	},
 	taskPlayerThink: () => {
@@ -799,7 +911,7 @@ var thisobj = {
 			return it.name == '誓言的烛台'
 		});
 
-		if (candle && ctx.playerinfo.nick.indexOf(candle.itemid.toString()) == -1) {
+		if (candle && playerinfo.nick.indexOf(candle.itemid.toString()) == -1) {
 			cga.ChangeNickName(candle.itemid.toString())
 			console.log('持有蜡烛:', candle.itemid)
 		}
