@@ -62,12 +62,12 @@ var thisobj = {
 			}
 
 			// 通用的技能遍历完之后，对特定职业进行定制学技能。如格斗士的气功弹不是得意技，却是必学技能
-			if(targetSkill === null){
-				if(jobObj.job == '格斗士'){
+			if (targetSkill === null) {
+				if (jobObj.job == '格斗士' && cga.findPlayerSkill('气功弹') == null) {
 					targetSkill = '气功弹'
 				}
 			}
-			
+
 			return targetSkill
 		}
 	},
