@@ -673,7 +673,7 @@ const skillInfos = [
 		cost : 100,
 		fieldCost : 1,
 		npcMainMap : '法兰城',
-		npcMap : '竞技场',
+		npcMap : 1401,
 		npcpos : [15, 56],
 		description : '合掌集气，便可以无视前后列关系以气功弹对复数敌人进行攻击',
 		notes : '只有没装武器时才能使用；所有职业伤害加成一致。',
