@@ -133,10 +133,10 @@ var thisobj = {
 						thisobj.hasRefreshReputation = false
 					}
 				} else {
-					console.log('你不满足晋级需求，', thisobj.finalJob.skill, '中必须满足其中1个技能大于等于', promoteObj.skillLv, '级')
+					console.log('你不满足晋级需求，', thisobj.finalJob.skill, '中必须满足至少1个技能大于等于', promoteObj.skillLv, '级')
 				}
 			} else {
-				console.log('你不满足晋级需求，需要完成列表', promoteObj.mission[curJobObj.jobType], '的其中之一。')
+				console.log('你不满足晋级需求，需要完成任务', promoteObj.mission[curJobObj.jobType], '的其中之一项，方可晋级。')
 			}
 		}
 

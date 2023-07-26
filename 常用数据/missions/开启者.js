@@ -6,7 +6,7 @@ var thisobj = {
 			workFunc: function (cb2) {
 				thisobj.func.bankObj.prepare(() => {
 					thisobj.func.healObj.func(() => {
-						if (thisobj.data.soloTravel) {
+						if (thisobj.data.soloBattle) {
 							console.log('单人solo，跳过建立队伍')
 							cb2(true)
 							return
@@ -38,7 +38,7 @@ var thisobj = {
 
 				let go = () => {
 					// 任务战斗模式
-					if (thisobj.data.soloTravel) {
+					if (thisobj.data.soloBattle) {
 						thisobj.func.configMode.manualLoad('战斗赶路');
 					} else {
 						thisobj.func.configMode.func('节能模式');
@@ -56,7 +56,7 @@ var thisobj = {
 
 				let prepare = () => {
 
-					if (thisobj.data.soloTravel) {
+					if (thisobj.data.soloBattle) {
 						go()
 						return
 					}
@@ -94,7 +94,7 @@ var thisobj = {
 
 				let go = () => {
 					// 任务战斗模式
-					if (thisobj.data.soloTravel) {
+					if (thisobj.data.soloBattle) {
 						thisobj.func.configMode.manualLoad('战斗赶路');
 					} else {
 						thisobj.func.configMode.func('节能模式');
@@ -121,7 +121,7 @@ var thisobj = {
 					}
 				}
 				// 单人模式不组队
-				if (thisobj.data.soloTravel) {
+				if (thisobj.data.soloBattle) {
 					go()
 					return
 				}
@@ -184,7 +184,7 @@ var thisobj = {
 
 				let go = () => {
 					// 任务战斗模式
-					if (thisobj.data.soloTravel) {
+					if (thisobj.data.soloBattle) {
 						thisobj.func.configMode.manualLoad('战斗赶路');
 					} else {
 						thisobj.func.configMode.func('节能模式');
@@ -206,7 +206,7 @@ var thisobj = {
 				}
 
 				// 单人模式不组队
-				if (thisobj.data.soloTravel) {
+				if (thisobj.data.soloBattle) {
 					go()
 					return
 				}
@@ -228,7 +228,7 @@ var thisobj = {
 			intro: '6.第1层换蜡烛，并进入下一层',
 			workFunc: function (cb2) {
 				// 任务战斗模式
-				if (thisobj.data.soloTravel) {
+				if (thisobj.data.soloBattle) {
 					thisobj.func.configMode.manualLoad('战斗赶路');
 				} else {
 					thisobj.func.configMode.func('节能模式');
@@ -252,7 +252,7 @@ var thisobj = {
 
 				let go = () => {
 					// 任务战斗模式
-					if (thisobj.data.soloTravel) {
+					if (thisobj.data.soloBattle) {
 						thisobj.func.configMode.manualLoad('战斗赶路');
 					} else {
 						thisobj.func.configMode.func('节能模式');
@@ -266,7 +266,7 @@ var thisobj = {
 				}
 
 				// 单人模式不组队
-				if (thisobj.data.soloTravel) {
+				if (thisobj.data.soloBattle) {
 					go()
 					return
 				}
@@ -294,7 +294,7 @@ var thisobj = {
 
 				let go = () => {
 					// 任务战斗模式
-					if (thisobj.data.soloTravel) {
+					if (thisobj.data.soloBattle) {
 						thisobj.func.configMode.manualLoad('战斗赶路');
 					} else {
 						thisobj.func.configMode.func('节能模式');
@@ -308,7 +308,7 @@ var thisobj = {
 				}
 
 				// 单人模式不组队
-				if (thisobj.data.soloTravel) {
+				if (thisobj.data.soloBattle) {
 					go()
 					return
 				}
@@ -363,7 +363,7 @@ var thisobj = {
 				let go = () => {
 					let delay = 5000
 					// 任务战斗模式
-					if (thisobj.data.soloTravel) {
+					if (thisobj.data.soloBattle) {
 						// // 单挑BOSS设置，自行配置
 						// thisobj.func.configMode.func('节能模式');
 					} else {
@@ -439,7 +439,7 @@ var thisobj = {
 	],
 	taskRequirements: [//任务阶段是否完成
 		function () {//0.前期处理。
-			return thisobj.data.soloTravel
+			return thisobj.data.soloBattle
 		},
 		function () {//1.前往杰诺瓦镇，出镇北门至莎莲娜岛（260.359）处与阿斯提亚神官对话，选“是”进入参道。
 			return cga.GetMapIndex().index3 == 14010
@@ -615,7 +615,7 @@ var thisobj = {
 			}
 		},
 		// 单人跑图flag，打开此开关，抵达BOSS房间前均为单人赶路、换蜡烛（需要准备一名换蜡烛的异性伙伴）。战斗则是一直逃跑。
-		soloTravel: false
+		soloBattle: false
 	},
 	func: {// 任务自定义函数
 		bankObj: require('../../通用挂机脚本/子插件/自动存取魔币.js'),
@@ -768,7 +768,7 @@ var thisobj = {
 			let keys = Object.keys(candleObj)
 
 			// 如果是单人，仅检查物品即可获取当前换蜡烛的阶段
-			if (thisobj.data.soloTravel) {
+			if (thisobj.data.soloBattle) {
 				for (let i = 0; i < keys.length; i++) {
 					if (cga.findItem(candleObj[keys[i]]) != -1) {
 						return keys[i]
@@ -887,7 +887,7 @@ var thisobj = {
 			cga.ChangePetState(ctx.petinfo.index, cga.PET_STATE_READY)
 		}
 
-		if (!thisobj.data.soloTravel && ctx.teamplayers.length != thisobj.param.teammates.length) {
+		if (!thisobj.data.soloBattle && ctx.teamplayers.length != thisobj.param.teammates.length) {
 			if (cga.isAroundPos(thisobj.data.noTeamThinkObj)) {
 				console.log('地图切换首末组队阶段，暂时阻止playerthink的组队监测..')
 			} else {
@@ -926,7 +926,7 @@ var thisobj = {
 			if (!thisobj.param.solo.hasOwnProperty('battle') || !thisobj.param.solo.hasOwnProperty('boss')) {
 				throw new Error('参数错误：如果要单人进行任务，solo对象必须包含battle、boss2个key，value为Boolean型。')
 			}
-			thisobj.data.soloTravel = true
+			thisobj.data.soloBattle = true
 		} else if ((!thisobj.param.hasOwnProperty('maleTeam') || !thisobj.param.hasOwnProperty('femaleTeam')) || (!thisobj.param.maleTeam instanceof Array || !thisobj.param.femaleTeam instanceof Array)) {
 			throw new Error('参数错误：如果不是单人solo，则必须传入maleTeam与femaleTeam的String型数组，来表示男女队员（至少要填写队长名称，其余队员可以写名字，也可以写null改为自由组队），否则任务无法进行。')
 		}
@@ -938,12 +938,12 @@ var thisobj = {
 			throw new Error('性别数值错误，cga.character.getCharacterInfo()返回的性别必须是0或1。')
 		}
 		// 组队任务，获取自己的队伍
-		if (!thisobj.data.soloTravel) {
+		if (!thisobj.data.soloBattle) {
 			thisobj.param.teammates = thisobj.data.sex == 1 ? thisobj.param.maleTeam : thisobj.param.femaleTeam
 		}
 
 		// 判断自己是队长还是队员
-		thisobj.data.isTeamLeader = thisobj.data.soloTravel || thisobj.param.teammates[0] == cga.GetPlayerInfo().name
+		thisobj.data.isTeamLeader = thisobj.data.soloBattle || thisobj.param.teammates[0] == cga.GetPlayerInfo().name
 
 		// 制作playerthink禁用队伍监测的坐标位置，在此位置1x1范围内，playerthink会忽视队伍变动
 		thisobj.data.noTeamThinkObj = {
