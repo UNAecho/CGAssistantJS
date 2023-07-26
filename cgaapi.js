@@ -12470,10 +12470,21 @@ module.exports = function(callback){
         24005:[[16, 82],[82, 43]],
         }
 	 * 在这些坐标的1x1附近，cga.isAroundPos会返回true。
-	 * @param {Object} xy 检测坐标，数据结构与cga.GetMapXY()返回结果一致。可以自定义。如果不传，默认使用人物当前坐标
+	 * @param {Object} posObj 检测对象，可以传入一维数组，也可以传入Object。数据结构：
+	 * 1、传入一维数组时。类似[2,5]这样的数组，可以判断任务是否站在这个坐标周围。
+	 * 2、传入Object时，要求如下：
+	 * key为地图index，value为二维数组，可以判断角色是否在地图index下的各个坐标周围
+	 * 例：
+	 * {
+			402: [[1,3],[2,5]],
+			24008: [[111,222],[333,123]],
+		}
+	 * @param {Object} xy 人物坐标，数据结构与cga.GetMapXY()返回结果一致。可以自定义。如果不传，默认使用人物当前坐标
+	 * @param {Boolean} containCenter 是否包含检测坐标。因为想要与NPC对话，人物不可以站在与NPC重叠的位置。此时需要将重叠情况视为false。
+	 * 但有时则不然，例如检测人物是否在某个坐标1x1内，这时需要将重叠情况视为true。
 	 * @returns 
 	 */
-	cga.isAroundPos = (posObj, xy = null) => {
+	cga.isAroundPos = (posObj, xy = null,containCenter=false) => {
 		if (!posObj instanceof Array || (typeof posObj[0] == 'number' && posObj.length != 2) || (Object.prototype.toString.call(posObj) == '[object Object]' && Object.keys(posObj).length == 0)) {
 			throw new Error('参数错误，pos必须为长度为2的int型一维数组；或者是Object，key是地图index，value是一维int型数组填充的二维数组')
 		}
@@ -12497,6 +12508,9 @@ module.exports = function(callback){
 			return mapindexes.some(index =>{
 				return posObj[index].some(p =>{
 					let range = cga.getPosAroundRange(p)
+					if(containCenter){
+						return xy.x >= range[0][0] && xy.x <= range[0][1] && xy.y >= range[1][0] && xy.y <= range[1][1]
+					}
 					// 人物处于范围内，并且不与p的坐标重叠（重叠就没法与NPC对话了）
 					return xy.x >= range[0][0] && xy.x <= range[0][1] && xy.y >= range[1][0] && xy.y <= range[1][1] && !(xy.x == p[0] && xy.y == p[1])
 				})

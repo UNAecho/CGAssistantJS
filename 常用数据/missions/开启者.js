@@ -430,7 +430,9 @@ var thisobj = {
 				cga.disbandTeam(() => {
 					cga.askNpcForObj(obj1, () => {
 						thisobj.func.dropUseless(['破损的刀刃','魔族的水晶','誓言之证'],() => {
-							cb2(true)
+							cga.refreshMissonStatus({'开启者' : true},()=>{
+								cb2(true)
+							})
 						})
 					})
 				})
@@ -888,7 +890,7 @@ var thisobj = {
 		}
 
 		if (!thisobj.data.soloBattle && ctx.teamplayers.length != thisobj.param.teammates.length) {
-			if (cga.isAroundPos(thisobj.data.noTeamThinkObj)) {
+			if (cga.isAroundPos(thisobj.data.noTeamThinkObj,null,true)) {
 				console.log('地图切换首末组队阶段，暂时阻止playerthink的组队监测..')
 			} else {
 				console.log('队伍与预设值', thisobj.param.teammates, '不符，中断任务')
