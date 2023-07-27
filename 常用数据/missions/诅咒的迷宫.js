@@ -173,7 +173,7 @@ var thisobj = {
 					return
 				}
 
-				cga.buildTeam({ teammates: thisobj.param.teammates, timeout: 60000, pos: thisobj.data.buildTeamPos2 }, (r) => {
+				cga.buildTeam({ teammates: thisobj.param.teammates, timeout: 300000, pos: thisobj.data.buildTeamPos2 }, (r) => {
 					if (r && r == 'ok') {
 						go()
 						return
@@ -461,7 +461,15 @@ var thisobj = {
 			return cga.GetMapIndex().index3 == 4334
 		},
 		function () {//6.调查连接时空的石盘（15.10），选“是”传送至民家地下。
-			return cga.GetMapIndex().index3 == 4335
+			let item = cga.getItemCount('刀刃的碎片')
+			if(item == 0){
+				return false
+			}
+			let mapindex = cga.GetMapIndex().index3
+			if(mapindex == 4300 || mapindex == 4320 || mapindex == 4335){
+				return true
+			}
+			return false
 		},
 		function () {//7.出阿巴尼斯村，前往莎莲娜岛（54.161）处，持有【刀刃的碎片】调查鼓动的石盘，交出【刀刃的碎片】传送至诅咒的迷宫。通过（35.9）处楼梯进入诅咒的迷宫。
 			return cga.GetMapIndex().index3 == 24008
@@ -694,7 +702,7 @@ var thisobj = {
 			if(jobObj.job == '传教士'){
 				cga.loadBattleConfig('BOSS传教')
 			}else{
-				cga.loadBattleConfig('BOSS合击')
+				cga.loadBattleConfig('BOSS合击血量高')
 			}
 		},
 		dropUseless: (items, cb) => {

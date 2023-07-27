@@ -102,16 +102,21 @@ var thisobj = {
 					// 判断声望，如果满足，则晋级。
 					if (curJobObj.reputationLv >= promoteObj.reputationLv) {
 						console.log('当前声望【' + curJobObj.reputation + '】满足晋级要求。')
-						cga.askNpcForObj({ act: 'promote', target: thisobj.finalJob.job, npcpos: thisobj.finalJob.npcpos }, () => {
+						cga.askNpcForObj({ act: 'promote', target: curJobObj.jobLv + 1, npcpos: thisobj.finalJob.npcpos }, () => {
 							thisobj.prepare(cb)
 						})
 						return
 					} else {// 如果声望不满足，则去刷新。刷新后，满足则晋级，不满足就退出
 						console.log('当前声望【' + curJobObj.reputation + '】不满足晋级要求。')
 						if (!thisobj.hasRefreshReputation) {
+							console.log('去和阿蒙对话，刷新一下声望，看最新声望进度是否符合晋级标准')
 							cga.refreshReputation(() => {
+								// 将刷新flag置为true，表示已经刷新过称号
 								thisobj.hasRefreshReputation = true
-								if (cga.job.getJob().reputationLv >= promoteObj.reputationLv) {
+								// 重新赋值
+								curJobObj = cga.job.getJob()
+
+								if (curJobObj.reputationLv >= promoteObj.reputationLv) {
 									console.log('刷新后，满足晋级条件，去晋级..')
 									// 注意act为promote时，target需要传目标职业等级，number类型。
 									cga.askNpcForObj({ act: 'promote', target: curJobObj.jobLv + 1, npcpos: thisobj.finalJob.npcpos }, () => {

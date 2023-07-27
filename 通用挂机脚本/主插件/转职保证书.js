@@ -43,7 +43,7 @@ var rollBack = (cb, result, obj) => {
 var loadBattleConfig = ()=>{
 	var job = cga.job.getJob()
 	if(job.job != '传教士'){
-		configMode.manualLoad('BOSS合击')
+		configMode.manualLoad('BOSS合击血量高')
 	}else{
 		configMode.manualLoad('传教士任务')
 	}

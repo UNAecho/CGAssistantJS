@@ -92,7 +92,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 			settingpath = settingpath + 'BOSS巫师.json'
 	
 		}else{
-			settingpath = settingpath + 'BOSS合击.json'
+			settingpath = settingpath + 'BOSS合击血量高.json'
 		}
 	
 		var setting = JSON.parse(fs.readFileSync(settingpath))

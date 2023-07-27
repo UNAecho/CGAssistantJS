@@ -7190,7 +7190,7 @@ module.exports = function(callback){
 	 */
 	cga.refreshReputation = (cb) => {
 		let villageName = cga.travel.switchMainMap()
-		if (villageName == '法兰城') {
+		if (villageName == '法兰城' || villageName == '艾尔莎岛') {
 			cga.travel.falan.toStone('E2', () => {
 				cga.walkList([
 					[230, 82],
@@ -9839,8 +9839,11 @@ module.exports = function(callback){
 		if(typeof obj != 'object' || !obj.hasOwnProperty("act") || !obj.hasOwnProperty("target")){
 			throw new Error('obj格式有误，见API注释')
 		}
-		if((obj.hasOwnProperty('job') || obj.hasOwnProperty('promote')) && (typeof obj.target != 'string')){
-			throw new Error('obj.act为job或promote时，obj.target必须为string类型的职业统称。')
+		if(obj.hasOwnProperty('job') && (typeof obj.target != 'string')){
+			throw new Error('obj.act为job时，obj.target必须为string类型的职业统称。')
+		}
+		if(obj.hasOwnProperty('promote') && (typeof obj.target != 'number')){
+			throw new Error('obj.act为promote时，obj.target必须为int类型的职业level。')
 		}
 		if((obj.hasOwnProperty('skill') || obj.hasOwnProperty('forget')) && (typeof obj.target != 'string')){
 			throw new Error('obj.act为skill或forget时，obj.target必须为string类型的技能名称。')
@@ -10045,8 +10048,6 @@ module.exports = function(callback){
 					setTimeout(retry, 1000, cb);
 					return
 				}
-				console.log("🚀 ~ file: cgaapi.js:10066 ~ retry ~ obj.target:", obj.target)
-				console.log("🚀 ~ file: cgaapi.js:10066 ~ retry ~ cga.job.getJob().jobLv:", cga.job.getJob().jobLv)
 				// 如果判断已经完成此次API的逻辑，进入调用cb环节
 				if(!repeatFlag){
 					// 如果是就职或者转职，晋级任务的状态需要重置。但战斗系5转和UD则不用，一生做一次即可全程有效
@@ -10109,7 +10110,12 @@ module.exports = function(callback){
 						console.log('notalk函数不允许自己与NPC对话..')
 					}else{
 						if(battleFlag && checkBattleFailed()){
-							throw new Error('战斗失败，全队血量为1，请检查队伍整体战斗力，或战斗配置')
+							cga.gui.LoadScript({
+								autorestart : false,
+							}, (err, result)=>{
+								throw new Error('战斗失败，全队血量为1，请检查队伍整体战斗力，或战斗配置。安全起见，终止自动重启脚本。')
+							})
+							throw new Error('战斗失败，全队血量为1，请检查队伍整体战斗力，或战斗配置。安全起见，终止自动重启脚本。')
 						}
 						// 有时候，队长还没在NPC面前调整好位置，队员先与NPC对话直接令全队地图改变了，导致队长walklist报错。这里加一个与NPC对话的小延迟。
 						setTimeout(() => {
@@ -10164,8 +10170,10 @@ module.exports = function(callback){
 			}
 			// 判断此次act是否需要特殊走路引导，如就职、学技能等
 			let tmpObj = null
-			if(obj.act == 'job' || obj.act == 'promote'){
+			if(obj.act == 'job'){
 				tmpObj = cga.job.getJob(obj.target)
+			}else if(obj.act == 'promote'){
+				tmpObj = cga.job.getJob()
 			}else if(obj.act == 'skill'){
 				tmpObj = cga.skill.getSkill(obj.target)
 			}else{// 如果没有特殊走路引导，进入队长队员判断
@@ -13602,7 +13610,7 @@ module.exports = function(callback){
 					}else{
 						jobObj.jobType = '生产系'
 					}
-					jobObj.jobLv = j
+					jobObj.jobLv = parseInt(j)
 					jobObj.curJob = playerInfo.job
 					break
 				}

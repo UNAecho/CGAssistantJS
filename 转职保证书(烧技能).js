@@ -26,7 +26,7 @@ require('./leo/common').then(cga => {
 		var body = {
 			path : rootdir + "\\转职保证书(卵4).js",
 		}
-		var settingpath = rootdir +'\\战斗配置\\BOSS合击.json';
+		var settingpath = rootdir +'\\战斗配置\\BOSS合击血量高.json';
 		var setting = JSON.parse(fs.readFileSync(settingpath))
 		scriptMode.call_ohter_script(body,setting)
 	}

@@ -405,7 +405,7 @@ var thisobj = {
 					return
 				} else {
 					console.log('你未指定打BOSS的队员，手动组队并击败BOSS后，脚本自动继续..')
-					// cga.loadBattleConfig('BOSS合击')
+					// cga.loadBattleConfig('BOSS合击血量高')
 					cga.waitForMap(obj.target, () => {
 						cb2(true)
 					})
