@@ -17,6 +17,10 @@ var loop = ()=>{
 
 	let jobObj = cga.job.getJob()
 
+	if(jobObj.job == '暗黑骑士' || jobObj.job == '教团骑士'){
+		throw new Error('暗黑骑士、教团骑士是道具服付费职业，不能依靠转职保证书刷声望，请手动处理。')
+	}
+
 	cga.SayWords('欢迎使用【UNAの脚本】全自动保证书+转职+刷声望流程，当前正在进行：【'+configTable.mainPlugin+'】阶段。', 0, 3, 1);
 
 	// 声望第13阶段是敬畏的寂静
