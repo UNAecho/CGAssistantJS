@@ -65,6 +65,7 @@ module.exports = function(callback){
 	cga.ENABLE_FLAG_CARD = 3;
 	cga.ENABLE_FLAG_TRADE = 4;
 	cga.ENABLE_FLAG_FAMILY = 5;
+	cga.ENABLE_FLAG_SHOWPETS = 6;
 	cga.ENABLE_FLAG_AVATAR_PUBLIC = 100;
 	cga.ENABLE_FLAG_BATTLE_POSITION = 101;
 	
@@ -13376,7 +13377,7 @@ module.exports = function(callback){
 		加载脚本
 		cga.gui.LoadScript({
 			path : "路径",
-			autorestart : true, //自动重启脚本开启
+			autorestart : 2, //自动重启脚本全开=2,半开=1,关闭=0
 			autoterm : true, //自动关闭脚本开启
 			injuryprot : true, //受伤保护开启
 			soulprot : true, //掉魂受伤保护开启
