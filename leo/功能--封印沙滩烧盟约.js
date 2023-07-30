@@ -19,9 +19,9 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
     };
 
     var protect = {
-        minHp: 1000,
+        minHp: 500,
         minMp: 50,
-        minPetHp: 800,
+        minPetHp: 200,
         minPetMp: 50,
         maxItemNumber: 19,
         minTeamNumber: 0,
@@ -37,7 +37,7 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
         rechargeFlag: -1,
         repairFlag: -1,
         crystalName: '火风的水晶（5：5）',
-        doctorName: 'UNAの护士'
+        doctorName: '医道之殇'
     };
     var playerinfo = cga.GetPlayerInfo();
     var playerName = playerinfo.name;
@@ -46,7 +46,7 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
         isTeamLeader = true;
     }
 
-    // leo.log('高仿红叶の沙滩登出回补脚本，推荐80~100级使用，启动~');
+    leo.log('高仿红叶の沙滩登出回补脚本，推荐80~100级使用，启动~');
 
     var task = async () => {
         await leo.waitAfterBattle()

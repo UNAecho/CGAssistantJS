@@ -4,7 +4,7 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 	var prepareOptions = {
         rechargeFlag: 1,
         repairFlag: -1,
-        doctorName: 'UNAの护士'
+        doctorName: '医道之殇'
     };
 
 	leo.log('红叶の士兵学宠物4级技能脚本，启动~');

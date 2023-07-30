@@ -11,7 +11,7 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 	var prepareOptions = {
         rechargeFlag: 1,
         repairFlag: -1,
-        doctorName: 'UNAの护士'
+        doctorName: '医道之殇'
     };
     var teammates = [];
 	leo.log('红叶の魔物狩猎大会(娱乐版)脚本，希特拉在等你哟~！启动~~~');

@@ -1,6 +1,6 @@
 require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 	//leo.baseInfoPrint();
-	var doctorName = 'UNAの护士';
+	var doctorName = '绿蔓之殇';
 
 	var playerinfo = cga.GetPlayerInfo();
 	var isDoctor = false;
@@ -8,7 +8,13 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 	if(playerinfo.name == doctorName){
 		isDoctor = true;
 	}
-	var defaultDoctor = 'UNAの护士';
+	if(isDoctor){
+		leo.say('红叶の医生烧治疗脚本，我是医生,启动~');
+	}else{
+		leo.say('红叶の医生烧治疗脚本，我是炮灰,启动~');
+	}
+	
+	var defaultDoctor = '医道之殇';
 	if(isDoctor){
 		var pos = [30, 87];
 		var minMp = 100;
@@ -130,6 +136,7 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 
 	var i = 0;
 	var autoTalk = ()=>{
+		leo.say('红叶の医生烧治疗脚本，说话防掉线',i);
 		++i > 4 ? (i = 0) : 0;
 		setTimeout(autoTalk, 60000);
 	}

@@ -1,7 +1,7 @@
 
 require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 	leo.monitor.config.healSelf = true;//自动治疗自己
-	// // leo.log('大叔memory尝试自采自造1级装备制作脚本，需要使用leo的模块启动');
+	leo.log('大叔memory尝试自采自造1级装备制作脚本，需要使用leo的模块启动');
 	var doctorName = '大叔-医治苍生';
 	var countmany = 1; //制作次数
 	var skillLevel = 1; //造几级弓， 目前只写了造1级弓的
@@ -85,7 +85,7 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 				} 
 				else{
 					
-				// leo.log('开始挖铜')				
+				leo.log('开始挖铜')				
 				while( cga.getItemCount('铜') < 600 && cga.GetPlayerInfo().mp >= 1) 
 					{
 
@@ -108,10 +108,10 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 			await leo.logBack()
 			await leo.goto(n=>n.falan.w2)    // 从新城去   falan： 法兰城，  w2: 西医附近
 		    await leo.autoWalkList([[106, 61,'米克尔工房'],[26, 5]])	
-			// leo.log('已到达工房，走到铜跟前，准备换铜');			
+			leo.log('已到达工房，走到铜跟前，准备换铜');			
 			var exchangeCount = cga.getItemCount(itemName) / 20;
 			var list = [{index:0, count:exchangeCount}];
-			await leo.exchange(6,list);
+			await leo.exchange(4,list);
 			// 压条结束
 			}
 		}

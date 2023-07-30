@@ -6,7 +6,7 @@ var thisobj = {
 			workFunc: function (cb2) {
 				thisobj.func.bankObj.prepare(() => {
 					thisobj.func.healObj.func(() => {
-						if (cga.findTitle('开启者')) {
+						if (cga.findTitle('开启者') != -1) {
 							console.log('已经完成【开启者】(UD)任务，可以继续任务..')
 							cb2(true)
 						} else {

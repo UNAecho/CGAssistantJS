@@ -1,0 +1,23 @@
+						share((shareInfoObj)=>{
+							if(typeof shareInfoObj == 'object'){// 共享信息成功，计算去哪里练级
+								// 关闭组队
+								cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
+								// 计算去哪里练级
+								let areaObj = thisobj.switchArea(shareInfoObj, cga.getTeamPlayers())
+								// 缓存练级信息结果
+								thisobj.object.area = areaObj
+								// 换水晶模块使用
+								global.area = thisobj.object.area
+								// 先落盘，再在内存中保存结果
+								update.update_config({area : thisobj.object.area}, true, ()=>{
+									// 获取练级对象
+									thisobj.object.battleAreaObj = battleAreaArray.find((b)=>{
+										return b.name == thisobj.object.area.map
+									});
+									cb(true)
+								})
+							}else if(typeof shareInfoObj == 'boolean' && shareInfoObj === false){// 共享信息过程中有人离队
+								setTimeout(wait, 1000);
+							}
+							return
+						})

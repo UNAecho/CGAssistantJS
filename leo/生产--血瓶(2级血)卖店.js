@@ -3,7 +3,7 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 	//leo.baseInfoPrint();
 	var bankSize = 20; //银行大小
 	leo.monitor.config.healSelf = true;//自动治疗自己
-	// leo.log('全自动2级血瓶采集制作贩卖商店脚本，启动~');
+	leo.log('全自动2级血瓶采集制作贩卖商店脚本，启动~');
 	
 	var daka = true  //是否打卡(true/false)
 	var doctorName = '假医生';
@@ -132,6 +132,8 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 //			await leo.delay(500)
 			await leo.autoWalk([31,77])
 			await leo.sell(30, 77, (item)=>{return item.name == '生命力回复药（150）' && item.count == 3})
+			await leo.log('本轮采集+血瓶制造贩卖完成')
+			await leo.log('药剂师单人全自动采集制作血瓶贩卖商店，完成第' + (countNo++) + '次')
 		}
 	}
 

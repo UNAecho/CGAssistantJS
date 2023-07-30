@@ -16,7 +16,7 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
         rechargeFlag: 1,
         repairFlag: -1,
         crystalName: '水火的水晶（5：5）',
-        doctorName: 'UNAの护士'
+        doctorName: '医道之殇'
     };
     var playerinfo = cga.GetPlayerInfo();
     var playerName = playerinfo.name;

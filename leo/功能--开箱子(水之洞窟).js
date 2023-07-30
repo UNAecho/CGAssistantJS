@@ -6,7 +6,7 @@ require(process.env.CGA_DIR_PATH_UTF8+'/leo').then(async (cga) => {
 	var prepareOptions = {
         rechargeFlag: 1,
         repairFlag: -1,
-        doctorName: 'UNAの护士'
+        doctorName: '医道之殇'
     };
     var teammates = [];
 	leo.log('红叶の开箱子(水之洞窟)脚本，启动~');

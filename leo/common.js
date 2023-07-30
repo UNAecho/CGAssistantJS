@@ -1134,7 +1134,7 @@ module.exports = require('./wrapper').then( async (cga) => {
                 }
 
                 let flagStr = flag?'，抓！':'';
-                console.log(leo.logTime()+'第【'+(petOptions.index++)+'】只1级怪:【' + e.name + '】【' + e.maxhp + '(要求：'+petOptions.minHp+')/' + e.maxmp + '(要求：'+petOptions.minMp+')】'+flagStr);
+                console.log(leo.logTime()+'第【'+(petOptions.index++)+'】只1级怪:【' + e.name + '】【' + e.maxhp + '('+petOptions.minHp+')/' + e.maxmp + '('+petOptions.minMp+')】'+flagStr);
             }
         });
     }
@@ -4826,11 +4826,7 @@ module.exports = require('./wrapper').then( async (cga) => {
     await leo.panel.autosupply(true);//勾选CGA面板的“自动补给”
     leo.beginTime = leo.now(); //脚本启动时间(Date类型，用于时间计算)
     leo.beginTimeStr = leo.formatDate(leo.now(), leo.FORMAT_DATETIME); //脚本启动时间(字符串类型，用于时间显示)
-<<<<<<< HEAD
-    // leo.log('欢迎使用红叶の脚本，版本['+leo.version+']，请注意是否已经开启防掉线功能');
-=======
     leo.log('欢迎使用红叶の脚本，版本['+leo.version+']，当前线路['+leo.getLine()+'线]');
->>>>>>> 6b7123f150f64f184d43d4a97ee1399dcb1223e3
     //统计信息
     leo.oldXp = cga.GetPlayerInfo().xp; //脚本启动时的经验值
     leo.keepAliveStatus = null; //防掉线状态
@@ -4845,7 +4841,7 @@ module.exports = require('./wrapper').then( async (cga) => {
     leo.monitor.keepAlive = () => {
         if(leo.keepAliveStatus != leo.monitor.config.keepAlive){
             leo.keepAliveStatus = leo.monitor.config.keepAlive;
-            // console.log(leo.logTime()+'防掉线功能已' + (leo.keepAliveStatus?'【开启】':'【关闭】'));
+            console.log(leo.logTime()+'防掉线功能已' + (leo.keepAliveStatus?'【开启】':'【关闭】'));
         }
         if(leo.keepAliveStatus){
             leo.sayWords();
