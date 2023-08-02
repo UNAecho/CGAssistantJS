@@ -60,7 +60,7 @@ var loadBattleConfig = ()=>{
 			settingpath = settingpath + '传教打隐秘徽记.json'
 		}
 	}else if(professionalInfo.name == '格斗士'){
-		settingpath = settingpath + '格斗打隐秘徽记.json'
+		settingpath = settingpath + '格斗士清怪.json'
 	}else if(professionalInfo.name == '弓箭手'){
 		settingpath = settingpath + '弓箭练级.json'
 	}else if(professionalInfo.name == '剑士'){

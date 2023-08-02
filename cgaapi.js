@@ -5364,12 +5364,23 @@ module.exports = function(callback){
 	
 	//前往新城银行
 	cga.travel.newisland.toBank = (cb)=>{
+		let go = (r)=>{
+			cga.walkList([
+				[49, 25]
+				], ()=>{
+					cb(r);
+				});
+			return
+		}
+		if(cga.GetMapIndex().index3 == 59548){
+			go(null)
+			return
+		}
 		cga.travel.newisland.toStone('B', (r)=>{
 			cga.walkList([
 			[114, 104, '银行'],
-			[49, 25]
 			], (r)=>{
-				cb(r);
+				go(r)
 			});
 		});
 	}

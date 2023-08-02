@@ -102,9 +102,9 @@
             },
             {
                 "condition": 3,
-                "condition2": 4,
-                "condition2rel": 3,
-                "condition2val": "25%",
+                "condition2": 0,
+                "condition2rel": 0,
+                "condition2val": "",
                 "conditionrel": 0,
                 "conditionval": "25%",
                 "index": 6,
