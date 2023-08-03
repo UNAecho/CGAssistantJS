@@ -170,7 +170,7 @@
         "lockcd": false,
         "lv1prot": false,
         "pet2action": false,
-        "r1nodelay": false,
+        "r1nodelay": true,
         "waitafterbattle": true
     },
     "chat": {
