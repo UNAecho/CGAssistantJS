@@ -593,6 +593,69 @@ module.exports = function(callback){
 		return items
 	}
 
+	/**
+	 * UNAecho:获取身上或银行所有的数据，包括道具、金币与宠物。
+	 * 数据取自于：
+	 * 1、身上数据使用cga.getInventoryItems()、cga.GetPlayerInfo().gold、cga.GetPetsInfo()获取
+	 * 2、银行数据使用cga.GetBankItemsInfo()、cga.GetBankGold()、cga.GetBankPetsInfo()
+	 * 
+	 * 【重要】【UNAecho开发提醒】：与bank交互的C++API：
+	 * 1、cga.GetBankItemsInfo()
+	 * 2、cga.GetBankGold()
+	 * 3、cga.GetBankPetsInfo()
+	 * 有一个通用的特性，我们暂时称其为【Session】：
+	 * 只要与银行NPC对话一次，便可缓存此Session。即使不与NPC再次对话，也可获取银行的所有最新数据。
+	 * 
+	 * 经测试：
+	 * 1、与NPC对话之后，bank类API可随时获取bank的所有最新数据，包括银行中的道具、宠物、金币。
+	 * 2、此Session机制是一种缓存，即便更换账号，仍然可以获取上次与银行NPC对话游戏角色的最新数据。
+	 * 3、当你再次使用新人物来与银行NPC对话时，此Session会被刷新为当前角色的Session。
+	 * 4、当你把游戏.exe整个窗口关闭时，Session失效。
+	 * 
+	 * 结论：
+	 * 推测Session为游戏本身实现的问题，CGA可能只是去获取此Session缓存，来实现的bank类API。
+	 * Session缓存写在了游戏.exe中，关闭游戏，登录相同账号，Session则被重置。
+	 * 
+	 * 巧用此Session机制：
+	 * 1、进入游戏先去与银行NPC对话一次，获取此Session。此后，可不去银行，直接查询银行所有数据。
+	 * 2、但更换账号需要注意，需要去银行对话一次刷新Session，否则获取的还是上一个账号的银行数据。
+	 * 
+	 * @param {Boolean} isBank 是否获取银行相关数据。true获取银行数据，false获取背包数据。默认false
+	 * @returns 
+	 */
+	cga.getAssets = (isBank=false) => {
+		let items = null
+		let pets = null
+
+		let res = {
+			gold: 0,
+			item: [],
+			pet: [],
+		}
+
+		if(isBank){
+			items = cga.GetBankItemsInfo()
+			pets = cga.GetBankPetsInfo()
+
+			res.gold = cga.GetBankGold()
+
+		}else{
+			items = cga.getInventoryItems()
+			pets = cga.GetPetsInfo()
+
+			res.gold = cga.GetPlayerInfo().gold
+		}
+
+		items.forEach(i => {
+			res.item.push({name : i.name, count : i.count, pos : i.pos})
+		});
+		pets.forEach(p => {
+			res.pet.push({name : p.name, realname : p.realname,index : p.index,})
+		});
+
+		return res
+	}
+
 	cga.travel = {};
 /**
  * UNAecho:一个定义自己在哪个领域内的API
@@ -6359,7 +6422,36 @@ module.exports = function(callback){
 		}
 		return count;
 	}
-	
+
+	/**
+	 * UNAecho:取背包中宠物的数量
+	 * 参数1：宠物自定义名，或过滤函数
+	 * 参数2：在参数1为String的前提下，是否包含宠物的默认名称。
+	 * @param {*} filter 宠物自定义名, 或过滤函数。注意，仅在filter为String类型时，参数2才会生效
+	 * @returns 
+	 */
+	cga.getPetCount = function(filter){
+		let includeRealname = arguments[1] === true ? true : false;
+		let pets = cga.GetPetsInfo()
+		let count = 0;
+		if(typeof filter == 'string'){
+			pets.forEach((pet)=>{
+				if(pet.name && pet.name == filter){
+					count+=1
+				}else if(includeRealname && pet.realname == filter){
+					count+=1
+				}
+			});
+		} else if(typeof filter == 'function'){
+			pets.forEach((pet)=>{
+				if(filter(pet) == true){
+					count+=1
+				}
+			});
+		}
+		return count;
+	}
+
 	//任务
 	cga.task = {};
 	
@@ -7100,8 +7192,153 @@ module.exports = function(callback){
 		
 		return null;
 	}
+
+	//保存每个人物自己的个人配置文件，用于保存银行格信息和登出点信息
+	cga.savePlayerOfflineData = (config, cb) => {
+		console.log('正在保存个人离线数据文件...');
+
+		var path = __dirname+'\\离线数据';
+		var fileName = path+'\\离线数据_'+cga.FileNameEscape(cga.GetPlayerInfo().name)+'.json';
+
+		fs.mkdir(path, (err)=>{
+			if(err && err.code != 'EEXIST'){
+				console.log('个人离线数据文件保存失败：');
+				console.log(err);
+				if(cb) cb(err);
+				return;
+			}
+
+			fs.writeFile(fileName, JSON.stringify(config), (err)=>{
+				if(err){
+					console.log('个人离线数据文件保存失败：');
+					console.log(err);
+					if(cb) cb(err);
+					return;
+				}			
+				console.log('个人离线数据文件保存成功!...');
+				if(cb) cb(null)
+				return
+			});
+		});		
+	}
+
+	//读取每个人物自己的个人配置文件
+	cga.loadPlayerOfflineData = () => {
+		console.log('正在读取个人离线数据文件...');
+
+		var path = __dirname+'\\离线数据';
+		var fileName = path+'\\离线数据_'+cga.FileNameEscape(cga.GetPlayerInfo().name)+'.json';
+
+		try
+		{
+			var json = fs.readFileSync(fileName, 'utf8');
+				
+			if(typeof json != 'string' || !json.length)
+				throw new Error('个人离线数据文件格式错误或文件不存在');
+
+			var obj = JSON.parse(json);
+
+			return obj;
+		}
+		catch(e)
+		{
+			if(e.code != 'ENOENT'){
+				console.log('读取个人离线数据时发生错误：');
+				console.log(e);
+			} else {
+				console.log('读取个人离线数据文件不存在');
+			}
+
+		}
+		
+		return null;
+	}
+
 	/**
-	 * UNA :写了一个持久化人物任务完成情况的方法，用于离线记录人物的一些数据，便于查询。
+	 * UNAecho:异步读取'./离线数据'文件夹下的所有文件，制作成Object放入数组返回。
+	 * 多数用于搜索仓库库存。
+	 * @param {*} cb 
+	 */
+	cga.loadPlayerOfflineDataAll = (cb) => {
+		let dir = __dirname + '\\离线数据\\';
+		// 获取文件列表
+		let list = fs.readdirSync(dir);
+		// 获取文件数
+		let fileCnt = list.length
+		// 结果集
+		let jsonArr = []
+
+		try {
+			list.forEach(function (file) {
+				// 异步读取，节约时间
+				fs.readFile(dir + file, 'utf-8', function (err, data) {
+					fileCnt -= 1
+					if (err) {
+						throw new Error(err)
+					}
+
+					if (typeof data != 'string' || !data.length)
+						throw new Error('个人离线数据文件格式错误或文件不存在');
+
+					// 读取出的文件内容放入结果集中
+					jsonArr.push(JSON.parse(data))
+					// 如果全部读取，
+					if (fileCnt == 0) {
+						// 给回调函数传入结果集，此API结束。
+						cb(jsonArr)
+						return
+					}
+				})
+			})
+		}
+		catch (e) {
+			if (e.code != 'ENOENT') {
+				console.log('读取个人离线数据时发生错误：');
+				console.log(e);
+			} else {
+				console.log('读取个人离线数据文件不存在');
+			}
+
+		}
+	}
+
+	/**
+	 * UNAecho:同步读取'./离线数据'文件夹下的所有文件，制作成Object放入数组返回。
+	 * 多数用于搜索仓库库存。
+	 * @param {*} cb 
+	 */
+	cga.loadPlayerOfflineDataAllSync = () => {
+		let dir = __dirname + '\\离线数据\\';
+		// 获取文件列表
+		let list = fs.readdirSync(dir);
+		// 结果集
+		let jsonArr = []
+
+		try {
+			list.forEach(function (file) {
+				// 异步读取，节约时间
+				let json = fs.readFileSync(dir + file, 'utf-8')
+				if (typeof json != 'string' || !json.length)
+					throw new Error('个人离线数据文件格式错误或文件不存在');
+				
+				jsonArr.push(JSON.parse(json))
+			})
+			return jsonArr
+		}
+		catch (e) {
+			if (e.code != 'ENOENT') {
+				console.log('读取个人离线数据时发生错误：');
+				console.log(e);
+			} else {
+				console.log('读取个人离线数据文件不存在');
+			}
+
+		}
+		return null
+	}
+
+	/**
+	 * UNAecho :写了一个持久化人物任务完成情况的方法，用于离线记录人物的一些数据，便于查询。
 	 * 请注意，关于任务的称号，我自己也没有做过全部的任务，所以请自行添加需要的任务名称，我只写了一个开启者
 	 * 【注意】采集系在3转后自动可以传送至小岛，相当于战斗系做完了半山6/地狱的回响。
 	 * 但是如果采集系参与了半山1-5的话，则必须按照战斗系的流程走完。所以建议采集系不要做半山任务。逻辑没空写。
@@ -7351,7 +7588,7 @@ module.exports = function(callback){
 		return -1;
 	}
 
-	//寻找银行中的空闲宠物格子, 参数：物品filter、最大堆叠数量、最大银行格
+	//寻找银行中的空闲宠物格子
 	cga.findBankPetEmptySlot = (maxslots = 5) => {
 		
 		var pets = cga.GetBankPetsInfo()
@@ -7416,6 +7653,24 @@ module.exports = function(callback){
 		return count;
 	}
 
+	//寻找背包中的宠物空闲格子
+	cga.findInventoryPetEmptySlot = () => {
+		let pets = cga.GetPetsInfo()
+
+		for (let i = 0; i < 5; ++i) {
+			if (pets[i] == undefined) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	//获取背包中的宠物空闲格子数量
+	cga.getInventoryPetEmptySlotCount = () =>{
+		return 5 - cga.GetPetsInfo().length
+	}
+
 	//将符合条件的物品存至银行，maxcount为最大堆叠数量
 	cga.saveToBankOnce = (filter, maxcount, cb)=>{
 		var itempos = cga.findItem(filter);
@@ -7456,12 +7711,25 @@ module.exports = function(callback){
 		});
 	}
 
-	// UNAecho:将符合条件的物品从银行取出，maxcount为最大堆叠数量
-	// filter仅支持String。TODO filter支持number、#开头的String类型itemid（参考其他背包类API）以及func自定义函数
+	/**
+	 * UNAecho:将符合条件的物品从银行取出，maxcount为最大堆叠数量
+	 * filter仅支持String。
+	 * 【注意】由于银行中的itemid均显示为0，我提了issue:https://github.com/hzqst/CGAssistant/issues/17。
+	 * 根据作者所述，游戏的服务端不会发送itemid给游戏客户端。
+	 * 所以我们无法以itemid来索引银行中的物品，只能使用String类型的itemname来索引。
+	 * @param {*} filter 过滤规则
+	 * @param {*} maxcount 物品最大堆叠数
+	 * @param {*} cb 
+	 * @returns 
+	 */
 	cga.drawFromBankOnce = (filter, maxcount, cb)=>{
 		var targetItem = cga.GetBankItemsInfo().find((it)=>{
-			if(it.name == filter)
+			if(typeof filter == 'string' && it.name == filter){
 				return true
+			}else if(typeof filter == 'function' && filter(it)){
+				return true
+			}
+			return false
 		});
 		
 		if(!targetItem){
@@ -7527,6 +7795,45 @@ module.exports = function(callback){
 			}
 		}, 1000);
 	}
+	
+	//将符合条件的宠物从银行取出
+	cga.drawPetFromBankOnce = (filter, customerName = false, cb) => {
+		let targetPet = cga.GetBankPetsInfo().find((pet) => {
+			if (typeof filter == 'string' && ((!customerName && pet.realname == filter) || (customerName && pet.name == filter))) {
+				return true
+			} else if (typeof filter == 'function' && filter(it)) {
+				return true
+			}
+			return false
+		});
+
+		if (!targetPet) {
+			cb(new Error('银行里没有该宠物, 无法取出。'));
+			return;
+		}
+
+		let emptyslot = cga.findInventoryPetEmptySlot();
+		if (emptyslot == -1) {
+			cb(new Error('背包没有空位, 无法从银行取出'));
+			return;
+		}
+
+		cga.MovePet(targetPet.index, emptyslot);
+
+		setTimeout(() => {
+			let pet = cga.GetPetsInfo().find((p) => {
+				return p.index == emptyslot;
+			});
+			if (pet != undefined) {
+				//取出成功
+				console.log('成功从银行中取出宠物' + (pet.name ? pet.name : pet.realname) + '到背包第 ' + (pet.index + 1) + ' 格!');
+				cb(null);
+			}
+			else {
+				cb(new Error('从银行取出宠物失败，可能背包格子已满、未与柜员对话或网络问题'));
+			}
+		}, 1000);
+	}
 
 	//循环将符合条件的物品存至银行，maxcount为最大堆叠数量
 	cga.saveToBankAll = (filter, maxcount, cb)=>{
@@ -7550,20 +7857,32 @@ module.exports = function(callback){
 		repeat();		
 	}
 
-	// UNAecho:循环将符合条件的物品从银行取出，maxcount为最大堆叠数量
-	// filter仅支持String。TODO filter支持number、#开头的String类型itemid（参考其他背包类API）以及func自定义函数
+	/**
+	 * UNAecho:循环将符合条件的物品从银行取出，maxcount为最大堆叠数量
+	 * filter仅支持String。
+	 * 【注意】由于银行中的itemid均显示为0，我提了issue:https://github.com/hzqst/CGAssistant/issues/17。
+	 * 根据作者所述，游戏的服务端不会发送itemid给游戏客户端。
+	 * 所以我们无法以itemid来索引银行中的物品，只能使用String类型的itemname来索引。
+	 * @param {*} filter 过滤规则
+	 * @param {*} maxcount 物品最大堆叠数
+	 * @param {*} cb 
+	 * @returns 
+	 */
 	cga.drawFromBankAll = (filter, maxcount, cb)=>{
 		console.log('开始批量从银行取出物品...');
-		var repeat = ()=>{
+		let repeat = ()=>{
 			cga.drawFromBankOnce(filter, maxcount, (err)=>{
 				if(err){
 					console.log(err);
 					cb(err);
 					return;
 				}
-				var targetItem = cga.GetBankItemsInfo().find((it)=>{
-					if(it.name == filter)
+				let targetItem = cga.GetBankItemsInfo().find((it)=>{
+					if(typeof filter == 'string' && it.name == filter){
 						return true
+					}else if(typeof filter == 'function' && filter(it)){
+						return true
+					}
 					return false
 				});
 				if(targetItem == undefined){
@@ -7579,9 +7898,9 @@ module.exports = function(callback){
 	}
 
 	//循环将符合条件的宠物存至银行。
-	cga.savePetToBankAll = (filter, customerName, cb)=>{
+	cga.savePetToBankAll = (filter, customerName=false, cb)=>{
 		console.log('开始批量保存宠物到银行...');
-		var repeat = ()=>{
+		let repeat = ()=>{
 			cga.savePetToBankOnce(filter, customerName, (err)=>{
 				if(err){
 					console.log(err);
@@ -7590,6 +7909,36 @@ module.exports = function(callback){
 				}
 				if(cga.findPet(filter, customerName) == -1){
 					console.log('包里已经没有指定宠物，批量保存到银行执行完毕！');
+					cb(null);
+					return;
+				}
+				setTimeout(repeat, 1000);
+			});
+		}
+		
+		repeat();		
+	}
+
+	//循环将符合条件的宠物从银行取出。
+	cga.drawPetToBankAll = (filter, customerName=false, cb)=>{
+		console.log('开始批量从银行取出宠物...');
+		let repeat = ()=>{
+			cga.drawPetFromBankOnce(filter, customerName, (err)=>{
+				if(err){
+					console.log(err);
+					cb(err);
+					return;
+				}
+				let targetPet = cga.GetBankPetsInfo().find((pet) => {
+					if (typeof filter == 'string' && ((!customerName && pet.realname == filter) || (customerName && pet.name == filter))) {
+						return true
+					} else if (typeof filter == 'function' && filter(pet)) {
+						return true
+					}
+					return false
+				});
+				if(targetPet == undefined){
+					console.log('银行里已经没有指定宠物，批量从银行取出宠物执行完毕！');
 					cb(null);
 					return;
 				}
@@ -10728,7 +11077,7 @@ module.exports = function(callback){
 	/**
 	 * UNAecho: 此API有一个潜在bug，会出现明明有timeout的前提下，不会超时，导致程序一直阻塞。
 	 * 猜测是底层API:cga.AsyncWaitChatMsg的超时实现有bug。
-	 * 经过测试，超时时间在大于等于4000毫秒的时候，会出现非常严重的不稳定情况，4000秒时可能会等待20才会超时，甚至更长。
+	 * 经过测试，超时时间在大于等于4000毫秒的时候，会出现非常严重的不稳定情况，4000毫秒时可能会等待20000毫秒才会超时，甚至更长。
 	 * 
 	 * 【注意】由于看不到cga.AsyncWaitChatMsg的源码，请慎用此API
 	 * @param {*} cb 
@@ -13479,6 +13828,257 @@ module.exports = function(callback){
 			}
 		});
 	}
+	
+	/**
+	 * UNAecho: 开发一个静态搜索账号的API
+	 * 由于CGA是不可以读取玩家的账号密码的，此API旨在使用半手动的方式获取玩家与账号的关联
+	 * 实现方式：
+	 * 1、玩家需要自行在./常用数据/AccountInfos.js中输入自己的账号信息。
+	 * 【注意】不要将此文件进行提交，否则会泄露账号信息。
+	 * 2、AccountInfos.js中的数据格式参考：
+	 * 	{
+		category: '仓库',
+		info:[
+				{	user:通行证账号,
+					pwd:通行证密码,
+					gid: {
+						'子账号1' : {name:['UNAの仓库01','UNAの仓库02']},
+					},
+				},
+				{	user:'',
+					pwd:'',
+					gid: {},
+				},
+		],
+		},	
+	{
+		category: '生产',
+		info:[
+				{	user:通行证账号,
+					pwd:通行证密码,
+					gid: {
+						'子账号1' : {name:['UNAの生产01','UNAの生产02']},
+					},
+				},
+				{	user:'',
+					pwd:'',
+					gid: {},
+				},
+		],
+	},
+	 * 此API会根据游戏玩家名称来关联对应的账号密码。
+	 * @param {String|Function} filter 过滤逻辑。可以是String也可以是Function
+	 * String：默认，通过玩家名称来索引账号信息。如果输入空串或不输入，默认搜索当前人物的账号信息。
+	 * Function：通过自定义函数来索引账号信息
+	 * @returns {}
+	 * 如果filter使用自定义Function，返回值建议使用以下格式。
+	 * { category: '仓库', user: 'UNAecho', pwd: '12345', gid: 'archer', character: 0 }
+	 * 其中：
+	 * 1、category代表自定义账号类型，可自行在AccountInfos.js划分账号类别。
+	 * 2、character代表人物在左还是右，0左1右。
+	 */
+	cga.gui.getAccount = (filter) => {
+		let accounts = require('./常用数据/AccountInfos.js');
+		
+		let func = null
+		if(!filter || typeof filter == 'string'){
+			let playerName = filter ? filter : cga.GetPlayerInfo().name;
+			func = (accounts)=>{
+				let res = {}
+
+				for (let categoryObj of accounts) {
+					// ai : accountIndex
+					for (let ai in categoryObj.info) {
+						let account = categoryObj.info[ai]
+						// gi : gidIndex
+						for (let gi in account.gids) {
+							let gidObj = account.gids[gi]
+							for (let name of gidObj.name) {
+								if(name == playerName){
+									res.category = categoryObj.category
+									res.user = account.user
+									res.pwd = account.pwd
+									res.gid = gidObj.gid
+									// 人物在左还是右，0左1右。
+									res.character = gidObj.name.indexOf(playerName)
+									// 子账号所在账号的索引数字
+									res.accountIndex = parseInt(ai)
+									// 子账号索引数字
+									res.gidIndex = parseInt(gi)
+									return res
+								}
+							
+							}
+							
+						}
+					
+					}
+					
+				}
+
+				if(Object.keys(res).length == 0){
+					throw new Error('没有找到对应账号，请检查账号信息或输入信息是否有误。')
+				}
+				
+				return null
+			}
+		}else if(typeof filter == 'function'){
+			func = filter
+		}else{
+			throw new Error('filter类型错误')
+		}
+
+		return func(accounts)
+	}
+	/**
+	 * UNAecho:一个计算账号偏移的API
+	 * 具体功能为：找出AccountInfos.js中与当前玩家所在账号【相同分类(category)】下的其它账号。
+	 * 根据偏移量bias来锁定偏移几个角色。
+	 * 举例：假设当前账号所在的category信息为：
+	 * 	{
+		category: '仓库',
+		info:[
+				{	user:'account1',
+					pwd:'account1',
+					gids: [ 
+						{ gid : 'saber1', name : ['UNAの剑士','UNAの剑士2'], },
+						{ gid : 'saber2', name : ['UNAの剑士3','UNAの剑士4'], },
+					],
+				},
+				{	user:'account2',
+					pwd:'account2',
+					gids: [
+						{ gid : 'saber3', name : ['UNAの剑士5','UNAの剑士6'], },
+						{ gid : 'saber4', name : ['UNAの剑士7','UNAの剑士8'], },
+						{ gid : 'saber5', name : ['UNAの剑士9','UNAの剑士10'], },
+					],
+				},
+				{	user:'account3',
+					pwd:'account3',
+					gids: [
+						{ gid : 'saber6', name : ['UNAの剑士11','UNAの剑士12'], },
+					],
+				},
+		],
+	},
+	 * 当前人物名称为【UNAの剑士】
+	 * 那么当你调用cga.gui.getAccountWithBias(1)时，会返回你账号右边的UNAの剑士2角色信息，直接可以使用cga.gui.LoadAccount切换账号。
+	 * 同理，当你调用cga.gui.getAccountWithBias(-1)时，会返回UNAの剑士12的信息。
+	 * bias>0时偏移为顺序，bias<0时，偏移为逆序。
+	 * 
+	 * 当你调用cga.gui.getAccountWithBias(2)时，由于当前gid:'saber1'这个子账号最多只有1个偏移(UNAの剑士2)
+	 * 所以会顺序返回当前账号的下一个子账号符合条件的人物，也就是UNAの剑士3。
+	 * 
+	 * 当你调用cga.gui.getAccountWithBias(5)时，由于当前user:'account1'这个账号最多只有3个偏移(UNAの剑士2-4)
+	 * 所以会顺序往下找到下一个账号user:'account2'，并继续消耗偏移，直至偏移耗尽，返回UNAの剑士6的账号信息。
+	 * 
+	 * bias<0时同理，只不过为逆序查找。cga.gui.getAccountWithBias(-5)会逆序查找5个账号，返回UNAの剑士8的账号信息。
+	 * 
+	 * 此方法多数用于仓库调整账号寻找某种资源，比如挨个查找哪个账号有十年戒指、血瓶、装备等等。
+	 * 
+	 * @param {Number} bias 偏移数量，必须为int型，为正则顺序查找，为负则逆序查找。
+	 * @returns 
+	 */
+	cga.gui.getAccountWithBias = (bias) => {
+		if(typeof bias != 'number'){
+			throw new Error('bias类型错误，必须为int型数字')
+		}
+		
+		let accountsData = require('./常用数据/AccountInfos.js');
+		let myAccount = cga.gui.getAccount()
+		
+		let accounts = null
+		// ci : categoryIndex
+		for (let ci in accountsData) {
+			// 选择与当前账号category一致的账号组
+			if(accountsData[ci].category == myAccount.category){
+				accounts = accountsData[ci].info
+				break
+			}
+		}
+
+		if(!accounts){
+			throw new Error('category【'+category+'】有误，文件中不存在此分类')
+		}
+
+		// 账号完整度检查
+		let errStr = 'accounts数据结构有误，详情参考AccountInfos.js中的注释。'
+		for(let a of accounts){
+			if(typeof a.user != 'string' || typeof a.pwd != 'string'|| !a.gids instanceof Array){
+				throw new Error(errStr)
+			}
+			if(!a.user || !a.pwd || !a.gids){
+				throw new Error(errStr)
+			}
+			if(a.gids.length == 0){
+				throw new Error(errStr)
+			}
+			for(let g of a.gids){
+				if(!g.gid){
+					throw new Error('子账号gid不能为空')
+				}
+				if(!g.name instanceof Array){
+					throw new Error('子账号name必须为数组形式，可以为空数组。')
+				}
+			}
+		}
+		
+		// 递归，初始化的账号为当前游戏角色的账号信息。
+		let loop = (currentAccount,remainBias) => {
+			currentAccount.gidIndex = currentAccount.gidIndex == null ? accounts[currentAccount.accountIndex].gids.length - 1 : currentAccount.gidIndex
+			let curGids = accounts[currentAccount.accountIndex].gids
+			let curNames = curGids[currentAccount.gidIndex].name
+			currentAccount.character = (currentAccount.character == null ? accounts[currentAccount.accountIndex].gids[currentAccount.gidIndex].name.length : currentAccount.character)
+			let curCharacter = currentAccount.character + remainBias 
+			if(curNames[curCharacter] != undefined){
+				currentAccount.user = accounts[currentAccount.accountIndex].user
+				currentAccount.pwd = accounts[currentAccount.accountIndex].pwd
+				currentAccount.gid = accounts[currentAccount.accountIndex].gids[currentAccount.gidIndex].gid
+				currentAccount.gids = accounts[currentAccount.accountIndex].gids
+				currentAccount.character = curCharacter
+				currentAccount.name = curNames[curCharacter]
+				return currentAccount
+			}else{
+				if(remainBias > 0){
+					remainBias = remainBias - (curNames.length - 1 - currentAccount.character)
+					currentAccount.character = -1
+					currentAccount.gidIndex += 1
+					if(curGids[currentAccount.gidIndex] != undefined){
+						return loop(currentAccount,remainBias)
+					}else{
+						currentAccount.gidIndex = 0
+						currentAccount.accountIndex += 1
+						if(accounts[currentAccount.accountIndex] != undefined){
+							return loop(currentAccount,remainBias)
+						}else{
+							currentAccount.accountIndex = 0
+							return loop(currentAccount,remainBias)
+						}
+					}
+				}else if(remainBias < 0){
+					remainBias = remainBias + (currentAccount.character - 0)
+					currentAccount.character = null
+					currentAccount.gidIndex -= 1
+					if(curGids[currentAccount.gidIndex] != undefined){
+						return loop(currentAccount,remainBias)
+					}else{
+						currentAccount.gidIndex = null
+						currentAccount.accountIndex -= 1
+						if(accounts[currentAccount.accountIndex] != undefined){
+							return loop(currentAccount,remainBias)
+						}else{
+							currentAccount.accountIndex = accounts.length - 1
+							return loop(currentAccount,remainBias)
+						}
+					}
+				}else{// remainBias == 0
+					throw new Error('loop逻辑不应该出现在这里，请检查')
+				}
+			}
+		}
+
+		return loop(myAccount,bias)
+	}
 
 	cga.getrootdir = ()=>{
 
@@ -14002,6 +14602,32 @@ module.exports = function(callback){
 		}
 	}
 
+	/**
+	 * UNAecho : 获取道具叠加数
+	 */
+	cga.getItemStackeMax = (item)=>{
+		if (item.name.indexOf('谜语箱') >= 0) return 0;
+		if (item.name.endsWith('的水晶碎片')) return 999;
+		if (['长老之证'].indexOf(item.name) >= 0) return 3;
+		if (['黄蜂的蜜'].indexOf(item.name) >= 0) return 6;
+		if (['魔族的水晶'].indexOf(item.name) >= 0) return 5;
+		if (['巨石','龙角','坚硬的鳞片','竹子','孟宗竹'].indexOf(item.name) >= 0) return 20;
+		if (item.type == 29) {// 矿
+			if (item.name.endsWith('条')) return 20;
+			return 40;
+		}
+		if (item.type == 30) return 40; // 木
+		if (item.type == 23 || item.type == 43) { // 料理 血瓶
+			if (item.name == '小护士家庭号' || item.name == '魔力之泉') return 10;
+			return 3;
+		}
+		if (item.type == 31) return 20; // 布
+		if ([32,34,35].indexOf(item.type) >= 0) { // 狩猎材料
+			if (item.name.endsWith('元素碎片')) return 4;
+			if (item.name.startsWith('隐秘的徽记')) return 20;
+			return 40;
+		}
+	}
 
 	return cga;
 }
