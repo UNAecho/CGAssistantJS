@@ -275,7 +275,7 @@ var battleAreaArray = [
 			return false;
 		},
 		isDesiredMap: (map, mapXY, mapindex) => {
-			return mapindex - 59800 == thisobj.object.area.layer ? true : false;
+			return (mapindex - 59800) == thisobj.object.area.layer ? true : false;
 		}
 	},
 	{
@@ -1047,7 +1047,7 @@ var thisobj = {
 			battleArea = '旧日迷宫', layer = 16
 		} else if (camp && minLv > 118 && minLv <= 125) {
 			battleArea = '旧日迷宫', layer = 20
-		} else if (camp && minLv > 125 && minLv <= 138) {// 10楼最大127级，众数126级。所以直接去顶层划算。
+		} else if (camp && minLv > 125 && !island) {// 10楼最大127级，众数126级。所以直接去顶层划算。如果不能去小岛，此处为练级最终地点。
 			battleArea = '黑龙沼泽', layer = 11
 		} else if (island && minLv > 138) {// 半山判定，由于是去迷宫出口练级，所以layer依然是0
 			battleArea = '通往山顶的路'

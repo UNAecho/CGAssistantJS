@@ -1,28 +1,37 @@
 /**
  * category：自定义类别
  * 每个category为一【大类】
- * user:通行证账号
- * gid：子账号
- * pwd：密码，如果和切换前密码相同，则不填。
- */
-
-const AccountInfos = [
+ * user:通行证账号,String型
+ * pwd：密码,String型
+ * gid：object数组。数据结构参考下面举例。
+ * 【注意】cga.gui.LoadAccount提供的键值对【'game':区服功能】无效（不仅无效，乱读取还会被服务器拒绝登录），不能改变服务器，所以这里设计没有加上区服的概念。
+ * 影响其实也不大，毕竟不能跨星系（服务器）交易
+ * 
+ * AccountInfos数据结构举例：
+ * 	[
 	{
 		category: '仓库',
 		info:[
-				{	user:'',
-					pwd:'',
-					gid: [
-
+				{	user:'account1',
+					pwd:'account1',
+					gids: [ 
+						{ gid : 'saber1', name : ['UNAの剑士','UNAの剑士2'], },
+						{ gid : 'saber2', name : ['UNAの剑士3','UNAの剑士4'], },
 					],
 				},
-				{	user:'',
-					pwd:'',
-					gid: [],
+				{	user:'account2',
+					pwd:'account2',
+					gids: [
+						{ gid : 'saber3', name : ['UNAの剑士5','UNAの剑士6'], },
+						{ gid : 'saber4', name : ['UNAの剑士7','UNAの剑士8'], },
+						{ gid : 'saber5', name : ['UNAの剑士9',], },
+					],
 				},
-				{	user:'',
-					pwd:'',
-					gid: [],
+				{	user:'account3',
+					pwd:'account3',
+					gids: [
+						{ gid : 'saber6', name : ['UNAの剑士11','UNAの剑士12'], },
+					],
 				},
 		],
 	},	
@@ -31,41 +40,58 @@ const AccountInfos = [
 		info:[
 				{	user:'',
 					pwd:'',
-					gid: [],
+					gids: [],
 				},
 				{	user:'',
 					pwd:'',
-					gid: [],
+					gids: [],
 				},
 		],
 	},
-	
-];
-const propertyMap = (value) => {
-	let obj = [];
-
-	AccountInfos.forEach(a =>{
-		if(a.category == value){
-			obj = a.info
-			// console.log('t = '+ t +' inputmsg = '+ inputmsg + '')
-		}
-	});
-	return obj
-};
-/**
- * value：查找自定义属性category的值，则返回该dict
- * 如value = '仓库'，则返回属性【category】为【仓库】这个dict。
+]
+ * 其中：
+ * 1、user与pwd只能为String类型
+ * 2、gids不能为空，否则账号没有意义。
+ * 3、gids中的object对象，必须包含gid和name，其中name代表当前子账号的0-2名玩家。
+ * 4、name可以为空数组，因为可以不建立角色，光有子账号。而gid不可为空。
  */
-module.exports = function(value) {
-	console.log('获取：【' + value + '】类账号列表')
-	var result = null
-	
-	result = propertyMap(value)
-	
-	if(result == null || result ==undefined){
-		throw new Error('错误,请检查输入账号类信息是否有误')
-	}else if(Object.keys(result).length === 0){
-		throw new Error('错误,未检测到账号信息,请检查输入账号信息是否有误')
-	}
-	return result;
-};
+
+const AccountInfos = [
+	{
+		category: '仓库',
+		info: [
+			{
+				user: '',
+				pwd: '',
+				gids: [],
+			},
+			{
+				user: '',
+				pwd: '',
+				gids: [],
+			},
+			{
+				user: '',
+				pwd: '',
+				gids: [],
+			},
+		],
+	},
+	{
+		category: '生产',
+		info: [
+			{
+				user: '',
+				pwd: '',
+				gids: [],
+			},
+			{
+				user: '',
+				pwd: '',
+				gids: [],
+			},
+		],
+	},
+
+];
+module.exports = AccountInfos

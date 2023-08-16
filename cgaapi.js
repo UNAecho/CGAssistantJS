@@ -117,6 +117,22 @@ module.exports = function(callback){
 			resolve();
 		}, millis);
 	});
+
+	/**
+	 * UNAecho:获取区间随机毫秒数。
+	 * @param {Number} arg1 秒级别的数字类型，可以为浮点数
+	 * @param {Number} arg2 秒级别的数字类型，可以为浮点数
+	 * 【注意】为了便于开发，输入是秒级别的数字，而返回是毫秒数
+	 * @returns Number，毫秒数
+	 */
+	cga.randomDelay = (arg1,arg2) =>{
+		if(arg1 > arg2){
+			[arg1,arg2] = [arg2,arg1]
+		}
+		arg1 = arg1 * 1000
+		arg2 = arg2 * 1000
+		return Math.floor(Math.random() * (arg2 - arg1 + 1) + arg1)
+	}
 	
 	cga.promisify = (fn, args) => new Promise((resolve, reject) => {
 		args.push((err, reason) => {
@@ -735,7 +751,7 @@ module.exports = function(callback){
 		}else if(mapindex >= 50000 && mapindex < 60000){// TODO完善范围
 			result = '神圣大陆'
 		}else{
-			console.warn('[UNA脚本警告]:未知地图index，请联系作者更新。')
+			console.warn('[UNA脚本警告]:未知地图index，请联系作者https://github.com/UNAecho更新。')
 		}
 		// console.log('cga.travel.switchMainMap输入mapindex:【'+mapindex+'】,识别结果为【'+result+'】')
 		return result
@@ -4370,7 +4386,7 @@ module.exports = function(callback){
 	}
 /**
  * UNA: 写了一个全自动导航的API，可以在城镇地图中任意一个地方去另一个任意的地方，无需登出。
- * 由于比较复杂，如果使用起来有问题，请联系yadhr582855555@hotmail.com来优化
+ * 由于比较复杂，如果使用起来有问题，请联系https://github.com/UNAecho来优化
  * @param {*} targetMap 目的地名称或者index3
  * @param {*} cb 回调
  * @returns 
@@ -4642,7 +4658,7 @@ module.exports = function(callback){
 			tmplist.push([91, 122])
 			tmpTurnDir = 0
 		}else{
-			throw new Error('[UNA脚本警告]:未知地图index，请联系作者更新。')
+			throw new Error('[UNA脚本警告]:未知地图index，请联系作者https://github.com/UNAecho更新。')
 		}
 
 		cga.walkList(
@@ -4770,7 +4786,7 @@ module.exports = function(callback){
 			tmplist.push([20, 17])
 			tmpTurnDir = 0
 		}else{
-			throw new Error('[UNA脚本警告]:未知地图index，请联系作者更新。')
+			throw new Error('[UNA脚本警告]:未知地图index，请联系作者https://github.com/UNAecho更新。')
 		}
 
 		cga.walkList(
@@ -9080,6 +9096,62 @@ module.exports = function(callback){
 		});
 	}
 
+	/**
+	 * UNAecho:等待队内指定玩家名称的人说话，如果该人物离队，则结束监听。
+	 * 参考cga.waitTeammateSay所写
+	 * @param {*} cb 
+	 */
+	cga.waitLockTeammateSay = (lockPlayerName,cb)=>{
+		cga.AsyncWaitChatMsg((err, r)=>{
+			if(!r){
+				let curTeamPlayerInfos = cga.GetTeamPlayerInfo()
+				for (let t of curTeamPlayerInfos) {
+					if(t.name == lockPlayerName){
+						cga.waitLockTeammateSay(lockPlayerName,cb);
+						return
+					}
+				}
+				console.log('监听【'+lockPlayerName+'】失败！该队员已离队。cga.waitLockTeammateSay结束..')
+				cb(null,null)
+				return;
+			}
+			
+			var listen = true;
+			var fromTeammate = null;
+			var teamplayers = cga.getTeamPlayers();
+
+			if(!teamplayers.length){
+				console.log('队伍已解散，cga.waitLockTeammateSay结束..')
+				// 队伍解散时，lockPlayerName置为null，方便外部判断。
+				cb(null,null)
+				return;
+			}
+
+			for(var i in teamplayers){
+				if(teamplayers[i].unit_id == r.unitid){
+					fromTeammate = teamplayers[i];
+					fromTeammate.index = i;
+					break;
+				}
+			}
+			
+			if(fromTeammate){
+				var msgheader = fromTeammate.name + ': ';
+				if(r.msg.indexOf(msgheader) >= 0){
+					var msg = r.msg.substr(r.msg.indexOf(msgheader) + msgheader.length);
+					
+					if (msg.indexOf('[交易]') == 0)
+						msg = msg.substr('[交易]' .length);
+					listen = cb(fromTeammate, msg);
+				}
+			}
+
+			if(listen == true){
+				cga.waitLockTeammateSay(lockPlayerName,cb);
+			}
+		}, 1000);
+	},
+
 	// UNAecho:队内使用自定义称号进行交流，注意称号有16字节长度限制
 	cga.waitTeammateInfo = (teammates, infoFunc, cb)=>{
 		// 如果没传入指定队伍，则自动以队内人员为准。
@@ -10574,7 +10646,7 @@ module.exports = function(callback){
 					cga.travel.toVillage(tmpObj.npcMainMap, cb)
 				}
 			} else {
-				throw new Error('API未支持的npcMainMap领域【'+tmpObj.npcMainMap+'】请联系作者更新')
+				throw new Error('API未支持的npcMainMap领域【'+tmpObj.npcMainMap+'】请联系作者https://github.com/UNAecho更新')
 			}
 
 			// 其次装载赶往NPC地图的函数
@@ -10674,7 +10746,7 @@ module.exports = function(callback){
 					}
 				}
 			} else {
-				throw new Error('API未支持的npcpos领域【'+tmpObj.npcpos+'】请联系作者更新')
+				throw new Error('API未支持的npcpos领域【'+tmpObj.npcpos+'】请联系作者https://github.com/UNAecho更新')
 			}
 
 			// 制作好3种导航函数之后，顺序执行
@@ -13098,7 +13170,25 @@ module.exports = function(callback){
 				return true;
 			});	
 		}
-		
+
+		/**
+		 * UNAecho:原版API有bug，姑且认为是bug吧。
+		 * bug描述：如果交易中出现物品、金币、宠物多种类别时，receivedStuffs中只会出现1种数据。
+		 * 1、优先顺序为物品、宠物、宠物技能、金币。
+		 * 3、举例：如果此次交易中包含物品和金币，那么receivedStuffs中只会有【物品】一种数据。
+		 * 4、举例：如果此次交易中包含宠物和金币，那么receivedStuffs中只会有【宠物】一种数据。
+		 * 造成这种原因，是因为：
+		 * 1、由于waitTradeStuffs()中，cga.AsyncWaitTradeStuffs这个API，只会获取1次数据，此次数据顺序使用if else判断
+		 * 2、如果此次交易类型为物品、宠物、宠物技能、金币其中一个，if else逻辑会命中，然后不再继续获取其它类型的东西。
+		 * 
+		 * UNAecho修复逻辑：
+		 * 观察到cga.TRADE_STUFFS_GOLD=4，代表最后一类交易信息，那么定义一个判断迭代次数的变量typeCount
+		 * 每次判断交易类型时，typeCount+=1
+		 * 当判断次数小于cga.TRADE_STUFFS_GOLD=4（最后一类交易信息）时，继续调用waitTradeStuffs()，直至所有type都判断一次。
+		 * 此时receivedStuffs包含了之前遗漏的所有数据。
+		 * 
+		 * 更新：还有另外一个宠物数据的bug，下面代码处会提及。
+		 */
 		var waitDialog = ()=>{
 			
 			if(tradeFinished)
@@ -13106,7 +13196,10 @@ module.exports = function(callback){
 			
 			var getInTradeStuffs = false;
 			var tradeStuffsChecked = false;
-						
+
+			// UNAecho:type判断次数累计
+			let typeCount = 0
+
 			var waitTradeStuffs = ()=>{
 
 				cga.AsyncWaitTradeStuffs((err, type, args) => {
@@ -13126,8 +13219,19 @@ module.exports = function(callback){
 						
 					if(type == cga.TRADE_STUFFS_ITEM){
 						receivedStuffs.items = args;
-					}else if(type == cga.TRADE_STUFFS_PET){
-						receivedStuffs.pet = [];
+					}
+					/**
+					 * UNAecho:这里原作者出现了比较大的bug
+					 * receivedStuffs.pet在首次判定宠物时，初始化为[]，并将宠物信息加入，这没有问题
+					 * 但是一次交易出现1个以上宠物时，再次进入此逻辑，已经有数据的receivedStuffs.pet会被再次初始化为[]，丢失了之前的所有信息
+					 * 所以此bug会导致不论交易多少只宠物，最后都只会剩1只
+					 * 
+					 * 修复逻辑：判定receivedStuffs.pet有数据时，不能初始化，只加入数据。
+					 */
+					else if(type == cga.TRADE_STUFFS_PET){
+						if(!receivedStuffs.pet){
+							receivedStuffs.pet = [];
+						}
 						receivedStuffs.pet[args.index] = args;
 					}else if(type == cga.TRADE_STUFFS_PETSKILL){
 						if(!(receivedStuffs.pet instanceof Array))
@@ -13137,7 +13241,11 @@ module.exports = function(callback){
 					}else if(type == cga.TRADE_STUFFS_GOLD){
 						receivedStuffs.gold = args;
 					}
-				
+					// UNAecho:判断次数不足时，继续迭代。否则receivedStuffs会遗漏其它type的数据。
+					if(typeCount < cga.TRADE_STUFFS_GOLD){
+						typeCount+=1
+						waitTradeStuffs()
+					}
 				}, 1000);
 			}
 			
@@ -14606,6 +14714,10 @@ module.exports = function(callback){
 	 * UNAecho : 获取道具叠加数
 	 */
 	cga.getItemStackeMax = (item)=>{
+		if(!item){
+			console.log('cga.getItemStackeMax:item没有传入，返回默认值0')
+			return 0
+		}
 		if (item.name.indexOf('谜语箱') >= 0) return 0;
 		if (item.name.endsWith('的水晶碎片')) return 999;
 		if (['长老之证'].indexOf(item.name) >= 0) return 3;
@@ -14627,6 +14739,8 @@ module.exports = function(callback){
 			if (item.name.startsWith('隐秘的徽记')) return 20;
 			return 40;
 		}
+		console.warn('【UNAecho提示】物品【' + item.name + '】没有查询到堆叠数，默认返回0。请联系作者https://github.com/UNAecho完善')
+		return 0
 	}
 
 	return cga;
