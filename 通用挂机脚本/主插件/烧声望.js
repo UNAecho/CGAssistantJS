@@ -278,8 +278,8 @@ var loop = ()=>{
 
 var thisobj = {
 	job : cga.job.getJob(),
-	// 自动存取魔币
-	bankObj : require('../子插件/自动存取魔币.js'),
+	// 自动存取
+	bankObj : require('../子插件/自动存取.js'),
 	translate : (pair)=>{
 
 		if(configMode.translate(pair))

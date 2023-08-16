@@ -1,1 +1,1 @@
-{"mainPlugin":"采集","subPlugins":["自动存取魔币"],"gatherObject":"双百买布","serverPort":2555,"target":"砂糖","mineType":1,"logoutTimes":0}
+{"mainPlugin":"采集","subPlugins":["自动存取"],"gatherObject":"双百买布","serverPort":2555,"target":"砂糖","mineType":1,"logoutTimes":0}

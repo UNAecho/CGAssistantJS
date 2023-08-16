@@ -620,7 +620,7 @@ var thisobj = {
 		soloBattle: false
 	},
 	func: {// 任务自定义函数
-		bankObj: require('../../通用挂机脚本/子插件/自动存取魔币.js'),
+		bankObj: require('../../通用挂机脚本/子插件/自动存取.js'),
 		healObj: require('../../通用挂机脚本/公共模块/治疗和招魂.js'),
 		configMode: require('../../通用挂机脚本/公共模块/读取战斗配置.js'),
 		dropUseless: (items, cb) => {

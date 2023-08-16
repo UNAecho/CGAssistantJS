@@ -74,8 +74,8 @@ var loop = ()=>{
 }
 
 var thisobj = {
-	// 自动存取魔币
-	bankObj : require('../子插件/自动存取魔币.js'),
+	// 自动存取
+	bankObj : require('../子插件/自动存取.js'),
 	getDangerLevel : ()=>{
 		return 0;
 	},

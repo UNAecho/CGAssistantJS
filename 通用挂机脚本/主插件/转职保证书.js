@@ -1051,9 +1051,9 @@ var thisobj = {
 	isLeader : false,
 	// 自动匹配队伍，记录至此
 	teammates : null,
-	// 自动存取魔币
-	bankObj : require('../子插件/自动存取魔币.js'),
-	// 自动存取魔币
+	// 自动存取
+	bankObj : require('../子插件/自动存取.js'),
+	// 自动存取
 	healObj : require('../公共模块/治疗和招魂.js'),
 	// 人物职业以及声望信息
 	job:cga.job.getJob(),

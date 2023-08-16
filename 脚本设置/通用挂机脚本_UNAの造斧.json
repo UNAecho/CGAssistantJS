@@ -1,1 +1,1 @@
-{"mainPlugin":"采集","subPlugins":["自动存取魔币"],"gatherObject":"双百采集","serverPort":8888,"target":"鹿皮","mineType":0,"logoutTimes":0}
+{"mainPlugin":"采集","subPlugins":["自动存取"],"gatherObject":"双百采集","serverPort":8888,"target":"鹿皮","mineType":0,"logoutTimes":0}
