@@ -21,5 +21,32 @@
     "minHp": "35%",
     "minMp": "35%",
     "buyCrystal": "风地的水晶（5：5）",
-    "minLoyality": 40
+    "minLoyality": 40,
+    "autoSaveAndDraw": {
+        "item": [],
+        "gold": [
+            {
+                "name": "金币",
+                "upper": 300000,
+                "lower": 100000
+            }
+        ],
+        "pet": [
+            {
+                "name": "1档",
+                "upper": 0,
+                "lower": 0
+            },
+            {
+                "name": "2档",
+                "upper": 0,
+                "lower": 0
+            },
+            {
+                "name": "3档",
+                "upper": 3,
+                "lower": 0
+            }
+        ]
+    }
 }

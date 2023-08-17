@@ -263,8 +263,8 @@ var thisobj = {
 			thisobj.speakStatus = 'off'
 			// 离开队伍
 			cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
-			// 结束此子插件
-			cb(null)
+			// 结束此子插件，稍微延迟，给离开队伍一点时间
+			setTimeout(cb,2000)
 			return
 		}
 
@@ -379,7 +379,7 @@ var thisobj = {
 	},
 	prepare: (cb) => {
 		let order = thisobj.refreshOrder()
-		console.log(order)
+
 		if (!order.length) {
 			console.log('【自动存取】经检查，无需存取。')
 
@@ -390,7 +390,7 @@ var thisobj = {
 			cb(null)
 			return
 		}
-
+		console.log('有自动存取需求:',order)
 		// 打开交易
 		console.log('打开交易..')
 		cga.EnableFlags(cga.ENABLE_FLAG_TRADE, true);
