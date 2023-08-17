@@ -13182,10 +13182,15 @@ module.exports = function(callback){
 		 * 2、如果此次交易类型为物品、宠物、宠物技能、金币其中一个，if else逻辑会命中，然后不再继续获取其它类型的东西。
 		 * 
 		 * UNAecho修复逻辑：
-		 * 观察到cga.TRADE_STUFFS_GOLD=4，代表最后一类交易信息，那么定义一个判断迭代次数的变量typeCount
-		 * 每次判断交易类型时，typeCount+=1
-		 * 当判断次数小于cga.TRADE_STUFFS_GOLD=4（最后一类交易信息）时，继续调用waitTradeStuffs()，直至所有type都判断一次。
+		 * 只要还能读到args，就继续读下去，直至读取不到args为止。
+		 * 由于首次读取到args时，getInTradeStuffs即被置为true。
+		 * 所以当if(!args)时，不会进入if(getInTradeStuffs == false && !tradeFinished)的代码块内，而是直接return。
 		 * 此时receivedStuffs包含了之前遗漏的所有数据。
+		 * 
+		 * 这么做是因为，当交易内容出现宠物的时候，【宠物】和【宠物技能】都会占据一次cga.AsyncWaitTradeStuffs
+		 * cga.AsyncWaitTradeStuffs只能读取一种type信息。
+		 * 1只宠物要占据2次cga.AsyncWaitTradeStuffs，如果此次交易还包含多个物品、金币等，就会出现漏读的现象
+		 * 所以选用了【只要还能读到args，就继续读下去，直至读取不到args为止。】这种方式。
 		 * 
 		 * 更新：还有另外一个宠物数据的bug，下面代码处会提及。
 		 */
@@ -13196,9 +13201,6 @@ module.exports = function(callback){
 			
 			var getInTradeStuffs = false;
 			var tradeStuffsChecked = false;
-
-			// UNAecho:type判断次数累计
-			let typeCount = 0
 
 			var waitTradeStuffs = ()=>{
 
@@ -13241,11 +13243,8 @@ module.exports = function(callback){
 					}else if(type == cga.TRADE_STUFFS_GOLD){
 						receivedStuffs.gold = args;
 					}
-					// UNAecho:判断次数不足时，继续迭代。否则receivedStuffs会遗漏其它type的数据。
-					if(typeCount < cga.TRADE_STUFFS_GOLD){
-						typeCount+=1
-						waitTradeStuffs()
-					}
+					// UNAecho:只要还能读到args，就继续读下去，直至读取不到args为止。
+					waitTradeStuffs()
 				}, 1000);
 			}
 			
@@ -14712,13 +14711,15 @@ module.exports = function(callback){
 
 	/**
 	 * UNAecho : 获取道具叠加数
+	 * 有时无法获取道具type时，只能靠道具名称查询。（比如身上没有此道具时）
 	 */
-	cga.getItemStackeMax = (item)=>{
+	cga.getItemMaxcount = (item) => {
 		if(!item){
-			console.log('cga.getItemStackeMax:item没有传入，返回默认值0')
+			console.log('cga.getItemMaxcount:item没有传入，返回默认值0')
 			return 0
 		}
 		if (item.name.indexOf('谜语箱') >= 0) return 0;
+		if (item.name.indexOf('生命力回复药') >= 0) return 3;
 		if (item.name.endsWith('的水晶碎片')) return 999;
 		if (['长老之证'].indexOf(item.name) >= 0) return 3;
 		if (['黄蜂的蜜'].indexOf(item.name) >= 0) return 6;
@@ -14739,7 +14740,7 @@ module.exports = function(callback){
 			if (item.name.startsWith('隐秘的徽记')) return 20;
 			return 40;
 		}
-		console.warn('【UNAecho提示】物品【' + item.name + '】没有查询到堆叠数，默认返回0。请联系作者https://github.com/UNAecho完善')
+		console.warn('【UNAecho脚本警告】物品【' + item.name + '】没有查询到堆叠数，默认返回0。请联系作者https://github.com/UNAecho完善')
 		return 0
 	}
 

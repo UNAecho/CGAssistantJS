@@ -28,6 +28,31 @@ var thisobj = {
 		'gold': '金币',
 		'pet': '宠物',
 	},
+	/**
+	 * UNAecho: 刷新订单，获取当前需要补足或削减的物资数量
+	 * 
+	 * 【注意】
+	 * 1、考虑到不能低于下限就补到下限，因为只要使用一次就又会低于下限。所以必须补足至上限。
+	 * 2、上限也是同理，超过上限就削减至上限的话，那么很快就会再次超过上限。还要去找服务端存取。人物就会疲于奔命。
+	 * 
+	 * 这个逻辑适用于gold和pet，但item却不太适用。
+	 * 举例说明：
+	 * 1、当前想要监视药瓶数量，药瓶堆叠数为3个1组。
+	 * 2、假设上限定为6，下限定为3。
+	 * 3、客户端手中只有2瓶药，此时去找服务端拿药，目标是拿到上限，6个。
+	 * 4、如果服务端给客户端1组，3瓶，2+3=5<6，并没有满足拿到上限这个目标，此时需要再拿6-5=1个
+	 * 5、由于CGA没有拆分，所以即便要求服务端给自己1瓶药，服务端还是只能给出1组，3瓶药。
+	 * 6、此时手上的药就变成了5+3=8>6，超过上限了，那么就需要存至下限。
+	 * 7、存至下限又会因为没有拆分，而只能存2组，2*3=6，8-6=2，又会低于下限，形成了死循环。
+	 * 
+	 * 为了避免此情况发生，目前使用下面逻辑：
+	 * 1、堆叠数(依赖于cga.getItemMaxcount()，请注意补足相关数据)，当对方需求存/取的数量出现不是堆叠数的整数倍时，会出现多存/取的现象。
+	 * 2、由于CGA没有道具拆分API（可能由于自动堆叠的存在），每次交易只能给出1组道具。
+	 * 3、所以刷新订单的逻辑，item的逻辑调整为【如果超过上/下限的部分小于道具的堆叠数时，视为没有超限，不做处理】
+	 * 
+	 * 这样可以避免存了item之后低于下限，而取了item之后又超过上限的问题。
+	 * @returns 
+	 */
 	refreshOrder: () => {
 		let orderArr = []
 
@@ -46,23 +71,20 @@ var thisobj = {
 					throw new Error('获取数量有误，请检查。')
 				}
 
-				if (obj.upper < obj.lower) {
-					throw new Error('数量上限不可以小于下限。')
-				}
-
-				if (obj.upper != null && curCount > obj.upper) {
+				// 超过上限，调整为下限。item逻辑说明见上面的doc
+				if (curCount > obj.upper && (k != 'item' || (k == 'item' && curCount - obj.upper >= cga.getItemMaxcount({ name: obj.name })))) {
 					orderArr.push({
 						name: obj.name,
 						type: k,
 						tradeType: 'save',
-						count: curCount - obj.upper,
+						count: curCount - obj.lower,
 					})
-				} else if (obj.lower != null && curCount < obj.lower) {
+				} else if (curCount < obj.lower && (k != 'item' || (k == 'item' && obj.lower - curCount >= cga.getItemMaxcount({ name: obj.name })))) {// 低于下限，调整为上限。
 					orderArr.push({
 						name: obj.name,
 						type: k,
 						tradeType: 'draw',
-						count: obj.lower - curCount,
+						count: obj.upper - curCount,
 					})
 				}
 
@@ -164,7 +186,7 @@ var thisobj = {
 				return it.name == orderObj.name
 			})
 
-			result += cga.getItemStackeMax(item).toString()
+			result += cga.getItemMaxcount(item).toString()
 		}
 		return result
 	},
@@ -410,6 +432,15 @@ var thisobj = {
 								console.error('读取配置：自动存取失败！数据格式有误，属性', property, '必须全部具备。请删除游戏角色对应脚本设置中的json文件，重新运行。');
 								return false
 							}
+							if ((p == 'upper' || p == 'lower') && typeof o[p] != 'number') {
+								console.error('读取配置：自动存取失败！数据格式有误，属性', p, '必须为number类型。请删除游戏角色对应脚本设置中的json文件，重新运行。');
+								return false
+							}
+						}
+
+						if (o.upper < o.lower) {
+							console.error('读取配置：自动存取失败！数值有误，' + o.name + 'upper的值必须大于lower。请删除游戏角色对应脚本设置中的json文件，重新运行。');
+							return false
 						}
 					}
 				} else {
@@ -496,23 +527,16 @@ var thisobj = {
 		let limit = (obj, cb) => {
 			let sayString = null
 			let property = {
-				'upper': '上限',
-				'lower': '下限',
+				'upper': '数量上限，超过上限时自动调整至下限',
+				'lower': '数量下限，低于下限时自动调整至上限',
 			}
 
 			for (let k of Object.keys(property)) {
 				if (!obj.hasOwnProperty(k)) {
-					sayString = '【自动存取】请输入数量' + property[k] + '。输入ok则视为不限制';
+					sayString = '【自动存取】请输入' + property[k] + '，上限不能小于下限。';
 					cga.sayLongWords(sayString, 0, 3, 1);
 					cga.waitForChatInput((msg, value) => {
-						if (msg && msg == 'ok') {
-							sayString = '当前已选择: [不限制]';
-							cga.sayLongWords(sayString, 0, 3, 1);
-
-							obj[k] = null
-							setTimeout(limit, 1000, obj, cb)
-							return false
-						} else if (value >= 0) {
+						if (value >= 0) {
 							sayString = '当前已输入: [' + value + ']';
 							cga.sayLongWords(sayString, 0, 3, 1);
 
