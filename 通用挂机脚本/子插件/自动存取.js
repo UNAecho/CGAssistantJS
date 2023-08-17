@@ -535,12 +535,12 @@ var thisobj = {
 				if (!obj.hasOwnProperty(k)) {
 					sayString = '【自动存取】请输入' + property[k] + '，上限不能小于下限。';
 					cga.sayLongWords(sayString, 0, 3, 1);
-					cga.waitForChatInput((msg, value) => {
-						if (value >= 0) {
-							sayString = '当前已输入: [' + value + ']';
+					cga.waitForChatInput((msg, val) => {
+						if (val !== null && val >= 0) {
+							sayString = '当前已输入: [' + val + ']';
 							cga.sayLongWords(sayString, 0, 3, 1);
 
-							obj[k] = value
+							obj[k] = val
 							setTimeout(limit, 1000, obj, cb)
 							return false
 						}
