@@ -22,13 +22,14 @@
     "memberFilter": "UNA",
     "minTeamMemberCount": 5,
     "roleMaxCount": {
-        "输出": 2,
+        "输出": 3,
         "治疗": 1,
-        "小号": 3
+        "小号": 2
     },
     "leaderX": 143,
     "leaderY": 109,
-    "timeout": 180000,"autoPromoteTask":true,
+    "timeout": 180000,
+    "autoPromoteTask": true,
     "spawnOfAmber4": {
         "flag": true,
         "part": "队员",
@@ -37,7 +38,6 @@
         "leaderY": 109,
         "leaderFilter": "egg"
     },
-    "needPerfectTrainSkill": false,
     "sellStore": 1,
     "autoRing": {
         "flag": true,
@@ -50,11 +50,23 @@
     "minHp": "25%",
     "minMp": "15%",
     "buyCrystal": "地水的水晶（5：5）",
+    "needPerfectTrainSkill": false,
     "minLoyality": 40,
     "maxEndurance": 186,
     "maxStrength": 300,
     "maxDefense": 0,
     "maxAgility": 130,
     "maxMagical": 50,
-    "petpoint": 4
+    "petpoint": 4,
+    "autoSaveAndDraw": {
+        "item": [],
+        "gold": [
+            {
+                "name": "金币",
+                "upper": 300000,
+                "lower": 100000
+            }
+        ],
+        "pet": []
+    }
 }
