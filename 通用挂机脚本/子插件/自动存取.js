@@ -471,7 +471,7 @@ var thisobj = {
 					let inputLoop = (cb) => {
 						// 金币不需要输入内容，直接进入上下限环节
 						if (k == 'gold') {
-							sayString = '【自动存取】请输入是否监测' + property[k] + '的上下限，0不监视1监视。';
+							sayString = '【自动存取】请输入是否监测' + property[k] + '的上下限，0不监视1监视:';
 							cga.sayLongWords(sayString, 0, 3, 1);
 
 							cga.waitForChatInput((msg, value) => {
@@ -491,14 +491,14 @@ var thisobj = {
 							});
 							return
 						}
-						sayString = '【自动存取】请输入' + property[k] + '的监测内容。输入ok结束当前[' + property[k] + ']循环。';
+						sayString = '【自动存取】请输入' + property[k] + '的监测内容。输入ok结束当前[' + property[k] + ']循环:';
 						cga.sayLongWords(sayString, 0, 3, 1);
 
 						cga.waitForChatInput((msg, value) => {
 							if (msg && msg == 'ok') {
 								stage(obj, cb)
 								return false
-							} else if (msg && msg.indexOf('输入') == -1) {
+							} else if (msg && msg.indexOf(':') == -1) {
 								let tmpObj = {
 									name: msg,
 								}
@@ -554,7 +554,7 @@ var thisobj = {
 		}
 
 		let inputObj = {}
-		stage(inputObj, cb)
+		setTimeout(stage, 2000, inputObj, cb)
 		return
 	}
 };
