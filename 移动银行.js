@@ -224,9 +224,15 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 					resObj.resStr = resObj.resStr + matchObj[6] + matchObj[7]
 				} else if (reqObj.targetType == 'gold') {
 					let cnt = gold
-					// 对方要的钱比自己持有的钱多，不能把全部钱都给出去，需要预留一点存银行消耗的钱
+					// 对方要的钱比自己身上金币还多，不能把全部钱都给出去，需要预留一点存银行消耗的钱（thisobj.protectGold）
 					if (cnt < reqObj.count) {
-						resObj.resCount = cnt - thisobj.protectGold
+						// 取钱逻辑，首先看一下thisobj.protectGold
+						// 如果身上连thisobj.protectGold的数额都没有，比如身上金币数为0，而此时客户端要求取钱
+						if(cnt <= thisobj.protectGold){
+							resObj.resCount = 0
+						}else{// 如果在thisobj.protectGold可以维持的情况下，给出一部分
+							resObj.resCount = cnt - thisobj.protectGold
+						}
 						resObj.resStr = resObj.resStr + resObj.resCount
 						resObj.resRemain = reqObj.count - resObj.resCount
 					} else {// 对方要的钱比自己持有的钱少，正常给
