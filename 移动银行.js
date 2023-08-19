@@ -409,9 +409,11 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 			// 既有记录中，没有满足需求的账号。开始循环登陆AccountInfos.js已经登记的账号，寻找满足需求的账号。
 			// 【注意】如果AccountInfos.js中登记得所有账号均没有要取得资源，会陷入无限循环。
 			if (account == null) {
+				console.log('离线数据中，没有角色满足需求，开始循环登陆已经登记的账号，挨个尝试..')
 				account = cga.gui.getAccountWithBias(1)
 				thisobj.switchAccount(account, cb)
 			} else if (account && account.name == cga.GetPlayerInfo().name) {//如果自己银行仓库满足需求
+				console.log('自己银行账户即可满足需求，去银行..')
 				// 去当地银行并与柜员对话
 				cga.travel.toBank(() => {
 					if (resObj.resTradeType == 'save') {
@@ -476,7 +478,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 					}
 				})
 			} else {//其它人身上或者银行仓库满足需求
-				thisobj.switchAccount(account, cb)
+				console.log('玩家【' + account.name + '】满足需求，开始切换账号..')
+				let accountObj = cga.gui.getAccount(account.name)
+				thisobj.switchAccount(accountObj, cb)
 			}
 		},
 		search: (resObj) => {
@@ -547,7 +551,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 				user: account.user,
 				pwd: account.pwd,
 				gid: account.gid,// 子账号
-				character: account.character, //左边or右边
+				character: account.character, //1左边2右边
 			}, (err, result) => {
 				if (err) {
 					console.error(err);
