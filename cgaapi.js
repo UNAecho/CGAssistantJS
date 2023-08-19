@@ -14181,7 +14181,7 @@ module.exports = function(callback){
 				// 将index转换为character该有的数值（1或2）
 				currentAccount.character = currentAccount.characterIndex + remainBias + 1
 
-				// 顺便把目标人物名字加进去，方便log观看。
+				// 顺便把目标角色名称加进去。
 				currentAccount.name = curNameArr[currentAccount.characterIndex + remainBias]
 
 				// 最后，characterIndex顺便也修正数值，但是外部只需要关注character的值即可。
