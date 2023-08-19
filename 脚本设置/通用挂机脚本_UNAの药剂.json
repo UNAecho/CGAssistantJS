@@ -1,1 +1,1 @@
-{"mainPlugin":"双百制造","subPlugins":["自动存取"],"craftType":"制药","forgetSkillAt":11,"listenPort":2333}
+{"mainPlugin":"双百制造","subPlugins":["自动存取"],"craftType":"制药","forgetSkillAt":11,"listenPort":2333, "autoSaveAndDraw": { "item": [], "gold": [ { "name": "金币", "upper": 300000, "lower": 100000 } ], "pet": [] }}

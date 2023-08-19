@@ -1,1 +1,1 @@
-{"mainPlugin":"采集冲技能","subPlugins":["自动存取"],"craftType":"料理","forgetSkillAt":11,"listenPort":2555}
+{"mainPlugin":"采集冲技能","subPlugins":["自动存取"],"craftType":"料理","forgetSkillAt":11,"listenPort":2555, "autoSaveAndDraw": { "item": [], "gold": [ { "name": "金币", "upper": 300000, "lower": 100000 } ], "pet": [] }}
