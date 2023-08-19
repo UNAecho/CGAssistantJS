@@ -389,9 +389,13 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 			}
 			// 先解散队伍
 			if (cga.GetTeamPlayerInfo().length) {
-				cga.disbandTeam(() => {
-					thisobj.afterTrade(resObj, cb)
-				})
+				// 重置昵称并延迟几秒解散队伍，防止其它等待玩家在解散队伍瞬间再次加入
+				cga.ChangeNickName('')
+				setTimeout(()=>{
+					cga.disbandTeam(() => {
+						thisobj.afterTrade(resObj, cb)
+					})
+				},1500)
 				return
 			}
 
@@ -426,8 +430,10 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 									setTimeout(thisobj.saveOfflineData, 1000, cb);
 								});
 						} else if (resObj.resTargetType == 'gold') {
-							// 仅腾出需求存不下的钱的空间
-							cga.MoveGold(resObj.resRemain, cga.MOVE_GOLD_TOBANK)
+							// 银行还能存多少钱
+							let freeSpace = 1000000 - cga.GetBankGold()
+							// 仅腾出需求存不下的部分
+							cga.MoveGold(resObj.resRemain > freeSpace ? freeSpace : resObj.resRemain, cga.MOVE_GOLD_TOBANK)
 							setTimeout(thisobj.saveOfflineData, 2000, cb);
 						} else if (resObj.resTargetType == 'pet') {
 							cga.savePetToBankAll(() => {
