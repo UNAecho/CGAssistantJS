@@ -132,7 +132,8 @@ var thisobj = {
 			let addTeam = () => {
 				cga.addTeammate(server.unit_name, (r) => {
 					if (!r) {
-						setTimeout(addTeam, 1000)
+						console.log('进入队伍失败，重新进入findServer..')
+						setTimeout(thisobj.findServer, 1000, cb)
 						return
 					}
 					// 开启队聊，防止干扰其他玩家
@@ -272,7 +273,7 @@ var thisobj = {
 		let teaminfo = cga.GetTeamPlayerInfo();
 		if (teaminfo.length == 0) {
 			console.log('移动银行离队，无法继续提供服务，继续等待下一位服务端..')
-			thisobj.findServer(cb)
+			setTimeout(thisobj.findServer, 1000, cb)
 			return
 		}
 
@@ -299,7 +300,7 @@ var thisobj = {
 					thisobj.speakStr = ''
 					thisobj.speakStatus = 'on'
 
-					thisobj.findServer(cb)
+					setTimeout(thisobj.findServer, 1000, cb)
 					return false
 				}
 				let matchObj = msg.match(tradeReg)

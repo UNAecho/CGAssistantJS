@@ -13891,7 +13891,7 @@ module.exports = function(callback){
 			game : 4, //区服
 			bigserver : 1, //电信or网通
 			server : 8, //线路
-			character : 1, //左边or右边
+			character : 1, //1左边，2右边
 			autologin : true, //自动登录开启
 			skipupdate : false, //禁用登录器更新开启
 		}, (err, result)=>{
@@ -13982,7 +13982,7 @@ module.exports = function(callback){
 	 * { category: '仓库', user: 'UNAecho', pwd: '12345', gid: 'archer', character: 0 }
 	 * 其中：
 	 * 1、category代表自定义账号类型，可自行在AccountInfos.js划分账号类别。
-	 * 2、character代表人物在左还是右，0左1右。
+	 * 2、character代表人物在左还是右，1左2右。
 	 */
 	cga.gui.getAccount = (filter) => {
 		let accounts = require('./常用数据/AccountInfos.js');
@@ -14006,12 +14006,14 @@ module.exports = function(callback){
 									res.user = account.user
 									res.pwd = account.pwd
 									res.gid = gidObj.gid
-									// 人物在左还是右，0左1右。
-									res.character = gidObj.name.indexOf(playerName)
+									// 人物在左还是右，1左2右。
+									res.character = gidObj.name.indexOf(playerName) + 1
 									// 子账号所在账号的索引数字
 									res.accountIndex = parseInt(ai)
 									// 子账号索引数字
 									res.gidIndex = parseInt(gi)
+									// 角色名称所在数组的索引数字
+									res.characterIndex = gidObj.name.indexOf(playerName)
 									return res
 								}
 							
@@ -14109,16 +14111,22 @@ module.exports = function(callback){
 		}
 
 		// 账号完整度检查
-		let errStr = 'accounts数据结构有误，详情参考AccountInfos.js中的注释。'
 		for(let a of accounts){
 			if(typeof a.user != 'string' || typeof a.pwd != 'string'|| !a.gids instanceof Array){
-				throw new Error(errStr)
+				throw new Error('user,pwd类型必须为string，gids必须为Array')
 			}
 			if(!a.user || !a.pwd || !a.gids){
-				throw new Error(errStr)
+				// console.log('user:',a.user,'pwd:',a.pwd)
+				// console.log('gids:',a.gids)
+				// console.log('以上账号数据有误，跳过。')
+				continue
 			}
+			// 跳过没有角色登记的账号
 			if(a.gids.length == 0){
-				throw new Error(errStr)
+				// console.log('user:',a.user,'pwd:',a.pwd)
+				// console.log('gids:',a.gids)
+				// console.log('以上账号没有子账号数据，跳过。')
+				continue
 			}
 			for(let g of a.gids){
 				if(!g.gid){
@@ -14132,51 +14140,77 @@ module.exports = function(callback){
 		
 		// 递归，初始化的账号为当前游戏角色的账号信息。
 		let loop = (currentAccount,remainBias) => {
-			currentAccount.gidIndex = currentAccount.gidIndex == null ? accounts[currentAccount.accountIndex].gids.length - 1 : currentAccount.gidIndex
-			let curGids = accounts[currentAccount.accountIndex].gids
-			let curNames = curGids[currentAccount.gidIndex].name
-			currentAccount.character = (currentAccount.character == null ? accounts[currentAccount.accountIndex].gids[currentAccount.gidIndex].name.length : currentAccount.character)
-			let curCharacter = currentAccount.character + remainBias 
-			if(curNames[curCharacter] != undefined){
-				currentAccount.user = accounts[currentAccount.accountIndex].user
-				currentAccount.pwd = accounts[currentAccount.accountIndex].pwd
-				currentAccount.gid = accounts[currentAccount.accountIndex].gids[currentAccount.gidIndex].gid
-				currentAccount.gids = accounts[currentAccount.accountIndex].gids
-				currentAccount.character = curCharacter
-				currentAccount.name = curNames[curCharacter]
+			// 首先看accountIndex
+			// 根据当前递归对象传来的accountIndex来获取当前偏移到哪个账号了
+			let curAcc = accounts[currentAccount.accountIndex]
+			// 如果数组越界，则视偏移的正负判断回滚到左边缘还是右边缘
+			if(!curAcc){
+				// console.log('accountIndex:',currentAccount.accountIndex,'数组越界，回滚至',remainBias > 0 ? '左':'右','边界')
+				currentAccount.accountIndex = remainBias > 0 ? 0 : accounts.length - 1
+				curAcc = accounts[currentAccount.accountIndex]
+			}
+			// 检查异常账户，如果有异常则跳过
+			if(!curAcc.user || !curAcc.pwd || !curAcc.gids instanceof Array ||!curAcc.gids.length){
+				// console.log('account:',curAcc,'异常，跳过此次递归。')
+				currentAccount.accountIndex = (remainBias > 0 ? currentAccount.accountIndex + 1 : currentAccount.accountIndex - 1)
+				return loop(currentAccount,remainBias)
+			}
+			// 接下来看gidIndex
+			// 如果gidIndex为null，那么必然是发生账号左移。因为不知道左边账号有多少个gids。
+			// 如果gid有值，则视为账号没有发生切换。
+			if (currentAccount.gidIndex == null){
+				// 告诉gidIndex当前账号的右闭区间index是多少
+				currentAccount.gidIndex = curAcc.gids.length - 1
+			}
+			// 然后根据gidIndex获取当前偏移到的gid
+			let curGid = curAcc.gids[currentAccount.gidIndex]
+			// 获取当前偏移账号的游戏角色名称数组
+			let curNameArr = curGid.name
+
+			// 然后看characterIndex
+			// 与gidIndex逻辑一样，如果characterIndex为null，则视为发生了账号左移
+			if (currentAccount.characterIndex == null){
+				currentAccount.characterIndex = curNameArr.length
+			}
+			// 如果剩余偏移量可被当前子账号消耗掉，那么返回当前账号结果，loop结束
+			if(curNameArr[currentAccount.characterIndex + remainBias] != undefined){
+				currentAccount.user = curAcc.user
+				currentAccount.pwd = curAcc.pwd
+				currentAccount.gid = curAcc.gids[currentAccount.gidIndex].gid
+				// currentAccount.gids = curAcc.gids
+				// 将index转换为character该有的数值（1或2）
+				currentAccount.character = currentAccount.characterIndex + remainBias + 1
+
+				// 顺便把目标人物名字加进去，方便log观看。
+				currentAccount.name = curNameArr[currentAccount.characterIndex + remainBias]
+
+				// 最后，characterIndex顺便也修正数值，但是外部只需要关注character的值即可。
+				currentAccount.characterIndex = currentAccount.characterIndex + remainBias
 				return currentAccount
-			}else{
+			}else{// 如果剩余偏移量会导致当前账号数组越界，则还需要再次切换账号或子账号
+				// 偏移剩余量大于0，往右偏的情况
 				if(remainBias > 0){
-					remainBias = remainBias - (curNames.length - 1 - currentAccount.character)
-					currentAccount.character = -1
+					// 当前的子账号能消耗掉多少的偏移
+					remainBias = remainBias - (curNameArr.length - 1 - currentAccount.characterIndex)
+					currentAccount.characterIndex = -1
 					currentAccount.gidIndex += 1
-					if(curGids[currentAccount.gidIndex] != undefined){
+					if(curAcc.gids[currentAccount.gidIndex] != undefined){
 						return loop(currentAccount,remainBias)
 					}else{
 						currentAccount.gidIndex = 0
 						currentAccount.accountIndex += 1
-						if(accounts[currentAccount.accountIndex] != undefined){
-							return loop(currentAccount,remainBias)
-						}else{
-							currentAccount.accountIndex = 0
-							return loop(currentAccount,remainBias)
-						}
+						return loop(currentAccount,remainBias)
 					}
-				}else if(remainBias < 0){
-					remainBias = remainBias + (currentAccount.character - 0)
-					currentAccount.character = null
+				}else if(remainBias < 0){// 偏移剩余量小于0，往左偏的情况
+					remainBias = remainBias + (currentAccount.characterIndex - 0)
+					currentAccount.characterIndex = null
 					currentAccount.gidIndex -= 1
-					if(curGids[currentAccount.gidIndex] != undefined){
+					if(curAcc.gids[currentAccount.gidIndex] != undefined){
 						return loop(currentAccount,remainBias)
 					}else{
 						currentAccount.gidIndex = null
 						currentAccount.accountIndex -= 1
-						if(accounts[currentAccount.accountIndex] != undefined){
-							return loop(currentAccount,remainBias)
-						}else{
-							currentAccount.accountIndex = accounts.length - 1
-							return loop(currentAccount,remainBias)
-						}
+						return loop(currentAccount,remainBias)
 					}
 				}else{// remainBias == 0
 					throw new Error('loop逻辑不应该出现在这里，请检查')

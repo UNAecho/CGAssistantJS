@@ -542,8 +542,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 					cb(new Error(err));
 					return
 				}
-				console.log(result);
-				console.log('登出!');
+				console.log('账号切换完毕，登出!');
 				setTimeout(() => {
 					cga.LogOut();
 				}, 1000);
