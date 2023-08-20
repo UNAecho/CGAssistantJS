@@ -376,6 +376,15 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 										setTimeout(thisobj.afterTrade, 1000, resObj, cb);
 									});
 									return
+								} else if(result.success == false && result.reason == '物品栏已满'){
+									console.log('与【' + lockPlayerName + '】交易失败，系统返回【物品栏已满】，推测是金币满了。搜索其它账号来支持继续交易..')
+									// 推测是金币满了，接收不了暗号的金币。这里手动修改一下resObj，以防干扰thisobj.afterTrade的判断
+									// resRemain直接等于resCount，因为实质上并没有完成交易，对方要存/取的东西数量没变
+									resObj.resRemain = resObj.resCount
+									setTimeout(thisobj.saveOfflineData, 1000, () => {
+										setTimeout(thisobj.afterTrade, 1000, resObj, cb);
+									});
+									return
 								} else {
 									console.log('与【' + lockPlayerName + '】交易失败，执行回调函数..')
 									setTimeout(cb, 1000);
@@ -546,26 +555,24 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 			cga.savePlayerOfflineData(obj, cb)
 			return
 		},
+		// 由于每次交易之后都落盘身上的数据，所以切账号前不需要再次记录身上以及银行的数据
 		switchAccount: (account, cb) => {
-			// 切换账号前，先保存身上与银行的数据
-			thisobj.saveOfflineData(()=>{
-				cga.gui.LoadAccount({
-					user: account.user,
-					pwd: account.pwd,
-					gid: account.gid,// 子账号
-					character: account.character, //1左边2右边
-				}, (err, result) => {
-					if (err) {
-						console.error(err);
-						cb(new Error(err));
-						return
-					}
-					console.log('账号切换完毕，登出!');
-					setTimeout(() => {
-						cga.LogOut();
-					}, 1000);
+			cga.gui.LoadAccount({
+				user: account.user,
+				pwd: account.pwd,
+				gid: account.gid,// 子账号
+				character: account.character, //1左边2右边
+			}, (err, result) => {
+				if (err) {
+					console.error(err);
+					cb(new Error(err));
 					return
-				})
+				}
+				console.log('账号切换完毕，登出!');
+				setTimeout(() => {
+					cga.LogOut();
+				}, 1000);
+				return
 			})
 		},
 	};
