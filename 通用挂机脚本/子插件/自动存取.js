@@ -94,6 +94,7 @@ var thisobj = {
 	},
 	// 循环喊话，由speakStatus控制状态
 	speaker: () => {
+		console.log("🚀 ~ file: 自动存取.js:98 ~ thisobj.speakStatus:", thisobj.speakStatus)
 		if (thisobj.speakStatus == 'off') {
 			console.log('speaker off..')
 			return
@@ -396,6 +397,7 @@ var thisobj = {
 		console.log('打开交易..')
 		cga.EnableFlags(cga.ENABLE_FLAG_TRADE, true);
 		// 启动speaker
+		thisobj.speakStatus = 'on'
 		thisobj.speaker()
 
 		thisobj.toWaitLocation(() => {
