@@ -382,7 +382,7 @@ var thisobj = {
 		let order = thisobj.refreshOrder()
 
 		if (!order.length) {
-			console.log('【自动存取】经检查，无需存取。')
+			// console.log('【自动存取】经检查，无需存取。')
 
 			// 关闭speaker
 			thisobj.speakStr = ''
