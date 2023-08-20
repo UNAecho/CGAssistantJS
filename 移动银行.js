@@ -4,8 +4,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 	const tradeReg = new RegExp(/r?([sd]{1})([igp])([\w\u4e00-\u9fa5（）]*)([\^]{1})([\d]+)(\&?)([\d]*)/)
 
 	var loop = () => {
-		// 如果没有与银行对话缓存数据
-		if (thisobj.bankCache.items == null || thisobj.bankCache.gold == null || thisobj.bankCache.pets == null) {
+		// 如果没有与银行对话缓存数据。
+		if (thisobj.bankCache.item == null || thisobj.bankCache.gold == null || thisobj.bankCache.pets == null) {
 			cga.disbandTeam(() => {
 				cga.travel.toBank((r) => {
 					setTimeout(thisobj.saveOfflineData, 1000, loop);
@@ -74,7 +74,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 		protectGold: 1000,
 		// 角色银行信息缓存
 		bankCache: {
-			items: null,
+			item: null,
 			gold: null,
 			pets: null,
 		},
@@ -228,9 +228,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 					if (cnt < reqObj.count) {
 						// 取钱逻辑，首先看一下thisobj.protectGold
 						// 如果身上连thisobj.protectGold的数额都没有，比如身上金币数为0，而此时客户端要求取钱
-						if(cnt <= thisobj.protectGold){
+						if (cnt <= thisobj.protectGold) {
 							resObj.resCount = 0
-						}else{// 如果在thisobj.protectGold可以维持的情况下，给出一部分
+						} else {// 如果在thisobj.protectGold可以维持的情况下，给出一部分
 							resObj.resCount = cnt - thisobj.protectGold
 						}
 						resObj.resStr = resObj.resStr + resObj.resCount
@@ -376,11 +376,16 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 										setTimeout(thisobj.afterTrade, 1000, resObj, cb);
 									});
 									return
-								} else if(result.success == false && result.reason == '物品栏已满'){
+								} else if (result.success == false && result.reason == '物品栏已满') {
 									console.log('与【' + lockPlayerName + '】交易失败，系统返回【物品栏已满】，推测是金币满了。搜索其它账号来支持继续交易..')
-									// 推测是金币满了，接收不了暗号的金币。这里手动修改一下resObj，以防干扰thisobj.afterTrade的判断
-									// resRemain直接等于resCount，因为实质上并没有完成交易，对方要存/取的东西数量没变
-									resObj.resRemain = resObj.resCount
+									/**
+									 * 推测是金币满了，接收不了暗号的金币。这里手动修改一下resObj，以防干扰thisobj.afterTrade的判断
+									 * 这里resObj要从item、pet改为gold，因为本质上交易前已经判断过部分item或pet是可以存的，只不过因为暗号金币不能存进来导致显示【物品栏已满】
+									 */
+									// 类型改为金币
+									resObj.resTargetType = 'gold'
+									// resRemain数量改为暗号金币的数量
+									resObj.resRemain = thisobj.goldCipher[resObj.resTradeType]
 									setTimeout(thisobj.saveOfflineData, 1000, () => {
 										setTimeout(thisobj.afterTrade, 1000, resObj, cb);
 									});
@@ -406,11 +411,11 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 			if (cga.GetTeamPlayerInfo().length) {
 				// 重置昵称并延迟几秒解散队伍，防止其它等待玩家在解散队伍瞬间再次加入
 				cga.ChangeNickName('')
-				setTimeout(()=>{
+				setTimeout(() => {
 					cga.disbandTeam(() => {
 						thisobj.afterTrade(resObj, cb)
 					})
-				},1500)
+				}, 1500)
 				return
 			}
 
@@ -493,9 +498,23 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 			}
 		},
 		search: (resObj) => {
+			// 读取全员数据
 			let offlineData = cga.loadPlayerOfflineDataAllSync()
+			// 背包和银行的名称
 			let type = ['inventory', 'bank']
 
+			// 先检查全员数据中是否有自己的数据，如果有，则将其置顶，这样可以优先搜索自己的银行信息，如果满足需求，则无需切换账号了。
+			let myName = cga.GetPlayerInfo().name
+			for (let i = 0; i < offlineData.length; i++) {
+				// 如果有自己的数据，则置顶自己的数据
+				if(offlineData[i].name == myName){
+					console.log('将自己的数据置顶..')
+					let tmp = offlineData[i]
+					offlineData[i] = offlineData[0]
+					offlineData[0] = tmp
+				}
+			}
+			// 开始搜索数据，找出符合条件的玩家
 			if (resObj.resTradeType == 'save') {
 				for (let i in offlineData) {
 					for (let j in type) {
@@ -548,7 +567,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 				bank: bank
 			}
 			// 顺便更新资源的缓存数据
-			thisobj.bankCache.items = bank.item
+			thisobj.bankCache.item = bank.item
 			thisobj.bankCache.gold = bank.gold
 			thisobj.bankCache.pets = bank.pet
 			// 将身上与银行的所有资源保存为离线文件，方便搜索。
