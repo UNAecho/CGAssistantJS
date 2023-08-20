@@ -548,7 +548,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 		},
 		switchAccount: (account, cb) => {
 			// 切换账号前，先保存身上与银行的数据
-			saveOfflineData(()=>{
+			thisobj.saveOfflineData(()=>{
 				cga.gui.LoadAccount({
 					user: account.user,
 					pwd: account.pwd,
