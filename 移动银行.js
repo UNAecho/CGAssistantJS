@@ -547,22 +547,25 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 			return
 		},
 		switchAccount: (account, cb) => {
-			cga.gui.LoadAccount({
-				user: account.user,
-				pwd: account.pwd,
-				gid: account.gid,// 子账号
-				character: account.character, //1左边2右边
-			}, (err, result) => {
-				if (err) {
-					console.error(err);
-					cb(new Error(err));
+			// 切换账号前，先保存身上与银行的数据
+			saveOfflineData(()=>{
+				cga.gui.LoadAccount({
+					user: account.user,
+					pwd: account.pwd,
+					gid: account.gid,// 子账号
+					character: account.character, //1左边2右边
+				}, (err, result) => {
+					if (err) {
+						console.error(err);
+						cb(new Error(err));
+						return
+					}
+					console.log('账号切换完毕，登出!');
+					setTimeout(() => {
+						cga.LogOut();
+					}, 1000);
 					return
-				}
-				console.log('账号切换完毕，登出!');
-				setTimeout(() => {
-					cga.LogOut();
-				}, 1000);
-				return
+				})
 			})
 		},
 	};
