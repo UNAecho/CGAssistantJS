@@ -1027,7 +1027,7 @@ var loop = ()=>{
 						// 不管是无限循环还是正常去转职，都要清空任务缓存，以免下次打还是继续上次的进度。
 						rollBack(()=>{
 							if(thisobj.spawnOfAmber4.aim == '无限循环' || cga.getItemCount('转职保证书') == 0){
-								console.log('称号已满、包中没有保证书或已经不需要再烧声望，重新做本任务。')
+								console.log('称号已满、包中没有保证书或需要无限循环帮其它人做此任务，重置任务状态，并重新进入loop..')
 								rollBack(()=>{
 									setTimeout(loop, 3000);
 								})
