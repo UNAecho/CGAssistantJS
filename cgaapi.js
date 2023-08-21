@@ -663,7 +663,7 @@ module.exports = function(callback){
 		}
 
 		items.forEach(i => {
-			res.item.push({name : i.name, count : i.count, pos : i.pos})
+			res.item.push({name : i.name, count : i.count > 0 ? i.count : 1, pos : i.pos})
 		});
 		pets.forEach(p => {
 			res.pet.push({name : p.name, realname : p.realname,index : p.index,})
