@@ -7354,6 +7354,50 @@ module.exports = function(callback){
 	}
 
 	/**
+	 * UNAecho:统计离线数据中的资产总和
+	 * @returns 
+	 */
+	cga.getSumOfflineData = () => {
+		let offlineData = cga.loadPlayerOfflineDataAllSync()
+		let categoryType = ['inventory', 'bank']
+		let type = ['item', 'gold', 'pet']
+
+		let result = {}
+
+		offlineData.forEach((jsonObj) => {
+			categoryType.forEach((category) => {
+				type.forEach((t) => {
+					if (!result.hasOwnProperty(t)) {
+						if (t == 'gold') {
+							result[t] = 0
+						} else {
+							result[t] = {}
+						}
+					}
+					if (t == 'item') {
+						jsonObj[category][t].forEach((item) => {
+							if (!result[t].hasOwnProperty(item.name)) {
+								result[t][item.name] = 0
+							}
+							result[t][item.name] += item.count
+						})
+					} else if (t == 'gold') {
+						result[t] += jsonObj[category][t]
+					} else if (t == 'pet') {
+						jsonObj[category][t].forEach((pet) => {
+							if (!result[t].hasOwnProperty(pet.name)) {
+								result[t][pet.name] = 0
+							}
+							result[t][pet.name] += 1
+						})
+					}
+				})
+			})
+		})
+		return result
+	}
+
+	/**
 	 * UNAecho :写了一个持久化人物任务完成情况的方法，用于离线记录人物的一些数据，便于查询。
 	 * 请注意，关于任务的称号，我自己也没有做过全部的任务，所以请自行添加需要的任务名称，我只写了一个开启者
 	 * 【注意】采集系在3转后自动可以传送至小岛，相当于战斗系做完了半山6/地狱的回响。

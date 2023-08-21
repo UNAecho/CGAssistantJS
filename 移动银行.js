@@ -508,7 +508,6 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 			for (let i = 0; i < offlineData.length; i++) {
 				// 如果有自己的数据，则置顶自己的数据
 				if(offlineData[i].name == myName){
-					console.log('将自己的数据置顶..')
 					let tmp = offlineData[i]
 					offlineData[i] = offlineData[0]
 					offlineData[0] = tmp
