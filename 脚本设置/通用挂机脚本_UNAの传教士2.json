@@ -28,7 +28,8 @@
     },
     "leaderX": 143,
     "leaderY": 109,
-    "timeout": 180000,"autoPromoteTask":true,
+    "timeout": 180000,
+    "autoPromoteTask": true,
     "spawnOfAmber4": {
         "flag": true,
         "part": "队长",
@@ -56,5 +57,16 @@
     "maxDefense": 0,
     "maxAgility": 150,
     "maxMagical": 150,
-    "petpoint": 1
+    "petpoint": 1,
+    "autoSaveAndDraw": {
+        "item": [],
+        "gold": [
+            {
+                "name": "金币",
+                "upper": 300000,
+                "lower": 100000
+            }
+        ],
+        "pet": []
+    }
 }

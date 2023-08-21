@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "转职保证书",
+    "mainPlugin": "智能练级",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
@@ -21,7 +21,8 @@
     "leaderFilter": "bus",
     "leaderX": 143,
     "leaderY": 109,
-    "timeout": 180000,"autoPromoteTask":true,
+    "timeout": 180000,
+    "autoPromoteTask": true,
     "spawnOfAmber4": {
         "flag": true,
         "part": "队员",
@@ -49,5 +50,16 @@
     "maxDefense": 0,
     "maxAgility": 200,
     "maxMagical": 0,
-    "petpoint": 4
+    "petpoint": 4,
+    "autoSaveAndDraw": {
+        "item": [],
+        "gold": [
+            {
+                "name": "金币",
+                "upper": 300000,
+                "lower": 100000
+            }
+        ],
+        "pet": []
+    }
 }
