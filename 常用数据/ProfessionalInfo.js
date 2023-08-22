@@ -853,7 +853,7 @@ const Professions = [
 			],
 		npcpos : [12 ,30],
 	}, {
-		name: '鉴定师',
+		name: '鉴定士',
 		category: '服务系',
 		skill:['鉴定'],
 		titles: ['鉴定学徒', '鉴定士', '资深鉴定师傅', '御用鉴定师', '鉴定专家'],

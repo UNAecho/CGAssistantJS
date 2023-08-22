@@ -35,7 +35,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	// 分组信息，绿组暂时不用，走else判断
 	const red = ["剑士","骑士","战斧斗士","弓箭手","格斗士","教团骑士","暗黑骑士","魔术师","传教士","咒术师","巫师"]
 	const blue = ["士兵","忍者","舞者","盗贼","封印师","驯兽师","饲养师","医生","护士"]
-	const yellow = ["鉴定师","厨师","侦探","仙人","药剂师","矿工","樵夫","猎人","武器修理工","防具修理工"]
+	const yellow = ["鉴定士","厨师","侦探","仙人","药剂师","矿工","樵夫","猎人","武器修理工","防具修理工"]
 	const green = ["造斧工","造弓工","长袍工"]
 	
 	// 分组隶属，红蓝黄绿
@@ -45,7 +45,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	const productDict = {
 		'武器修理工' : {item : '至高之剑', count : 1},
 		'防具修理工' : {item : '至高之铠', count : 1},
-		'鉴定师' : {item : '神秘陨石', count : 1},
+		'鉴定士' : {item : '神秘陨石', count : 1},
 		'侦探' : {item : '侦探眼镜', count : 1},
 		'仙人' : {item : '仙花', count : 1},
 		'药剂师' : {item : '生命回复药（1000）', count : 1},

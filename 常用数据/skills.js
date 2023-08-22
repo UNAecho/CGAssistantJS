@@ -1424,7 +1424,7 @@ const skillInfos = [
 	{
 		name : '鉴定',
 		type : '其他特殊技能',
-		owner :  '鉴定师',
+		owner :  '鉴定士',
 		target : '其它',
 		cost : 100,
 		fieldCost : 2,

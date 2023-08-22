@@ -79,7 +79,7 @@ if(job == '药剂师'){
 			socket.cga_data = data;
 			socket.join('gather_'+data.gather_name);
 			console.log(socket.cga_data.player_name +' 已加入魔法大学节点');
-			if(data.job_name == '鉴定师'){
+			if(data.job_name == '鉴定士'){
 				thisobj.isFull = data.is_full
 				console.log('鉴定师通知:thisobj.isFull : ' + thisobj.isFull)
 			}
@@ -806,7 +806,7 @@ var promote = (cb)=>{
 		return
 	});
 	
-	if(job == '鉴定师'){
+	if(job == '鉴定士'){
 		cga.TurnTo(6, 7);
 		cga.AsyncWaitNPCDialog(dialogHandler);
 	}
@@ -835,7 +835,7 @@ var promote = (cb)=>{
 	// 		setTimeout(disbandTeam, 1000, cb);
 	// 	}
 
-	// 	if(job == '鉴定师'){
+	// 	if(job == '鉴定士'){
 	// 		cga.TurnTo(6, 7);
 	// 		cga.AsyncWaitNPCDialog(dialogHandler);
 	// 	}
@@ -1012,7 +1012,7 @@ var loop = ()=>{
 			
 			craft();		
 		})
-	}else if(job == '鉴定师'){
+	}else if(job == '鉴定士'){
 		// 极端情况下，药剂师通过socket.emit通知鉴定师状态更改为deepblue_ready，刚好鉴定师loop运行，就会将deepblue_ready覆盖掉，这里做一下处理
 		if(thisobj.state != 'deepblue_ready'){
 			console.log('loop开始，thisobj != deepblue_ready，将其置为waiting')
@@ -1433,7 +1433,7 @@ var thisobj = {
 	// 客户端仓库是否已存满3转物品（深蓝药剂或其他3转物品），默认值为null，不要使用false
 	isFull : null,
 	// 客户端状态，鉴定初始化waiting，采集初始化gathering
-	state : job == '鉴定师' ? 'waiting' : 'gathering',
+	state : job == '鉴定士' ? 'waiting' : 'gathering',
 	// 客户端采集者用
 	gatherInfo : {},
 	// 客户端采集者用，正在采集的物品名称
@@ -1604,7 +1604,7 @@ var thisobj = {
 			return true;
 		}
 		// 鉴定师以及猎人、伐木的端口号
-		if(job == '鉴定师' || job == '猎人' || job == '樵夫' && pair.field == 'serverPort'){
+		if(job == '鉴定士' || job == '猎人' || job == '樵夫' && pair.field == 'serverPort'){
 			pair.field = '服务端口';
 			pair.value = pair.value;
 			pair.translated = true;
@@ -1626,7 +1626,7 @@ var thisobj = {
 				console.error('读取配置：监听端口失败！');
 				return false;
 			}
-		}else if(job == '鉴定师' || job == '猎人' || job == '樵夫'){// 鉴定师以及猎人、伐木的端口号
+		}else if(job == '鉴定士' || job == '猎人' || job == '樵夫'){// 鉴定师以及猎人、伐木的端口号
 			configTable.serverPort = obj.serverPort;
 			thisobj.serverPort = obj.serverPort;
 			
@@ -1744,7 +1744,7 @@ var thisobj = {
 				}
 				// 用修改昵称的方式来告知晋级小号，魔法大学队长是谁。
 				// 因为小号可能为多台机器运行，不参加服务端的socket，无法传递信息。
-				else if(job == '鉴定师'){
+				else if(job == '鉴定士'){
 					cga.ChangeNickName(thisobj.craft_player)
 				}
 			});
@@ -1799,7 +1799,7 @@ var thisobj = {
 				loop()
 			}
 
-			if(job == '鉴定师'){
+			if(job == '鉴定士'){
 				// 服务端通知客户端已备好药剂
 				socket.on('deepblue_ready', () => {
 					console.log('deepblue_ready');
