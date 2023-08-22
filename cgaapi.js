@@ -14404,6 +14404,8 @@ module.exports = function(callback){
 					jobObj.job = data[i].name
 					if(['物理系', '魔法系', '魔物系'].indexOf(data[i].category)!=-1){
 						jobObj.jobType = '战斗系'
+					}else if(data[i].category == '服务系'){
+						jobObj.jobType = '服务系'
 					}else{
 						jobObj.jobType = '生产系'
 					}
