@@ -94,7 +94,6 @@ var thisobj = {
 	},
 	// 循环喊话，由speakStatus控制状态
 	speaker: () => {
-		console.log("🚀 ~ file: 自动存取.js:98 ~ thisobj.speakStatus:", thisobj.speakStatus)
 		if (thisobj.speakStatus == 'off') {
 			console.log('speaker off..')
 			return

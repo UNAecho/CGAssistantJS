@@ -611,7 +611,7 @@ var loop = () => {
 				setTimeout(autoRing, 1000, loop);
 			});
 			return
-		} else if (thisobj.autoRing.aim == '一次性' && cga.getItemCount('承认之戒', true) == 0) {
+		} else if (thisobj.autoRing.aim == '一次性' && cga.getItemCount('承认之戒', true) == 0 && cga.GetPlayerInfo().level >= 80) {
 			console.log('监测到你需要承认之戒，但身上没有。进入承认之戒任务..')
 			callSubPluginsAsync('prepare', () => {
 				setTimeout(autoRing, 1000, loop);
