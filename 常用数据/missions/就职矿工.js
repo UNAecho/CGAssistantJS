@@ -138,8 +138,8 @@ var thisobj = {
 
 	},
 	doTask: (param, cb) => {
-		// 单人即可完成，战斗改为逃跑
-		cga.loadBattleConfig('战斗赶路')
+		// 避免使用自动丢弃列表包含铜的战斗配置
+		cga.loadBattleConfig('生产赶路')
 		// 接受外部传入的参数
 		thisobj.param = param
 		var task = cga.task.TaskWithThink(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements)
