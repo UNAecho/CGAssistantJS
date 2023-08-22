@@ -314,6 +314,10 @@ var thisobj = {
 						}
 						if (reqObj.tradeType == 'draw') {
 							if (reqObj.type == 'item') {
+								if(!receivedStuffs.items){
+									console.log('【' + lockPlayerName + '】动作【' + reqObj.tradeType + '】【' + reqObj.name + '】未获取到道具信息，验证失败！拒绝交易')
+									return false
+								}
 								let receivedCount = 0
 								let received = receivedStuffs.items.filter((it) => {
 									if (it.name == reqObj.name) {
@@ -337,6 +341,10 @@ var thisobj = {
 								console.log('【' + lockPlayerName + '】动作【' + reqObj.tradeType + '】【' + reqObj.name + '】验证失败！拒绝交易')
 								return false
 							} else if (reqObj.type == 'pet') {
+								if(!receivedStuffs.pet){
+									console.log('【' + lockPlayerName + '】动作【' + reqObj.tradeType + '】【' + reqObj.name + '】未获取到宠物信息，验证失败！拒绝交易')
+									return false
+								}
 								let petsCount = 0
 								let received = receivedStuffs.pet.filter((pet) => {
 									// 必须为自定义名称
@@ -363,8 +371,8 @@ var thisobj = {
 							setTimeout(thisobj.tradeFunc, 1000, lockPlayerName, cb);
 							return
 						} else {// 交易失败，重新发起请求，并打开监听
-							console.log('与【' + lockPlayerName + '】交易失败，重新发起请求..')
-							setTimeout(startTrade, 1000);
+							console.log('与【' + lockPlayerName + '】交易失败，重新进入tradeFunc..')
+							setTimeout(thisobj.tradeFunc, 1000, lockPlayerName, cb)
 							return
 						}
 					});

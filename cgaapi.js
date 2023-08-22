@@ -14796,6 +14796,16 @@ module.exports = function(callback){
 			console.log('cga.getItemMaxcount:item没有传入，返回默认值0')
 			return 0
 		}
+		// 首先看看身上是否有该物品
+		let targetItem = cga.GetItemsInfo().find((it)=>{
+			return it.name == item.name
+		});
+		// 如果有，则可获取其type，更好地辨别其堆叠数
+		if(targetItem){
+			console.log('道具【' + item.name +'】查询到其type:'+ targetItem.type+'，便于获取其堆叠数')
+			item.type = targetItem.type
+		}
+
 		if (item.name.indexOf('谜语箱') >= 0) return 0;
 		if (item.name.indexOf('生命力回复药') >= 0) return 3;
 		if (item.name.endsWith('的水晶碎片')) return 999;
@@ -14818,7 +14828,7 @@ module.exports = function(callback){
 			if (item.name.startsWith('隐秘的徽记')) return 20;
 			return 40;
 		}
-		console.warn('【UNAecho脚本警告】物品【' + item.name + '】没有查询到堆叠数，默认返回0。请联系作者https://github.com/UNAecho完善')
+		console.warn('【UNAecho脚本警告】物品【' + item.name + '】没有查询到堆叠数，默认返回0。如需完善，请联系作者https://github.com/UNAecho。')
 		return 0
 	}
 
