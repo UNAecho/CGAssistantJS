@@ -1410,7 +1410,7 @@ const skillInfos = [
 	{
 		name : '治疗',
 		type : '其他特殊技能',
-		owner :  '医生',
+		owner :  '医师',
 		target : '其它',
 		cost : 100,
 		fieldCost : 2,

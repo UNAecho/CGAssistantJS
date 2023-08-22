@@ -901,7 +901,7 @@ const Professions = [
 		titles: ['见习侦探', '侦探', '名侦探', '大侦探', '超级侦探'],
         npcMainMap: '法兰城'
 	}, {
-		name: '医生',
+		name: '医师',
 		category: '服务系',
 		skill:['治疗'],
 		titles: ['实习医师','医师','资深医师','御医','超级医生','神医'],

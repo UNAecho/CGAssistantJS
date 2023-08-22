@@ -7434,7 +7434,7 @@ module.exports = function(callback){
 			throw new Error('category数值有误，请手动检查ProfessionalInfo.js中【' + professionalInfo.name+'】的category')
 		}
 		// 护士和医生属于生产系，但晋级需要做战斗系的任务
-		if(['护士', '医生',].indexOf(professionalInfo.name) != -1){
+		if(['护士', '医师',].indexOf(professionalInfo.name) != -1){
 			category = '战斗系'
 		}else if(['物理系', '魔法系', '魔物系',].indexOf(category) != -1){
 			category = '战斗系'
