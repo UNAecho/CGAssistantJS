@@ -31,9 +31,9 @@ var thisobj = {
 		let targetObj = { param: {} }
 		// 未就职小号
 		if (curJobObj.curJob == '游民') {
-			if (thisobj.finalJob.jobType == '战斗系') {
+			if (thisobj.finalJob.jobType == '战斗系' || thisobj.finalJob.jobType == '服务系') {
 				if (cga.getItemCount('驯兽师推荐信') > 0) {
-					console.log('战斗系拿完驯兽推荐信之后，先就职矿工练级，方便单人开传送。在刷声望前，随便转职。')
+					console.log('战斗系或服务系拿完驯兽推荐信之后，先就职矿工练级，方便单人开传送。在刷声望前，随便转职。')
 					targetObj.missionName = '就职矿工'
 				} else {
 					targetObj.missionName = '拿驯兽师推荐信'
@@ -55,7 +55,7 @@ var thisobj = {
 		}
 
 		/**
-		 * 进入转职保证书、传咒驯互转、烧声望循环的前提条件：角色在2转或以下（防止将高阶职业误转）、角色培养目标职业是战斗系、大于80级（方便战斗）、声望小于无尽星空。
+		 * 进入转职保证书、传咒驯互转、烧声望循环的前提条件：角色在2转或以下（防止将高阶职业误转）、角色培养目标职业是战斗系、服务系、大于80级（方便战斗）、声望小于无尽星空。
 		 * 这里暂时使用脚本跳转的方式，因为逻辑太复杂，没有做解耦。
 		 * 【暗黑骑士】【教团骑士】由于官方设定，无法进行转职保证书方式烧声望，故排除。
 		 * 
@@ -64,16 +64,16 @@ var thisobj = {
 		 * 也就是说，在不进行离线写入、不与阿梅对话的情况下，由于无法分辨当前角色是否刷满声望，使用【当前职业与目标职业一致，并且声望小于奔跑的春风】来判断该号是否进入刷声望环节。
 		 * 2、当前职业与目标职业不一致，并且不是驯兽师（驯兽师要靠练级刷，因为技能比称号更难刷满）的情况；或者无论是什么职业，手中没有转职保证书，而当前职业并不是目标职业时，需要进入刷声望环节。
 		 */
-		if (thisobj.finalJob.jobType == '战斗系' && playerInfo.level >= 80 && curJobObj.job != '暗黑骑士' && curJobObj.job != '教团骑士') {
+		if ((thisobj.finalJob.jobType == '战斗系' || thisobj.finalJob.jobType == '服务系') && playerInfo.level >= 80 && curJobObj.job != '暗黑骑士' && curJobObj.job != '教团骑士') {
 			let transfer = () => {
-				console.log('你的角色培养目标是战斗系职业，并且声望小于无尽星空，开始进入烧声望环节。包含【转职保证书】【烧声望】【传咒驯互转】3个部分')
+				console.log('你的角色培养目标是战斗系或服务系职业，并且声望小于无尽星空，开始进入烧声望环节。包含【转职保证书】【烧声望】【传咒驯互转】3个部分')
 				setTimeout(() => {
 					updateConfig.update_config({ 'mainPlugin': '转职保证书' })
 				}, 2000)
 			}
 			// 安全起见，2转以后的角色不参与烧声望流程，以防误转。
 			if (curJobObj.jobLv > 2) {
-				console.log('【UNAecho脚本警告】你目标职业是战斗系，但你已经3转或以上，保险起见，禁止脚本转职，如果需要烧声望，请手动转职一次，再运行脚本。')
+				console.log('【UNAecho脚本警告】你目标职业是战斗系或服务系，但你已经3转或以上，保险起见，禁止脚本转职，如果需要烧声望，请手动转职一次，再运行脚本。')
 			} else if (thisobj.finalJob.job != curJobObj.job && cga.getItemCount('转职保证书') == 0) {// 如果不是目标职业，必须去拿一份转职保证书。因为你终究是要去转成目标职业的
 				transfer()
 				return
@@ -84,7 +84,13 @@ var thisobj = {
 		}
 
 		// 如果满足目标职业的晋级条件
-		if (thisobj.finalJob.job == curJobObj.job && ((curJobObj.jobType == '战斗系' && curJobObj.jobLv < 5) || (curJobObj.jobType == '生产系' && curJobObj.jobLv < 4))) {
+		if (thisobj.finalJob.job == curJobObj.job &&
+			(
+				(curJobObj.jobType == '战斗系' && curJobObj.jobLv < 5)
+				|| (curJobObj.jobType == '生产系' && curJobObj.jobLv < 4)
+				|| (curJobObj.jobType == '服务系' && curJobObj.jobLv < 4)
+			)
+		) {
 			console.log('你没有达到职业的顶级，进入晋级判定..')
 			let promoteObj = cga.job.promoteInfo[curJobObj.jobLv]
 			// 如果完成了对应的进阶任务，则初步判定可能需要晋级，进入判断得意技是否达标的逻辑。
