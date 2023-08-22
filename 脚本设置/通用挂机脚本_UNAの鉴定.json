@@ -1,1 +1,65 @@
-{"mainPlugin":"采集","subPlugins":["自动存取"],"gatherObject":"双百买布","serverPort":2555,"target":"砂糖","mineType":1,"logoutTimes":0}
+{
+    "mainPlugin": "智能练级",
+    "subPlugins": [
+        "受伤宠物医院治疗",
+        "受伤飞碟治疗",
+        "回补提醒",
+        "换水晶",
+        "掉魂自动招魂",
+        "智能培养角色",
+        "监听回补",
+        "监听宠物忠诚度",
+        "自动加点",
+        "自动存取",
+        "队员卖石"
+    ],
+    "finalJob": "鉴定师",
+    "roleObj": {
+        "part": "队员",
+        "role": "小号"
+    },
+    "leaderFilter": "bus",
+    "leaderX": 143,
+    "leaderY": 109,
+    "timeout": 180000,
+    "autoPromoteTask": true,
+    "spawnOfAmber4": {
+        "flag": false,
+        "part": "队员",
+        "aim": "一次性",
+        "leaderX": 146,
+        "leaderY": 109,
+        "leaderFilter": "egg"
+    },
+    "sellStore": 1,
+    "autoRing": {
+        "flag": true,
+        "part": "队员",
+        "aim": "一次性",
+        "leaderX": 50,
+        "leaderY": 77,
+        "leaderFilter": "ring"
+    },
+    "minHp": "25%",
+    "minMp": "15%",
+    "buyCrystal": "地水的水晶（5：5）",
+    "needPerfectTrainSkill": false,
+    "minLoyality": 40,
+    "maxEndurance": 233,
+    "maxStrength": 0,
+    "maxDefense": 0,
+    "maxAgility": 100,
+    "maxMagical": 333,
+    "petpoint": 1,
+    "autoSaveAndDraw": {
+        "item": [],
+        "gold": [
+            {
+                "name": "金币",
+                "upper": 300000,
+                "lower": 100000
+            }
+        ],
+        "pet": []
+    }
+}

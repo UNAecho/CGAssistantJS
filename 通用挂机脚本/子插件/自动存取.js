@@ -266,7 +266,7 @@ var thisobj = {
 			// 离开队伍
 			cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
 			// 结束此子插件，稍微延迟，给离开队伍一点时间
-			setTimeout(cb,2000)
+			setTimeout(cb, 2000)
 			return
 		}
 
@@ -314,7 +314,7 @@ var thisobj = {
 						}
 						if (reqObj.tradeType == 'draw') {
 							if (reqObj.type == 'item') {
-								if(!receivedStuffs.items){
+								if (!receivedStuffs.items) {
 									console.log('【' + lockPlayerName + '】动作【' + reqObj.tradeType + '】【' + reqObj.name + '】未获取到道具信息，验证失败！拒绝交易')
 									return false
 								}
@@ -341,7 +341,7 @@ var thisobj = {
 								console.log('【' + lockPlayerName + '】动作【' + reqObj.tradeType + '】【' + reqObj.name + '】验证失败！拒绝交易')
 								return false
 							} else if (reqObj.type == 'pet') {
-								if(!receivedStuffs.pet){
+								if (!receivedStuffs.pet) {
 									console.log('【' + lockPlayerName + '】动作【' + reqObj.tradeType + '】【' + reqObj.name + '】未获取到宠物信息，验证失败！拒绝交易')
 									return false
 								}
@@ -400,7 +400,42 @@ var thisobj = {
 			cb(null)
 			return
 		}
-		console.log('有自动存取需求:',order)
+		console.log('有自动存取需求:', order)
+		// 打开交易
+		console.log('打开交易..')
+		cga.EnableFlags(cga.ENABLE_FLAG_TRADE, true);
+		// 启动speaker
+		thisobj.speakStatus = 'on'
+		thisobj.speaker()
+
+		thisobj.toWaitLocation(() => {
+			thisobj.findServer(cb)
+		})
+
+		return
+	},
+	/**
+	 * UNAecho:暴露接口，将prepare的功能给除通用挂机脚本以外的脚本调用。方便存取
+	 * 可以手动传一份autoSaveAndDraw，具体格式见脚本设置中的json文件，或者下面的inputcb
+	 * @param {Object} autoSaveAndDraw 
+	 * @param {*} cb 
+	 */
+	manualPrepare: (autoSaveAndDraw, cb) => {
+		// 如果手动传入，则使用手动的数据。否则使用脚本设置保存的数据
+		if(autoSaveAndDraw){
+			thisobj.autoSaveAndDraw = autoSaveAndDraw
+		}
+
+		let order = thisobj.refreshOrder()
+		if (!order.length) {
+			// 关闭speaker
+			thisobj.speakStr = ''
+			thisobj.speakStatus = 'off'
+
+			cb(null)
+			return
+		}
+		console.log('有自动存取需求:', order)
 		// 打开交易
 		console.log('打开交易..')
 		cga.EnableFlags(cga.ENABLE_FLAG_TRADE, true);

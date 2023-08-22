@@ -14802,7 +14802,7 @@ module.exports = function(callback){
 		});
 		// 如果有，则可获取其type，更好地辨别其堆叠数
 		if(targetItem){
-			console.log('道具【' + item.name +'】查询到其type:'+ targetItem.type+'，便于获取其堆叠数')
+			// console.log('道具【' + item.name +'】查询到其type:'+ targetItem.type+'，便于获取其堆叠数')
 			item.type = targetItem.type
 		}
 
