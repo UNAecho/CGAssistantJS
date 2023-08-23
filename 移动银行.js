@@ -1,7 +1,7 @@
 var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 
 	// 需要与自动存取.js中一致
-	const tradeReg = new RegExp(/r?([sd]{1})([igp])([\w\u4e00-\u9fa5（）]*)([\^]{1})([\d]+)(\&?)([\d]*)/)
+	const tradeReg = new RegExp(/r?([sd]{1})([igp])([\w\u4e00-\u9fa5（）]*)([\^]{1})([\d]+)(\&?)([\d]*)([\S]*)?/)
 
 	var loop = () => {
 		// 如果没有与银行对话缓存数据。
@@ -63,13 +63,17 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 	var thisobj = {
 		// 寻找服务玩家的昵称暗号，需要与自动存取.js中一致
 		serverCipher: '朵拉',
-		// 客户端昵称暗号，服务方会辨识是否提供服务。
-		clientCipher: '$^~',
+		// 客户端昵称暗号，服务方会辨识是否提供服务。，需要与自动存取.js中一致
+		clientCipher: '$^@',
 		// 隐式加密金额，请在自动存取.js中加入对应逻辑。
 		goldCipher: {
 			'save': 1,
 			'draw': 7,
 		},
+		// 禁用隐式加密的开关，如身上和银行金币均满，而对方要取东西，自己无法收取暗号金币时，启用此开关
+		skipCipherGold: false,
+		// 禁用隐式加密告知内容，需要与自动存取.js中一致
+		skipCipherStr: '*1~',
 		// 角色最低保留金币，方式角色没钱不能存银行。
 		protectGold: 1000,
 		// 角色银行信息缓存
@@ -239,8 +243,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 						resObj.resStr = resObj.resStr + reqObj.count
 						resObj.resCount = reqObj.count
 					}
-				}
-				else if (reqObj.targetType == 'pet') {
+				} else if (reqObj.targetType == 'pet') {
 					/**
 					 * 这里判断宠物是否满足需求，如果是默认官方名称，name是''空串，只能通过realname（默认官方宠物名称）来判断。
 					 * 如果宠物重命名，则以重命名为判断标准；如果是默认名字，以默认名字为判断标准。
@@ -261,6 +264,14 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 				}
 			} else {
 				throw new Error('matchObj.tradeType数值错误。')
+			}
+
+			// 然后判断是否要收取暗号金币
+			if (cga.GetPlayerInfo().gold + thisobj.goldCipher[reqObj.tradeType] > 1000000) {
+				// 将跳过暗号金币flag置为true
+				thisobj.skipCipherGold = true
+				// 告知客户端不需要暗号金币
+				resObj.resStr = resObj.resStr + thisobj.skipCipherStr
 			}
 
 			// 分析完身上资源之后，进入判断。
@@ -317,7 +328,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 											}
 											return false
 										})
-										if (received && receivedStuffs.gold != thisobj.goldCipher[reqObj.tradeType]) {
+										if (received && (!thisobj.skipCipherGold && receivedStuffs.gold != thisobj.goldCipher[reqObj.tradeType])) {
 											console.log('【' + lockPlayerName + '】的金币数【' + receivedStuffs.gold + '】未通过暗号识别！拒绝交易')
 											return false
 										}
@@ -344,7 +355,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 											}
 											return false
 										})
-										if (received && receivedStuffs.gold != thisobj.goldCipher[reqObj.tradeType]) {
+										if (received && (!thisobj.skipCipherGold && receivedStuffs.gold != thisobj.goldCipher[reqObj.tradeType])) {
 											console.log('【' + lockPlayerName + '】的金币数【' + receivedStuffs.gold + '】未通过暗号识别！拒绝交易')
 											return false
 										}
@@ -358,6 +369,10 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 									// 隐式加密，存取物品/宠物要提供金币暗号
 									if (resObj.resTargetType != 'gold') {
 										if (receivedStuffs && receivedStuffs.gold == thisobj.goldCipher[reqObj.tradeType]) {
+											console.log('对方没有给出暗号金币，拒绝交易..')
+											return true
+										} else if (thisobj.skipCipherGold) {
+											console.log('当前金币已经接收不了暗号金币，跳过此判断，同意交易..')
 											return true
 										}
 									} else if (resObj.resTargetType == 'gold') {// 由于使用金币作为暗号，在交易本身就是金币的时候，则不使用暗号，太麻烦。TODO想一个除了金币以外的加密方式。
@@ -369,28 +384,37 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 								console.error('异常情况，请检查')
 								return false
 							}, (result) => {
+								// 无论交易是否成功，都要重置暗号金币flag
+								thisobj.skipCipherGold = false
+
 								if (result.success == true) {
-									// 交易过后，更新离线数据
+									// 交易成功，新离线数据
 									// 银行数据也会被更新，但是银行数据由于有Session机制（进入游戏时与银行NPC对话过），也是最新的。
 									setTimeout(thisobj.saveOfflineData, 1000, () => {
 										setTimeout(thisobj.afterTrade, 1000, resObj, cb);
 									});
 									return
-								} else if (result.success == false && result.reason == '物品栏已满') {
-									console.log('与【' + lockPlayerName + '】交易失败，系统返回【物品栏已满】，推测是金币满了。搜索其它账号来支持继续交易..')
-									/**
-									 * 推测是金币满了，接收不了暗号的金币。这里手动修改一下resObj，以防干扰thisobj.afterTrade的判断
-									 * 这里resObj要从item、pet改为gold，因为本质上交易前已经判断过部分item或pet是可以存的，只不过因为暗号金币不能存进来导致显示【物品栏已满】
-									 */
-									// 类型改为金币
-									resObj.resTargetType = 'gold'
-									// resRemain数量改为暗号金币的数量
-									resObj.resRemain = thisobj.goldCipher[resObj.resTradeType]
-									setTimeout(thisobj.saveOfflineData, 1000, () => {
-										setTimeout(thisobj.afterTrade, 1000, resObj, cb);
-									});
-									return
-								} else {
+								}
+								// 暗号金币实行判断制，理论上不应该出现物品栏已满的逻辑，暂时上线运行测试是否可用
+
+								// else if (result.success == false && result.reason == '物品栏已满') {
+								// 	console.log('与【' + lockPlayerName + '】交易失败，系统返回【物品栏已满】，推测是金币满了。搜索其它账号来支持继续交易..')
+								// 	/**
+								// 	 * 推测是金币满了，接收不了暗号的金币。这里手动修改一下resObj，以防干扰thisobj.afterTrade的判断
+								// 	 * 这里resObj中相关数据要从item、pet改为gold类型，因为本质上交易前已经判断过部分item或pet是可以存的，只不过因为暗号金币不能存进来导致显示【物品栏已满】
+								// 	 */
+								// 	resObj.resTradeType = 'save'
+								// 	resObj.resTarget = '金币'
+								// 	resObj.resTargetType = 'gold'
+								// 	resObj.resCount = '0'
+								// 	// resRemain数量改为暗号金币的数量
+								// 	resObj.resRemain = thisobj.goldCipher[resObj.resTradeType]
+								// 	setTimeout(thisobj.saveOfflineData, 1000, () => {
+								// 		setTimeout(thisobj.afterTrade, 1000, resObj, cb);
+								// 	});
+								// 	return
+								// } 
+								else {
 									console.log('与【' + lockPlayerName + '】交易失败，执行回调函数..')
 									setTimeout(cb, 1000);
 								}
@@ -507,7 +531,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 			let myName = cga.GetPlayerInfo().name
 			for (let i = 0; i < offlineData.length; i++) {
 				// 如果有自己的数据，则置顶自己的数据
-				if(offlineData[i].name == myName){
+				if (offlineData[i].name == myName) {
 					let tmp = offlineData[i]
 					offlineData[i] = offlineData[0]
 					offlineData[0] = tmp

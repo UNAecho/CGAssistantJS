@@ -2,13 +2,13 @@ var cga = global.cga;
 var configTable = global.configTable;
 
 // 需要与移动银行.js中一致
-const tradeReg = new RegExp(/r?([sd]{1})([igp])([\w\u4e00-\u9fa5（）]*)([\^]{1})([\d]+)(\&?)([\d]*)/)
+const tradeReg = new RegExp(/r?([sd]{1})([igp])([\w\u4e00-\u9fa5（）]*)([\^]{1})([\d]+)(\&?)([\d]*)([\S]*)?/)
 
 var thisobj = {
 	// 寻找服务玩家的昵称暗号，需要与移动银行.js中一致
 	serverCipher: '朵拉',
-	// 客户端昵称暗号，服务方会辨识是否提供服务。
-	clientCipher: '$^~',
+	// 客户端昵称暗号，服务方会辨识是否提供服务。需要与移动银行.js中一致
+	clientCipher: '$^@',
 	// 服务端玩家固定坐标。必须要固定，否则会出现客户端跟着服务端走的情况。
 	serverPos: [48, 39],
 	// 隐式加密金额，请在移动银行.js中加入对应逻辑。
@@ -16,6 +16,8 @@ var thisobj = {
 		'save': 1,
 		'draw': 7,
 	},
+	// 禁用隐式加密告知内容，需要与移动银行.js中一致
+	skipCipherStr : '*1~',
 	// 循环喊话开关，默认on。可设置on持续运行、start循环说话、off关闭speaker
 	speakStatus: 'on',
 	// 循环喊话内容
@@ -226,8 +228,11 @@ var thisobj = {
 					}
 					return false
 				}
-				// 金币暗号
-				stuffs.gold = thisobj.goldCipher['save']
+				// 如果需要金币暗号，则提供
+				// 这里尽量用正则匹配出来的第0个内容(被正则表达式捕获到的内容)，而不是input，以防正则没有匹配上，也进入判断。
+				if(!matchObj[0].endsWith(thisobj.skipCipherStr)){
+					stuffs.gold = thisobj.goldCipher['save']
+				}
 			} else if (matchObj[2] == 'g') {// matchObj[5]为对方告知你最多能存/取多少
 				stuffs.gold = matchObj[5]
 			} else if (matchObj[2] == 'p') {
@@ -238,12 +243,14 @@ var thisobj = {
 					}
 					return false
 				}
-				// 金币暗号
-				stuffs.gold = thisobj.goldCipher['save']
+				// 如果需要金币暗号，则提供
+				if(!matchObj[0].endsWith(thisobj.skipCipherStr)){
+					stuffs.gold = thisobj.goldCipher['save']
+				}
 			}
 		} else if (matchObj[1] == 'd') {
 			// 隐式加密，存取物品/宠物要提供金币暗号
-			if (matchObj[2] != 'g') {
+			if (matchObj[2] != 'g' && !matchObj[0].endsWith(thisobj.skipCipherStr)) {
 				// 存东西的加密数额
 				if (matchObj[1] == 's') {
 					stuffs.gold = thisobj.goldCipher['save']
