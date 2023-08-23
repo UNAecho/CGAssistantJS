@@ -479,16 +479,6 @@ const Professions = [
 			[11, 42]
 			],
 		npcpos : [11, 41],
-		teacherlocation: '圣拉鲁卡村',
-		teacherwalk:[
-			[7, 3, '村长的家'],
-			[2, 9, '圣拉鲁卡村'],
-			[32, 70, '装备品店'],
-			[14, 4, '1楼小房间'],
-			[9, 3, '地下工房'],
-			[29, 31]
-			],
-		npcpos : [30 ,31],
 	}, {
 		category: '制造系',
 		name: '裁缝工',
@@ -505,16 +495,6 @@ const Professions = [
 			[17, 19]
 			],
 		npcpos : [17, 18],
-		teacherlocation: '圣拉鲁卡村',
-		teacherwalk:[
-			[7, 3, '村长的家'],
-			[2, 9, '圣拉鲁卡村'],
-			[32, 70, '装备品店'],
-			[14, 4, '1楼小房间'],
-			[9, 3, '地下工房'],
-			[13, 19]
-			],
-		npcpos : [13 ,18],
 	}, {
 		category: '制造系',
 		name: '长袍工',
@@ -531,16 +511,6 @@ const Professions = [
 			[16, 17]
 			],
 		npcpos : [17, 17],
-		teacherlocation: '圣拉鲁卡村',
-		teacherwalk:[
-			[7, 3, '村长的家'],
-			[2, 9, '圣拉鲁卡村'],
-			[32, 70, '装备品店'],
-			[14, 4, '1楼小房间'],
-			[9, 3, '地下工房'],
-			[12, 19]
-			],
-		npcpos : [12 ,18],
 	}, {
 		category: '制造系',
 		name: '厨师',
@@ -555,13 +525,6 @@ const Professions = [
 			[15, 5],
 			],
 		npcpos : [15, 4],
-		teacherlocation: '法兰城',
-		teacherwalk:[
-			[41, 50, '里谢里雅堡 1楼'],
-			[103, 21,'厨房'],
-			[12, 7],
-			],
-		npcpos : [12, 6],
 	}, {
 		category: '制造系',
 		name: '铠甲工',
@@ -578,14 +541,6 @@ const Professions = [
 			[27, 32]
 			],
 		npcpos : [27, 31],
-		teacherlocation: '法兰城',
-		teacherwalk:[
-			CS,
-			[153, 241, '芙蕾雅'],
-			[421, 308,'小备前之洞窟'],
-			[8, 7],
-			],
-			npcpos : [7 ,7],
 	}, {
 		category: '制造系',
 		name: '帽子工',
@@ -602,16 +557,6 @@ const Professions = [
 			[12, 25]
 			],
 		npcpos : [13, 25],
-		teacherlocation: '圣拉鲁卡村',
-		teacherwalk:[
-			[7, 3, '村长的家'],
-			[2, 9, '圣拉鲁卡村'],
-			[32, 70, '装备品店'],
-			[14, 4, '1楼小房间'],
-			[9, 3, '地下工房'],
-			[12, 25]
-			],
-		npcpos : [11 ,25],
 	}, {
 		category: '制造系',
 		name: '头盔工',
@@ -628,16 +573,6 @@ const Professions = [
 			[15, 32]
 			],
 		npcpos : [15, 31],
-		teacherlocation: '圣拉鲁卡村',
-		teacherwalk:[
-			[7, 3, '村长的家'],
-			[2, 9, '圣拉鲁卡村'],
-			[32, 70, '装备品店'],
-			[14, 4, '1楼小房间'],
-			[9, 3, '地下工房'],
-			[14, 27]
-			],
-		npcpos : [15 ,27],
 	}, {
 		category: '制造系',
 		name: '投掷武器工',
@@ -654,16 +589,6 @@ const Professions = [
 			[32, 18]
 			],
 		npcpos : [33, 17],
-		teacherlocation: '圣拉鲁卡村',
-		teacherwalk:[
-			[7, 3, '村长的家'],
-			[2, 9, '圣拉鲁卡村'],
-			[32, 70, '装备品店'],
-			[14, 4, '1楼小房间'],
-			[9, 3, '地下工房'],
-			[32, 18]
-			],
-		npcpos : [31 ,17],
 	}, {
 		category: '制造系',
 		name: '小刀工',
@@ -680,16 +605,6 @@ const Professions = [
 			[32, 34]
 			],
 		npcpos : [33, 33],
-		teacherlocation: '圣拉鲁卡村',
-		teacherwalk:[
-			[7, 3, '村长的家'],
-			[2, 9, '圣拉鲁卡村'],
-			[32, 70, '装备品店'],
-			[14, 4, '1楼小房间'],
-			[9, 3, '地下工房'],
-			[30, 35]
-		],
-		npcpos : [31 ,36],
 	}, {
 		category: '制造系',
 		name: '药剂师',
@@ -705,13 +620,6 @@ const Professions = [
 			[12, 6]
 			],
 		npcpos : [12, 5],
-		teacherlocation:'法兰城',
-		teacherwalk:[
-			CW,
-			[82, 83, '医院'],
-			[12, 6]
-			],
-		npcpos : [12 ,5],
 	}, {
 		category: '制造系',
 		name: '造枪工',
@@ -728,16 +636,6 @@ const Professions = [
 			[39, 32]
 			],
 		npcpos : [39, 31],
-		teacherlocation: '圣拉鲁卡村',
-		teacherwalk:[
-			[7, 3, '村长的家'],
-			[2, 9, '圣拉鲁卡村'],
-			[32, 70, '装备品店'],
-			[14, 4, '1楼小房间'],
-			[9, 3, '地下工房'],
-			[39, 33]
-			],
-		npcpos : [39 ,34],
 	}, {
 		category: '制造系',
 		name: '造杖工',
@@ -754,16 +652,6 @@ const Professions = [
 			[37, 19]
 			],
 		npcpos : [38, 18],
-		teacherlocation: '圣拉鲁卡村',
-		teacherwalk:[
-			[7, 3, '村长的家'],
-			[2, 9, '圣拉鲁卡村'],
-			[32, 70, '装备品店'],
-			[14, 4, '1楼小房间'],
-			[9, 3, '地下工房'],
-			[37, 19]
-			],
-		npcpos : [37 ,20],
 	}, {
 		category: '制造系',
 		name: '制靴工',
@@ -780,16 +668,6 @@ const Professions = [
 			[17, 32]
 			],
 		npcpos : [17, 31],
-		teacherlocation: '圣拉鲁卡村',
-		teacherwalk:[
-			[7, 3, '村长的家'],
-			[2, 9, '圣拉鲁卡村'],
-			[32, 70, '装备品店'],
-			[14, 4, '1楼小房间'],
-			[9, 3, '地下工房'],
-			[19, 31]
-			],
-		npcpos : [19 ,30],
 	}, {
 		category: '制造系',
 		name: '铸剑工',
@@ -806,14 +684,6 @@ const Professions = [
 			[35, 36]
 			],
 		npcpos : [36, 36],
-		teacherlocation:'法兰城',
-		teacherwalk:[
-			CW,
-			[22, 88,'芙蕾雅'],
-			[446, 101,'小村正之洞窟'],
-			[15, 7]
-			],
-		npcpos : [15 ,6],
 	}, {
 		name: '防具修理工',
 		category: '服务系',
@@ -822,14 +692,6 @@ const Professions = [
         npcMainMap: '法兰城',
 		npcMap: '米克尔工房',
 		npcpos : [14, 15],
-		teacherlocation: '法兰城',
-		teacherwalk:[
-			CS,
-			[153, 241, '芙蕾雅'],
-			[421, 308,'小备前之洞窟'],
-			[25, 4],
-			],
-		npcpos : [26 ,4],
 	}, {
 		name: '护士',
 		category: '服务系',
@@ -845,13 +707,6 @@ const Professions = [
 			[11, 5]
 			],
 		npcpos : [11, 4],
-		teacherlocation:'法兰城',
-		teacherwalk:[
-			[17,53,'法兰城'],
-			[82, 83, '医院'],
-			[12, 31]
-			],
-		npcpos : [12 ,30],
 	}, {
 		name: '鉴定士',
 		category: '服务系',
@@ -865,13 +720,6 @@ const Professions = [
 			[12, 11]
 			],
 		npcpos : [12, 9],
-		teacherlocation: '法兰城',
-		teacherwalk:[
-			CE,
-			[196, 78, '凯蒂夫人的店'],
-			[15,14]
-			],
-		npcpos : [17 ,14],
 	}, {
 		name: '武器修理工',
 		category: '服务系',
@@ -880,14 +728,6 @@ const Professions = [
         npcMainMap: '法兰城',
 		npcMap: '米克尔工房',
 		npcpos : [11, 12],
-		teacherlocation:'法兰城',
-		teacherwalk:[
-			CW,
-			[22, 88,'芙蕾雅'],
-			[446, 101,'小村正之洞窟'],
-			[14, 14]
-			],
-		npcpos : [14, 12],
 	}, {
 		name: '仙人',
 		category: '服务系',
@@ -913,13 +753,6 @@ const Professions = [
 			[15, 8]
 			],
 		npcpos : [16, 8],
-		teacherlocation: '法兰城',
-		teacherwalk:[
-			CW,
-			[82, 83, '医院'],
-			[11, 6]
-			],
-		npcpos : [10 ,5],
 	}, {
 		category: '采集系',
 		name: '矿工',
@@ -933,13 +766,6 @@ const Professions = [
 			[8, 5]
 			],
 		npcpos : [8, 4],
-		teacherlocation:'法兰城',
-		teacherwalk:[
-			CS,
-			[200, 132, '基尔的家'],
-			[9, 3]
-			],
-		npcpos : [9 ,2],
 	}, {
 		category: '采集系',
 		name: '猎人',
@@ -954,13 +780,6 @@ const Professions = [
 			[12, 17]
 			],
 		npcpos : [13, 16],
-		teacherlocation: '法兰城',
-		teacherwalk:[
-			CE,
-			[281, 88, '芙蕾雅'],
-			],
-		// 坐标随机，在外层直接写搜索逻辑
-		npcpos : null,
 	}, {
 		category: '采集系',
 		name: '樵夫',
@@ -974,14 +793,6 @@ const Professions = [
 			[7, 10]
 			],
 		npcpos : [7, 11],
-		teacherlocation: '法兰城',
-		teacherwalk:[
-			CE,
-			[281, 88, '芙蕾雅'],
-			[509, 153, '山男的家'],
-			[10,8]
-			],
-		npcpos : [10 ,7],
 	}, {
 		name: '游民',
 		category: '初始系',
