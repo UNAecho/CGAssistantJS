@@ -339,7 +339,7 @@ var playerThink = ()=>{
 					cga.DropPet(pets[i].index)
 				}// 给符合条件的宠物命名
 				else if(cga.isInNormalState() && gradeDict[petId].dropFlag === false && (pets[i].name == pets[i].realname || pets[i].name == '')){
-					var rename = gradeDict[petId]['最可能情况'].grade + '档'
+					var rename = gradeDict[petId]['最可能情况'].grade + 'D' + pets[i].realname
 					cga.ChangePetName(pets[i].index,rename)
 				}// 如果目标宠物已满，则进行处理。
 				else if(i == (pets.length - 1) && !calculateRunning && cga.GetPetsInfo().length == 5){
