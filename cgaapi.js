@@ -2702,7 +2702,7 @@ module.exports = function(callback){
 				// 里谢里雅堡
 				1500:[[153, 100, 1500],],
 				// 厨房
-				1502:[[153, 100, 1500],[104, 21, 1502],],
+				1502:[[153, 100, 1500],[41, 50, 1520],[104, 21, 1502],],
 				// 图书室
 				1504:[[153, 100, 1500],[41, 50, 1520],[74, 19, 1521],[0, 74, 1504],],
 				// 食堂
@@ -10754,6 +10754,22 @@ module.exports = function(callback){
 							let obj = { act: 'map', target: tmpObj.npcMap, npcpos: [23, 23] }
 							cga.askNpcForObj(obj, cb)
 						})
+					})
+				}
+			}else if(tmpObj.npcMap == '小村正之洞窟'){// 铸剑工、武器修理工
+				walkFunc = (cb)=>{
+					cga.travel.autopilot('西门', () => {
+						cga.walkList([
+							[446, 101, '小村正之洞窟'],
+						], cb)
+					})
+				}
+			}else if(tmpObj.npcMap == '小备前之洞窟'){// 铠甲工、防具修理工
+				walkFunc = (cb)=>{
+					cga.travel.autopilot('南门', () => {
+						cga.walkList([
+							[421, 308, '小备前之洞窟'],
+						], cb)
 					})
 				}
 			}else {
