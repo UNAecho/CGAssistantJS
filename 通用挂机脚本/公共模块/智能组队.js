@@ -73,7 +73,7 @@ var teamModeArray = [
 			}
 
 			// 如果队长开启了自动帮做战斗系晋级任务，则将相关任务纳入统计
-			if(thisobj.object.autoPromoteTask){
+			if (thisobj.object.autoPromoteTask) {
 				cusObj.check['m树精长老'] = { sum: -1 }
 				cusObj.check['m挑战神兽'] = { sum: -1 }
 				cusObj.check['p职业等级'] = { sum: -1 }
@@ -93,7 +93,7 @@ var teamModeArray = [
 				return
 			}
 			// pos传null，是因为执行本函数时已经走到了指的位置。不需要再调整
-			cga.buildTeam({teammates : thisobj.object.area.teammates, timeout:thisobj.object.timeout, pos : null}, (r) => {
+			cga.buildTeam({ teammates: thisobj.object.area.teammates, timeout: thisobj.object.timeout, pos: null }, (r) => {
 				if (r && r == 'timeout') {
 					console.log('等待组队超时，删除练级相关信息')
 					cga.EnableFlags(cga.ENABLE_FLAG_JOINTEAM, false);
@@ -252,7 +252,7 @@ var battleAreaArray = [
 		name: '雪拉威森塔',
 		muster: (cb) => {
 			cga.travel.newisland.toStone('X', () => {
-				cga.askNpcForObj({ act: 'map', target: '利夏岛', npcpos : [165, 154] }, () => {
+				cga.askNpcForObj({ act: 'map', target: '利夏岛', npcpos: [165, 154] }, () => {
 					cga.walkList([
 						[90, 99, '国民会馆'],
 						cga.isTeamLeader ? [108, 42] : [108, 43],
@@ -306,7 +306,7 @@ var battleAreaArray = [
 		name: '梅布尔隘地',
 		muster: (cb) => {
 			cga.travel.newisland.toStone('X', () => {
-				var obj = { act: 'map', target: '梅布尔隘地', neg: '梅布尔隘地', npcpos : [165, 154] }
+				var obj = { act: 'map', target: '梅布尔隘地', neg: '梅布尔隘地', npcpos: [165, 154] }
 				cga.askNpcForObj(obj, () => {
 					cga.walkList([
 						cga.isTeamLeader ? [198, 49] : [198, 48],
@@ -724,7 +724,7 @@ var battleAreaArray = [
 				cga.walkList([
 					[116, 69, '总部1楼'],
 				], () => {
-					cga.askNpcForObj({ act: 'item', target: '战斗号角', npcpos : [87, 50] }, () => {
+					cga.askNpcForObj({ act: 'item', target: '战斗号角', npcpos: [87, 50] }, () => {
 						cga.walkList([
 							[4, 47, '圣骑士营地'],
 						], () => {
@@ -735,8 +735,8 @@ var battleAreaArray = [
 				return;
 			}
 			var go = (cb2) => {
-				cga.askNpcForObj({ act: 'map', target: '旧日之地', npcpos : [120, 81] }, () => {
-					cga.askNpcForObj({ act: 'map', target: '迷宫入口', npcpos : [45, 46] }, () => {
+				cga.askNpcForObj({ act: 'map', target: '旧日之地', npcpos: [120, 81] }, () => {
+					cga.askNpcForObj({ act: 'map', target: '迷宫入口', npcpos: [45, 46] }, () => {
 						cga.walkList([
 							cga.isTeamLeader ? [6, 5] : [6, 6],
 						], cb2);
@@ -815,7 +815,7 @@ var battleAreaArray = [
 		name: '树精长老',
 		doTask: (cb) => {
 			let missionObj = require(rootdir + '/常用数据/missions/' + '树精长老' + '.js');
-			missionObj.doTask({teammates : thisobj.object.area.teammates}, cb)
+			missionObj.doTask({ teammates: thisobj.object.area.teammates }, cb)
 			return
 		},
 	},
@@ -824,10 +824,10 @@ var battleAreaArray = [
 		doTask: (cb) => {
 			// 检查候选人列表中是否有自己，有则做任务，没有则回到集散地，等待下一班车
 			let myname = cga.GetPlayerInfo().name
-			if(thisobj.object.area.teammates.includes(myname)){
+			if (thisobj.object.area.teammates.includes(myname)) {
 				let missionObj = require(rootdir + '/常用数据/missions/' + '挑战神兽' + '.js');
-				missionObj.doTask({teammates : thisobj.object.area.teammates}, cb)
-			}else{
+				missionObj.doTask({ teammates: thisobj.object.area.teammates }, cb)
+			} else {
 				console.log('你不在挑战神兽的候选集中，可能是前面有其它小号占了位置，回到集散地，等待下一班车...')
 				setTimeout(cb, 1000);
 			}
@@ -844,7 +844,7 @@ var update = require(rootdir + '/通用挂机脚本/公共模块/修改配置文
 // 如果练级地点发生改变，且已经落盘完毕，则将此flag打在人物昵称上
 const areaChangedFlag = 'areaChanged'
 // 判定读取到teamModeArray中的对象，是否为任务对象的依据（根据name判断）
-const taskArr = ['树精长老','挑战神兽']
+const taskArr = ['树精长老', '挑战神兽']
 
 // 如果obj有key则增加数值，如果没有则初始化为value
 var objUtil = (obj, key, value) => {
@@ -877,13 +877,13 @@ var thisobj = {
 		thisobj.object.muster(cb);
 	},
 	isTaskTeamReady: () => {// 判断此次组队是否是做任务
-		return (Object.prototype.toString.call(thisobj.object.battleAreaObj) == '[object Object]' && taskArr.includes(thisobj.object.battleAreaObj.name))? true : false
+		return (Object.prototype.toString.call(thisobj.object.battleAreaObj) == '[object Object]' && taskArr.includes(thisobj.object.battleAreaObj.name)) ? true : false
 	},
 	isBuildTeamReady: () => {// 判断此次组队是否是练级Object（thisobj.object.battleAreaObj是否读取到了object），并且不是任务
-		return (Object.prototype.toString.call(thisobj.object.battleAreaObj) == '[object Object]' && !thisobj.isTaskTeamReady())? true : false
+		return (Object.prototype.toString.call(thisobj.object.battleAreaObj) == '[object Object]' && !thisobj.isTaskTeamReady()) ? true : false
 	},
 	doTask: (cb) => {// 对外暴露的做任务模块
-		thisobj.object.battleAreaObj.doTask(()=>{
+		thisobj.object.battleAreaObj.doTask(() => {
 			// 任务完毕，清空缓存的各种信息
 			update.delete_config(['area'], true, () => {
 				thisobj.object.battleAreaObj = null
@@ -1021,13 +1021,16 @@ var thisobj = {
 			layer = 50
 		} else if (minLv > 50 && minLv <= 60) {
 			battleArea = '回廊'
+		} else if (minLv > 60 && !camp) {// 如果没有承认之戒，那么只能在回廊一直练
+			battleArea = '回廊'
+			console.log('【UNAecho脚本提醒】当前队伍已经超过60级，但是有队员没有承认之戒，所以只能在回廊一直练下去。')
 		} else if (camp && minLv > 60 && minLv <= 72) {
 			battleArea = '营地'
 		} else if (camp && minLv > 72 && minLv <= 80) {// 雪塔80层有睡眠怪，导致人物经常阵亡，不再去80层练级
 			battleArea = '蝎子'
 		} else if (camp && minLv > 80 && minLv <= 94) {// 雪塔89层人物也经常阵亡，不再去89层练级
 			battleArea = '沙滩'
-		}else if (camp && minLv > 94 && minLv <= 103) {// 蜥蜴有石化，即便有抗石化依旧容易出现大量阵亡导致宠物忠诚下降，故尽量缩短蜥蜴练级范围
+		} else if (camp && minLv > 94 && minLv <= 103) {// 蜥蜴有石化，即便有抗石化依旧容易出现大量阵亡导致宠物忠诚下降，故尽量缩短蜥蜴练级范围
 			battleArea = '蜥蜴洞穴上层', layer = 1
 		} else if (camp && minLv > 103 && minLv <= 106) {
 			battleArea = '黑龙沼泽', layer = 1
@@ -1058,12 +1061,12 @@ var thisobj = {
 		 * 1、开启自动做战斗系晋级任务的功能（thisobj.object.autoPromoteTask = true）
 		 * 2、全员至少80级
 		 * 3、队内至少1人没有做过树精或神兽任务
-		 * */ 
+		 * */
 
-		if(thisobj.object.autoPromoteTask && minLv >= 80){
-			if(tree){
+		if (thisobj.object.autoPromoteTask && minLv >= 80) {
+			if (tree) {
 				battleArea = '树精长老', layer = 0
-			}else if(monster){
+			} else if (monster) {
 				/**
 				 * 神兽需要对成员进行裁剪，必须为2人，满足以下条件其一即可入队：
 				 * 1、你是带队队长
@@ -1072,7 +1075,7 @@ var thisobj = {
 				 */
 				let newTeam = []
 				for (let i = 0; i < areaObj.teammates.length; i++) {
-					if(i == 0 || (newTeam.length < 2 && shareInfoObj[areaObj.teammates[i]].mission['挑战神兽'] == '0' && parseInt(shareInfoObj[areaObj.teammates[i]].profession['职业等级']) > 0)){
+					if (i == 0 || (newTeam.length < 2 && shareInfoObj[areaObj.teammates[i]].mission['挑战神兽'] == '0' && parseInt(shareInfoObj[areaObj.teammates[i]].profession['职业等级']) > 0)) {
 						console.log('【' + areaObj.teammates[i] + '】【满足】神兽入队条件：1、是队长，2、没做过挑战神兽任务，且已经1转，任务的候选人数小于2')
 						newTeam.push(areaObj.teammates[i])
 						continue
@@ -1086,8 +1089,8 @@ var thisobj = {
 				 * 此时整个队伍需要先判定队伍中没有没有人满足与队长组成挑战神兽的2人队伍，如果能，则此2人去做任务，其它人员等待下一班车。
 				 * 
 				 * 如果没有人满足条件，则正常练级。如：虽然有人没有做过挑战神兽，但是又由于得意技没有到4级，无法晋级。只能先练级，烧技能。等待【智能培养角色】脚本自动去晋级。
-				 * */ 
-				if(newTeam.length == 2){
+				 * */
+				if (newTeam.length == 2) {
 					battleArea = '挑战神兽', layer = 0
 					areaObj.teammates = newTeam
 				}
@@ -1405,10 +1408,10 @@ var thisobj = {
 			thisobj.object.timeout = obj.timeout;
 		}
 
-		if(typeof obj.autoPromoteTask == 'boolean'){
+		if (typeof obj.autoPromoteTask == 'boolean') {
 			configTable.autoPromoteTask = obj.autoPromoteTask
 			thisobj.object.autoPromoteTask = obj.autoPromoteTask;
-		}else{
+		} else {
 			console.error('读取配置：战斗系晋级任务失败！autoPromoteTask的值必须为true或者false（代表做或者不做）');
 			return false;
 		}
@@ -1638,7 +1641,7 @@ var thisobj = {
 				if (index !== null && (index == 0 || index == 1)) {
 					let flag = index == 1 ? true : false;
 
-					sayString = '当前已选择: [' + (flag ? '做':'不做') + ']';
+					sayString = '当前已选择: [' + (flag ? '做' : '不做') + ']';
 					cga.sayLongWords(sayString, 0, 3, 1);
 
 					configTable.autoPromoteTask = flag
@@ -1654,7 +1657,7 @@ var thisobj = {
 		}
 
 		// stage2-4仅队长需要执行，所以在stage1中判断是否执行
-		Async.series([stage0, stage1, stage5, stage6, stage7,stage8], cb);
+		Async.series([stage0, stage1, stage5, stage6, stage7, stage8], cb);
 	}
 }
 
