@@ -16,7 +16,7 @@ var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配
 var thisobj = {
 	prepare: (cb) => {
 		let playerInfo = cga.GetPlayerInfo();
-		let curJobObj = cga.job.getJob()
+		let curJobObj = cga.job.getJob();
 		let config = cga.loadPlayerConfig();
 		// 小号到达一定等级才开始自行做任务，方便赶路和过门禁。
 		let accessLv = 20
@@ -149,6 +149,30 @@ var thisobj = {
 				}
 			} else {
 				console.log('你不满足晋级需求，需要完成任务', promoteObj.mission[curJobObj.jobType], '的其中之一项，方可晋级。')
+				// 如果是生产系，可自行完成晋级任务
+				if(curJobObj.jobType == '生产系'){
+					if(curJobObj.jobLv == 0){
+						targetObj.missionName = '咖哩任务'
+					}else if(curJobObj.jobLv == 1){
+						targetObj.missionName = '起司的任务'
+						let config = cga.loadPlayerConfig();
+						if(config && config["mission"]){
+							let item = '好像很好吃的起司'
+							if(cga.findItem(item) != -1 && config["mission"][item]){
+								console.log('检测到你身上有【' + item +'】，现在继续流程。')
+								targetObj.param.timestamp = config["mission"][item]
+							}
+							item = '好像很好喝的酒'
+							if(cga.findItem(item) != -1 && config["mission"][item]){
+								console.log('检测到你身上有【' + item +'】，现在继续流程。')
+								targetObj.param.timestamp = config["mission"][item]
+							}
+						}
+					}else if(curJobObj.jobLv == 2){
+						// TODO
+						// targetObj.missionName = '魔法大学'
+					}
+				}
 			}
 		}
 
@@ -201,7 +225,7 @@ var thisobj = {
 			return false;
 		}
 
-		if (!transferMode.loadconfig(obj))
+		if (thisobj.finalJob == '战斗系' && !transferMode.loadconfig(obj))
 			return false;
 
 		return true;

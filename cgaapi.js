@@ -4678,30 +4678,49 @@ module.exports = function(callback){
 		);
 		return
 	}
-	// UNA: 在村镇开启传送石之后补给。isPro为true是去资深护士处补给
+
+	/**
+	 * UNAecho: 在村镇开启传送石之后补给。
+	 * 如果持有不能记录传送权限的道具，如起司的任务中的起司和酒，则跳过开传送部分。
+	 * @param {*} isPro 去资深护士处补给，为true则与资深护士对话，false则与普通护士对话
+	 * @param {*} cb 
+	 * @returns 
+	 */
 	cga.travel.saveAndSupply = (isPro, cb) => {
+		const noSaveItem = ['好像很好吃的起司', '好像很好喝的酒',];
+		for (let item of noSaveItem) {
+			if (cga.findItem(item) != -1) {
+				console.log('持有【' + item + '】不能开启传送许可权限，跳过此阶段..')
+				cga.travel.toHospital(() => {
+					if (cb) cb(null)
+					return
+				}, isPro)
+				return
+			}
+
+		}
 		// 准备保存开传状态
 		var config = cga.loadPlayerConfig();
-		if(!config){
+		if (!config) {
 			config = {};
 		}
-		
+
 		var villageName = cga.travel.switchMainMap()
 
 		// 魔法大学没有传送石，直接转为回补模式
-		if(villageName == '魔法大学'){
+		if (villageName == '魔法大学') {
 			console.log('魔法大学没有传送点，跳过开启传送阶段。')
-			cga.travel.toHospital(()=>{
+			cga.travel.toHospital(() => {
 				if (cb) cb(null)
 				return
 			}, isPro)
 			return
 		}
-		
+
 		// 如果已经开启过传送，则直接补给并结束函数
-		if(config[villageName]){
-			console.log('你已开启过【'+villageName+'】传送石，跳过开启传送阶段。')
-			cga.travel.toHospital(()=>{
+		if (config[villageName]) {
+			console.log('你已开启过【' + villageName + '】传送石，跳过开启传送阶段。')
+			cga.travel.toHospital(() => {
 				if (cb) cb(null)
 				return
 			}, isPro)
@@ -4709,19 +4728,19 @@ module.exports = function(callback){
 		}
 		// 如果没开启过传送，则去开启并记录状态。
 		const info = cga.travel.info[villageName]
-		cga.travel.autopilot('传送石',()=>{
+		cga.travel.autopilot('传送石', () => {
 			cga.walkList(
-				[cga.getRandomSpace(info.stoneNPCpos[0], info.stoneNPCpos[1])], ()=>{
+				[cga.getRandomSpace(info.stoneNPCpos[0], info.stoneNPCpos[1])], () => {
 					cga.TurnTo(info.stoneNPCpos[0], info.stoneNPCpos[1]);
-					cga.AsyncWaitNPCDialog((err, dlg)=>{
-						if(dlg && (dlg.message.indexOf('金币') >= 0 || dlg.message.indexOf('欢迎') >= 0)){
+					cga.AsyncWaitNPCDialog((err, dlg) => {
+						if (dlg && (dlg.message.indexOf('金币') >= 0 || dlg.message.indexOf('欢迎') >= 0)) {
 							setTimeout(() => {
 								// 如果开传成功，则记录状态
 								config[villageName] = true
-								cga.savePlayerConfig(config, ()=>{
-									console.log('【'+villageName+'】传送石已开启，离线信息已记录完毕')
+								cga.savePlayerConfig(config, () => {
+									console.log('【' + villageName + '】传送石已开启，离线信息已记录完毕')
 									// 记录之后去补给
-									cga.travel.toHospital(()=>{
+									cga.travel.toHospital(() => {
 										if (cb) cb(null)
 										return
 									}, isPro)
