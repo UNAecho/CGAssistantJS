@@ -54,11 +54,13 @@ var thisobj = {
 		{//4
 			intro: '5.返回维诺亚村荷特尔咖哩店与村姑诗特对话，交出【点心？】，生产系（护士、医生除外）获得晋阶资格，任务完结。',
 			workFunc: function (cb2) {
-				let obj = { act: 'msg', target: '资格', npcpos: [11, 6] }
+				let obj = { act: 'msg', target: '见习', npcpos: [11, 6] }
 				cga.travel.toVillage('维诺亚村', () => {
 					cga.travel.autopilot('荷特尔咖哩店', () => {
 						cga.askNpcForObj(obj, () => {
-							cb2(true)
+							cga.refreshMissonStatus({'咖哩任务' : true},()=>{
+								cb2(true)
+							})
 						})
 					})
 				})

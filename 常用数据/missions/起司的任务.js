@@ -325,7 +325,10 @@ var thisobj = {
 						}
 						setTimeout(() => {
 							cga.askNpcForObj(obj, () => {
-								cb2(true)
+								cga.refreshMissonStatus({'起司的任务' : true},()=>{
+									// 任务结束还要在个人配置中删除时间数据，这里延迟一下再调用cb，以免读写间隔过短
+									setTimeout(cb2, 2000, true)
+								})
 							})
 						}, remain);
 
