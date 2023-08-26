@@ -4877,6 +4877,9 @@ module.exports = function(callback){
 			['杰诺瓦镇', '阿巴尼斯村', '魔法大学'],
 		]
 
+		// 部分道具无法使用传送石。
+		const noTransferItem = [18322,'好像很好吃的起司','好像很好喝的酒',];
+
 		var tmpPath = null
 		var tmpIndex = null
 		// 如果找到某个村庄路径，就不要继续遍历，防止覆盖
@@ -4916,17 +4919,19 @@ module.exports = function(callback){
 		// 如果需要赶路，先读取单人战斗配置
 		cga.loadBattleConfig('生产赶路')
 
-		if(config[villageName]){
+		if (config[villageName]) {
 			console.log('你已经开过【' + villageName + '】传送，直接使用传送石抵达。')
-			if(mainMapName == villageName){
+			if (mainMapName == villageName) {
 				next(cb)
-			}else{
-				cga.travel.falan.toTeleRoom(villageName, ()=>{
+			} else if (noTransferItem.some(it => { return cga.findItem(it) != -1 })) {
+				console.log('身上持有不能使用传送石的道具【' + it + '】，只能步行前往【' + villageName + '】')
+			} else {
+				cga.travel.falan.toTeleRoom(villageName, () => {
 					next(cb)
 				})
 			}
 			return
-		}else if(villageName != '魔法大学'){
+		} else if(villageName != '魔法大学'){
 			console.log('你没有开启【' + villageName + '】传送权限，开始计算最优步行模式...')
 		}
 		// 用于判断角色的过关资格
