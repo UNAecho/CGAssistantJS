@@ -9484,7 +9484,7 @@ module.exports = function(callback){
 				return
 			}
 			let leaderNick = curTeamplayers[0].nick
-			if(leaderNick.indexOf('restart') != -1){
+			if(leaderNick && leaderNick.indexOf('restart') != -1){
 				cb(false)
 				return
 			}
@@ -9493,7 +9493,7 @@ module.exports = function(callback){
 				cb(false)
 				return
 			}
-			if(leaderNick.indexOf('check') != -1){
+			if(leaderNick && leaderNick.indexOf('check') != -1){
 				cb(true)
 				return
 			}
