@@ -453,7 +453,7 @@ var thisobj = {
 			return result
 		},
 		saveTimestamp: (itemName, cb) => {
-			thisobj.timestamp = Date.now()
+			thisobj.data.timestamp = Date.now()
 			let config = cga.loadPlayerConfig();
 
 			if (!config)
@@ -461,7 +461,7 @@ var thisobj = {
 			if (!config["mission"])
 				config["mission"] = {}
 
-			config["mission"][itemName] = thisobj.timestamp;
+			config["mission"][itemName] = thisobj.data.timestamp;
 
 			cga.savePlayerConfig(config, cb);
 			return

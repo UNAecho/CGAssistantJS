@@ -8887,7 +8887,7 @@ module.exports = function(callback){
 			let currentTime = new Date()
 			// 间隔报时
 			if (currentTime.getSeconds() % 10 == 0) {
-				console.log('已等待' + Math.floor((currentTime.getTime() - start) / 1000) + '秒')
+				console.log('已等待' + Math.floor((currentTime.getTime() - start) / 1000) + '秒，' + Math.floor(obj.timeout / 1000) + '秒后超时。')
 			}
 
 			if (obj.timeout > 0 && (currentTime.getTime() - start) >= obj.timeout) {
@@ -14751,11 +14751,11 @@ module.exports = function(callback){
 	cga.battle = {}
 
 	// 等待BOSS战结束，一般以地图变动为基准
-	cga.battle.waitBossBattle = (map , cb) => {
+	cga.battle.waitBossBattle = (map, cb) => {
 		var obj = {}
-		if(typeof map == 'string'){
+		if (typeof map == 'string') {
 			obj.mapname = map
-		}else if(typeof map == 'number'){
+		} else if (typeof map == 'number') {
 			obj.mapindex = map
 		}
 
@@ -14763,7 +14763,7 @@ module.exports = function(callback){
 			cga.waitForLocation(obj, () => {
 				// 虽然战斗胜利一瞬间index就切换到战斗胜利房间，但有时候战斗动画和切屏并未结束
 				// 所以要等到cga.isInNormalState()为true才能退出此API
-				let waitNormal = ()=>{
+				let waitNormal = () => {
 					if (cga.isInNormalState()) {
 						cb(true)
 						return;
@@ -14774,8 +14774,8 @@ module.exports = function(callback){
 			});
 			return;
 		}
-		
-		setTimeout(cga.battle.waitBossBattle, 1500, roomIndex , cb);
+
+		setTimeout(cga.battle.waitBossBattle, 1500, map, cb);
 		return
 	}
 
