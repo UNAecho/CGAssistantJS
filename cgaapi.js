@@ -4924,7 +4924,7 @@ module.exports = function(callback){
 			if (mainMapName == villageName) {
 				next(cb)
 			} else if (noTransferItem.some(it => { return cga.findItem(it) != -1 })) {
-				console.log('身上持有不能使用传送石的道具【' + it + '】，只能步行前往【' + villageName + '】')
+				console.log('身上持有不能使用传送石的道具，只能步行前往【' + villageName + '】')
 			} else {
 				cga.travel.falan.toTeleRoom(villageName, () => {
 					next(cb)
