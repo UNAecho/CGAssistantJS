@@ -33,17 +33,17 @@
         ],
         "pet": [
             {
-                "name": "1档",
+                "name": "1D水龙蜥",
                 "upper": 0,
                 "lower": 0
             },
             {
-                "name": "2档",
+                "name": "2D水龙蜥",
                 "upper": 0,
                 "lower": 0
             },
             {
-                "name": "3档",
+                "name": "3D水龙蜥",
                 "upper": 2,
                 "lower": 0
             }
