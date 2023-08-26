@@ -18,6 +18,11 @@ var thisobj = {
 		let playerInfo = cga.GetPlayerInfo();
 		let curJobObj = cga.job.getJob();
 		let config = cga.loadPlayerConfig();
+		if(!config)
+			config = {};
+		if(!config.hasOwnProperty("mission")){
+			config["mission"] = {}
+		}
 		// 小号到达一定等级才开始自行做任务，方便赶路和过门禁。
 		let accessLv = 20
 
