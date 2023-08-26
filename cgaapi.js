@@ -4878,7 +4878,7 @@ module.exports = function(callback){
 		]
 
 		// 部分道具无法使用传送石。
-		const noTransferItem = [18322,'好像很好吃的起司','好像很好喝的酒',];
+		const noTransferItem = [18320,18321,18322,'好像很好吃的起司','好像很好喝的酒',];
 
 		var tmpPath = null
 		var tmpIndex = null
@@ -4923,14 +4923,15 @@ module.exports = function(callback){
 			console.log('你已经开过【' + villageName + '】传送，直接使用传送石抵达。')
 			if (mainMapName == villageName) {
 				next(cb)
+				return
 			} else if (noTransferItem.some(it => { return cga.findItem(it) != -1 })) {
 				console.log('身上持有不能使用传送石的道具，只能步行前往【' + villageName + '】')
 			} else {
 				cga.travel.falan.toTeleRoom(villageName, () => {
 					next(cb)
 				})
+				return
 			}
-			return
 		} else if(villageName != '魔法大学'){
 			console.log('你没有开启【' + villageName + '】传送权限，开始计算最优步行模式...')
 		}
