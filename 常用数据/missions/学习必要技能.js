@@ -52,7 +52,7 @@ var thisobj = {
 						}
 					}
 				}
-			} else if (jobObj.jobType == '生产系') {
+			} else if (jobObj.jobType == '生产系' || jobObj.jobType == '服务系') {
 				for (let i = 0; i < thisobj.data.productTypeSkills.length; i++) {
 					if (cga.findPlayerSkill(thisobj.data.productTypeSkills[i]) == null) {
 						targetSkill = thisobj.data.productTypeSkills[i]
