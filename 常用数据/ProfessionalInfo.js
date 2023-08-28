@@ -545,7 +545,7 @@ const Professions = [
 		category: '制造系',
 		name: '帽子工',
 		skill:['制帽子'],
-		titles: ['帽子学徒', '帽子工', '资深帽子师傅', '御用帽子师', '帽子名师'],
+		titles: ['帽子学徒', '帽子工', '资深帽子师傅', '御用帽子师傅', '帽子名师'],
         npcMainMap: '圣拉鲁卡村',
 		npcMap: '地下工房',
 		tutorwalk:[
