@@ -11690,7 +11690,7 @@ module.exports = function(callback){
 		});
 		return found != undefined ? found : null;
 	}
-	
+
 	/**
 	 * UNAecho: 记录一些常用迷宫的信息
 	 * key选用迷宫名称的一部分，方便调用时使用。寻找迷宫入口可配合cga.getRandomMazeEntrance使用
@@ -12997,7 +12997,7 @@ module.exports = function(callback){
         }
 	 * 在这些坐标的1x1附近，cga.isAroundPos会返回true。
 	 * @param {Object} posObj 检测对象，可以传入一维数组，也可以传入Object。数据结构：
-	 * 1、传入一维数组时。类似[2,5]这样的数组，可以判断任务是否站在这个坐标周围。
+	 * 1、传入一维数组时。类似[2,5]这样的数组，可以判断人物是否站在这个坐标周围。
 	 * 2、传入Object时，要求如下：
 	 * key为地图index，value为二维数组，可以判断角色是否在地图index下的各个坐标周围
 	 * 例：
@@ -14784,7 +14784,53 @@ module.exports = function(callback){
 		setTimeout(cga.battle.waitBossBattle, 1500, map, cb);
 		return
 	}
+	
+	/**
+	 * UNAecho:可获取角色当前所处地图的所有出入口信息，并进行聚类，所有1x1范围内相邻的门，都仅保留1个pos。
+	 * 举例：如果一个门是3个pos连在一起，比如法兰城的出入口，仅保留1个pos后返回
+	 * 数据来源于cga.getMapObjects()，根据观察，数据中cell=10的对象代表地图之间切换的门。
+	 * 
+	 * 【注意】
+	 * 1、有的地图有些门处于无法抵达的位置，如隔着墙、河道、或者地图之外（如艾尔莎岛墙外面x: 124, y: 114-117居然是门）
+	 * 这些门并未进行cga.isPathAvailable()的判断，外部调用需要自行判断。
+	 * 本API仅为采集数据时使用，时间复杂度较高，但此API属于较低使用频率（采集静态、非变化数据）所以还可以接受。
+	 * 2、地图之间的切换方式并不是只有【走进门】这一种方式，还有与NPC对话、主动使用道具（飞行券、5转迷宫使用任务水晶）、转向某个NPC（法兰城水晶传送）等其它方式。
+	 * @returns 数据结构参考cga.getMapObjects()返回值
+	 */
+	cga.getDoorCluster = ()=>{
+		let mapObjects = cga.getMapObjects()
+		let resultArr = []
+		let ngArr = []
+		for (let mapObj of mapObjects) {
+			if(mapObj.cell != 10){
+				console.log('【UNAecho脚本警告】坐标x:',mapObj.mapx,'y:',mapObj.mapy,'，的cell不为10，请注意')
+				continue
+			}
+			let exist = false
+			for (let resultObj of resultArr) {
+				if(cga.isAroundPos([resultObj.x,resultObj.y],{x:mapObj.mapx,y:mapObj.mapy})){
+					// console.log('坐标x:',mapObj.mapx,'y:',mapObj.mapy,'，处于结果集x:',resultObj.x,'y:',resultObj.y,'1x1内，舍弃')
+					exist = true
+					ngArr.push(mapObj)
+					break
+				}
+			}
+			for (let ngObj of ngArr) {
+				if(cga.isAroundPos([ngObj.x,ngObj.y],{x:mapObj.mapx,y:mapObj.mapy})){
+					// console.log('坐标x:',mapObj.mapx,'y:',mapObj.mapy,'，处于重复集x:',ngObj.x,'y:',ngObj.y,'1x1内，舍弃')
+					exist = true
+					ngArr.push(mapObj)
+					break
+				}
+			}
+			if(!exist){
+				resultArr.push(mapObj)
+			}
+		} 
 
+		return resultArr
+	}
+	
 	/**
 	 * UNAecho: 游戏角色对象，用于提取或保存一些常用的静态信息，或开发一些常用的API
 	 */
