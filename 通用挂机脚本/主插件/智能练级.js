@@ -133,12 +133,12 @@ var autoRing = (cb) => {
 		think: (ctx) => {
 			if (!thisobj.autoRing.teammates) {
 				console.log('thisobj.autoRing.teammates无数据，跳过think阶段')
-				return
+				return false
 			}
 			if ((ctx.teamplayers.length < thisobj.autoRing.teammates.length && thisobj.autoRing.part == '队长') || ctx.teamplayers.length == 0) {
 				ctx.result = 'logback';
 				ctx.reason = '人数不足，登出';
-				return;
+				return false
 			}
 		}
 	}
