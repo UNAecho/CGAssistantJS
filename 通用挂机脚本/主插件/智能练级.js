@@ -286,9 +286,16 @@ var autoRing = (cb) => {
 	}
 
 	if (cga.needSupplyInitial({})) {
-		supplyMode.func(() => {
-			autoRing(cb)
-		});
+		// 小号在交任务信件时可能会在法兰城和营地之间掉一点血，此时无需回城补血，直接在营地内补血即可。不然队长容易等待超时
+		if(cga.travel.switchMainMap() == '曙光骑士团营地'){
+			cga.travel.toHospital(() => {
+				autoRing(cb)
+			})
+		}else{
+			supplyMode.func(() => {
+				autoRing(cb)
+			});
+		}
 		return;
 	}
 
