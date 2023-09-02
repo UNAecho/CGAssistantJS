@@ -1483,7 +1483,7 @@ var thisobj = {
 				return true
 			}
 		}
-		console.warn('【UNA脚本提醒】警告，check_done不应该运行至此，请检查。')
+		console.warn('【UNAecho脚本提醒】警告，check_done不应该运行至此，请检查。')
 	},
 	// 客户端使用
 	doneManager : (cb)=>{

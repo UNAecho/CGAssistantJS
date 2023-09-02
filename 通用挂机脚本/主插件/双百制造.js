@@ -8,12 +8,6 @@ var craft_target = null;
 var playerInfoOrigin = cga.GetPlayerInfo()
 
 var rootdir = cga.getrootdir()
-var updateConfig = require(rootdir + '/通用挂机脚本/公共模块/修改配置文件');
-// 提取本地职业数据
-const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
-var professionalInfo = getprofessionalInfos(playerInfoOrigin.job)
-// 声望数据
-const reputationInfos = require(rootdir + '/常用数据/reputation.js');
 
 // 制造者交易时的站立坐标以及朝向坐标
 var craftPlayerPos = [34, 89]
@@ -109,15 +103,6 @@ var jump = (scriptName)=>{
 const isFabricName = (name)=>{
 	return ['麻布', '木棉布', '毛毡', '绵', '细线', '绢布', '莎莲娜线', '杰诺瓦线', '阿巴尼斯制的线', '阿巴尼斯制的布', '细麻布', '开米士毛线', ].indexOf(name) != -1 ? true : false
 }
-
-const teachers = [
-{
-	skillname : professionalInfo.skill,
-	location : professionalInfo.teacherlocation,
-	path : professionalInfo.teacherwalk,
-	pos : professionalInfo.npcpos,	
-},
-]
 
 const io = require('socket.io')();
 
@@ -438,64 +423,38 @@ var getBestCraftableItem = ()=>{
 	return item;
 }
 
-var forgetAndLearn = (cb)=>{
-
-	var goAndLearn = (cb2)=>{
-		cga.walkList(professionalInfo.teacherwalk, ()=>{
-			cga.turnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
-			var dialogHandler = (err, dialog)=>{
-				if(dialog){
-					// 这里需要使用configTable.craftType作为名称，否则会出现configTable.craftType如果填错，直接把自己本职技能给遗忘的严重bug
-					var hasSkill = cga.findPlayerSkill(configTable.craftType) ? true : false;
-					if( hasSkill )
-					{
-						if (dialog.type == 16) {
-							cga.ClickNPCDialog(-1, 1);
-							cga.AsyncWaitNPCDialog(dialogHandler);
-							return;
-						}
-						if (dialog.type == 18) {
-							const skillIndex = cga.GetSkillsInfo().sort((a,b) => a.pos - b.pos).findIndex(s => s.name == professionalInfo.skill);
-							if (skillIndex > -1) {
-								cga.ClickNPCDialog(0, skillIndex);
-								cga.AsyncWaitNPCDialog(dialogHandler);
-								return;
-							}
-						}
-					}
-					if (dialog.options == 12) {
-						cga.ClickNPCDialog(4, -1);
-						cga.AsyncWaitNPCDialog(dialogHandler);
-						return;
-					}
-					if (dialog.message.indexOf('已经删除') >= 0 || !hasSkill) {
-						setTimeout(()=>{
-							cga.TurnTo(professionalInfo.npcpos[0], professionalInfo.npcpos[1]);
-							cga.AsyncWaitNPCDialog((dlg)=>{
-								cga.ClickNPCDialog(0, 0);
-								cga.AsyncWaitNPCDialog((dlg2)=>{
-									cga.ClickNPCDialog(0, 0);
-									setTimeout(cb2, 1000);
-								});
-							});
-						}, 1000);
-						return;
-					}
-				}
-			}
-			cga.AsyncWaitNPCDialog(dialogHandler);
+// forgetAndLearn()尽量使用configTable.craftType，因为thisobj.craftSkill可能为undefined
+var forgetAndLearn = (cb) => {
+	let skillObj = cga.findPlayerSkill(configTable.craftType)
+	let obj = null
+	// 如果持有技能，则忘记技能
+	if (skillObj) {
+		let stoneSkill = cga.skill.getSkill('石化魔法')
+		console.log('【UNAecho脚本提醒】去石化魔法NPC处忘记【' + skillObj.name + '】技能')
+		obj = { act: 'forget', target: skillObj.name, npcpos: stoneSkill.npcpos }
+		cga.travel.falan.toStone('C', (r) => {
+			cga.walkList([
+				[17, 53, '法兰城'],
+			], (r) => {
+				cga.askNpcForObj(obj, () => {
+					// 忘记之后重新学习
+					setTimeout(forgetAndLearn, 1000, cb);
+				})
+			});
+		});
+	} else {// 如果没有技能，则重新学习技能
+		console.log('【UNAecho脚本提醒】去学习【' + configTable.craftType + '】技能')
+		let craftSkill = cga.skill.getSkill(configTable.craftType)
+		obj = { act: 'skill', target: craftSkill.name, npcpos: craftSkill.npcpos }
+		cga.travel.toVillage(craftSkill.npcMainMap, () => {
+			cga.travel.autopilot(craftSkill.npcMap, () => {
+				cga.askNpcForObj(obj, () => {
+					cb(true)
+				})
+			})
 		});
 	}
 
-	if(professionalInfo.teacherlocation == '法兰城'){
-		cga.travel.falan.toStone('C', () => {
-			goAndLearn(cb)
-		});
-	}else{
-		cga.travel.falan.toTeleRoom('圣拉鲁卡村', ()=>{
-			goAndLearn(cb)
-		});
-	}
 	return
 }
 
@@ -644,7 +603,9 @@ var loop = ()=>{
 		forgetAndLearn(loop);
 		return;
 	}
-
+	/**
+	 * UNAecho:推荐使用子插件【智能培养角色】来自动完成晋级任务与晋级，方便直接从1级冲至10级生产技能。
+	 */
 	callSubPluginsAsync('prepare', ()=>{
 		
 		craft_target = getBestCraftableItem();
@@ -675,55 +636,6 @@ var loop = ()=>{
 					craft_count = 0;
 					forgetAndLearn(loop);
 					return;
-			}
-		}
-
-		// 如果技能没刷满，开始考虑做晋级任务并自动晋级。
-		if(thisobj.craftSkill.lv < 10 && thisobj.craftSkill.lv >= thisobj.craftSkill.maxlv){
-			var playerCurrentInfo = cga.GetPlayerInfo()
-			// 计算当前声望是否有资格晋级
-			var jobLv = getprofessionalInfos.getJobLevel(playerCurrentInfo.job)
-			var titleinfo = reputationInfos.getReputation(playerCurrentInfo.titles)
-			var minimumLv = reputationInfos.promoteReputation[jobLv]
-			// 必须大于等于晋级称号
-			if(titleinfo['titleLv'] >= minimumLv){
-				console.log('【UNA脚本提示】人物技能到达当前阶段上限，且称号满足要求，开始执行晋级逻辑。')
-				
-				var config = cga.loadPlayerConfig()
-				
-				// 如果没有任务记录，则初始化
-				if(config && !config['mission']){
-					config['mission'] = {}
-				}
-
-				if(thisobj.craftSkill.lv >= 8){
-					if (config && config['mission']['魔法大学']){
-						jump('职业晋级')
-					}else{
-						setTimeout(()=>{
-							updateConfig.update_config({'mainPlugin' : '魔法大学'})
-						},2000)
-					}
-					return
-				}else if(thisobj.craftSkill.lv >= 6){
-					if (config && config['mission']['起司的任务']){
-						jump('职业晋级')
-					}else{
-						setTimeout(()=>{
-							updateConfig.update_config({'mainPlugin' : '起司的任务'})
-						},2000)
-					}
-					return
-				}else if(thisobj.craftSkill.lv >= 4){
-					if (config && config['mission']['咖哩任务']){
-						jump('职业晋级')
-					}else{
-						setTimeout(()=>{
-							updateConfig.update_config({'mainPlugin' : '咖哩任务'})
-						},2000)
-					}
-					return
-				}
 			}
 		}
 

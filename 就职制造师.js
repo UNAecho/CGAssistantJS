@@ -552,7 +552,7 @@ var cga = require('./cgaapi')(function(){
 			}
 
 			if(job == '铠甲工'){
-				var sayWords = '【UNA脚本提醒】造铠并不在圣拉鲁卡村学习，出发前往小备前之洞窟'
+				var sayWords = '【UNAecho脚本提醒】造铠并不在圣拉鲁卡村学习，出发前往小备前之洞窟'
 				healMode.func(()=>{
 					cga.SayWords(sayWords, 0, 3, 1);
 					cga.travel.falan.toStone('C', () => {
@@ -566,7 +566,7 @@ var cga = require('./cgaapi')(function(){
 					});
 				})
 			}else if(job == '铸剑工'){
-				var sayWords = '【UNA脚本提醒】铸剑并不在圣拉鲁卡村学习，出发前往小村正之洞窟'
+				var sayWords = '【UNAecho脚本提醒】铸剑并不在圣拉鲁卡村学习，出发前往小村正之洞窟'
 				healMode.func(()=>{
 					cga.SayWords(sayWords, 0, 3, 1);
 					cga.travel.falan.toStone('C', () => {

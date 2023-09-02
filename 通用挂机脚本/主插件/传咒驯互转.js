@@ -127,7 +127,7 @@ var thisobj = {
 					configTable.needPerfectTrainSkill = saveValue;
 					thisobj.needPerfectTrainSkill = saveValue
 
-					sayString = '当前已选择【' + strValue + '】【完美调教术】，烧声望结束后【' + strValue + '】转职成驯兽师';
+					sayString = '当前已选择:[' + strValue + '][完美调教术]，烧声望结束后[' + strValue + ']转职成驯兽师';
 					cga.sayLongWords(sayString, 0, 3, 1);
 
 					cb(null)

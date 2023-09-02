@@ -469,7 +469,7 @@ var thisobj = {
 			} else if (timeRemaining >= 20 && timeRemaining < 30) {
 				result = thisobj.data.fiveMinute * 2
 			}
-			console.log('【UNA脚本提醒】距离交付道具还需' + timeRemaining.toFixed(2) + '分钟，在这里先等待【' + (result / 1000 / 60).toFixed(0) + '】分钟后再出发，防止单一位置等待时间过长而掉线')
+			console.log('【UNAecho脚本提醒】距离交付道具还需' + timeRemaining.toFixed(2) + '分钟，在这里先等待【' + (result / 1000 / 60).toFixed(0) + '】分钟后再出发，防止单一位置等待时间过长而掉线')
 			return result
 		},
 		saveTimestamp: (itemName, cb) => {

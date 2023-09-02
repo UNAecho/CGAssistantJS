@@ -570,7 +570,7 @@ var playerThink = () => {
 		}
 		else if (ctx.result == 'logback' || ctx.result == 'logback_forced') {
 			if (ctx.reason && ctx.reason.indexOf('发生改变') != -1) {
-				cga.SayWords('UNA脚本提醒：当前练级区域已经不适合练级，切换练级区域..', 0, 3, 1);
+				cga.SayWords('UNAecho脚本提醒：当前练级区域已经不适合练级，切换练级区域..', 0, 3, 1);
 			}
 			if (interruptFromMoveThink) {
 				logbackEx.func(loop);

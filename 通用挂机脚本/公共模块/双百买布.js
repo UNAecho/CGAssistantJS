@@ -141,7 +141,7 @@ var thisobj = {
 			
 			// 绢布可以在魔法大学顺便购买
 			if (thisobj.object.order.hasOwnProperty('维诺亚村') && thisobj.object.order.hasOwnProperty('魔法大学')){
-				console.log('【UNA脚本提醒】：绢布可以顺便在魔法大学直接买，就不去维诺亚村买了')
+				console.log('【UNAecho脚本提醒】：绢布可以顺便在魔法大学直接买，就不去维诺亚村买了')
 				thisobj.object.order['魔法大学'].push({item: '绢布', index:fabricInfo['绢布'].index, count: thisobj.object.order['维诺亚村'][0].count})
 				delete thisobj.object.order['维诺亚村']
 			}
