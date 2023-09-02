@@ -58,6 +58,7 @@ let thisobj = {
         // console.log('写入', content)
         fs.writeFileSync(file, JSON.stringify(content));
     },
+    // 由于遍历完毕后，使用随机探索当前地图的方式循环，这里是无法调用cb的。cb留给后续开发使用
     walkAndSave: (cb) => {
         thisobj.cache.doorInfo = thisobj.read()
 
@@ -137,7 +138,6 @@ let thisobj = {
                 setTimeout(loop, 500)
                 return
             } else {
-                console.log('待遍历的门:',doors)
                 // 遍历所有没登记过的门
                 for (let door of doors) {
                     // 缓存进入门的id
@@ -153,53 +153,21 @@ let thisobj = {
                             setTimeout(loop, 500)
                         });
                         return
-
-                    }else{
-                        console.log(thisobj.cache.doorId + '已经存在记录，跳过')
                     }
                 }
-                console.log('当前区域已经全部登记完毕，请更换其它区域')
-                // 重置缓存
-                thisobj.cache = {
-                    doorInfo : null,
-                    doorId : null,
-                    doorObjs : {}
-                }
-                cb(null)
+                console.log('当前区域已经全部登记完毕，开始随机进入任意一个门，完善可能缺失的信息')
+                let randomDoor = doors[Math.floor(Math.random() * doors.length)]
+                cga.walkList([
+                    [randomDoor.mapx, randomDoor.mapy, '']
+                ], () => {
+                    // 由于使用空串做cga.walkList的出口判定，这里给一点延迟，以防cb调用过快导致地图没切换成功时也被认为切换成功了。
+                    setTimeout(loop, 500)
+                });
                 return
             }
         }
         loop()
         return
-
-        // let tmpIndex = null
-        // // di:door index
-        // for (let di in doors) {
-        //     // base点初始化
-        //     if(tmpIndex == null){
-        //         tmpIndex = di
-        //         continue
-        //     }
-        //     // 当前迭代的door的切比雪夫距离
-        //     let doorObj = doors[di]
-        //     let doorDistance = cga.chebyshevDistance(XY.x,XY.y,doorObj.mapx,doorObj.mapy)
-        //     // 如果当前距离小于缓存距离，则当前door成为新的base点。以此来搜索最近邻door
-        //     if(doorDistance < cga.chebyshevDistance(XY.x,XY.y,doors[tmpIndex].mapx,doors[tmpIndex].mapy)){
-        //         tmpIndex = di
-        //     }
-        // }
-        // if(tmpIndex == null){
-        //     throw new Error('【UNAecho脚本提醒】当前地图index:'+index+'当前地图名称:'+map+'没有出口，请手动更新相关信息')
-        // }
-
-        // let projectDistance = cga.projectDistance(XY.x,XY.y,doors[tmpIndex].mapx,doors[tmpIndex].mapy)
-
-
-
-
-        // let tmp = offlineData[i]
-        // offlineData[i] = offlineData[0]
-        // offlineData[0] = tmp
     }
 }
 
