@@ -14797,18 +14797,18 @@ module.exports = function(callback){
 	 * 2、地图之间的切换方式并不是只有【走进门】这一种方式，还有与NPC对话、主动使用道具（飞行券、5转迷宫使用任务水晶）、转向某个NPC（法兰城水晶传送）等其它方式。
 	 * @returns 数据结构参考cga.getMapObjects()返回值
 	 */
-	cga.getDoorCluster = ()=>{
+	cga.getDoorCluster = () => {
 		let mapObjects = cga.getMapObjects()
 		let resultArr = []
 		let ngArr = []
 		for (let mapObj of mapObjects) {
-			if(mapObj.cell != 10){
-				console.log('【UNAecho脚本警告】坐标x:',mapObj.mapx,'y:',mapObj.mapy,'，的cell不为10，请注意')
+			if (mapObj.cell != 10 && mapObj.cell != 3) {
+				console.log('【UNAecho脚本警告】坐标x:', mapObj.mapx, 'y:', mapObj.mapy, '，的cell=' + mapObj.cell + '，不为10，请注意。')
 				continue
 			}
 			let exist = false
 			for (let resultObj of resultArr) {
-				if(cga.isAroundPos([resultObj.x,resultObj.y],{x:mapObj.mapx,y:mapObj.mapy})){
+				if (cga.isAroundPos([resultObj.x, resultObj.y], { x: mapObj.mapx, y: mapObj.mapy })) {
 					// console.log('坐标x:',mapObj.mapx,'y:',mapObj.mapy,'，处于结果集x:',resultObj.x,'y:',resultObj.y,'1x1内，舍弃')
 					exist = true
 					ngArr.push(mapObj)
@@ -14816,17 +14816,17 @@ module.exports = function(callback){
 				}
 			}
 			for (let ngObj of ngArr) {
-				if(cga.isAroundPos([ngObj.x,ngObj.y],{x:mapObj.mapx,y:mapObj.mapy})){
+				if (cga.isAroundPos([ngObj.x, ngObj.y], { x: mapObj.mapx, y: mapObj.mapy })) {
 					// console.log('坐标x:',mapObj.mapx,'y:',mapObj.mapy,'，处于重复集x:',ngObj.x,'y:',ngObj.y,'1x1内，舍弃')
 					exist = true
 					ngArr.push(mapObj)
 					break
 				}
 			}
-			if(!exist){
+			if (!exist) {
 				resultArr.push(mapObj)
 			}
-		} 
+		}
 
 		return resultArr
 	}
