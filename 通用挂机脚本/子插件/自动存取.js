@@ -17,13 +17,30 @@ var thisobj = {
 		'draw': 7,
 	},
 	// 禁用隐式加密告知内容，需要与移动银行.js中一致
-	skipCipherStr : '*1~',
+	skipCipherStr: '*1~',
 	// 循环喊话开关，默认on。可设置on持续运行、start循环说话、off关闭speaker
 	speakStatus: 'on',
 	// 循环喊话内容
 	speakStr: '',
 	// 循环喊话间隔，尽量大于移动银行的检测客户端昵称时间间隔，以免多等一轮循环
 	speakDelay: cga.randomDelay(4, 6),
+	/**
+	 * 存取钱金币优化系数，范围为0-1的浮点数。代表百分比。
+	 * 当把钱取到上限时，很可能卖了点魔石，又变成超过上限，需要存钱了
+	 * 当把钱存到下限时，很可能补了次血，又变成低于下限了，需要取钱了
+	 * 为了避免此极端现象，这个优化系数可以取与上/下限差值的百分比，再与上/下限结合，平滑数值。
+	 * 设上限为upper，下限为lower，系数为x，身上现金为curgold
+	 * 公式为 : 
+	 * 1、存钱时：upper - (upper - lower) * x
+	 * 2、取钱时：lower + (upper - lower) * x
+	 * 
+	 * 举例说明：如果此系数为0.9，上限为90万，下限为10万。
+	 * 存钱时，需要将钱【存到】90万 - (90万-10万) * 0.9 = 18万，也就是最终需要存curgold - 18万
+	 * 取钱时，需要将钱【取到】10万 + (90万-10万) * 0.9 = 82万，也就是最终需要取82万 - curgold
+	 * 
+	 * 这样避免了刚存完就要取，和刚取完就要存的尬尴。
+	 */
+	alpha: 0.9,
 	// 属性名称字典
 	typeProperty: {
 		'item': '道具',
@@ -57,6 +74,7 @@ var thisobj = {
 	 */
 	refreshOrder: () => {
 		let orderArr = []
+		let needCount = null
 
 		for (let k in thisobj.autoSaveAndDraw) {
 			for (let obj of thisobj.autoSaveAndDraw[k]) {
@@ -75,18 +93,33 @@ var thisobj = {
 
 				// 超过上限，调整为下限。item逻辑说明见上面的doc
 				if (curCount > obj.upper && (k != 'item' || (k == 'item' && curCount - obj.upper >= cga.getItemMaxcount({ name: obj.name })))) {
+					// 如果是金币操作，使用平滑系数来避免直接将金币存取至上下限临界点
+					if (k == 'gold') {
+						needCount = curCount - (obj.upper - (obj.upper - obj.lower) * thisobj.alpha)
+						console.log('【UNAecho脚本提醒】存金币不会存至下限，而是加入平滑系数防止金币数量成为临界点。当前需要【存】' + needCount + '金币，使现金变为' + (obj.upper - (obj.upper - obj.lower) * thisobj.alpha) + 'G')
+					} else {
+						needCount = curCount - obj.lower
+					}
+
 					orderArr.push({
 						name: obj.name,
 						type: k,
 						tradeType: 'save',
-						count: curCount - obj.lower,
+						count: needCount,
 					})
 				} else if (curCount < obj.lower && (k != 'item' || (k == 'item' && obj.lower - curCount >= cga.getItemMaxcount({ name: obj.name })))) {// 低于下限，调整为上限。
+					// 如果是金币操作，使用平滑系数来避免直接将金币存取至上下限临界点
+					if (k == 'gold') {
+						needCount = (obj.lower + (obj.upper - obj.lower) * thisobj.alpha) - curCount
+						console.log('【UNAecho脚本提醒】取金币不会取至上限，而是加入平滑系数防止金币数量成为临界点。当前需要【取】' + needCount + '金币，使现金变为' + (obj.lower + (obj.upper - obj.lower) * thisobj.alpha) + 'G')
+					} else {
+						needCount = obj.upper - curCount
+					}
 					orderArr.push({
 						name: obj.name,
 						type: k,
 						tradeType: 'draw',
-						count: obj.upper - curCount,
+						count: needCount,
 					})
 				}
 
@@ -230,7 +263,7 @@ var thisobj = {
 				}
 				// 如果需要金币暗号，则提供
 				// 这里尽量用正则匹配出来的第0个内容(被正则表达式捕获到的内容)，而不是input，以防正则没有匹配上，也进入判断。
-				if(!matchObj[0].endsWith(thisobj.skipCipherStr)){
+				if (!matchObj[0].endsWith(thisobj.skipCipherStr)) {
 					stuffs.gold = thisobj.goldCipher['save']
 				}
 			} else if (matchObj[2] == 'g') {// matchObj[5]为对方告知你最多能存/取多少
@@ -244,7 +277,7 @@ var thisobj = {
 					return false
 				}
 				// 如果需要金币暗号，则提供
-				if(!matchObj[0].endsWith(thisobj.skipCipherStr)){
+				if (!matchObj[0].endsWith(thisobj.skipCipherStr)) {
 					stuffs.gold = thisobj.goldCipher['save']
 				}
 			}
@@ -428,7 +461,7 @@ var thisobj = {
 	 */
 	manualPrepare: (autoSaveAndDraw, cb) => {
 		// 如果手动传入，则使用手动的数据。否则使用脚本设置保存的数据
-		if(autoSaveAndDraw){
+		if (autoSaveAndDraw) {
 			thisobj.autoSaveAndDraw = autoSaveAndDraw
 		}
 

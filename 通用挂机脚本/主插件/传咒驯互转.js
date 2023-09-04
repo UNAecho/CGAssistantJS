@@ -6,6 +6,10 @@ var cga = global.cga;
 var rootdir = cga.getrootdir()
 var configTable = global.configTable;
 
+// 提取本地职业数据
+const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
+const professionalArray = getprofessionalInfos.Professions
+
 var jump = ()=>{
 	setTimeout(()=>{
 		updateConfig.update_config({'mainPlugin' : '烧声望'})
@@ -20,8 +24,18 @@ var loop = ()=>{
 	if(jobObj.job == '暗黑骑士' || jobObj.job == '教团骑士'){
 		throw new Error('暗黑骑士、教团骑士是道具服付费职业，不能依靠转职保证书刷声望，请手动处理。')
 	}
-
-	if(jobObj.jobType != '战斗系'){
+	// 如果当前职业并非战斗系（除了医师和护士），则禁止使用此脚本，防止错误转职造成严重后果。
+	if(thisobj.finalJob.jobType == '服务系'){
+		if(thisobj.finalJob.job == '医师' || thisobj.finalJob.job == '护士'){
+			console.log('医师和护士可以参与保证书的转职烧声望环节，开始转职..')
+		}else{
+			console.log('服务系除了医师和护士，其它人不需要通过转职来刷声望。')
+			setTimeout(()=>{
+				updateConfig.update_config({'mainPlugin' : '智能练级'})
+			},5000)
+			return
+		}
+	}else if(jobObj.jobType != '战斗系'){
 		throw new Error('生产系禁止使用此脚本，因为生产系无法通过保证书+转职来获取声望。防止错误转职。')
 	}
 
@@ -101,7 +115,21 @@ var thisobj = {
 			configTable.needPerfectTrainSkill = obj.needPerfectTrainSkill;
 			thisobj.needPerfectTrainSkill = obj.needPerfectTrainSkill;
 		}
-		
+		// 如果其他模块已经读取了目标职业，则直接使用
+		if (configTable.finalJob) {
+			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
+		} else if (typeof obj.finalJob == 'number') {
+			configTable.finalJob = professionalArray[obj.finalJob].name;
+			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
+		} else if (typeof obj.finalJob == 'string') {
+			configTable.finalJob = obj.finalJob;
+			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
+		}
+		if (!thisobj.finalJob) {
+			console.error('读取配置：自动读取目标职业失败！必须手动指定当前角色的培养意向（当前账号最终要练什么）职业。注意需要填写职业的统称，不需要附带职业称号。如【王宫弓箭手】，就填【弓箭手】');
+			return false;
+		}
+
 		return true;
 	},
 	inputcb : (cb)=>{
@@ -138,8 +166,43 @@ var thisobj = {
 			});
 
 		}
+
+		var stage1 = (cb2) => {
+
+			if (configTable.finalJob) {
+				console.log('【传咒驯互转】其他模块已经定义了目标职业，这里直接跳过输入')
+				thisobj.finalJob = cga.job.getJob(configTable.finalJob)
+				cb2(null)
+				return
+			}
+
+			var sayString = '【战斗配置插件】请选择角色的最终要练什么职业:';
+			for (var i in professionalArray) {
+				if (i != 0)
+					sayString += ', ';
+				sayString += '(' + (parseInt(i) + 1) + ')' + professionalArray[i].name;
+			}
+			cga.sayLongWords(sayString, 0, 3, 1);
+			cga.waitForChatInput((msg, index) => {
+				if (index !== null && index >= 1 && professionalArray[index - 1]) {
+					configTable.finalJob = professionalArray[index - 1].name;
+					thisobj.finalJob = cga.job.getJob(configTable.finalJob)
+
+					var sayString2 = '当前已选择:[' + thisobj.finalJob.job + ']。';
+					cga.sayLongWords(sayString2, 0, 3, 1);
+
+					cb2(null);
+
+					return false;
+				}
+
+				return true;
+			});
+		}
+
 		Async.series([
 			stage0,
+			stage1,
 		], cb);
 	},
 	execute : ()=>{

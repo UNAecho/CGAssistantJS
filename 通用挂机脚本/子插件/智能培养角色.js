@@ -226,7 +226,7 @@ var thisobj = {
 			thisobj.finalJob = cga.job.getJob(configTable.finalJob)
 		}
 		if (!thisobj.finalJob) {
-			console.error('读取配置：自动读取战斗配置失败！必须手动指定当前角色的培养意向（当前账号最终要练什么）职业。注意需要填写职业的统称，不需要附带职业称号。如【王宫弓箭手】，就填【弓箭手】');
+			console.error('读取配置：自动读取目标职业失败！必须手动指定当前角色的培养意向（当前账号最终要练什么）职业。注意需要填写职业的统称，不需要附带职业称号。如【王宫弓箭手】，就填【弓箭手】');
 			return false;
 		}
 
