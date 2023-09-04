@@ -43,7 +43,7 @@
     "minHp": "25%",
     "minMp": "15%",
     "buyCrystal": "地水的水晶（5：5）",
-    "needPerfectTrainSkill": false,
+    "needPerfectTrainSkill": true,
     "minLoyality": 40,
     "maxEndurance": 233,
     "maxStrength": 150,
