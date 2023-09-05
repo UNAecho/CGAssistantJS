@@ -14830,6 +14830,22 @@ module.exports = function(callback){
 
 		return resultArr
 	}
+
+	cga.calculateDoorDistance = (door1,door2) => {
+		let path = null
+		try {
+			path = cga.calculatePath(door1.mapx, door1.mapy, door2.mapx, door2.mapy, null, null, null, []);
+		} catch (error) {
+			if(error.message.indexOf('寻路失败') != -1){
+				console.log('door1:',door1,'无法抵达door2:',door2,'距离视为-1。')
+				return -1
+			}else{
+				throw new Error('cga.calculatePath()返回未知错误:',error)
+			}
+			
+		}
+		return PF.Util.expandPath(path).length
+	}
 	
 	/**
 	 * UNAecho: 游戏角色对象，用于提取或保存一些常用的静态信息，或开发一些常用的API
