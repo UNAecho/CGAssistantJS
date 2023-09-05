@@ -618,6 +618,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 			})
 		},
 	};
+	// main开始前，先播报当前资产，方便审计
+	console.log(cga.getSumOfflineData())
 	// main
 	loop()
 });

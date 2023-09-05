@@ -1,1 +1,1 @@
-{"mainPlugin":"采集","subPlugins":["自动存取"],"gatherObject":"双百采集","serverPort":8888,"target":"鹿皮","mineType":0,"logoutTimes":0, "autoSaveAndDraw": { "item": [], "gold": [ { "name": "金币", "upper": 300000, "lower": 100000 } ], "pet": [] }}
+{ "mainPlugin": "双百制造", "subPlugins": [ "智能培养角色", "自动存取" ], "craftType": "造枪", "forgetSkillAt": 5, "listenPort": 5555, "finalJob": "造枪工", "needPerfectTrainSkill": false, "autoSaveAndDraw": { "item": [], "gold": [ { "name": "金币", "upper": 900000, "lower": 100000 } ], "pet": [] } }

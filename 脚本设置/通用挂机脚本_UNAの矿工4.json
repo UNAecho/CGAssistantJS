@@ -1,1 +1,1 @@
-{"mainPlugin":"采集","subPlugins":["自动存取"],"gatherObject":"双百采集","serverPort":8888,"target":"鹿皮","mineType":0,"logoutTimes":0, "autoSaveAndDraw": { "item": [], "gold": [ { "name": "金币", "upper": 300000, "lower": 100000 } ], "pet": [] }}
+{"mainPlugin":"采集","subPlugins":["自动存取"],"gatherObject":"双百采集","serverPort":8888,"target":"铜","mineType":0,"logoutTimes":0, "autoSaveAndDraw": { "item": [], "gold": [ { "name": "金币", "upper": 300000, "lower": 100000 } ], "pet": [] }}
