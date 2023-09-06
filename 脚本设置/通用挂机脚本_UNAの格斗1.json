@@ -42,7 +42,7 @@
     "autoRing": {
         "flag": true,
         "part": "队员",
-        "aim": "一次性",
+        "aim": "无限循环",
         "leaderX": 50,
         "leaderY": 77,
         "leaderFilter": "ring"

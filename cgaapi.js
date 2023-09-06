@@ -14872,6 +14872,15 @@ module.exports = function(callback){
 	}
 	
 	/**
+	 * UNAecho:计算自己与输入的door之间的cga.calculatePath().length距离
+	 * @param {*} door 
+	 */
+	cga.getDoorDistance = (door) => {
+		let XY = cga.GetMapXY()
+		return cga.calculateDoorDistance({mapx: XY.x, mapy: XY.y}, door)
+	}
+
+	/**
 	 * UNAecho: 游戏角色对象，用于提取或保存一些常用的静态信息，或开发一些常用的API
 	 */
 	cga.character = {}
