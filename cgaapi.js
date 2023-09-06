@@ -10900,20 +10900,19 @@ module.exports = function(callback){
 				spaceList = cga.getRandomSpaceThroughWall(npcpos[0],npcpos[1])
 			}
 
-			let carryTeamToPosArr = (npcpos,arr1,arr2,leaveteam,cb)=>{
+			let carryTeamToPosArr = (npcpos, arr1, arr2, leaveteam, cb) => {
 				let tmpArr = []
 				// 如果是组队，把队员都拉到NPC周围
-				if (isLeader()){
+				if (isLeader()) {
 					// 单人或者队长最终站位
 					tmpArr.push(arr1)
-					// 
-					// 新增：
 					/**
 					 * 如果是队长，并且在带队，那么需要把队友拉到NPC周围
 					 * 由于类似UD传送水晶，队长在水晶附近走来回走的次数较少，导致队员会小概率被甩到NPC1x1以外的位置
 					 * 这里多加一些队长在NPC1x1内来回走的逻辑，使队员平稳落在NPC1x1内的位置
 					 */
-					if(cga.getTeamPlayers().length){
+					let curTeamplayers = cga.getTeamPlayers()
+					if (curTeamplayers.length) {
 						tmpArr.push(arr2)
 						tmpArr.push(arr1)
 						tmpArr.push(arr2)
@@ -10921,29 +10920,33 @@ module.exports = function(callback){
 						tmpArr.push(arr2)
 						tmpArr.push(arr1)
 					}
-					cga.walkList(tmpArr, ()=>{
-						if(leaveteam){
-							cga.disbandTeam(()=>{
-								askAndCheck(npcpos,cb)
-							})
-							return
-						}
-						askAndCheck(npcpos,cb)
+					cga.walkList(tmpArr, () => {
+						// 如果队长带队，走到NPC附近要稍微顿一下再与NPC对话。
+						// 防止队员的cga.waitForLocation没等走到NPC附近执行cb，队长这边已经对话完毕并切换地图了，导致队员直接卡在cga.waitForLocation中，无法调用cb。
+						setTimeout(() => {
+							if (leaveteam) {
+								cga.disbandTeam(() => {
+									askAndCheck(npcpos, cb)
+								})
+								return
+							}
+							askAndCheck(npcpos, cb)
+						}, curTeamplayers.length ? 1500 : 0)
 					});
-				}else{// 如果是队员
+				} else {// 如果是队员
 					// 如果需要NPC周围只有1格，需要解散队伍后自行走至NPC面前
-					if(leaveteam){
+					if (leaveteam) {
 						console.log('NPC周围只有1格，需要等待队长解散队伍..')
 						tmpArr.push(arr1)
-						cga.disbandTeam(()=>{
-							cga.walkList(tmpArr, ()=>{
-								askAndCheck(npcpos,cb)
+						cga.disbandTeam(() => {
+							cga.walkList(tmpArr, () => {
+								askAndCheck(npcpos, cb)
 							});
 						})
 						return
 					}
-					cga.waitForLocation({pos : [npcpos[0],npcpos[1]]}, ()=>{
-						askAndCheck(npcpos,cb)
+					cga.waitForLocation({ pos: [npcpos[0], npcpos[1]] }, () => {
+						askAndCheck(npcpos, cb)
 					})
 				}
 			}
