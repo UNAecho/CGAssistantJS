@@ -5988,7 +5988,28 @@ module.exports = function(callback){
 		
 		return false;
 	}
-
+	/**
+	 * 【UNAecho开发提醒】虽然此API使用开源包Pathfinding，但实际实现可能并不是游戏内的最短路径。
+	 * 测试：
+	 * 1、在法兰城安其摩酒吧的【酒吧里面】，mapindex3为1171。
+	 * 2、起点[17,7]。
+	 * 3、走至[9,1]，path:
+	 * [ [ 17, 7 ], [ 17, 6 ], [ 16, 6 ], [ 15, 5 ], [ 14, 5 ], [ 13, 4 ], [ 12, 3 ], [ 11, 3 ], [ 10, 3 ], [ 9, 2 ], [ 9, 1, null, null, null, true ] ]
+	 * 4、走至[8,7]，path:
+	 * [ [ 17, 7 ], [ 17, 6 ], [ 16, 6 ], [ 15, 6 ], [ 14, 6 ], [ 13, 6 ], [ 12, 6 ], [ 11, 6 ], [ 10, 6 ], [ 9, 6 ], [ 8, 6 ], [ 8, 7, null, null, null, true ] ]
+	 * 走至[9,1]路径居然比走至[8,7]的路径还短，这是有问题的。
+	 * 有心情的时候，试着优化
+	 * 
+	 * @param {*} curX 起点x坐标
+	 * @param {*} curY 起点y坐标
+	 * @param {*} targetX 终点x坐标
+	 * @param {*} targetY 终点y坐标
+	 * @param {*} targetMap 终点传送至目标地图
+	 * @param {*} dstX 如果targetMap没有发生变化，则表示传送至同地图x坐标
+	 * @param {*} dstY 如果targetMap没有发生变化，则表示传送至同地图y坐标
+	 * @param {*} newList 迭代Array,初始化请传空数组[]
+	 * @returns Array
+	 */
 	cga.calculatePath = (curX, curY, targetX, targetY, targetMap, dstX, dstY, newList)=>{
 		var walls = cga.buildMapCollisionMatrix();
 		var grid = new PF.Grid(walls.matrix);
