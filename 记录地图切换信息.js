@@ -30,15 +30,60 @@
  * 这个概念用来登记哪个门与哪个门相通，或者单向连接。
  * 距离：可以用切比雪夫距离，或者cga.calculatePath()长度更为准确，但是性能消耗较大。
  * 因为最终需要遍历所有门，所以用切比雪夫距离作为度量方法，速度更快。
- * 5、落盘数据格式
- * 所有数据会被落盘在filePathDir下
- * 1、所有入口门、出口门信息会被记录为doorInfoFile的json文件
- * 2、所有门之间的代价信息会被记录为doorDstFile的json文件
- * 文件的key、value信息见getDoorId()与getDoor2DoorId()说明
  * 
  * 此外，当最近邻门的距离大于thisobj.nearestThreshold时，会视为上一个入口门没有出口门对应，也就是单向门。
  * 比如法兰城【竞技场的入口】的门[15,6]进到【竞技场】的[34,67]，此时最近邻门是【竞技场】的[58,58]
  * 但肉眼观察得知，实际上出口门是旁边的NPC，而不是[58,58]的cell = 10的门。
+ * 
+ * 5、落盘数据格式
+ * 所有数据会被落盘在doorInfoFile文件中
+ * 
+ * 数据格式说明：
+ * 最外层key为地图index，value为dict，代表每个门。
+ * 第二层key为当前地图下门的ID，value为与其它门两两交叉，所消耗的代价
+ * 其中dst为distance，代表走路所需距离，如果dst=0，则代表可以单向传送。如果dst=-1，代表无法从这个门抵达那个门。如果dst>0，则代表可以走路抵达，并且要走dst步
+ * gold为消耗费用，例如传送石之间互相传送。默认值为null，这种情况较少，需要手动添加消耗金币数
+ * item为消耗的道具，比如飞行券之类、或者过法兰城-维诺亚的洞穴需要的生产材料，同样，这种情况较少，需要手动添加
+ * item对象的格式：key为道具名称，value为数量
+ * {
+ *      '青椒肉丝' : 1,
+ * }
+ * 例：
+ * {"1170": {
+        "1170_安其摩酒吧_10_6": {
+            "1170_安其摩酒吧_16_23": {
+                "dst": -1,
+                "gold": null,
+                "item": {}
+            },
+            "1171_酒吧里面_8_7": {
+                "dst": 0,
+                "gold": null,
+                "item": {}
+            }
+        },
+        "1170_安其摩酒吧_16_23": {
+            "1000_法兰城_102_131": {
+                "dst": 0,
+                "gold": null,
+                "item": {}
+            },
+            "1170_安其摩酒吧_19_6": {
+                "dst": 18,
+                "gold": null,
+                "item": {}
+            },
+        },
+    },
+    }
+    
+ * 首先看key为"1170_安其摩酒吧_10_6"的value：
+ * 代表1170_安其摩酒吧_10_6这个门，不可以抵达1170_安其摩酒吧_16_23这个门(dst=-1)，可以传送至1171_酒吧里面_8_7这个门(dst=0)。
+ * 然后看key为"1170_安其摩酒吧_16_23"的value：
+ * 代表1170_安其摩酒吧_16_23这个门可以传送至1000_法兰城_102_131这个门(dst=0)，以及可以走18步抵达1170_安其摩酒吧_19_6这个门。
+ * 
+ * key中带有汉字名字是为了方便我debug，等开发完善后，需要去掉。节约空间
+ * 
  */
 let fs = require('fs');
 let path = require('path');
@@ -46,7 +91,6 @@ let path = require('path');
 // 固定文件路径，如果父目录不存在则创建
 let filePathDir = path.join(__dirname, '/常用数据/');
 let doorInfoFile = filePathDir + 'doorInfo.json';
-let doorDstFile = filePathDir + 'doorDistanceInfo.json';
 if (fs.existsSync(filePathDir) == false) {
     fs.mkdirSync(filePathDir);
 }
@@ -56,16 +100,16 @@ let thisobj = {
     cache: {
         // 入口门、出口门之间的信息
         doorInfo: null,
-        // 本地图所有门之间的代价信息，此脚本仅计算距离代价。金币(使用传送石)、道具(使用飞机票)等代价请手动加入
-        doorDstInfo: null,
+        // 入口门所在的mapindex的缓存
+        lastDoorMapIndex: null,
         // 入口门ID的缓存
-        doorId: null,
+        lastDoorId: null,
         // 每个探索过的地图的door信息缓存
         doorObjs: {}
     },
     separator: '_',
     // 最近邻门的距离阈值，大于此值视为上一个地图的入口门是单向门，不可通过最近邻门返回上一个地图的入口
-    nearestThreshold: 6,
+    nearestThreshold: 7,
     /**
      * 生成门的ID
      * @param {*} doorObj 生成门ID所传参数，包括：
@@ -97,14 +141,7 @@ let thisobj = {
             resultStr = resultStr + thisobj.separator + doorObj['mapx'] + thisobj.separator + doorObj['mapy']
         }
 
-        if (doorObj.hasOwnProperty('method')) {
-            resultStr = resultStr + thisobj.separator + doorObj['method']
-        }
         return resultStr
-    },
-    // 门何门之间的ID生成方式，统一使用此函数来连接双方ID
-    getDoor2DoorId: (door1Id, door2Id) => {
-        return door1Id + '@' + door2Id
     },
     // 黑名单，记录一些不能通过程序自动采集的情况。防止脚本陷入死循环。
     blacklist: [
@@ -124,15 +161,15 @@ let thisobj = {
         return result
     },
     // 使用cga.calculateDoorDistance()，度量a与b的顺序。本函数结果需要return给Array.sort()使用。
-    sortDistance : (XY,a,b)=>{
+    sortDistance: (XY, a, b) => {
         // 必须使用cga.calculatePath()的类A*算法计算长度，而非切比雪夫距离。切比雪夫无法计算有障碍物的情况。
-        let aDst = cga.calculateDoorDistance({mapx:XY.x,mapy:XY.y},a)
-        let bDst = cga.calculateDoorDistance({mapx:XY.x,mapy:XY.y},b)
-        if(aDst == bDst){
+        let aDst = cga.calculateDoorDistance({ mapx: XY.x, mapy: XY.y }, a)
+        let bDst = cga.calculateDoorDistance({ mapx: XY.x, mapy: XY.y }, b)
+        if (aDst == bDst) {
             return 0
-        }else if(aDst < 0){
+        } else if (aDst < 0) {
             return 1
-        }else if(bDst < 0){
+        } else if (bDst < 0) {
             return -1
         }
         // console.log('当前',XY,'距离',a,'为',aDst)
@@ -156,7 +193,6 @@ let thisobj = {
     // 由于遍历完毕后，使用随机探索当前地图的方式循环，这里是无法调用cb的。cb留给后续开发使用
     walkAndSave: (cb) => {
         thisobj.cache.doorInfo = thisobj.read(doorInfoFile)
-        thisobj.cache.doorDstInfo = thisobj.read(doorDstFile)
 
         let loop = () => {
             let playerInfo = cga.GetPlayerInfo()
@@ -175,44 +211,63 @@ let thisobj = {
                 doors = thisobj.cache.doorObjs[index]
             } else {
                 console.log('首次进入地图' + index + '缓存所有门的信息..')
-                doors = cga.getDoorCluster()
-
+                doors = cga.getDoorCluster(true)
                 if (doors.length == 0) {
                     throw new Error('【UNAecho脚本提醒】当前地图index:' + index + '当前地图名称:' + map + '没有出口，请手动更新相关信息')
                 } else {
                     console.log('当前地图门的数量:' + doors.length)
                 }
-                // 首先计算各个门之间的代价信息
-                console.log('开始记录门何门之间的代价信息，如果当前地图门数量较多，脚本可能会持续运行一段时间，这段时间人物不会有动作。')
+
+                // 计算当前mapindex的各个门之间的代价信息
+                console.log('开始记录门和门之间的代价信息，如果当前地图门数量较多，脚本可能会持续运行一段时间，这段时间人物不会有动作。')
+
+                // init mapindex dict
+                if (!thisobj.cache.doorInfo[index]) {
+                    thisobj.cache.doorInfo[index] = {}
+                }
+
                 // O(n2)遍历
                 for (let door1 of doors) {
+                    let door1Id = thisobj.getDoorId(Object.assign({
+                        mapindex: index,
+                        mapname: map,
+                    }, door1))
+                    // init door1
+                    if (!thisobj.cache.doorInfo[index][door1Id]) {
+                        thisobj.cache.doorInfo[index][door1Id] = {}
+                    }
                     for (let door2 of doors) {
                         // 跳过计算相同的门
                         if (door1.mapx == door2.mapx && door1.mapy == door2.mapy) {
                             continue
                         }
-                        let door1Id = thisobj.getDoorId(Object.assign({
-                            mapindex: index,
-                            mapname: map,
-                        }, door1))
                         let door2Id = thisobj.getDoorId(Object.assign({
                             mapindex: index,
                             mapname: map,
                         }, door2))
-                        let dstId = thisobj.getDoor2DoorId(door1Id, door2Id)
-                        if (!thisobj.cache.doorDstInfo.hasOwnProperty(dstId)) {
-                            let dst = cga.calculateDoorDistance(door1, door2)
-                            thisobj.cache.doorDstInfo[dstId] = 'd' + dst.toString()
+                        // init door2
+                        if (!thisobj.cache.doorInfo[index][door1Id][door2Id]) {
+                            thisobj.cache.doorInfo[index][door1Id][door2Id] = {
+                                dst: cga.calculateDoorDistance(door1, door2),
+                                gold: null,
+                                item: {}
+                            }
                         }
                     }
+                    // sort door1 dict
+                    thisobj.cache.doorInfo[index][door1Id] = thisobj.sortDict(thisobj.cache.doorInfo[index][door1Id])
                 }
+                // sort mapindex dict
+                thisobj.cache.doorInfo[index] = thisobj.sortDict(thisobj.cache.doorInfo[index])
+                // sort thisobj.cache.doorInfo dict
+                thisobj.cache.doorInfo = thisobj.sortDict(thisobj.cache.doorInfo)
                 // 落盘，各个门之间的代价信息部分结束
-                thisobj.write(doorDstFile, thisobj.sortDict(thisobj.cache.doorDstInfo))
+                thisobj.write(doorInfoFile, thisobj.cache.doorInfo)
 
                 // 然后处理入口门、出口门相关信息
                 // 先排序，为了将最近邻门移至队尾。注意：不能filter掉无法抵达的门，因为有些无法抵达的门，可由当前地图其它门来抵达。举例案例可以参考法兰城【安其摩酒吧】的地图。
                 doors = doors.sort((a, b) => {
-                    return thisobj.sortDistance(XY,a,b)
+                    return thisobj.sortDistance(XY, a, b)
                 })
 
                 /**
@@ -228,28 +283,24 @@ let thisobj = {
                 // 将当前door的顺序缓存，再次进入时使用此顺序，不能再次排序
                 thisobj.cache.doorObjs[index] = doors
             }
-
             // 如果没有记录上一次进入的入口门，则将最近邻门标记为此入口门的出口门。
-            if (thisobj.cache.doorId && !thisobj.cache.doorInfo.hasOwnProperty(thisobj.cache.doorId)) {
+            if (thisobj.cache.lastDoorId && !Object.values(thisobj.cache.doorInfo[thisobj.cache.lastDoorMapIndex][thisobj.cache.lastDoorId]).some((d) => { return d.dst == 0 })) {
                 // 注意这里的最近邻门必须重新获取，因为缓存中的门信息为当前地图首次计算的顺序，和已经走动过的现在顺序不同。
-                nearest = cga.getDoorCluster().sort((a, b) => {
-                    return thisobj.sortDistance(XY,a,b)
+                nearest = cga.getDoorCluster(false).sort((a, b) => {
+                    return thisobj.sortDistance(XY, a, b)
                 }).shift()
 
-                // 先获取出入口门的ID与代价。入口门ID就是缓存thisobj.cache.doorId
+                // 先获取出入口门的ID与代价。入口门ID就是缓存thisobj.cache.lastDoorId
                 // 出口门ID，出口门视为最近邻门。
                 let nearestDoorId = thisobj.getDoorId(Object.assign({
                     mapindex: index,
                     mapname: map,
                 }, nearest))
-                // 出入口门的代价，此脚本仅记录walk方式的距离代价，所以默认为0（用脚走的门何门距离视为0）
-                let cost = 0
 
                 // 然后制作出入口落盘信息
                 let curObj = {
                     mapindex: index,
                     mapname: map,
-                    method: 'walk'
                 }
                 // 与door信息合并，注意只能用深拷贝。
                 Object.assign(curObj, nearest)
@@ -262,24 +313,20 @@ let thisobj = {
                 // 当最近邻门距离大于thisobj.nearestThreshold，才会被视为单向门
                 if (projectDistance > thisobj.nearestThreshold) {
                     curObj['curpos'] = XY
-                    // 单向门距离
-                    cost = -1
 
-                    console.log('最近邻门', curObj, '与自己距离大于阈值【' + thisobj.nearestThreshold + '】，视为上一个地图的入口门是单向门。将当前坐标视为出口门。距离代价视为', cost)
+                    console.log('最近邻门', curObj, '与自己距离大于阈值【' + thisobj.nearestThreshold + '】，视为上一个地图的入口门是单向门。将当前坐标视为出口门。')
                 }
                 // 登记与入口门对应的出口门
-                thisobj.cache.doorInfo[thisobj.cache.doorId] = thisobj.getDoorId(curObj)
-                // 同步落盘出入口文件
-                thisobj.write(doorInfoFile, thisobj.sortDict(thisobj.cache.doorInfo))
-
-                // 将代价缓存
-                thisobj.cache.doorDstInfo[thisobj.getDoor2DoorId(thisobj.cache.doorId, nearestDoorId)] = 'd' + cost.toString()
-                // 同步落盘门的代价文件
-                thisobj.write(doorDstFile, thisobj.sortDict(thisobj.cache.doorDstInfo))
+                thisobj.cache.doorInfo[thisobj.cache.lastDoorMapIndex][thisobj.cache.lastDoorId][nearestDoorId] = {
+                    dst: 0,
+                    gold: null,
+                    item: {}
+                }
+                // 落盘
+                thisobj.write(doorInfoFile, thisobj.cache.doorInfo)
                 setTimeout(loop, 500)
                 return
             } else {
-                console.log("🚀 ~ file: 记录地图切换信息.js:270 ~ loop ~ doors:", doors)
                 // 遍历所有没登记过的门
                 for (let door of doors) {
                     if (!cga.isPathAvailable(XY.x, XY.y, door.mapx, door.mapy)) {
@@ -293,13 +340,16 @@ let thisobj = {
                         console.log(door, '为黑名单房间，禁止进入')
                         continue
                     }
-                    // 缓存进入门的id
-                    thisobj.cache.doorId = thisobj.getDoorId(Object.assign({
+
+                    // 缓存入口门所在的mapindex与该门的id
+                    thisobj.cache.lastDoorMapIndex = index
+                    thisobj.cache.lastDoorId = thisobj.getDoorId(Object.assign({
                         mapindex: index,
                         mapname: map,
                     }, door))
+
                     // 如果缓存中没有这个门的信息
-                    if (!thisobj.cache.doorInfo.hasOwnProperty(thisobj.cache.doorId)) {
+                    if (!Object.values(thisobj.cache.doorInfo[index][thisobj.cache.lastDoorId]).some((d) => { return d.dst == 0 })) {
                         // 有拦路BOSS的情况，特殊处理。例如哈洞熊男
                         if (index == 11004 && ((XY.y < 17 && door.mapy > 17) || (XY.y > 17 && door.mapy < 17))) {
                             console.log('当前地图【' + map + '】有boss，先跳过BOSS，再继续逻辑..')

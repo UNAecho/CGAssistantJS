@@ -9348,6 +9348,8 @@ module.exports = function(callback){
 			return
 		}
 		var playerInfo = cga.GetPlayerInfo()
+		var config = cga.loadPlayerConfig();
+		var jobObj = cga.job.getJob()
 		var isleader = teamplayers[0].name == playerInfo.name ? true : false
 
 		if(isleader && teamplayers.length < memberCnt){
@@ -9391,9 +9393,20 @@ module.exports = function(callback){
 				return cga.findTitle(input) == -1 ? 0 : 1
 			},
 			"mission" : (input)=>{
-				let config = cga.loadPlayerConfig();
 				if(config && config["mission"] && config["mission"][input]){
 					return 1
+				}
+				/**
+				 * UNAecho:这里可能会有一个小问题
+				 * 比如你是一个已经生产1转的职业，而这时候恰巧队长问你'挑战神兽'任务完成与否
+				 * 由于生产系无需做战斗系的任务，所以对你来说'挑战神兽'当然没有完成，return 0
+				 * 但是如果是这样，就可能会触发队长带你去做'挑战神兽'任务，而这是一个生产系不需要的任务
+				 * 所以这里做出调整，如果是不为医师和护士的非战斗系，则直接谎报事实，避免被队长带去做不必要的任务
+				 */
+				if(jobObj.jobType != '战斗系' && jobObj.job != '医师' && jobObj.job != '护士'){
+					if(input == '挑战神兽' || input == '诅咒的迷宫'){
+						return 1
+					}
 				}
 				return 0
 			},
@@ -11680,11 +11693,11 @@ module.exports = function(callback){
 	cga.cachedMapObjects = null;
 	cga.cachedMapObjectsTime = 0;
 	
-	cga.getMapObjects = ()=>{
+	cga.getMapObjects = (load_all=true)=>{
 		var curtime = (new Date()).getTime();
 		if(1 || cga.cachedMapObjects == null || curtime > cga.cachedMapObjectsTime + 200)
 		{
-			var wall = cga.GetMapObjectTable(true);
+			var wall = cga.GetMapObjectTable(load_all);
 			var objs = [];
 			for(var y = 0; y < wall.y_size; ++y){
 				for(var x = 0; x < wall.x_size; ++x){
@@ -14819,10 +14832,11 @@ module.exports = function(callback){
 	 * 这些门并未进行cga.isPathAvailable()的判断，外部调用需要自行判断。
 	 * 本API仅为采集数据时使用，时间复杂度较高，但此API属于较低使用频率（采集静态、非变化数据）所以还可以接受。
 	 * 2、地图之间的切换方式并不是只有【走进门】这一种方式，还有与NPC对话、主动使用道具（飞行券、5转迷宫使用任务水晶）、转向某个NPC（法兰城水晶传送）等其它方式。
+	 * @param {*} load_all 默认为true。当值为true时，返回整张地图数据，否则返回人物附近51x51的数据。
 	 * @returns 数据结构参考cga.getMapObjects()返回值
 	 */
-	cga.getDoorCluster = () => {
-		let mapObjects = cga.getMapObjects()
+	cga.getDoorCluster = (load_all=true) => {
+		let mapObjects = cga.getMapObjects(load_all)
 		let resultArr = []
 		let ngArr = []
 		for (let mapObj of mapObjects) {
@@ -14861,7 +14875,7 @@ module.exports = function(callback){
 			path = cga.calculatePath(door1.mapx, door1.mapy, door2.mapx, door2.mapy, null, null, null, []);
 		} catch (error) {
 			if(error.message.indexOf('寻路失败') != -1){
-				console.log('door1:',door1,'无法抵达door2:',door2,'距离视为-1。')
+				// console.log('door1:',door1,'无法抵达door2:',door2,'距离视为-1。')
 				return -1
 			}else{
 				throw new Error('cga.calculatePath()返回未知错误:',error)
