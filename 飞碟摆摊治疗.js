@@ -14,17 +14,15 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 	
 	var loop = ()=>{
 
-		if(cga.GetMapName() != '里谢里雅堡')
-		{
-			cga.travel.falan.toStone('C', (r)=>{
-				originalPos = cga.GetMapXY();
-				originalDir = cga.GetPlayerInfo().direction;
-			});
+		if(cga.GetMapName() != '里谢里雅堡'){
+			cga.travel.falan.toStone('C', loop);
 			return
 		}
-		
-		if(skill)
-		{
+
+		originalPos = cga.GetMapXY();
+		originalDir = cga.GetPlayerInfo().direction;
+
+		if(skill){
 			var requiremp = 25 + skill.lv * 5;
 			
 			//补魔
@@ -60,8 +58,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		}
 
 		//找到了
-		if(skill && index != -1)
-		{
+		if(skill && index != -1){
 			cga.StartWork(skill.index, skill.lv-1);
 			cga.AsyncWaitPlayerMenu((err, players)=>{
 				
@@ -81,12 +78,10 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 					}
 					return;
 				}
-				
 				setTimeout(loop, 1000);
 			});
 			return;
 		}
-		
 		//说话防掉线
 		cga.SayWords('', 0, 3, 1);
 		setTimeout(loop, 1000);
