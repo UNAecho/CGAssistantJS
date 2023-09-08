@@ -20,6 +20,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 				originalPos = cga.GetMapXY();
 				originalDir = cga.GetPlayerInfo().direction;
 			});
+			return
 		}
 		
 		if(skill)
