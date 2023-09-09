@@ -190,6 +190,32 @@ let thisobj = {
         // console.log('写入', content)
         fs.writeFileSync(file, JSON.stringify(content));
     },
+    walkTo : (index,XY,door,cb)=>{
+        // 有拦路BOSS的情况，特殊处理。例如哈洞熊男
+        if (index == 11004 && ((XY.y < 17 && door.mapy > 17) || (XY.y > 17 && door.mapy < 17))) {
+            console.log('当前地图【' + map + '】有boss，先跳过BOSS，再继续逻辑..')
+            cga.walkList([
+                door.mapy < 17 ? [17, 18] : [17, 16]
+            ], () => {
+                cga.ForceMove(XY.y > 17 ? 6 : 2, true);
+                cga.ForceMove(XY.y > 17 ? 6 : 2, true);
+                cga.walkList([
+                    [door.mapx, door.mapy, '']
+                ], () => {
+                    setTimeout(cb, 500)
+                });
+            });
+        } else {
+            cga.walkList([
+                [door.mapx, door.mapy, '']
+            ], () => {
+                // 由于使用空串做cga.walkList的出口判定，这里给一点延迟，以防cb调用过快导致地图没切换成功时也被认为切换成功了。
+                setTimeout(cb, 500)
+            });
+        }
+        return
+
+    },
     // 由于遍历完毕后，使用随机探索当前地图的方式循环，这里是无法调用cb的。cb留给后续开发使用
     walkAndSave: (cb) => {
         thisobj.cache.doorInfo = thisobj.read(doorInfoFile)
@@ -350,28 +376,7 @@ let thisobj = {
 
                     // 如果缓存中没有这个门的信息
                     if (!Object.values(thisobj.cache.doorInfo[index][thisobj.cache.lastDoorId]).some((d) => { return d.dst == 0 })) {
-                        // 有拦路BOSS的情况，特殊处理。例如哈洞熊男
-                        if (index == 11004 && ((XY.y < 17 && door.mapy > 17) || (XY.y > 17 && door.mapy < 17))) {
-                            console.log('当前地图【' + map + '】有boss，先跳过BOSS，再继续逻辑..')
-                            cga.walkList([
-                                door.mapy < 17 ? [17, 18] : [17, 16]
-                            ], () => {
-                                cga.ForceMove(XY.y > 17 ? 6 : 2, true);
-                                cga.ForceMove(XY.y > 17 ? 6 : 2, true);
-                                cga.walkList([
-                                    [door.mapx, door.mapy, '']
-                                ], () => {
-                                    setTimeout(loop, 500)
-                                });
-                            });
-                        } else {
-                            cga.walkList([
-                                [door.mapx, door.mapy, '']
-                            ], () => {
-                                // 由于使用空串做cga.walkList的出口判定，这里给一点延迟，以防cb调用过快导致地图没切换成功时也被认为切换成功了。
-                                setTimeout(loop, 500)
-                            });
-                        }
+                        thisobj.walkTo(index,XY,door,loop)
                         return
                     }
                 }
@@ -384,12 +389,7 @@ let thisobj = {
                     return false
                 })
                 let randomDoor = accessibleDoor[Math.floor(Math.random() * accessibleDoor.length)]
-                cga.walkList([
-                    [randomDoor.mapx, randomDoor.mapy, '']
-                ], () => {
-                    // 由于使用空串做cga.walkList的出口判定，这里给一点延迟，以防cb调用过快导致地图没切换成功时也被认为切换成功了。
-                    setTimeout(loop, 500)
-                });
+                thisobj.walkTo(index,XY,randomDoor,loop)
                 return
             }
         }
