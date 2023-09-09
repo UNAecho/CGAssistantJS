@@ -113,7 +113,7 @@ var commonPilot = (cb)=>{
 
 // 欢迎信息，可写入插件介绍等信息。
 var welcome = ()=>{
-	var welcomeWord = '欢迎使用【UNA脚本】【自动抓宠+精确算档】，当前抓【'+thisobj.petGrade+'】档及以上宠物。本脚本包含精确算档功能，请认真检查您输入的理想档位，以免丢弃理想宠物。'
+	var welcomeWord = '欢迎使用【UNA脚本】【自动抓宠+精确算档】，当前抓【0-'+thisobj.petGrade+'】档宠物。本脚本包含精确算档功能，请认真检查您输入的理想档位，以免丢弃理想宠物。'
 	cga.sayLongWords(welcomeWord, 1, 3, 1);
 	return
 }
@@ -372,7 +372,7 @@ var playerThink = ()=>{
 					}
 					if(petGrade.petGrade){
 						if(petGrade.petGrade['最差掉档'].grade > thisobj.petGrade){
-							// console.log('计算结果:最差为' + petGrade.petGrade['最差掉档'].grade +'档，目标档位:' + thisobj.petGrade + '档，丢弃')
+							console.log(pets[i],'计算结果:最差掉档为' + petGrade.petGrade['最差掉档'].grade +'档，目标档位:' + thisobj.petGrade + '档，丢弃')
 							petGrade.petGrade.dropFlag = true
 							var logString = (new Date()).toLocaleString() + '宠物:['+pets[i].realname+'],可能为:'+petGrade.petGrade['最可能情况'].grade+'档:'+ JSON.stringify(petGrade.petGrade)
 							log.writeLine(logString)
