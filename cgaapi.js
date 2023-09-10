@@ -17,6 +17,80 @@ global.is_array_contain = function(arr, val)
 	return false;
 }
 
+/**
+ * UNAecho: 定义链表数据结构以及增删改查方法
+ */
+class Node {
+	constructor(value) {
+		this.value = value;
+		this.next = null;
+	}
+}
+class LinkedList {
+	constructor() {
+		this.head = null;
+		this.length = 0;
+	}
+}
+LinkedList.prototype.add = function (value) {
+	const newNode = new Node(value);
+
+	if (!this.head) {
+		// 如果当前链表为空，则将新节点设置为头结点
+		this.head = newNode;
+	} else {
+		let current = this.head;
+
+		// 找到最后一个节点
+		while (current.next) {
+			current = current.next;
+		}
+
+		// 将新节点链接到链表末尾
+		current.next = newNode;
+	}
+
+	this.length++;
+}
+LinkedList.prototype.find = function (value) {
+	let current = this.head;
+
+	while (current) {
+		if (current.value === value) {
+			return current;
+		}
+
+		current = current.next;
+	}
+
+	return null;
+}
+LinkedList.prototype.remove = function (value) {
+	if (!this.head) {
+		return;
+	}
+
+	if (this.head.value === value) {
+		// 如果是头结点，则将头结点指向下一个节点
+		this.head = this.head.next;
+		this.length--;
+		return;
+	}
+
+	let current = this.head;
+
+	while (current.next) {
+		if (current.next.value === value) {
+			// 将当前节点的next属性指向下一个节点的next属性，实现删除操作
+			current.next = current.next.next;
+			this.length--;
+			return;
+		}
+
+		current = current.next;
+	}
+}
+
 module.exports = function(callback){
 	var port = null;
 
@@ -4283,7 +4357,7 @@ module.exports = function(callback){
 		 * 雪拉威森塔每层的index是有顺序的，不是随机迷宫
 		 * index598开头，第**层就是598**。如：第1层59801，第10层59810，第25层59825。
 		 * 只有1层和每5层有传送石，其他层没有。
-		 * 95层（含）以前无限制95通往96层，需要4转及以上才能通过。
+		 * 95层（含）之前，无通行限制。95通往96层，需要4转及以上才能通过。
 		 * 96-99层的模式是：96层开始NPC给你一个护身符，双击回到此NPC处，交给下一层NPC，传送至下一层
 		 * 99-100层也是一样，100层是顶层，可以拿王冠、公主头冠、小猫帽
 		 * 相关任务：圣域守护者
@@ -7400,13 +7474,23 @@ module.exports = function(callback){
 	}
 
 	/**
-	 * UNAecho:统计离线数据中的资产总和
-	 * @returns 
+	 * UNAecho:统计离线数据资产的API，方便监测资产情况。
+	 * 统计包括：
+	 * 1、离线数据中的资产总和
+	 * 2、整个离线记录中，空余道具格、魔币、宠物格的剩余空间。方便查看还可以存多少。
+	 * @returns {Object}
 	 */
 	cga.getSumOfflineData = () => {
 		let offlineData = cga.loadPlayerOfflineDataAllSync()
 		let categoryType = ['inventory', 'bank']
 		let type = ['item', 'gold', 'pet']
+
+		// 为了打印顺序方便观看，这里单独定义一个dict，并在return前添加进result中
+		let emptySlotCount = {
+			'emptyItemSlot' :0,
+			'emptyGoldSlot' :0,
+			'emptyPetSlot' :0,
+		}
 
 		let result = {}
 
@@ -7427,8 +7511,12 @@ module.exports = function(callback){
 							}
 							result[t][item.name] += item.count
 						})
+						// 累加道具空余格子数量
+						emptySlotCount.emptyItemSlot += (20 - jsonObj[category][t].length)
 					} else if (t == 'gold') {
 						result[t] += jsonObj[category][t]
+						// 累加金币空余数量
+						emptySlotCount.emptyGoldSlot += (1000000 - jsonObj[category][t])
 					} else if (t == 'pet') {
 						jsonObj[category][t].forEach((pet) => {
 							if (!result[t].hasOwnProperty(pet.name)) {
@@ -7436,10 +7524,14 @@ module.exports = function(callback){
 							}
 							result[t][pet.name] += 1
 						})
+						// 累加宠物空余格子数量
+						emptySlotCount.emptyPetSlot +=(5 - jsonObj[category][t].length)
 					}
 				})
 			})
 		})
+		// 最后添加道具、金币、宠物空余格子统计，方便观看
+		result.emptySlotCount = emptySlotCount
 		return result
 	}
 
@@ -9405,6 +9497,7 @@ module.exports = function(callback){
 				 */
 				if(jobObj.jobType != '战斗系' && jobObj.job != '医师' && jobObj.job != '护士'){
 					if(input == '挑战神兽' || input == '诅咒的迷宫'){
+						console.log('你并非战斗系，且不是医师和护士，如果被问神兽或诅咒是否完成，需要撒谎说已完成，不然会被带去做不必要的任务。')
 						return 1
 					}
 				}
@@ -14535,11 +14628,14 @@ module.exports = function(callback){
 
 	// UNAecho:关于技能信息的API对象
 	cga.skill = {}
-
+	
 	// 获取本地职业数据。
+	cga.cachedSkillInfos = null
 	cga.skill.loadSkillData = () => {
-		const skills = require('./常用数据/skills.js').skillInfos;
-		return skills
+		if(!cga.cachedSkillInfos){
+			cga.cachedSkillInfos = require('./常用数据/skills.js').skillInfos;
+		}
+		return cga.cachedSkillInfos
 	}
 
 	/**
@@ -14821,7 +14917,7 @@ module.exports = function(callback){
 		setTimeout(cga.battle.waitBossBattle, 1500, map, cb);
 		return
 	}
-	
+
 	/**
 	 * UNAecho:可获取角色当前所处地图的所有出入口信息，并进行聚类，所有1x1范围内相邻的门，都仅保留1个pos。
 	 * 举例：如果一个门是3个pos连在一起，比如法兰城的出入口，仅保留1个pos后返回
@@ -14869,6 +14965,12 @@ module.exports = function(callback){
 		return resultArr
 	}
 
+	/**
+	 * UNAecho:计算两个门之间的cga.calculatePath()距离
+	 * @param {*} door1 
+	 * @param {*} door2 
+	 * @returns 
+	 */
 	cga.calculateDoorDistance = (door1,door2) => {
 		let path = null
 		try {
@@ -14887,11 +14989,105 @@ module.exports = function(callback){
 	
 	/**
 	 * UNAecho:计算自己与输入的door之间的cga.calculatePath().length距离
-	 * @param {*} door 
+	 * @param {*} door 数据结构参考cga.getMapObjects()返回的数组中的元素
 	 */
 	cga.getDoorDistance = (door) => {
 		let XY = cga.GetMapXY()
 		return cga.calculateDoorDistance({mapx: XY.x, mapy: XY.y}, door)
+	}
+
+	// 获取本地静态门数据。
+	cga.cachedDoorInfos = null
+	cga.loadDoorInfo = () => {
+		if(!cga.cachedDoorInfos){
+			let fs = require('fs');
+			cga.cachedDoorInfos = JSON.parse(fs.readFileSync('./常用数据/doorInfo.json'))
+		}
+		return cga.cachedDoorInfos
+	}
+	/**
+	 * UNAecho:将输入的doorId转化为Object格式
+	 * @param {*} doorId String类型的id，使用下划线('_')做为分隔符。
+	 * 具体形式为door所在地图的mapindex3_mapname_mapx_mapy
+	 * 其中mapx与mapy为door的坐标
+	 */
+	cga.getDoorObj = (doorId)=>{
+		if(typeof doorId != 'string'){
+			throw new Error('doorId必须为String类型')
+		}
+		let splitArr = doorId.split('_')
+		let result = {}
+		result.mapindex = splitArr[0]
+		result.mapname = splitArr[1]
+		result.mapx = splitArr[2]
+		result.mapy = splitArr[3]
+		return request
+	}
+
+	/**
+	 * UNAecho:搜索可以抵达doorId的所有门，包含除不可抵达以外的所有形式（传送、走路、道具等等）
+	 * 注意：虽然可以直接取inputDoorId可以抵达的门，但是并不能获得其它单向门传送至inputDoorId的数据，所以才写了此搜索API
+	 * @param {*} inputDoorId 
+	 * @returns {Array[LinkedList]} 链表型数组
+	 */
+	cga.searchConnectedDoor = (inputDoorId) => {
+		let doorinfo = cga.loadDoorInfo()
+		let resultArr = []
+		for (let mapindex in doorinfo) {
+			for (let door in doorinfo[mapindex]) {
+				if (doorinfo[mapindex][door][inputDoorId] && doorinfo[mapindex][door][inputDoorId].dst >= 0) {
+					let linkedList = new LinkedList()
+					linkedList.add({
+						id: door,
+						dst: doorinfo[mapindex][door][inputDoorId].dst,
+						gold: doorinfo[mapindex][door][inputDoorId].gold,
+						item: doorinfo[mapindex][door][inputDoorId].item,
+					})
+					resultArr.push(linkedList)
+				}
+			}
+		}
+		return resultArr
+	}
+	/**
+	 * UNAecho:图计算，利用静态数据，计算目标门的最优路径
+	 * 初步逻辑:使用链表，将目标门制作成链表格式的数据，放入Array中
+	 * 遍历此Array，将所有可抵达的门，与其相连，数量会程笛卡尔积倍增
+	 * 将所有门的代价加入链表的value中，形成链表形式的数据
+	 * 实现倒是实现了，但时间复杂度过高，无法正式使用
+	 * TODO:使用A*等方式重写此逻辑，有空再做
+	 * @param {*} obj 
+	 * @returns 
+	 */
+	cga.getNearestPath = (obj)=>{
+		// let mapname = cga.GetMapName();
+		let mapindexStr = cga.GetMapIndex().index3.toString()
+		// let XY = cga.GetMapXY()
+
+		let loop = (linkedListArr) => {
+			let loopArr = []
+			for (let linkedList of linkedListArr) {
+				let tmpArr = cga.searchConnectedDoor(linkedList.head.value.id)
+				for (let l of tmpArr) {
+					// 终止迭代逻辑，目前并不是最优方式
+					if(l.head.value.id.startsWith(mapindexStr)){
+						return loopArr
+						// let doorObj = cga.getDoorObj(l.head.value.id)
+						// if(cga.getDoorDistance(doorObj) >= 0){
+						// 	return loopArr
+						// }else{
+						// 	return loop(loopArr)
+						// }
+					}
+					l.add(linkedList)
+					loopArr.push(l)
+				}
+			}
+			return loop(loopArr)
+		}
+		// 初始化，并丢入递归中
+		let doorId = obj.id
+		return loop(cga.searchConnectedDoor(doorId))
 	}
 
 	/**
