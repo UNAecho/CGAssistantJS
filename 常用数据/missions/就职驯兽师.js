@@ -155,20 +155,10 @@ var thisobj = {
 		{
 			intro: '5、返回法兰城与相关职业就职人员对话，就职成功，任务完结。',
 			workFunc: (cb2) => {
-				cga.travel.falan.toStone('W1', (r) => {
-					cga.walkList([
-						[73, 60, '职业公会'],
-						[13, 10],
-					], (r) => {
-						cga.turnTo(13, 8);
-						cga.AsyncWaitNPCDialog(() => {
-							cga.ClickNPCDialog(0, 0);
-							cga.AsyncWaitNPCDialog(() => {
-								cb2(true);
-							});
-						});
-					});
-				});
+				let obj = { act: 'job', target: thisobj.data.job.job }
+				cga.askNpcForObj(obj, () => {
+					cb2(true)
+				})
 			}
 		}
 	],
