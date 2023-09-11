@@ -6219,6 +6219,7 @@ module.exports = function(callback){
 	* UNAecho开发提醒：cga.walkList有一个严重bug，就是在同一个地图不同的坐标之间传送（如：UD圣坛地图，[24, 76, '圣坛', 24, 71]）这种坐标时，会出现没切换坐标前就提前执行callback的情况。
 	* 这会导致你传给cga.walkList的callback会提前执行，如果callback中含有坐标类的API，会直接导致报错(因为无法抵达。)
 	* 使用cga.walkList时，要注意此事
+	* 如果目标名称地图使用String类型，而非Number类型时，此bug出现的概率会略微降低。
 	 */
 	cga.walkList = (list, cb)=>{
 		
@@ -10841,7 +10842,15 @@ module.exports = function(callback){
 				startFunc = (cb)=>{
 					cga.travel.toVillage(tmpObj.npcMainMap, cb)
 				}
-			} else {
+			}else if (tmpObj.npcMainMap == '曙光骑士团营地') {
+				startFunc = (cb)=>{
+					if(cga.travel.switchMainMap() == '曙光骑士团营地'){
+						cb(null)
+					}else{
+						cga.travel.falan.toCamp(cb,true)
+					}
+				}
+			}  else {
 				throw new Error('API未支持的npcMainMap领域【'+tmpObj.npcMainMap+'】请联系作者https://github.com/UNAecho更新')
 			}
 
@@ -10924,6 +10933,30 @@ module.exports = function(callback){
 						], cb)
 					})
 				}
+			}else if(tmpObj.npcMap == 27015){// 教团骑士，由于肯吉罗岛相关的地图很多都是一个mapindex多个房间，这里自定义一下func
+				walkFunc = (cb)=>{
+					cga.travel.autopilot(27015, () => {
+						let XY = cga.GetMapXY()
+						if (XY.x < 15){
+							cb(null)
+						}else if(XY.x >= 15 && XY.x < 85){
+							cga.walkList([
+								[69, 70, '曙光营地指挥部', 85, 3],
+							], ()=>{
+								walkFunc(cb)
+							})
+						}else{
+							cga.askNpcForObj({
+								act : 'map', 
+								target : 27015,
+								npcpos : [97, 14],
+								pos:[11,0],
+							},()=>{
+								walkFunc(cb)
+							})
+						}
+					})
+				}
 			}else {
 				walkFunc = (cb)=>{
 					cga.travel.autopilot(tmpObj.npcMap, cb)
@@ -10965,7 +10998,8 @@ module.exports = function(callback){
 			// 但要区分是队长还是队员
 
 			if(isLeader()){
-				if(cga.isInMap(tmpObj.npcMap)){
+				// 曙光骑士团营地（27015）是新地图结构，不能跳过赶路模块。
+				if(cga.isInMap(tmpObj.npcMap) && tmpObj.npcMainMap != '曙光骑士团营地'){
 					console.log('已经在目标地图，跳过赶路模块')
 					searchFunc((npcpos)=>{
 						walkToNPC(npcpos,cb)
