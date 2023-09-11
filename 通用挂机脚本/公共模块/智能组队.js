@@ -1028,9 +1028,11 @@ var thisobj = {
 			battleArea = '营地'
 		} else if (camp && minLv > 72 && minLv <= 80) {// 雪塔80层有睡眠怪，导致人物经常阵亡，不再去80层练级
 			battleArea = '蝎子'
-		} else if (camp && minLv > 80 && minLv <= 94) {// 雪塔89层人物也经常阵亡，不再去89层练级
+		} else if (camp && minLv > 80 && minLv <= 90) {// 雪塔89层人物也经常阵亡，不再去89层练级
 			battleArea = '沙滩'
-		} else if (camp && minLv > 94 && minLv <= 103) {// 蜥蜴有石化，即便有抗石化依旧容易出现大量阵亡导致宠物忠诚下降，故尽量缩短蜥蜴练级范围
+		} else if (camp && minLv > 90 && minLv <= 95) {
+			battleArea = '雪拉威森塔', layer = 95
+		} else if (camp && minLv > 95 && minLv <= 103) {// 蜥蜴有石化，即便有抗石化依旧容易出现大量阵亡导致宠物忠诚下降，故尽量缩短蜥蜴练级范围
 			battleArea = '蜥蜴洞穴上层', layer = 1
 		} else if (camp && minLv > 103 && minLv <= 106) {
 			battleArea = '黑龙沼泽', layer = 1
