@@ -150,7 +150,7 @@ const productReputationList = [
 ];
 var calculate =(inputreputation,percentage) => {
 	let count = 0;
-	reputationList.forEach(p => {
+	for (let p of reputationList) {
 		if(p.reputation == inputreputation){
 			// 如果传入了当前声望百分比，那么就粗略按照已有百分比计算，节约时间与金钱
 			if(percentage !=null && parseFloat(percentage) > 0 && parseFloat(percentage) < 1){
@@ -159,11 +159,9 @@ var calculate =(inputreputation,percentage) => {
 				// 向上取整
 				count = Math.ceil((p.max - p.min) / 10)
 			}
-		}else{
-			//foreach 不支持continue、break效果，continue可以直接return，break不可以实现
-			return 
+			return count
 		}
-	});
+	}
 	return count;
 };
 module.exports.reputationList = reputationList
