@@ -40,6 +40,12 @@ var thisobj = {
 			if (jobObj.jobType == '战斗系') {
 				for (let i = 0; i < thisobj.data.battleTypeSkills.length; i++) {
 					if (cga.findPlayerSkill(thisobj.data.battleTypeSkills[i]) == null) {
+						// 先查询一下该技能是否能学
+						let reason = cga.skill.ableToLearn(thisobj.data.battleTypeSkills[i])
+						if (reason.indexOf('slot') != -1) {
+							console.log('【UNAecho脚本警告】人物剩余技能栏位不足，无法学习【'+thisobj.data.battleTypeSkills[i]+'】技能，跳过')
+							continue
+						}
 						if (thisobj.data.battleTypeSkills[i].indexOf('抗') != -1 && cga.GetPlayerInfo().level < 40) {
 							console.log('人物等级未到40级，无法进入海底。跳过【' + thisobj.data.battleTypeSkills[i] + '】学习')
 							continue
