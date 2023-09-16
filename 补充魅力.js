@@ -48,9 +48,10 @@ var cga = require('./cgaapi')(function () {
 		global.cga = cga
 		var path = __dirname+'\\通用挂机脚本\\子插件\\自动存取'
 		var obj = require(path);
-		obj.prepare(()=>{
-			if(cb) cb(null)
-		})
+		obj.manualPrepare({
+			"gold": [{"name":"金币","upper":300000,"lower":100000}]
+		
+		},cb)
 		return
 	}
 
