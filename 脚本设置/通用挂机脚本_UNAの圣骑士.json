@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "转职保证书",
+    "mainPlugin": "智能练级",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
@@ -19,13 +19,6 @@
         "role": "输出"
     },
     "leaderFilter": "bus",
-    "memberFilter": "UNA",
-    "minTeamMemberCount": 5,
-    "roleMaxCount": {
-        "输出": 2,
-        "治疗": 1,
-        "小号": 3
-    },
     "leaderX": 143,
     "leaderY": 109,
     "timeout": 180000,
@@ -33,7 +26,7 @@
     "spawnOfAmber4": {
         "flag": true,
         "part": "队员",
-        "aim": "无限循环",
+        "aim": "一次性",
         "leaderX": 146,
         "leaderY": 109,
         "leaderFilter": "egg"
@@ -49,7 +42,7 @@
         "leaderFilter": "ring"
     },
     "minHp": "25%",
-    "minMp": "25%",
+    "minMp": "15%",
     "buyCrystal": "地水的水晶（5：5）",
     "minLoyality": 40,
     "maxEndurance": 333,

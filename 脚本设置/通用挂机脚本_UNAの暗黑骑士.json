@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "转职保证书",
+    "mainPlugin": "智能练级",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
@@ -26,7 +26,7 @@
     "spawnOfAmber4": {
         "flag": true,
         "part": "队员",
-        "aim": "无限循环",
+        "aim": "一次性",
         "leaderX": 146,
         "leaderY": 109,
         "leaderFilter": "egg"
