@@ -1,14 +1,14 @@
 var cga = require('./cgaapi')(function () {
 
-	var playerinfo = cga.GetPlayerInfo();
+	let playerinfo = cga.GetPlayerInfo();
 	// 美容前的资产
-	var origingold = playerinfo.gold
+	let origingold = playerinfo.gold
 	// 美容前魅力
-	var origincharisma = playerinfo.detail.value_charisma
+	let origincharisma = playerinfo.detail.value_charisma
 	// 目标魅力数值
-	var targetvalue = 100
+	let targetvalue = 100
 
-	var retry =()=>{
+	let retry = () => {
 		cga.turnDir(6);
 		cga.AsyncWaitNPCDialog(() => {
 			cga.ClickNPCDialog(4, 0);
@@ -17,25 +17,25 @@ var cga = require('./cgaapi')(function () {
 				cga.AsyncWaitNPCDialog((err, dlg) => {
 					cga.ClickNPCDialog(1, 0);
 					setTimeout(() => {
-						if(dlg && dlg.message.indexOf('不够') >= 0){
+						if (dlg && dlg.message.indexOf('不够') >= 0) {
 							console.log('钱不够了，需要取钱')
-							takeMoney(retry)
+							takeMoney(main)
 							return
 						}
-						var currentinfo = cga.GetPlayerInfo()
-						console.log('当前已消费:【' + (origingold - currentinfo.gold)+'】')
-						console.log('当前已提升魅力:【' + (currentinfo.detail.value_charisma - origincharisma)+'】')
-						if(currentinfo.detail.value_charisma >= targetvalue){
+						let currentinfo = cga.GetPlayerInfo()
+						console.log('当前已消费:【' + (origingold - currentinfo.gold) + '】')
+						console.log('当前已提升魅力:【' + (currentinfo.detail.value_charisma - origincharisma) + '】')
+						if (currentinfo.detail.value_charisma >= targetvalue) {
 							console.log('魅力提升完毕，执行自动存取来维持收支平衡。如果魔币足够，则退出脚本')
-							takeMoney(()=>{
+							takeMoney(() => {
 								cga.gui.LoadScript({
-									autorestart : false,
-								}, (err, result)=>{
+									autorestart: false,
+								}, (err, result) => {
 									console.log('脚本结束，关闭自动重启脚本。')
 								})
 							})
 							return
-						}else{
+						} else {
 							retry()
 						}
 					}, 1000);
@@ -44,33 +44,35 @@ var cga = require('./cgaapi')(function () {
 		});
 	}
 
-	var takeMoney = (cb)=>{
+	let takeMoney = (cb) => {
 		global.cga = cga
-		var path = __dirname+'\\通用挂机脚本\\子插件\\自动存取'
-		var obj = require(path);
+		let path = __dirname + '\\通用挂机脚本\\子插件\\自动存取'
+		let obj = require(path);
 		obj.manualPrepare({
-			"gold": [{"name":"金币","upper":300000,"lower":100000}]
-		
-		},cb)
+			"gold": [{ "name": "金币", "upper": 300000, "lower": 100000 }]
+
+		}, cb)
 		return
 	}
 
-    // 获取当前主地图名称
-    var villageName = cga.travel.switchMainMap()
-    if(villageName == '法兰城'){
-        cga.travel.autopilot('美容院',()=>{
-			cga.walkList(
-				[[15, 10]], retry);
-		})
-        // cga.travel.toHospital(false,success)
-    }else{
-		cga.travel.falan.toStone('E1', ()=>{
-			cga.travel.autopilot('美容院',()=>{
+	let main = () => {
+		// 获取当前主地图名称
+		let villageName = cga.travel.switchMainMap()
+		if (villageName == '法兰城') {
+			cga.travel.autopilot('美容院', () => {
 				cga.walkList(
 					[[15, 10]], retry);
 			})
-		});
-    }
+			// cga.travel.toHospital(false,success)
+		} else {
+			cga.travel.falan.toStone('E1', () => {
+				cga.travel.autopilot('美容院', () => {
+					cga.walkList(
+						[[15, 10]], retry);
+				})
+			});
+		}
+	}
 
-
+	main()
 });
