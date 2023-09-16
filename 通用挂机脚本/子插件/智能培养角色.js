@@ -7,6 +7,8 @@ var rootdir = cga.getrootdir()
 // 提取本地职业数据
 const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
 const professionalArray = getprofessionalInfos.Professions
+// 不能通过转职保证书烧声望的战斗系职业
+const specialJob = ['暗黑骑士','教团骑士']
 // 学习必要技能任务对象，用于获取需要学习的任务技能，统一静态变量，防止多处数据不统一。
 const learnSkillMission = require(rootdir + '/常用数据/missions/学习必要技能.js');
 var transferMode = require('../主插件/传咒驯互转');
@@ -65,11 +67,13 @@ var thisobj = {
 		 * 【暗黑骑士】【教团骑士】由于官方设定，无法进行转职保证书方式烧声望，故排除。
 		 * 
 		 * 如果满足了前提条件，还有2种情况判断：
-		 * 1、当前职业与目标职业一致，但是声望小于奔跑的春风。因为刷满声望最终开始练级的时候，是从声望33000，也就是奔跑的春风最低数值开始的。
+		 * 1、当前职业与目标职业一致，但是声望小于奔跑的春风。
+		 * 因为刷满声望最终开始练级的时候，是从声望33000，也就是奔跑的春风最低数值开始的。
 		 * 也就是说，在不进行离线写入、不与阿梅对话的情况下，由于无法分辨当前角色是否刷满声望，使用【当前职业与目标职业一致，并且声望小于奔跑的春风】来判断该号是否进入刷声望环节。
-		 * 2、当前职业与目标职业不一致，并且不是驯兽师（驯兽师要靠练级刷，因为技能比称号更难刷满）的情况；或者无论是什么职业，手中没有转职保证书，而当前职业并不是目标职业时，需要进入刷声望环节。
+		 * 2、当前职业与目标职业不一致，并且不是驯兽师（驯兽师要靠练级刷，因为技能比称号更难刷满）的情况。
+		 * 或者无论是什么职业，手中没有转职保证书，而当前职业并不是目标职业时，需要进入刷声望环节。
 		 */
-		if ((thisobj.finalJob.jobType == '战斗系' || thisobj.finalJob.jobType == '服务系') && playerInfo.level >= 80 && curJobObj.job != '暗黑骑士' && curJobObj.job != '教团骑士') {
+		if ((thisobj.finalJob.jobType == '战斗系' || thisobj.finalJob.jobType == '服务系') && playerInfo.level >= 80 && !specialJob.includes(curJobObj.job)) {
 			let transfer = () => {
 				console.log('你的角色培养目标是战斗系或服务系职业，并且声望小于无尽星空，开始进入烧声望环节。包含【转职保证书】【烧声望】【传咒驯互转】3个部分')
 				setTimeout(() => {
@@ -79,7 +83,8 @@ var thisobj = {
 			// 安全起见，2转以后的角色不参与烧声望流程，以防误转。
 			if (curJobObj.jobLv > 2) {
 				console.log('【UNAecho脚本警告】你目标职业是战斗系或服务系，但你已经3转或以上，保险起见，禁止脚本转职，如果需要烧声望，请手动转职一次，再运行脚本。')
-			} else if (thisobj.finalJob.job != curJobObj.job && cga.getItemCount('转职保证书') == 0) {// 如果不是目标职业，必须去拿一份转职保证书。因为你终究是要去转成目标职业的
+			} else if (thisobj.finalJob.job != curJobObj.job && cga.getItemCount('转职保证书') == 0) {// 如果不是目标职业，必须去拿一份转职保证书。因为你终究需要一份转职保证书去转成目标职业的
+				console.log('【UNAecho脚本提醒】必须去拿一份转职保证书。因为你终究需要一份转职保证书去转成目标职业的。')
 				transfer()
 				return
 			} else if (thisobj.finalJob.job == curJobObj.job && curJobObj.reputationLv < 8) {// 如果不是刚转完目标职业（声望小于奔跑的春风，肯定不是无尽星空转来的）

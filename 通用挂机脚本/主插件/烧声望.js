@@ -1,4 +1,3 @@
-var fs = require('fs');
 var supplyMode = require('./../公共模块/灵堂回补');
 var updateConfig = require('./../公共模块/修改配置文件');
 var configMode = require('../公共模块/读取战斗配置');
@@ -9,40 +8,6 @@ var interrupt = require('./../公共模块/interrupt');
 var moveThinkInterrupt = new interrupt();
 var playerThinkInterrupt = new interrupt();
 var playerThinkRunning = false;
-
-// 检查技能
-var checkSkill = (cb) => {
-	let needLearn = null
-	if (thisobj.job.job == '传教士' && !cga.findPlayerSkill('气绝回复')) {
-		console.log('没找到气绝回复，去亚留特学习')
-		needLearn = '气绝回复'
-
-	} else if (thisobj.job.job == '咒术师' && !cga.findPlayerSkill('石化魔法')) {
-		console.log('没找到石化魔法，去法兰城学习')
-		needLearn = '石化魔法'
-	}
-	if (needLearn != null) {
-		cga.askNpcForObj({
-			act: 'skill',
-			target: needLearn,
-		}, () => {
-			// 学完技能要回调，因为下面还有读取战斗配置的逻辑
-			checkSkill(cb)
-		})
-		return
-	}
-
-	if (thisobj.job.job == '咒术师') {
-		cga.loadBattleConfig('咒术烧声望')
-	} else if (thisobj.job.job == '传教士') {
-		cga.loadBattleConfig('传教烧声望')
-	} else {// 驯兽师、饲养师或其它情况。
-		cga.loadBattleConfig('练级')
-	}
-
-	if (cb) cb(null)
-	return
-}
 
 // 声望数据
 const reputationInfos = require('../../常用数据/reputation.js');
@@ -99,8 +64,12 @@ var getPercentage = (cb) => {
 
 							// 跳转前，在昵称中写一下称号状态，方便查看
 							cga.ChangeNickName(jobObj.reputation)
-
-							jump()
+							// 记录声望上限
+							thisobj.configObj.maxreputationlv = jobObj.reputationLv
+							// 落盘并跳转
+							cga.savePlayerConfig(thisobj.configObj, () => {
+								jump()
+							});
 							return
 						}
 
@@ -125,20 +94,21 @@ var getPercentage = (cb) => {
 						} else {
 							if (originInfo.reputation == jobObj.reputation && originInfo.percentage == per) {
 								console.log('声望【无】进展，该去做保证书任务了')
-								jump()
+								// 记录声望上限
+								thisobj.configObj.maxreputationlv = jobObj.reputationLv
+								// 落盘并跳转
+								cga.savePlayerConfig(thisobj.configObj, () => {
+									jump()
+								});
 								return
 							} else {
-								// console.log('originInfo.reputation:'+originInfo.reputation)
-								// console.log('reputation:'+jobObj.reputation)
-								// console.log('originInfo.percentage:'+originInfo.percentage)
-								// console.log('per:'+per)
-								// console.log(originInfo.reputation == jobObj.reputation)
-								// console.log(originInfo.percentage == per)
 								console.log('声望【有】进展，继续烧声望')
 								originInfo.reputation = jobObj.reputation
 								originInfo.percentage = per
 								console.log('originInfo.reputation改为:' + originInfo.reputation)
 								console.log('originInfo.percentage改为:' + originInfo.percentage)
+								// 记录声望上限
+								thisobj.configObj.maxreputationlv = jobObj.reputationLv
 							}
 						}
 						// 登出回到里堡更快一些
@@ -176,9 +146,9 @@ var moveThink = (arg) => {
  */
 var playerThink = () => {
 
-	if (!cga.isInNormalState()){
-		if(isTamer && !onceFlag && cga.isInBattle()){
-			count -=1
+	if (!cga.isInNormalState()) {
+		if (isTamer && !onceFlag && cga.isInBattle()) {
+			count -= 1
 			onceFlag = true
 			console.log('还需遇敌' + count + '次')
 		}
@@ -293,6 +263,39 @@ var thisobj = {
 	job: cga.job.getJob(),
 	// 自动存取
 	bankObj: require('../子插件/自动存取.js'),
+	configObj: cga.loadPlayerConfig(),
+	checkSkill: (cb) => {
+		let needLearn = null
+		if (thisobj.job.job == '传教士' && !cga.findPlayerSkill('气绝回复')) {
+			console.log('没找到气绝回复，去亚留特学习')
+			needLearn = '气绝回复'
+
+		} else if (thisobj.job.job == '咒术师' && !cga.findPlayerSkill('石化魔法')) {
+			console.log('没找到石化魔法，去法兰城学习')
+			needLearn = '石化魔法'
+		}
+		if (needLearn != null) {
+			cga.askNpcForObj({
+				act: 'skill',
+				target: needLearn,
+			}, () => {
+				// 学完技能要回调，因为下面还有读取战斗配置的逻辑
+				thisobj.checkSkill(cb)
+			})
+			return
+		}
+
+		if (thisobj.job.job == '咒术师') {
+			cga.loadBattleConfig('咒术烧声望')
+		} else if (thisobj.job.job == '传教士') {
+			cga.loadBattleConfig('传教烧声望')
+		} else {// 驯兽师、饲养师或其它情况。
+			cga.loadBattleConfig('练级')
+		}
+
+		if (cb) cb(null)
+		return
+	},
 	translate: (pair) => {
 
 		if (configMode.translate(pair))
@@ -319,9 +322,18 @@ var thisobj = {
 			cga.ChangePetState(petIndex, cga.PET_STATE_READY);
 		}
 
+		// 个人配置初始化
+		if (!thisobj.configObj) {
+			thisobj.configObj = {}
+		}
+		if (!thisobj.configObj.mission) {
+			thisobj.configObj.mission = {}
+		}
+
 		playerThinkTimer();
 		cga.registerMoveThink(moveThink);
-		checkSkill(loop);
+		// 先检查技能，再进入loop
+		thisobj.checkSkill(loop);
 	},
 };
 
