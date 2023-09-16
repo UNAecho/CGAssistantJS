@@ -481,7 +481,7 @@ var moveThink = (arg) => {
 
 	if (moveThinkInterrupt.hasInterrupt())
 		return false;
-
+	
 	if (arg == 'freqMoveMapChanged') {
 		playerThinkInterrupt.requestInterrupt();
 		return false;
@@ -495,7 +495,23 @@ var playerThink = () => {
 	if (!cga.isInNormalState()) {
 		// 在切换地图时（包括迷宫上下楼），cga.isInNormalState()其实也是false，但这时无法判断战斗情况。所以这里还是要判断是否在战斗中
 		if (cga.isInBattle()) {
-			teamMode.battleThink()
+			// 战斗中的ctx
+			let ctx = {result : null,reason : null}
+			teamMode.battleThink(ctx)
+			// 如果遭遇智能组队.js中logBackForceEnemy指定回避的敌人，则在战斗中直接登出，避免伤亡。playerThink中断
+			if(ctx.result == 'logback_forced'){
+				console.log('【UNAecho脚本提醒】' + ctx.reason)
+				// 需要打断movethink，否则cga.walklist会出现地图、坐标识别错误，或者走路冲突。因为遇敌之前一定是处于走动的。
+				if (cga.isTeamLeaderEx()) {
+					moveThinkInterrupt.requestInterrupt(()=>{
+						logbackEx.func(loop,ctx.result);
+						return true
+					});
+				}else{
+					logbackEx.func(loop,ctx.result);
+				}
+				return false
+			}
 		}
 		return true;
 	}

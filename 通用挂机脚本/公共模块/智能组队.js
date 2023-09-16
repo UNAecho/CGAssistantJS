@@ -1115,8 +1115,18 @@ var thisobj = {
 		'通往山顶的路': '半山腰',
 		'蜥蜴洞穴上层': '蜥蜴洞穴',
 	},
+	/**
+	 * 强制回避dict。
+	 * 部分练级区域小概率遇到BOSS，如回廊，雪拉威森塔95层等。
+	 * 如果需要战斗中强制登出避免全队阵亡，请在这里添加敌人信息
+	 * key为敌人名字，value为回避理由。key必须正确，value仅用于打印log
+	 */
+	logBackForceEnemy : {
+		'红鬼' : '雪塔95层，放毒、睡眠、石化，可能导致团灭。',
+		'巫师之鬼' : '雪塔95层，放毒、睡眠、石化，可能导致团灭。',
+	},
 	// 战斗处理，包括敌人数据统计，以及调整练级地点
-	battleThink: () => {
+	battleThink: (ctx) => {
 		if (thisobj.hasBattleThink) {
 			return
 		}
@@ -1129,14 +1139,25 @@ var thisobj = {
 		if (thisobj.object.area.layer > 0) {
 			areaName = areaName + thisobj.object.area.layer + '楼'
 		}
-		var units = cga.GetBattleUnits()
-		units.forEach((u) => {
+
+		let units = cga.GetBattleUnits()
+		let enemies = Object.keys(thisobj.logBackForceEnemy)
+		for (let u of units) {
+			// 累积遇到的敌人数量
 			if (u.pos > 9) {
 				objUtil(thisobj.statInfo, areaName, {})
 				objUtil(thisobj.statInfo[areaName], u.name, {})
 				objUtil(thisobj.statInfo[areaName][u.name], u.level, 1)
 			}
-		});
+			// 如果发现需要躲避的敌人，ctx传入对应逻辑
+			if(enemies.includes(u.name)){
+				ctx.result = 'logback_forced'
+				ctx.reason = '遭遇指定敌人【'+u.name+'】，强制登出。理由:' + thisobj.logBackForceEnemy[u.name]
+				// 终止battleThink，并且本次战斗阻止再次进入battleThink
+				thisobj.hasBattleThink = true
+				return
+			}
+		}
 
 		let area = thisobj.switchArea(null, units)
 		// 如果练级区域或楼层发生变化，则作出调整，并落盘保存
@@ -1157,7 +1178,7 @@ var thisobj = {
 				console.log('练级信息写入完毕，在昵称中展示已完成..')
 			})
 		}
-
+		// 本次战斗阻止再次进入battleThink
 		thisobj.hasBattleThink = true
 	},
 	// 计算在某个练级区域的人物经验获取效率以及金币消耗等情况

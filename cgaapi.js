@@ -220,8 +220,24 @@ module.exports = function(callback){
 	});
 	
 	cga.moveThinkFnArray = [];
-	
-	cga.moveThink = (arg)=>{
+
+	/**
+	 * UNAecho开发笔记：
+	 * 如果想在cga.walklist中使用cga.moveThink() return false来打断人物行走，需要注意的是：
+	 * 1、人物仅有在非直线行走时(x或y一直不变)，才会有对cga.moveThink()返回值的判断
+	 * 2、如果人物一直处于直线行走(x或y一直不变)时，cga.moveThink() return false不会打断walklist。
+	 * 3、因为1的原因，导致cga.moveThink()其实根本没有被调用。
+	 * 4、不知道是不是底层C++代码实现走路的API实现的问题，还是cga.walklist()实现的问题，总之目前的情况是这样。
+	 * 5、我在cga.walklist()中的if(reason == 2 || reason == 5)逻辑的waitBattle()中添加了cga.moveThink('walkList') == false则打断cga.walklist()逻辑
+	 * 方便脚本在战斗中躲避指定敌人。
+	 * 原cga.walklist()逻辑，在等待战斗中如果登出，cga.walklist()不会结束，导致登出之后立即出现cga.walklist()已在运行中的问题。
+	 * 
+	 * 现在可以令cga.moveThink() return false来在战斗中打断cga.walklist()了。
+	 * 
+	 * @param {*} arg 
+	 * @returns 
+	 */
+	cga.moveThink = (arg) => {
 		for(var i = 0; i < cga.moveThinkFnArray.length; ++i){
 			if(cga.moveThinkFnArray[i](arg) == false){
 				return false;
@@ -6351,6 +6367,13 @@ module.exports = function(callback){
 						
 						var waitBattle = ()=>{
 							if(!cga.isInNormalState()){
+								// UNAecho:在这里添加一个if逻辑，使得在战斗中登出，可以被识别出来。防止登出后行走出现cga.walklist冲突的情况。
+								// 逻辑开始
+								if(!cga.moveThink('walkList')){
+									console.log('cga.walkList在等待战斗中被打断！');
+									cga.isMoveThinking = false;
+									return;
+								}// 逻辑结束
 								setTimeout(waitBattle, 1000);
 								return;
 							}
