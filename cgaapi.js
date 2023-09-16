@@ -10909,8 +10909,6 @@ module.exports = function(callback){
 											roomWalkList = [19, 10, 15009]
 										}
 										cga.walkList([
-											[38, 37, '咒术师的秘密住处'],
-											[10, 0, 15008],
 											roomWalkList,
 										], cb);
 										});
