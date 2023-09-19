@@ -6503,7 +6503,13 @@ module.exports = function(callback){
 		return skill != undefined ? skill : null;
 	}
 	
-	//查找宝箱
+	/**
+	 * UNAecho开发笔记：这是一个查找宝箱的API
+	 * 只有当人物距离目标小于12(小于等于11的投影距离)时，cga.GetMapUnits()才会监测到其存在。
+	 * 并且在战斗中、地图切换时是无效的
+	 * @param {*} filter 
+	 * @returns 
+	 */
 	cga.findCrate = function(filter){
 		var unit = cga.GetMapUnits().find((u)=>{
 			if(u.valid == 2 && u.type == 2 && u.model_id != 0 && (u.flags & 1024) != 0)
@@ -6515,7 +6521,13 @@ module.exports = function(callback){
 		return unit != undefined ? unit : null;
 	}
 	
-	//搜索NPC，支持过滤器
+	/**
+	 * UNAecho开发笔记：这是一个搜索NPC，支持过滤器的API
+	 * 只有当人物距离目标小于12(小于等于11的投影距离)时，cga.GetMapUnits()才会监测到其存在。
+	 * 并且在战斗中、地图切换时是无效的
+	 * @param {*} filter 
+	 * @returns 
+	 */
 	cga.findNPCEx = function(filter){
 		var unit = cga.GetMapUnits().find((u)=>{
 			if(u.valid == 2 && u.type == 1 && u.model_id != 0 && (u.flags & 4096) != 0)
@@ -11913,6 +11925,19 @@ module.exports = function(callback){
 	 * backTopPosList:迷宫出口水晶所在的坐标，用于返回迷宫。如黑龙的顶层不是固定的，可以由此坐标返回黑龙的顶层
 	 */
 	cga.mazeInfo = {
+		'奇怪的洞窟' : {
+			name : '奇怪的洞窟',
+			entryMap : '芙蕾雅',
+			exitMap : 15505,
+			posList : [[543, 38],],
+			xLimit : [523, 558],
+			yLimit : [14, 49],
+			prefix:'奇怪的洞窟地下',
+			suffix:'楼',
+			forwardEntryTile : 12002,
+			backEntryTile : 12000,
+			backTopPosList : [[40, 6,'']],
+		},
 		/**
 		 * 出口是个BOSS房间，可以选择跟勇者开战，或者和BOSS阴影开战。可能是个任务。我记得法兰城有两个并排在别墅区站着，让你抓什么东西
 		 */
@@ -13027,6 +13052,203 @@ module.exports = function(callback){
 			});
 		});
 	}
+
+	cga.thoroughSearchMap = (cache, cb) => {
+		let mapindex = cga.GetMapIndex().index3
+		let map = cga.GetMapName()
+
+		// 每层楼的唯一识别id。由于迷宫每层楼的名称不会变，而mapindex会变，所以使用拼接形式来制作唯一辨识符
+		let mapKey = mapindex + '_' + map
+		// 每层楼的缓存初始化
+		if (!cache.hasOwnProperty(mapKey)) {
+			cache[mapKey] = {
+				// 本层楼是否已经探索过的缓存，key为坐标，value为Boolean，true为探索过，false为未探索过
+				view:{}
+			}
+		}
+
+		let getFoundedPoints = (map, start) => {
+			let foundedPoints = {
+				'available': {},
+				'wall': {},
+			};
+			foundedPoints.available[start.x + '-' + start.y] = start;
+			let findByNextPoints = (centre) => {
+				let nextPoints = [];
+				let push = (p) => {
+					if (p.x > map.x_bottom && p.x < map.x_size && p.y > map.y_bottom && p.y < map.y_size) {
+						if (map.matrix[p.y][p.x] === 0) {
+							let key = p.x + '-' + p.y;
+							if (!foundedPoints.available[key]) {
+								foundedPoints.available[key] = p;
+								nextPoints.push(p);
+							}
+						} else if (map.matrix[p.y][p.x] > 0) {
+							let key = p.x + '-' + p.y;
+							if (!foundedPoints.wall[key]) {
+								foundedPoints.wall[key] = p;
+							}
+						}
+					}
+				};
+				push({ x: centre.x + 1, y: centre.y });
+				push({ x: centre.x + 1, y: centre.y + 1 });
+				push({ x: centre.x, y: centre.y + 1 });
+				push({ x: centre.x - 1, y: centre.y + 1 });
+				push({ x: centre.x - 1, y: centre.y });
+				push({ x: centre.x - 1, y: centre.y - 1 });
+				push({ x: centre.x, y: centre.y - 1 });
+				push({ x: centre.x + 1, y: centre.y - 1 });
+				nextPoints.forEach(findByNextPoints);
+			};
+			findByNextPoints(start);
+			return foundedPoints;
+		}
+
+		// 计算周围8点有多少碰撞点
+		// 注意游戏坐标的xy在cga.buildMapCollisionMatrix().matrix这里要反着用，因为matrix中y是1维坐标，x是2维坐标
+		let calCnt = (walls,x,y) => {
+			let cnt = 0
+			if(walls[y][x-1] == 1)
+				cnt += 1
+			if(walls[y][x+1] == 1)
+				cnt += 1
+			if(walls[y-1][x] == 1)
+				cnt += 1
+			if(walls[y+1][x] == 1)
+				cnt += 1
+			if(walls[y+1][x+1] == 1)
+				cnt += 1
+			if(walls[y+1][x-1] == 1)
+				cnt += 1
+			if(walls[y-1][x+1] == 1)
+				cnt += 1
+			if(walls[y-1][x-1] == 1)
+				cnt += 1
+			
+			return cnt;
+		}
+
+		let findNext = (cb) => {
+			// 当前坐标
+			let current = cga.GetMapXY()
+			// cga.buildMapCollisionRawMatrix()用来辨别楼梯的colraw值
+			let colraw = cga.buildMapCollisionRawMatrix()
+			// cga.buildMapCollisionMatrix()用来辨别是可通行点还是墙
+			let walls = cga.buildMapCollisionMatrix(true)
+
+			// 识别可通行的点与不可通行的墙壁，注意这里必须用cga.buildMapCollisionMatrix()来识别墙（而不是cga.buildMapCollisionRawMatrix()），否则会出现墙体被识别为可通行的bug
+			let foundedPoints = getFoundedPoints(walls,current)
+			// 将视野范围内的信息记录到缓存中
+			view(current,foundedPoints,colraw)
+
+			// 先看看缓存中有没有未探索区域，如果有，则优先探索
+			for (let keyPoint in cache[mapKey].view) {
+				if(cache[mapKey].view[keyPoint] === false){
+					let next = keyPoint.split('-').map(Number)
+					if(cga.isPathAvailable(current.x, current.y, next[0], next[1])){
+						console.log('未探索区域:', next)
+						cga.walkList(
+							[next], 
+							() => {
+								findNext(cb)
+							}
+						)	
+						return
+					}else{
+						console.log('未探索区域:', next,'，但是无法抵达，舍弃')
+					}
+				}
+			}
+
+			// 再看看有没有未探索墙壁，如果有，则探索其附近可通行格子
+			for (let w in foundedPoints.wall) {
+				// 一个wall point周围有至少5个wall point，视为未探索wall point
+				if(calCnt(colraw.matrix,foundedPoints.wall[w].x,foundedPoints.wall[w].y) > 4){
+					let next = cga.getRandomSpace(w.x,w.y)
+					console.log('未探索墙壁:', next)
+					cga.walkList(
+						[next], 
+						() => {
+							findNext(cb)
+						}
+					);	
+					return
+				}
+			}
+			// 如果既没有未探索领域，也没有未探索墙壁，则视为本层已探索完毕，callback返回缓存，退出API
+			cb(cache)
+			return
+		}
+
+		/**
+		 * 虽然可以使用cga.getMapObjects(true)在地图任意位置获得碰撞类单位的信息，但是却无法获取其名称
+		 * 所以这里统一使用有视野范围限制的cga.GetMapUnits()来获取信息，利用：
+		 * 1、cga.getMapObjects(true)
+		 * 2、cga.buildMapCollisionRawMatrix()
+		 * 来辅助数据的完善，如boss名字、楼梯是前进还是后退，水晶是入口还是出口等等
+		 * 【注意】大部分楼梯虽然可通过colraw的值来判断是前进还是后退，有时候却不行
+		 * 狗洞（奇怪的洞窟）出口是一个后退单位，和后退的楼梯无论从外观还是cell、colraw值都一模一样，无法分辨
+		 * 
+		 * 在cga.thoroughSearchMap()中不对楼梯做这种区分，仅返回colraw做参考，外部调用时需要注意判断
+		 * 建议外部调用的函数，在进入地图时，记录起始位置，来分别到底是后退楼梯还是出口
+		 */
+		let view = (current,foundedPoints,colraw) => {
+			// 获取碰撞类单位，如楼梯、boss、传送水晶等
+			let mapObjs = cga.getMapObjects(true)
+			// 记录视野范围内的单位，如NPC、宝箱等。视野范围为11格（含）投影距离。游戏设定即为如此。
+			let units = cga.GetMapUnits()
+			for (let u of units) {
+				if(u.valid != 2){
+					console.log('无效目标',u,'的valid!=2，跳过')
+					continue
+				}
+				let uid = u.xpos + '_' + u.ypos
+				// 宝箱
+				if (u.type == 2 && u.model_id != 0 && (u.flags & 1024) != 0) {
+					if(cache[mapKey].hasOwnProperty(uid)){
+						console.log(uid,'已在缓存中，跳过记录')
+						continue
+					}
+					cache[mapKey][uid] = { name: u.item_name, type: 'box', x: u.xpos, y: u.ypos }
+				}
+				// NPC或者碰撞类单位
+				if (u.type == 1 && (u.flags & 4096) != 0) {
+					if(cache[mapKey].hasOwnProperty(uid)){
+						console.log(uid,'已在缓存中，跳过记录')
+						continue
+					}
+					// 楼梯或传送水晶
+					if (mapObjs.some(m => { return m.cell == 3 && m.x == u.xpos && m.y == u.ypos })) {
+						if (u.model_id == 0) {// 楼梯
+							cache[mapKey][uid] = { name: '楼梯', type: 'stair', x: u.xpos, y: u.ypos, colraw: colraw.matrix[u.ypos][u.xpos] }
+						} else if (u.model_id != 0) {// 传送水晶
+							cache[mapKey][uid] = { name: '水晶', type: 'door', x: u.xpos, y: u.ypos, colraw: colraw.matrix[u.ypos][u.xpos] }
+						}
+					}else if (mapObjs.some(m => {return m.cell == 2 && m.x == u.xpos && m.y == u.ypos})) {// boss
+						cache[mapKey][uid] = { name: u.unit_name, type: 'boss', x: u.xpos, y: u.ypos }
+					} else {//NPC
+						cache[mapKey][uid] = { name: u.unit_name, type: 'npc', x: u.xpos, y: u.ypos }
+					}
+				}
+			}
+			// 然后记录已探索和未探索坐标
+			for (let key in foundedPoints.available) {
+				if(cache[mapKey].view[key] === true){
+					continue
+				}
+				// 人物只能看到小于等于11格的东西
+				if(cga.projectDistance(current.x,current.y,foundedPoints.available[key].x,foundedPoints.available[key].y) < 12){
+					cache[mapKey].view[key] = true
+				}else{
+					cache[mapKey].view[key] = false
+				}
+			}
+		}
+		findNext(cb)
+		return
+	}
+
 	/**
 	 * UNAecho: 生成某一点的视野范围内的坐标，多数用于查看人物所能看见的视野坐标。
 	 * 比如探索迷宫时，可以大致知道人物能看到哪里。
