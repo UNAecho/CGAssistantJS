@@ -6163,6 +6163,77 @@ module.exports = function(callback){
 		);
 		//return [];
 	}
+
+	/**
+	 * UNAecho：一个仅对cga.calculatePath()的输入源做处理的API，用于规避路径上的NPC碰撞触发战斗的问题
+	 * 多数用于探索迷宫时，走路遇见NPC，并被迫战斗
+	 * 开发此API的原因是，cga.calculatePath()的A star算法使用cga.buildMapCollisionMatrix()的数据作为网格grid的输入
+	 * 而cga.buildMapCollisionMatrix()是不会侦测到地图上的碰撞类NPC的，例如哈洞熊男、随机迷宫中的BOSS NPC等
+	 * 这会导致cga.walklist()在走路时撞上NPC，进入战斗
+	 * 此API仅对输入源cga.buildMapCollisionMatrix()传入true，使其绕开NPC走路
+	 * 【注意】此API不能使用的情况：
+	 * 1、想走到迷宫上下楼梯进入下一层时，或地图经常加载不好的地方
+	 * 因为本质上是使用cga.buildMapCollisionMatrix(true)来进行A star算法
+	 * 而传入true的cga.buildMapCollisionMatrix()会认为加载不好的地方的cell值大于0，导致寻路失败
+	 * 2、在城镇内等多数地图使用，因为会规避很多门的point，效率低
+	 * 
+	 * @param {*} curX 起点x坐标
+	 * @param {*} curY 起点y坐标
+	 * @param {*} targetX 终点x坐标
+	 * @param {*} targetY 终点y坐标
+	 * @param {*} targetMap 终点传送至目标地图
+	 * @param {*} dstX 如果targetMap没有发生变化，则表示传送至同地图x坐标
+	 * @param {*} dstY 如果targetMap没有发生变化，则表示传送至同地图y坐标
+	 * @param {*} newList 迭代Array,初始化请传空数组[]
+	 * @returns Array
+	 */
+	cga.calculatePathAvoidNpc = (curX, curY, targetX, targetY, targetMap, dstX, dstY, newList)=>{
+		// 与cga.calculatePath()唯一不同之处是传入了true参数
+		var walls = cga.buildMapCollisionMatrix(true);
+		var grid = new PF.Grid(walls.matrix);
+		var finder = new PF.AStarFinder({
+			allowDiagonal: true,
+			dontCrossCorners: true
+		});
+
+		var frompos = [curX - walls.x_bottom, curY - walls.y_bottom];
+		var topos = [targetX - walls.x_bottom, targetY - walls.y_bottom];
+		
+		if(frompos[0] >= 0 && frompos[0] < walls.x_size && 
+		frompos[1] >= 0 && frompos[1] < walls.y_size &&
+			topos[0] >= 0 && topos[0] < walls.x_size && 
+			topos[1] >= 0 && topos[1] < walls.y_size){
+		
+			var path = finder.findPath(frompos[0], frompos[1], topos[0], topos[1], grid);
+			
+			if(path.length)
+			{
+				var joint = PF.Util.compressPath(path);
+				for(var i in joint){
+					joint[i][0] += walls.x_bottom;
+					joint[i][1] += walls.y_bottom;
+					if(joint[i][0] == targetX && joint[i][1] == targetY){
+						joint[i][2] = targetMap;
+						joint[i][3] = dstX;
+						joint[i][4] = dstY;
+					}
+					joint[i][5] = true;
+				}
+
+				newList = joint.concat(newList);
+				
+				return newList;
+			}
+		}
+		
+		throw new Error('发现严重错误：寻路失败！\n' 
+		+ '地图最小值坐标 ('  + (walls.x_bottom) + ', '+ (walls.y_bottom) + ')'
+		+ '地图最大值坐标 ('  + (walls.x_size) +', '+(walls.y_size) + ')'
+		+ '寻路起始坐标 ('  + (frompos[0]) + ', '+ (frompos[1]) + ')'
+		+ '寻路目的坐标 ('  + (topos[0]) +', '+(topos[1]) + ')'
+		+ '【注意】此错误多数情况下是由于地图未下载完全导致，请手动在【地图】模式中下载地图再试试'
+		);
+	}
 	
 	cga.getMapXY = ()=>{
 		var f = cga.GetMapXYFloat();
@@ -6228,6 +6299,12 @@ module.exports = function(callback){
 		cga.walkList({
 			[坐标x, 坐标y, 地图索引, 传送目标x, 传送目标y]
 		}, cb回调)
+		
+		// UNAecho:【回避路径上NPC的方式】
+		// 在第6个参数传入true，则回避路径上可能碰撞的NPC，防止进入不必要的战斗，例如随即迷宫中的NPC
+		cga.walkList({
+			[坐标x, 坐标y, 地图索引(可为null), 传送目标x(可为null), 传送目标y(可为null),[],true]
+		}, cb回调)
 
 	*/
 	/**
@@ -6236,7 +6313,11 @@ module.exports = function(callback){
 	* 这会导致你传给cga.walkList的callback会提前执行，如果callback中含有坐标类的API，会直接导致报错(因为无法抵达。)
 	* 使用cga.walkList时，要注意此事
 	* 如果目标名称地图使用String类型，而非Number类型时，此bug出现的概率会略微降低。
-	 */
+	* 
+	* 另外，我在参数list中，新增了一个参数，来实现躲避NPC走路的问题,具体格式见上面的调用方式
+	* 【注意】当进行非探索性质的走路时（如去迷宫上下楼梯进入下一层），不要使用躲避NPC的方式行走。
+	* 具体原因见cga.calculatePathAvoidNpc()的注解
+	*/
 	cga.walkList = (list, cb)=>{
 		
 		//console.log('初始化寻路列表');
@@ -6273,6 +6354,8 @@ module.exports = function(callback){
 			var dstX = newList[0][3];
 			var dstY = newList[0][4];
 			var isAStarPath = newList[0][5];
+			// UNAecho：如果为true，则绕开所有cga.GetMapCollisionTable(true)的cell值大于0的点
+			var avoidNpc = newList[0][6];
 			
 			var walked = newList[0].slice(0);
 			walkedList.push(walked);
@@ -6474,7 +6557,12 @@ module.exports = function(callback){
 			}
 
 			if(isAStarPath !== true){
-				newList = cga.calculatePath(curpos.x, curpos.y, targetX, targetY, targetMap, dstX, dstY, newList);
+				if(avoidNpc){
+					// console.log('使用躲避NPC的方式寻路..')
+					newList = cga.calculatePathAvoidNpc(curpos.x, curpos.y, targetX, targetY, targetMap, dstX, dstY, newList);
+				}else{
+					newList = cga.calculatePath(curpos.x, curpos.y, targetX, targetY, targetMap, dstX, dstY, newList);
+				}
 				walkCb();
 				return;
 			}
@@ -13252,6 +13340,7 @@ module.exports = function(callback){
 			for (let keyPoint in viewCache) {
 				if(viewCache[keyPoint] === false){
 					let next = keyPoint.split('-').map(Number)
+					next = next.concat([null,null,null,[],true])
 					if(cga.isPathAvailable(current.x, current.y, next[0], next[1])){
 						cga.walkList(
 							[next], 
@@ -13271,6 +13360,7 @@ module.exports = function(callback){
 				// 一个wall point周围有至少5个wall point，视为未探索wall point
 				if(calCnt(colraw.matrix,foundedPoints.wall[w].x,foundedPoints.wall[w].y) > 4){
 					let next = cga.getRandomSpace(w.x,w.y)
+					next = next.concat([null,null,null,[],true])
 					console.log('未探索墙壁:', next)
 					cga.walkList(
 						[next], 
