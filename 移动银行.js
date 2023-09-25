@@ -333,7 +333,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 											return false
 										}
 										// 检查数量。注意，客户端可能会多给（数量除以堆叠数出现余数情况）
-										if (received && receivedCount >= resObj.resCount && received.length == Math.ceil(resObj.resCount / resObj.resTargetMaxcount)) {
+										if (received && receivedCount >= resObj.resCount && received.length == Math.ceil(resObj.resCount / (resObj.resTargetMaxcount > 0 ? resObj.resTargetMaxcount : 1))) {
 											return true
 										}
 										console.log('【' + lockPlayerName + '】动作【' + resObj.resTradeType + '】【' + resObj.resTarget + '】验证失败！拒绝交易')
@@ -458,17 +458,10 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 						if (resObj.resTargetType == 'item') {
 							/**
 							 * 说明：
-							 * 存物品的逻辑是无视身上物品，尽量全都存进银行来腾出空间。
-							 * 但如果银行中的道具的count=0，也就是无堆叠数的物品，如武器防具
-							 * 这时cga.saveToBankAll中的cga.findBankEmptySlot逻辑，会根据maxcount数来返回可以存的pos
-							 * 如果resObj.resTargetMaxcount是3，而银行中的道具count数为0，就会出现在这个count=0的格子无限循环存物品
-							 * 这里需要将count=0的格子排除掉，所以return false。
-							 * 其余情况均视为true
+							 * 我在cga.findBankEmptySlot()中修改了部分逻辑，现在filter直接返回true，即可实现将身上任何道具都存入，腾出足够空间
+							 * filter直接return true即可
 							 */
 							cga.saveToBankAll((it) => {
-								if (it.count == 0) {
-									return false
-								}
 								return true
 							},
 								resObj.resTargetMaxcount,

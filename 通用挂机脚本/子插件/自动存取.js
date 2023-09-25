@@ -217,16 +217,12 @@ var thisobj = {
 			 * 获取物品堆叠数时，有一种特殊情况：
 			 * 1、如果当前有残余目标物品，则获取其堆叠数
 			 * 2、如果没有，则无法获取其堆叠数，那么默认为0堆叠数，也就是和装备一样。
-			 * 3、如果出现2的情况，将0堆叠数视为1，并报告给服务端，不然会出现除数为0的情况
 			 */
 			let item = cga.GetItemsInfo().find((it) => {
 				return it.name == orderObj.name
 			})
-			// 装备等道具，堆叠数为0时，对服务端汇报成1，方便进行除算
-			let maxcount = cga.getItemMaxcount(item)
-			maxcount = maxcount == 0 ? 1 : maxcount
 
-			result += maxcount.toString()
+			result += cga.getItemMaxcount(item).toString()
 		}
 		return result
 	},

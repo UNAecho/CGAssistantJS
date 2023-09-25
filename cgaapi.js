@@ -4376,6 +4376,7 @@ module.exports = function(callback){
 		 * 95层（含）之前，无通行限制。95通往96层，需要4转及以上才能通过。
 		 * 96-99层的模式是：96层开始NPC给你一个护身符，双击回到此NPC处，交给下一层NPC，传送至下一层
 		 * 99-100层也是一样，100层是顶层，可以拿王冠、公主头冠、小猫帽
+		 * 100层(mapname:雪拉威森塔最上层)的index为59900
 		 * 相关任务：圣域守护者
 		 * 王冠可以飞辛梅尔，公主头冠飞丘斯特村，小猫帽是人物技能加成
 		 * 支线任务：迷之箱
@@ -7917,7 +7918,21 @@ module.exports = function(callback){
 		}
 	};
 
-	//寻找银行中的空闲格子, 参数：物品filter、最大堆叠数量、最大银行格
+	/**
+	 * UNAecho:寻找银行中的空闲格子, 参数：物品filter、最大堆叠数量、最大银行格
+	 * 
+	 * 原API有一个bug：
+	 * 当传入参数maxcount>0（例如血瓶、料理），而银行中的道具出现count=0的情况（如装备）时
+	 * 此时遍历银行，如果arr[i].count < maxcount，则视为此格子可以往里叠加目标道具。
+	 * 而arr[i]是装备，arr[i].count = 0，必然小于3
+	 * 但往装备上叠加道具显然是有错误的，所以这里添加continue逻辑:arr[i].count==0时，continue
+	 * 也就是当银行中的装备只有count>0时，才考虑在上面叠加，否则视为不可往上面叠加目标道具
+	 * 
+	 * @param {*} filter 
+	 * @param {*} maxcount 
+	 * @param {*} maxslots 
+	 * @returns 
+	 */
 	cga.findBankEmptySlot = (filter, maxcount, maxslots = 20) => {
 		
 		var banks = cga.GetBankItemsInfo();
@@ -7930,6 +7945,10 @@ module.exports = function(callback){
 		
 		for(var i = 0; i < maxslots; ++i){
 			if(typeof arr[i] != 'undefined'){
+				// UNAecho:count=0的装备无法继续堆叠，跳过此格
+				if(arr[i].count == 0){
+					continue
+				}
 				if(typeof filter == 'string' && maxcount > 0){
 					if(arr[i].name == filter && arr[i].count < maxcount)
 						return 100+i;
@@ -12313,6 +12332,22 @@ module.exports = function(callback){
 			backEntryTile : 12002,
 			backTopPosList : [[26, 72,'']],
 		},
+		/**
+		 * 战斗四转，黑色方舟迷宫
+		 */
+		'黑色方舟' : {
+			name : '黑色方舟',
+			entryMap : 59933,
+			exitMap : 0,// TODO
+			posList : [[100,95]],
+			xLimit : [100,100],
+			yLimit : [95,95],
+			prefix:'黑色方舟第',
+			suffix:'层',
+			forwardEntryTile : 17980,
+			backEntryTile : 17981,
+			backTopPosList : [[26, 72,'']],// TODO
+		},
 	}
 
 	//下载地图的部分区域并等待下载完成
@@ -13189,7 +13224,7 @@ module.exports = function(callback){
 	 * 
 	 * 此API简要逻辑为：
 	 * 1、将距离自己11投影距离的各单位存入参数cache中。（距离大于11的话，cga.getMapObjects()无法观测到目标具体数据）
-	 * 2、cache由外部传入，每一层的id使用mapindex + '_' + map制作 TODO改为离线落盘记录
+	 * 2、cache对象使用落盘文件，如果文件不存在，则初始化一个新的Object
 	 * 3、以人物为中心，使用扩散方法获取可通行点与墙壁。该方法可避免获取到墙壁以外的不可抵达点。
 	 * 4、将探索过的可通行点加入缓存中，避免重复探索迷宫，实现地毯式搜索一层迷宫
 	 * 5、地毯式搜索过后，调用callback，传入更新的缓存数据，结束API
@@ -13340,6 +13375,7 @@ module.exports = function(callback){
 			for (let keyPoint in viewCache) {
 				if(viewCache[keyPoint] === false){
 					let next = keyPoint.split('-').map(Number)
+					// 第6个参数传入true，代表躲避NPC走路
 					next = next.concat([null,null,null,[],true])
 					if(cga.isPathAvailable(current.x, current.y, next[0], next[1])){
 						cga.walkList(
@@ -13360,6 +13396,7 @@ module.exports = function(callback){
 				// 一个wall point周围有至少5个wall point，视为未探索wall point
 				if(calCnt(colraw.matrix,foundedPoints.wall[w].x,foundedPoints.wall[w].y) > 4){
 					let next = cga.getRandomSpace(w.x,w.y)
+					// 第6个参数传入true，代表躲避NPC走路
 					next = next.concat([null,null,null,[],true])
 					console.log('未探索墙壁:', next)
 					cga.walkList(

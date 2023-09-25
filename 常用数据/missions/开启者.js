@@ -440,8 +440,8 @@ var thisobj = {
 		},
 	],
 	taskRequirements: [//任务阶段是否完成
-		function () {//0.前期处理。
-			return thisobj.data.soloBattle
+		function () {//0.前期处理。不能跳过，否则单人可能会因为没有治疗受伤出现无限阵亡的情况。
+			return false
 		},
 		function () {//1.前往杰诺瓦镇，出镇北门至莎莲娜岛（260.359）处与阿斯提亚神官对话，选“是”进入参道。
 			return cga.GetMapIndex().index3 == 14010

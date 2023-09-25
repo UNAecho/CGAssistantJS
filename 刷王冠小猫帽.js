@@ -1,5 +1,8 @@
 var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 	global.cga = cga
+	let rootdir = cga.getrootdir()
+	let configMode = require(rootdir + '/通用挂机脚本/公共模块/读取战斗配置');
+
 	// UNAecho:加入自动存取，不将刷完的道具存进个人银行，而是存入移动银行
 	let saveAndDraw = require('./通用挂机脚本/子插件/自动存取');
 	// 单人治疗和招魂
@@ -539,27 +542,33 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 		cga.SayWords('已刷' + loop_count + '遍！', 0, 3, 1);
 		task.doTask(loop);
 	}
+	// 逃跑模式赶路
+	configMode.manualLoad('刷王冠小猫帽')
 
-	cga.SayWords('欢迎使用CGA通用王冠/小猫脚本，输入‘1’刷王冠，输入‘2’刷公主头冠，输入‘3’刷小猫帽。', 0, 3, 1);
+	// 直接刷王冠
+	mineObject = mineArray[0]
+	cga.SayWords('欢迎使用UNA刷王冠、公主头冠、小猫帽脚本，当前正在刷【'+mineObject.name+'】。', 0, 3, 1);
+	task.doTask(loop)
 
-	cga.waitTeammateSay((player, msg) => {
 
-		if (player.is_me == true) {
+	// cga.waitTeammateSay((player, msg) => {
 
-			for (var i in mineArray) {
-				if (mineArray[i].type == parseInt(msg)) {
-					mineObject = mineArray[i];
-					break;
-				}
-			}
+	// 	if (player.is_me == true) {
 
-			if (mineObject != null) {
-				cga.SayWords('您选择了刷' + mineObject.name + '。', 0, 3, 1);
-				task.doTask(loop);
-				return false;
-			}
-		}
+	// 		for (var i in mineArray) {
+	// 			if (mineArray[i].type == parseInt(msg)) {
+	// 				mineObject = mineArray[i];
+	// 				break;
+	// 			}
+	// 		}
 
-		return true;
-	});
+	// 		if (mineObject != null) {
+	// 			cga.SayWords('您选择了刷' + mineObject.name + '。', 0, 3, 1);
+	// 			task.doTask(loop);
+	// 			return false;
+	// 		}
+	// 	}
+
+	// 	return true;
+	// });
 });

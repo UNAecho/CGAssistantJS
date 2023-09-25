@@ -148,10 +148,12 @@ var configModeArray = [
 		 */
 		name: '逃跑模式',
 		func: () => {
-			var filename = '生产赶路'
+			let filename = '生产赶路'
+			if(cga.job.getJob().jobType == '战斗系'){
+				filename = '战斗赶路'
+			}
 			thisobj.manualLoad(filename)
 			return
-
 		},
 		think: (ctx) => {
 			return
