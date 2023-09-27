@@ -4565,7 +4565,7 @@ module.exports = function(callback){
 			if(teamplayers.length && teamplayers[0].name != cga.GetPlayerInfo().name){
 				console.log('监测到你是队员，等待队长将自己带到指定index:' + targetindex)
 				cga.waitForLocation({ mapindex: targetindex }, () => {
-					console.log('抵达:' + targetindex)
+					console.log('cga.travel.autopilot()抵达:' + targetindex)
 					setTimeout(cb, 1000);
 				});
 				return
@@ -6642,6 +6642,23 @@ module.exports = function(callback){
 		});
 	}
 
+	/**
+	 * UNAecho:按名称持续搜索NPC，直至找到才调用callback，停止搜索。
+	 * 【注意】此API依赖cga.findNPCEx()，有小于12的距离限制，详情参考cga.findNPCEx()注释
+	 * @param {*} name 
+	 * @param {*} cb 
+	 * @returns 
+	 */
+	cga.findNPCWithCallback = function(name,cb){
+		let npc = cga.findNPC(name)
+		if(npc == null){
+			setTimeout(cga.findNPCWithCallback,1000,name,cb)
+			return
+		}
+		cb(npc)
+		return
+	}
+
 	//取背包中的物品数量
 	//参数1：物品名, 或#物品id，或过滤函数
 	//参数2：是否包括装备栏
@@ -7634,7 +7651,9 @@ module.exports = function(callback){
 		if (fs.existsSync(dir) == false) {
 			fs.mkdirSync(dir)
 		}
-		fs.writeFileSync(cga.fileObj.getFileDir() + fileName, JSON.stringify(content));
+		let path = cga.fileObj.getFileDir() + fileName
+		fs.writeFileSync(path, JSON.stringify(content));
+		console.log('文件【'+path+'】写入完毕..')
 		return
 	}
 
@@ -9189,7 +9208,7 @@ module.exports = function(callback){
 			let currentTime = new Date()
 			// 间隔报时
 			if (currentTime.getSeconds() % 10 == 0) {
-				console.log('已等待' + Math.floor((currentTime.getTime() - start) / 1000) + '秒，' + Math.floor(obj.timeout / 1000) + '秒后超时。')
+				console.log('已等待' + Math.floor((currentTime.getTime() - start) / 1000) + '秒' + (obj.timeout > 0 ? ('，' + Math.floor(obj.timeout / 1000).toString() + '秒后超时。') : ''))
 			}
 
 			if (obj.timeout > 0 && (currentTime.getTime() - start) >= obj.timeout) {
@@ -10595,7 +10614,7 @@ module.exports = function(callback){
 	 * obj格式以及各个key的功能：
 	 * obj.waitLocation : 目标NPC所处的地图，在组队时必须传入。因为队长需要走至此地图，而队员只需等待队长将自己带到此地图。
 	 * obj.npcpos : 目标NPC所处的坐标，必须传入。
-	 * obj.act : 与NPC交互的动作目的。有item，msg，map3种类型可选：
+	 * obj.act : 与NPC交互的动作目的。有item，msg，map等几种种类型可选：
 		item: 找NPC拿道具，物品栏出现此道具则调用cb，函数结束
 		msg: 找NPC对话，直至NPC出现此msg的内容，调用cb，函数结束
 		map: 找NPC对话，直至人物被传送至此地图，调用cb，函数结束
@@ -10651,13 +10670,13 @@ module.exports = function(callback){
 		if(typeof obj != 'object' || !obj.hasOwnProperty("act") || !obj.hasOwnProperty("target")){
 			throw new Error('obj格式有误，见API注释')
 		}
-		if(obj.hasOwnProperty('job') && (typeof obj.target != 'string')){
+		if(obj.act == 'job' && (typeof obj.target != 'string')){
 			throw new Error('obj.act为job时，obj.target必须为string类型的职业统称。')
 		}
-		if(obj.hasOwnProperty('promote') && (typeof obj.target != 'number')){
+		if(obj.act =='promote' && (typeof obj.target != 'number')){
 			throw new Error('obj.act为promote时，obj.target必须为int类型的职业level。')
 		}
-		if((obj.hasOwnProperty('skill') || obj.hasOwnProperty('forget')) && (typeof obj.target != 'string')){
+		if((obj.act =='skill' || obj.act =='forget') && (typeof obj.target != 'string')){
 			throw new Error('obj.act为skill或forget时，obj.target必须为string类型的技能名称。')
 		}
 		if(obj.hasOwnProperty("pos") && (!Array.isArray(obj.pos) || obj.pos.length != 2)){
@@ -10665,6 +10684,9 @@ module.exports = function(callback){
 		}
 		if(obj.hasOwnProperty("say") && (typeof obj.say != 'string' || obj.say.length == 0)){
 			throw new Error('obj.say格式必须为长度大于0的字符串')
+		}
+		if(obj.act == 'function' && typeof obj.target != 'function'){
+			throw new Error('obj.act为function时，obj.target必须为function()')
 		}
 
 		// 如果是学技能，判断技能栏剩余数和金币剩余数是否充足
@@ -10905,6 +10927,14 @@ module.exports = function(callback){
 					repeatFlag = false
 					setTimeout(retry, 1000, cb);
 					return
+				}else if(obj.act == "function"){// 自定义function，拥有最高泛化性。
+					obj.target((r)=>{
+						if(r === false){
+							repeatFlag = false
+						}
+						setTimeout(retry, 1000, cb);
+					})
+					return
 				}
 
 				// 自定义与NPC交谈的内容
@@ -10947,8 +10977,11 @@ module.exports = function(callback){
 				retry(cb)
 				return
 			}else{// item、msg等模式不离队，依旧用waitTeammateReady
-				// 为任务物品留位置
-				dropStoneForMissionItem(obj.target)
+				// 为任务物品留位置，如果obj.target为func，会导致cga.findItem(obj.target)将obj.target当作item的filter函数来遍历所有道具。
+				// 如果需要清理道具，请在obj.target直接写逻辑
+				if(obj.act != 'function'){
+					dropStoneForMissionItem(obj.target)
+				}
 
 				cga.waitTeammateReady(null, (r)=>{
 					retry(r)
@@ -11150,8 +11183,7 @@ module.exports = function(callback){
 				}
 			}else if(tmpObj.name == '狩猎'){
 				searchFunc = (cb)=>{
-					let obj = cga.GetMapUnits()
-					let npc = obj.find(u => u.unit_name == '猎人拉修' && u.type == 1 && u.model_id != 0)
+					let npc = cga.findNPC('猎人拉修')
 					if (npc){
 						cb([npc.xpos,npc.ypos])
 						return
@@ -12076,7 +12108,7 @@ module.exports = function(callback){
 			name : '奇怪的洞窟',
 			entryMap : '芙蕾雅',
 			exitMap : 15505,
-			posList : [[543, 38],],
+			posList : [[543, 38],[531, 38],],
 			xLimit : [523, 558],
 			yLimit : [14, 49],
 			prefix:'奇怪的洞窟地下',
@@ -12338,7 +12370,7 @@ module.exports = function(callback){
 		'黑色方舟' : {
 			name : '黑色方舟',
 			entryMap : 59933,
-			exitMap : 0,// TODO
+			exitMap : 59934,
 			posList : [[100,95]],
 			xLimit : [100,100],
 			yLimit : [95,95],
@@ -13217,6 +13249,136 @@ module.exports = function(callback){
 	}
 
 	/**
+	 * UNAecho:探索迷宫的目标寻找与执行动作逻辑，并返回指导下一步的参数
+	 * 该API仅适用于探索迷宫的API调用
+	 * 
+	 * @param {Object} checkObj 识别函数与动作函数对象，包含了对迷宫所有对象的识别与动作函数，如开宝箱、与NPC对话、与BOSS对话开战等。
+	 * 该对象必须包括:
+	 * 1、identify()，识别函数，辨别目标是否为预期对象。return true是false否
+	 * 2、act(cb)，动作函数，仅当identify() return true时触发，执行某动作。
+	 * 其中，act(cb)需要在callback中返回部分参数来通知是否继续搜索、删除缓存对象（如开完就消失的宝箱）等逻辑，具体为以下几种:
+	 * 1、cb(true)，代表继续探索迷宫
+	 * 2、cb(false)，代表中断探索迷宫
+	 * 3、cb('delete and continue')，代表删除该对象，并继续探索迷宫
+	 * 4、cb('delete and break')，代表删除该对象，并中断探索迷宫
+	 * 
+	 * 现在在【奇怪的洞窟】（亚留特外的狗洞）举一个写法的例子，目标为：
+	 * 1、在洞窟中寻找【无照护士米内鲁帕】，对话获得【实验药】，继续探索迷宫
+	 * 2、在洞窟中寻找【人类？】，在持有【实验药】的前提下，与其对话，发生战斗，直至战斗结束，返回迷宫，继续探索迷宫
+	 * 3、在洞窟中寻找【宝箱】，使用自定义方法，将其打开，并监听打开箱子的结果 TODO 没有囊括战斗，因为测试的时候没有遇到战斗的情况（如出现五色箱子的怪物），继续探索迷宫。
+	 * {
+                identify: (obj) => {
+                    if(obj.name == '无照护士米内鲁帕' && cga.getItemCount('实验药') == 0) return true
+                    if(obj.name == '人类？' && cga.getItemCount('实验药') > 0) return true
+                    if(obj.name == '宝箱' && cga.getItemCount('铜钥匙') > 0) return true
+                    return false
+                },
+                act: (obj, cb) => {
+                    if(obj.name == '无照护士米内鲁帕'){
+                        cga.askNpcForObj({ act: 'item', target: '实验药', npcpos: [obj.x, obj.y] }, () => {
+                            // 返回true是为了继续cga.exploreMaze的探索逻辑
+                            cb(true)
+                        })
+                        return
+                    }
+                    if(obj.name == '人类？'){
+                        cga.askNpcForObj({
+                            act: 'function', target: (cb) => {
+                                let hasBattle = false
+    
+                                let retry = ()=>{
+                                    if(!cga.isInNormalState()){
+                                        hasBattle = true
+                                        setTimeout(retry, 1500);
+                                        return;
+                                    }
+                                    if(hasBattle){
+                                        console.log('已手持实验药击败人类？')
+                                        // 返回true是为了终止askNpcForObj()的retry()
+                                        cb(false)
+                                        return
+                                    }
+                                    cga.TurnTo(obj.x, obj.y);
+                                    setTimeout(retry,1000)
+                                }
+                                retry()
+                            }, npcpos: [obj.x, obj.y]
+                        }, () => {
+                            cb('delete and continue')
+                        })
+                        return
+                    }
+                    if(obj.name == '宝箱'){
+                        cga.askNpcForObj({
+                            act: 'function', target: (cb) => {
+                                cga.waitSysMsg((msg)=>{
+                                    console.log(msg)
+                                    // 箱子内有东西，如【打开了宝箱】【捡到了卡片？】
+                                    if(msg.indexOf('捡到了') != -1 || msg.indexOf('打开了宝箱') != -1){
+                                        cb(false)
+                                        return false
+                                    }
+                                    return true;
+                                });
+                            }, npcpos: [obj.x, obj.y]
+                        }, () => {
+                            cb('delete and continue')
+                        })
+                        return
+                    }
+                }
+            }
+	 * @param {*} cb 
+	 */
+	cga.checkMazeCacheInternal = (layerObj,checkObj,cb) => {
+		let unitKeys = Object.keys(layerObj)
+		if(typeof checkObj.identify != 'function' || typeof checkObj.act != 'function'){
+			throw new Error('checkObj中的每个对象都必须包含identify和act方法')
+		}
+
+		for (let key of unitKeys) {
+			// id类数据与checkObj无关，跳过
+			if(key == 'id'){
+				// console.log('id类型数据跳过..')
+				continue
+			}
+			// 地图是否完全探索数据与checkObj无关，跳过
+			if(key == 'complete'){
+				// console.log('complete数据跳过..')
+				continue
+			}
+			// 如果识别函数返回true，则将目标对象传入动作函数，并执行。
+			if(checkObj.identify(layerObj[key])){
+				console.log('发现目标:',layerObj[key])
+				checkObj.act(layerObj[key],(result)=>{
+					// 如果checkObj中的act()返回true，或者check()返回null则为继续探索迷宫
+					if(result === true){
+						cb(true)
+					}else if(result === false){// 如果checkObj中的act()返回false，则中断探索
+						console.log('cga.thoroughSearchMap()返回', result, '中断探索迷宫')
+						cb(false)
+					}else if(result == 'delete and continue'){// 如果checkObj中的act()返回'delete and continue'，则删除缓存对应的数据，并继续探索迷宫
+						console.log('checkObj中的act()返回', result, '删除对应的数据:',layerObj[key],'并继续探索迷宫')
+						delete layerObj[key]
+						cb(true)
+					}else if(result == 'delete and break'){// 如果checkObj中的act()返回'del'，则删除缓存对应的数据
+						console.log('checkObj中的act()返回', result, '删除对应的数据:',layerObj[key],'中断探索迷宫')
+						delete layerObj[key]
+						cb(false)
+					}else{
+						throw new Error('checkObj中的act()返回值异常，必须返回Boolean型数值')
+					}
+					return
+				})
+				return
+			}
+		}
+		// 如果checkObj.identify没有检测到需要执行动作的对象，返回null
+		cb(null)
+		return
+	}
+
+	/**
 	 * UNAecho:开发一个探索本层迷宫的API
 	 * 此API与cga.searchMap()神似，但却有不同的目标。可以理解为损失函数不同。
 	 * cga.searchMap()是以优先找到前进/后退的楼梯为主，发现楼梯立即进入
@@ -13235,13 +13397,12 @@ module.exports = function(callback){
 	 * 3、cga.buildMapCollisionRawMatrix()唯一的用处是获取楼梯的colraw值，配合cga.mazeInfo来识别是前进还是后退楼梯。
 	 * @param {Object} mazeInfo 当前探索的迷宫数据，需要外部传入。如果数据格式不正确，则重新获取
 	 * @param {Object} cache 缓存数据，默认为{}，如果外部传入，则使用外部传入的数据
-	 * @param {Array[Object]} funcArr 函数数组，包含多个对象，每个对象必须包含2种函数：
-	 * 1、identify()，识别函数，辨别目标是否为预期对象。return true是false否
-	 * 2、act()，动作函数，仅当identify() return true时触发，执行某动作。return true代表继续探索迷宫，false代表终止探索迷宫。
+	 * @param {Object} checkObj 识别函数与动作函数对象，包含了对迷宫所有对象的识别与动作函数，如开宝箱、与NPC对话、与BOSS对话开战等。
+	 * 该对象具体写法参考cga.checkMazeCacheInternal()的注释
 	 * @param {*} cb 
 	 * @returns 
 	 */
-	cga.thoroughSearchMap = (mazeInfo,cache={},funcArr,cb) => {
+	cga.thoroughSearchMap = (mazeInfo,cache={},checkObj,cb) => {
 
 		// 本层迷宫名称
 		let layerName = cga.GetMapName()
@@ -13339,79 +13500,57 @@ module.exports = function(callback){
 			let foundedPoints = getFoundedPoints(walls,current)
 			// 将视野范围内的信息记录到缓存中
 			view(current,foundedPoints,colraw)
-			
+
 			// view()过后，执行识别函数与动作函数，如果有中断信号，则中断搜索迷宫。
-			for (let funcObj of funcArr) {
-
-				if(typeof funcObj.identify != 'function' || typeof funcObj.act != 'function'){
-					throw new Error('funcArr中的每个对象都必须包含identify和act方法')
-				}
-
-				for (let unitObj of Object.values(cache[mazeInfo.name][layerName])) {
-					// 如果识别函数返回true，则将目标对象传入动作函数，并执行。
-					if(funcObj.identify(unitObj)){
-						console.log('发现目标:',unitObj)
-						funcObj.act(unitObj,(r)=>{
-							// 如果callback被传入的参数为true，则继续探索
-							if(r){
-								console.log('对目标的动作执行完毕，继续搜索迷宫..')
-								findNext(cb)
+			cga.checkMazeCacheInternal(cache[mazeInfo.name][layerName],checkObj,(result)=>{
+				// 如果继续探索
+				if(result === true || result === null){
+					// 开始探索，先看看缓存中有没有未探索区域，如果有，则优先探索
+					for (let keyPoint in viewCache) {
+						if(viewCache[keyPoint] === false){
+							let next = keyPoint.split('-').map(Number)
+							// 第6个参数传入true，代表躲避NPC走路
+							next = next.concat([null,null,null,[],true])
+							if(cga.isPathAvailable(current.x, current.y, next[0], next[1])){
+								cga.walkList(
+									[next], 
+									() => {
+										findNext(cb)
+									}
+								)	
 								return
+							}else{
+								console.log('未探索区域:', next,'，但是无法抵达，舍弃')
 							}
-							// 如果callback被传入的参数为false，则中断此API
-							console.log('中断搜索迷宫..')
-							// 中断搜索，并将缓存和act()返回的结果传出去，供外部识别
-							cb(cache,r)
-							return
-						})
-						return
-					}
-					
-					
-				}
-			}
-
-			// 开始探索，先看看缓存中有没有未探索区域，如果有，则优先探索
-			for (let keyPoint in viewCache) {
-				if(viewCache[keyPoint] === false){
-					let next = keyPoint.split('-').map(Number)
-					// 第6个参数传入true，代表躲避NPC走路
-					next = next.concat([null,null,null,[],true])
-					if(cga.isPathAvailable(current.x, current.y, next[0], next[1])){
-						cga.walkList(
-							[next], 
-							() => {
-								findNext(cb)
-							}
-						)	
-						return
-					}else{
-						console.log('未探索区域:', next,'，但是无法抵达，舍弃')
-					}
-				}
-			}
-
-			// 再看看有没有未探索墙壁，如果有，则探索其附近可通行格子
-			for (let w in foundedPoints.wall) {
-				// 一个wall point周围有至少5个wall point，视为未探索wall point
-				if(calCnt(colraw.matrix,foundedPoints.wall[w].x,foundedPoints.wall[w].y) > 4){
-					let next = cga.getRandomSpace(w.x,w.y)
-					// 第6个参数传入true，代表躲避NPC走路
-					next = next.concat([null,null,null,[],true])
-					console.log('未探索墙壁:', next)
-					cga.walkList(
-						[next], 
-						() => {
-							findNext(cb)
 						}
-					);	
+					}
+		
+					// 再看看有没有未探索墙壁，如果有，则探索其附近可通行格子
+					for (let w in foundedPoints.wall) {
+						// 一个wall point周围有至少5个wall point，视为未探索wall point
+						if(calCnt(colraw.matrix,foundedPoints.wall[w].x,foundedPoints.wall[w].y) > 4){
+							let next = cga.getRandomSpace(w.x,w.y)
+							// 第6个参数传入true，代表躲避NPC走路
+							next = next.concat([null,null,null,[],true])
+							console.log('未探索墙壁:', next)
+							cga.walkList(
+								[next], 
+								() => {
+									findNext(cb)
+								}
+							);	
+							return
+						}
+					}
+			
+					console.log('本层已全部探索完毕..')
+					// 如果既没有未探索领域，也没有未探索墙壁，则视为本层已探索完毕，callback返回缓存与非中断信号true，退出API
+					cb(cache, true)
 					return
+				}else if(result === false){// 如果中断探索
+					cb(cache, false)
 				}
-			}
-			console.log('本层已全部探索完毕..')
-			// 如果既没有未探索领域，也没有未探索墙壁，则视为本层已探索完毕，callback返回缓存与非中断信号true，退出API
-			cb(cache, true)
-			return
+			})
 		}
 
 		/**
@@ -13423,7 +13562,6 @@ module.exports = function(callback){
 		 * 【注意】大部分楼梯虽然可通过colraw的值来判断是前进还是后退，有时候却不行
 		 * 狗洞（奇怪的洞窟）出口是一个后退单位，和后退的楼梯无论从外观还是cell、colraw值都一模一样，无法分辨
 		 * 
-		 * 在cga.thoroughSearchMap()中不对楼梯做这种区分，仅返回colraw做参考，外部调用时需要注意判断
 		 * 建议外部调用的函数，在进入地图时，记录起始位置，来分别到底是后退楼梯还是出口
 		 */
 		let view = (current,foundedPoints,colraw) => {
@@ -13457,9 +13595,18 @@ module.exports = function(callback){
 					if(cache[mazeInfo.name][layerName].hasOwnProperty(uid)){
 						continue
 					}
-					cache[mazeInfo.name][layerName][uid] = { name: u.item_name, type: 'box', x: u.xpos, y: u.ypos }
+					// 额外记录一下model_id，观察宝箱的model_id是否在一定范围内。否则无法判断一个物体是丢弃在地上的道具，还是宝箱
+					cache[mazeInfo.name][layerName][uid] = { name: u.item_name, type: 'box', x: u.xpos, y: u.ypos ,model_id : u.model_id}
 				}
-				// NPC或者碰撞类单位
+				/**
+				 * NPC或者碰撞类单位
+				 * 【注意】经过【奇怪的洞窟】的手持【实验药】与【人类？】NPC对话并发生战斗，我发现了一些事情：
+				 * 1、【人类？】被击倒后，cga.GetMapUnits()仍然能捕获其存在，但是游戏中看不见，也无法对话
+				 * 2、虽然【人类？】被击倒后一定时间内看不见，但是过一会，游戏内又能看见了。
+				 * 3、无论1还是2的情况，cga.GetMapUnits()能一直捕获其存在
+				 * 4、也就是说，只是游戏中使用了某种方法隐藏了NPC，而不是真的消失了，否则一个玩家击倒后，全服玩家等着刷新，不现实
+				 * 5、我个人推测type=1的NPC是可以被击倒一定时间后重生的，而type = 2的宝箱，开过了就是没有了 TODO有待验证
+				 */
 				if (u.type == 1 && (u.flags & 4096) != 0) {
 					if(cache[mazeInfo.name][layerName].hasOwnProperty(uid)){
 						continue
@@ -13501,7 +13648,23 @@ module.exports = function(callback){
 		return
 	}
 
-	cga.exploreMaze = (funcArr, cb) => {
+	/**
+	 * UNAecho:一个完整探索迷宫的API
+	 * 核心逻辑：
+	 * 1、使用cga.thoroughSearchMap()探索每一层迷宫
+	 * 2、使用缓存文件记录迷宫的探索进度
+	 * 3、先前进探索，如果没找到目标，则走到顶层后，折返开始反向探索遗漏点（如果有的话）
+	 * 4、如果折返探索至1层，还是没有发现目标，则抛出异常，多数情况为checkObj中的identify()函数有误
+	 * 5、可以一边探索，一边执行多个逻辑，如边开宝箱边找BOSS进行击倒，也可以顺道捡起其它玩家丢弃的魔石、古钱等。具体实现逻辑需要在checkObj中写好
+	 * 6、迷宫的数据，依赖cga.mazeInfo
+	 * 
+	 * checkObj()的写法，参考参考cga.checkMazeCacheInternal()的注释
+	 * 
+	 * @param {*} checkObj 
+	 * @param {*} cb 
+	 * @returns 
+	 */
+	cga.exploreMaze = (checkObj, cb) => {
 		// 人物前进方向，true为向楼层增加方向走，false反之。默认true
 		let isForward = true
 		// 获取静态地图数据
@@ -13538,34 +13701,6 @@ module.exports = function(callback){
 			}
 
 			return layerIndex
-		}
-
-		let check = (funcArr, units,cb)=>{
-			for (let funcObj of funcArr) {
-
-				if(typeof funcObj.identify != 'function' || typeof funcObj.act != 'function'){
-					throw new Error('funcArr中的每个对象都必须包含identify和act方法')
-				}
-
-				for (let unitObj of units) {
-					// id的value是唯一一个string数据，跳过它
-					if(typeof unitObj == 'string'){
-						// console.log('id类型数据跳过..')
-						continue
-					}
-					// 如果识别函数返回true，则将目标对象传入动作函数，并执行。
-					if(funcObj.identify(unitObj)){
-						console.log('发现目标:',unitObj)
-						funcObj.act(unitObj,(r)=>{
-							cb(r)
-							return
-						})
-						return
-					}
-				}
-			}
-			cb(null)
-			return
 		}
 
 		// 收集完本层缓存内容后，开始行动
@@ -13690,32 +13825,45 @@ module.exports = function(callback){
 
 				// 每层楼的唯一识别id。由于迷宫每层楼的名称不会变，而mapindex会变，所以使用拼接形式来制作唯一辨识符
 				let id = mapindex + '_' + layerName
-				// 如果缓存已经有记录，并且迷宫没有刷新
-				if (cache[mazeInfo.name] && cache[mazeInfo.name][layerName] && cache[mazeInfo.name][layerName].id && cache[mazeInfo.name][layerName].id == id) {
+				// 如果缓存已经有记录，并且迷宫没有刷新、本层数据也被标记为完全探索
+				if (cache[mazeInfo.name] && cache[mazeInfo.name][layerName] && cache[mazeInfo.name][layerName].id && cache[mazeInfo.name][layerName].id == id && cache[mazeInfo.name][layerName].complete == true) {
 					console.log('缓存已有记录，并且迷宫mapindex没有变化，直接利用..')
-					// 先对缓存中的对象进行处理，并判断是否需要继续搜索迷宫
-					let units =Object.values(cache[mazeInfo.name][layerName])
-					check(funcArr, units, (r) => {
-						// 如果funcArr中的act()返回true，或者check()返回null则为继续探索迷宫
-						if(r == true || r == null){
+					// 先对缓存中的对象进行处理，并处理act()之后该对象的去留。如开过的宝箱，要从缓存中删除
+					cga.checkMazeCacheInternal(cache[mazeInfo.name][layerName],checkObj,(result)=>{
+						// 如果继续在本层探索
+						if(result === true){
+							// 落盘更新状态，如开过的箱子要删除掉
+							cga.fileObj.save(file,cache)
+							loop()
+						}else if(result === null){// 如果checkObj.identify没有检测到需要执行动作的对象
 							nextStep(layerName, loop)
-						}else if(r == false){// 如果funcArr中的act()返回false，则中断探索
-							console.log('cga.thoroughSearchMap()返回', r, '中断探索迷宫')
+						}else if(result === false){// 如果中断探索
+							// 落盘更新状态，如开过的箱子要删除掉
+							cga.fileObj.save(file,cache)
+							// 调用cb，返回缓存数据，结束此API
 							cb(cache)
 						}else{
-							throw new Error('funcArr中的act()返回值异常，必须返回Boolean型数值')
+							throw new Error('cga.checkMazeCacheInternal返回的参数错误:',result)
 						}
 					})
 					return
-				}else{// 如果缓存没有记录，或迷宫已经刷新，则需要探索地图
-					cga.thoroughSearchMap(mazeInfo,cache, funcArr, (_, r) => {
-						// 探索完毕，同步落盘存储探索好的数据
-						cga.fileObj.save(file,cache)
+				}else{// 如果缓存没有记录，或迷宫已经刷新，或者上一次探索中断被标记为非完全探索，则需要探索地图
+					cga.thoroughSearchMap(mazeInfo,cache, checkObj, (_, r) => {
 						// 如果返回true则继续探索
 						if (r) {
+							// 将本层地图标记为完全探索
+							cache[mazeInfo.name][layerName].complete = true
+							// 将数据落盘
+							cga.fileObj.save(file,cache)
+							// 下一步动作
 							nextStep(layerName, loop)
 						} else {// 如果返回false则终止探索
 							console.log('cga.thoroughSearchMap()返回', r, '中断探索迷宫')
+							// 将本层地图标记为非完全探索
+							cache[mazeInfo.name][layerName].complete = false
+							// 将数据落盘
+							cga.fileObj.save(file,cache)
+							// 调用cb，返回缓存数据，结束此API
 							cb(cache)
 						}
 					})
