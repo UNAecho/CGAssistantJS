@@ -10622,6 +10622,7 @@ module.exports = function(callback){
 		forget: 找NPC对话，直至人物忘记技能，调用cb，函数结束
 		job: 找NPC对话，直至人物就职或转职，调用cb，函数结束
 		promote: 找NPC对话，直至人物职业晋级，调用cb，函数结束
+		battle: 找NPC对话进入战斗，直至战斗完毕，调用cb，函数结束
 	 * obj.target : obj.act的目标，根据obj.act的不同，有几种情况：
 		obj.act为item时，obj.target输入item的名称或数字itemid
 		obj.act为msg时，obj.target输入监测NPC说话的内容切片
@@ -10630,6 +10631,10 @@ module.exports = function(callback){
 		obj.act为forget时，obj.target输入想忘记的技能名称
 		obj.act为job时，obj.target输入想就职的职业称号，可以输入任意职业阶级的称号，如【见习弓箭手】【王宫弓箭手】均指代【弓箭手】这一职业。
 		obj.act为promote时，obj.target输入目标阶级数字。0：0转，见习。1：1转，正阶。2：2转，王宫。3：3转，师范。4：4转，大师。5：5转，最终阶段。
+		obj.act为battle时，obj.target输入Object，包含：
+			1、battle:'与NPC战斗时使用的战斗配置文件名'
+			2、normal:'不与NPC战斗时使用的战斗配置文件名'
+			例如：{battle:'手动BOSS',normal:'练级'}
 	 * [obj.neg] : 可选选项，如果与NPC说话，某句话想要选【否】【取消】等消极选项，obj.neg需要输入那句话的切片。
 		比如，如果想在NPC问【你愿意吗？】的时候回答【否】，那么obj.neg可以输入"愿意"、"你愿意吗"等切片
 	 * [obj.pos] : 可选选项，2维int型数组。仅在obj.act = "map"时生效，人物需要等待被NPC传送至pos这个坐标，函数才结束
@@ -10684,6 +10689,9 @@ module.exports = function(callback){
 		}
 		if(obj.hasOwnProperty("say") && (typeof obj.say != 'string' || obj.say.length == 0)){
 			throw new Error('obj.say格式必须为长度大于0的字符串')
+		}
+		if(obj.hasOwnProperty("battle") && Object.prototype.toString.call(obj.target) != '[object Object]'){
+			throw new Error('obj.act为battle时，obj.target必须为Object，包含战斗前后的战斗配置文件名。具体格式见API注释')
 		}
 		if(obj.act == 'function' && typeof obj.target != 'function'){
 			throw new Error('obj.act为function时，obj.target必须为function()')
@@ -10895,11 +10903,16 @@ module.exports = function(callback){
 							"起司的任务" : false ,
 							"魔法大学" : false ,
 						},()=>{
+							// 调用cb，API结束
 							cb("ok")
 						})
 						return
 					}
-					// 其它情况则直接调用cb
+					// 如果是战斗，则需要恢复normal战斗配置
+					if(obj.act == "battle"){
+						cga.loadBattleConfig(obj.target.normal)
+					}
+					// 调用cb，API结束
 					cb("ok")
 					return
 				}
@@ -10927,7 +10940,11 @@ module.exports = function(callback){
 					repeatFlag = false
 					setTimeout(retry, 1000, cb);
 					return
-				}else if(obj.act == "function"){// 自定义function，拥有最高泛化性。
+				}else if(obj.act == "battle" && battleFlag){// 如果是战斗，并且战斗flag已经置为true。由于逻辑走到这里已经是非战斗状态，那么battleFlag=true则代表已经战斗完毕。
+					repeatFlag = false
+					setTimeout(retry, 1000, cb);
+					return
+				}else if(obj.act == "function"){// 自定义function，拥有最高自由度。
 					obj.target((r)=>{
 						if(r === false){
 							repeatFlag = false
@@ -10935,6 +10952,11 @@ module.exports = function(callback){
 						setTimeout(retry, 1000, cb);
 					})
 					return
+				}
+
+				// 与NPC互动前，如果是战斗，则需要读取battle战斗配置
+				if(obj.act == "battle"){
+					cga.loadBattleConfig(obj.target.battle)
 				}
 
 				// 自定义与NPC交谈的内容
@@ -13269,7 +13291,7 @@ module.exports = function(callback){
 	 * {
                 identify: (obj) => {
                     if(obj.name == '无照护士米内鲁帕' && cga.getItemCount('实验药') == 0) return true
-                    if(obj.name == '人类？' && cga.getItemCount('实验药') > 0) return true
+                    if(obj.name == '人类？' && cga.getItemCount('实验药') > 0 && cga.getItemCount(遗物「丝巾」) == 0) return true
                     if(obj.name == '宝箱' && cga.getItemCount('铜钥匙') > 0) return true
                     return false
                 },
@@ -13304,30 +13326,25 @@ module.exports = function(callback){
                                 retry()
                             }, npcpos: [obj.x, obj.y]
                         }, () => {
-                            cb('delete and continue')
+                            // 这里不要返回'delete and continue'，因为npc不会消失，一会还会刷新
+                            cb(true)
                         })
                         return
                     }
                     if(obj.name == '宝箱'){
-                        cga.askNpcForObj({
-                            act: 'function', target: (cb) => {
-                                cga.waitSysMsg((msg)=>{
-                                    console.log(msg)
-                                    // 箱子内有东西，如【打开了宝箱】【捡到了卡片？】
-                                    if(msg.indexOf('捡到了') != -1 || msg.indexOf('打开了宝箱') != -1){
-                                        cb(false)
-                                        return false
-                                    }
-                                    return true;
-                                });
-                            }, npcpos: [obj.x, obj.y]
-                        }, () => {
-                            cb('delete and continue')
+                        cga.openBoxInMaze(obj,'生产赶路','练级',(r)=>{
+                            cb(r)
                         })
                         return
                     }
                 }
             }
+	 * 【注意】
+	 * 1、部分迷宫NPC在击倒过后一段时间，会被游戏隐藏，但不会消失。因为其它玩家还需要与其战斗。
+	 * 此时cga.GetMapUnits()仍然可以捕获其存在，但是被隐藏后无法与其交互
+	 * 所以此类NPC在act()执行完毕后，不要使用删除功能，因为他还会出现
+	 * 如果想规避与其无限战斗，可以在identify()中执行规避的逻辑，如持有战斗胜利的物品，或者干脆直接代码写逻辑缓存flag也可以
+	 * 2、但如果是宝箱，因为打开之后，在迷宫刷新前他是不会再出现的，所以需要act()执行完毕后，使用删除功能，将其数据删除
 	 * @param {*} cb 
 	 */
 	cga.checkMazeCacheInternal = (layerObj,checkObj,cb) => {
@@ -13574,7 +13591,7 @@ module.exports = function(callback){
 			// 分析迷宫是否刷新
 			if(cache[mazeInfo.name][layerName].hasOwnProperty('id')){
 				if(cache[mazeInfo.name][layerName].id != id){
-					console.warn('【UNAecho脚本警告】当前迷宫mapindex与缓存不符，判定为迷宫已经刷新，删除掉缓存中本迷宫所有数据')
+					console.warn('【UNAecho脚本警告】当前迷宫mapindex与缓存不符，判定为迷宫已经刷新，初始化本迷宫所有数据..')
 					// 仅删除此迷宫数据，其它迷宫数据不动
 					cache[mazeInfo.name] = {}
 					// 刷新id
@@ -13873,6 +13890,106 @@ module.exports = function(callback){
 		}
 
 		loop()
+		return
+	}
+
+	/**
+	 * UNAecho:在迷宫中打开宝箱（单人）
+	 * @param {*} obj 宝箱数据，数据格式参考cga.GetMapUnits()返回数组中的Object
+	 * @param {*} normalConfig 平时走迷宫探索时的战斗配置文件名，战斗完毕将恢复此配置
+	 * @param {*} battleConfig 与宝箱怪战斗时的战斗配置文件名，战斗前将读取此配置
+	 * @param {*} cb 
+	 * @returns 
+	 */
+	cga.openBoxInMaze = (obj,normalConfig='生产赶路',battleConfig='练级',cb)=>{
+		// 重复开箱子的次数
+		let retryCnt = 2
+		// 所需的钥匙
+		const keyDict = {
+			'宝箱' : '铜钥匙',
+			'白色宝箱' : '白钥匙',
+			'黑色宝箱' : '黑钥匙',
+		}
+		// 获取钥匙所在位置
+		let keyPos = cga.findItem(keyDict[obj.name])
+		if(keyPos == -1){
+			throw new Error('你没有对应的钥匙:'+keyDict[obj.name]+'，为了防止外层无限调用，这里抛出异常')
+		}
+		
+		// 中止retry的Flag
+		let stopRetry = false
+		// cb返回的参数
+		let result = null
+
+		let retry = ()=>{
+			if(!cga.isInNormalState()){
+				console.log('cga.openBoxInMaze()等待战斗..')
+				setTimeout(retry,1500)
+				return;
+			}
+			if(stopRetry){
+				console.log('cga.openBoxInMaze()结束，result:',result)
+				cga.loadBattleConfig(normalConfig)
+				cb(result)
+				return
+			}
+			cga.UseItem(keyPos);
+			setTimeout(retry,1500)
+			return
+		}
+		
+		let target = cga.getRandomSpace(obj.x,obj.y);
+		cga.walkList([
+			target,
+		], ()=>{
+			// 切换战斗配置，防止与宝箱怪战斗时逃跑
+			cga.loadBattleConfig(battleConfig)
+
+			/**
+			 * 由于宝箱在系统中被视为道具，所以不会出现宝箱和道具叠加的情况
+			 * 也就无需担心cga.waitSysMsg()会因为cga.TurnTo()捡起与NPC重叠的道具而直接终止监听了
+			 * 
+			 * 【注意】打开宝箱的瞬间，系统可能会发出2条消息
+			 * 一条为【打开了宝箱】，另一条为宝箱内的内容提示，如【捡到了卡片？】
+			 * 这两条消息近乎同时出现，cga.waitSysMsg()来不及反应，只能捕获1条
+			 * 所以在判断msg时，要注意这件事情
+			 * 
+			 * 但是，如果宝箱本身是怪物，那么系统只会给出1条消息【从宝箱中出现了怪物】
+			 */
+			cga.waitSysMsg((msg)=>{
+				console.log('cga.openBoxInMaze()侦测到系统消息:' + msg)
+				// 箱子内有东西，如【打开了宝箱】【捡到了卡片？】【从宝箱中出现了怪物】
+				if(msg.indexOf('捡到了') != -1 || msg.indexOf('打开了宝箱') != -1 || msg.indexOf('从宝箱中出现了怪物') != -1){
+					// 中止retry
+					stopRetry = true
+					// 制作cga.checkMazeCacheInternal()所使用的参数
+					result = 'delete and continue'
+					// 中止cga.waitSysMsg()
+					return false
+				}
+				// 如果被其他人抢先开了宝箱，防止逻辑卡住，这里设置重复次数上限
+				if(msg.indexOf('没有必要使用钥匙') != -1){
+					// 开几次没有成功，则视为箱子已经消失
+					if(retryCnt <= 0){
+						console.log('箱子已经消失')
+						// 中止retry
+						stopRetry = true
+						// 通知cga.checkMazeCacheInternal()删除此箱子
+						result = 'delete and continue'
+						// 中止cga.waitSysMsg()
+						return false
+					}
+					console.log('没开成功，再试'+retryCnt+'次')
+					retryCnt -= 1
+					return true
+				}
+				return true;
+			});
+			// 只转向一次即可
+			cga.TurnTo(obj.x, obj.y);
+
+			setTimeout(retry,1000)
+		});
 		return
 	}
 
