@@ -8,8 +8,11 @@
  * 绿组【定论者】106,78
  * 龙心 #622042 @26，登出即消失
  * 与目送者（火焰鼠）对话，交出龙心后，被传送至黑露比房间的[93,12]
+ * 目送者（火焰鼠）房间:index 59934 x[124,156],y[53,85]。
  * 黑露比房间:index 59934 x[90,102],y[9,21]。露比 99,15
- * 完成任务后，再次回到露比房间对话，她会说【真的来了啊】然后传送至77, 96, 59934
+ * 传授者、觉醒者房间:index 59934 x[44,84],y[53,137]。
+ * 完成任务并晋级后，再次回到露比房间对话，她会说【真的来了啊】然后传送至77, 96, 59934
+ * 【注意】必须晋级，到达4转或以上，才会被露比传送至11级技能栏或配方的地图区域
  * 
  * 传授者[64,60]（噩梦鼠）是教11级配方的npc，如果你不是黄绿组，则传到唤醒者面前（他俩处于同一个地图，并且互相走路可抵达）
  * 唤醒者[51,132]（水蓝鼠）是给11格技能栏的NPC，同时也是传送回光之路的NPC。与其对话：
@@ -25,13 +28,12 @@ var thisobj = {
 		{//0
 			intro: '1.前往光之路调查（165.81）处石碑，选“是”进入白色方舟第一层。',
 			workFunc: function (cb2) {
-				return
-				let talkStone = (cb)=>{
+				let talkStone = (cb) => {
 					cga.askNpcForObj({ act: 'map', target: '白色方舟·第一层', npcpos: [165, 81] }, () => {
 						cb(true)
 					})
 				}
-				let goOut = (cb)=>{
+				let goOut = (cb) => {
 					cga.walkList([
 						[207, 91, '光之路'],
 					], cb);
@@ -42,13 +44,13 @@ var thisobj = {
 						"item": [{ "name": "王冠", "upper": 1, "lower": 1 },],
 					}, () => {
 						let mapname = cga.GetMapName()
-						if(mapname == '辛梅尔'){
-							goOut(()=>{
+						if (mapname == '辛梅尔') {
+							goOut(() => {
 								talkStone(cb2)
 							})
 							return
 						}
-						if(mapname == '光之路'){
+						if (mapname == '光之路') {
 							talkStone(cb2)
 							return
 						}
@@ -65,7 +67,7 @@ var thisobj = {
 						cga.travel.newisland.toLiXiaIsland(() => {
 							cga.travel.autopilot(59801, () => {
 								cga.askNpcForObj({ act: 'map', target: '辛梅尔', npcpos: [35, 95] }, () => {
-									goOut(()=>{
+									goOut(() => {
 										talkStone(cb2)
 									})
 								})
@@ -251,29 +253,29 @@ var thisobj = {
 					}
 				} else {//黄组、绿组部分逻辑可共用 TODO黄组需要完成每个职业对应的任务
 					// 调查（92.78）宝箱获得【至高之剑】，与见证者对话，修理耐久降低后的【至高之剑】，成功后再与见证者对话
-					if(thisobj.data.jobObj.job == '武器修理工'){
+					if (thisobj.data.jobObj.job == '武器修理工') {
 
 					}
 					// 调查（92.78）宝箱获得【至高之铠】，与见证者对话，修理耐久降低后的【至高之铠】，成功后再与见证者对话
-					else if(thisobj.data.jobObj.job == '防具修理工'){
+					else if (thisobj.data.jobObj.job == '防具修理工') {
 
 					}
 					// 调查（92.78）宝箱获得【陨石？】，鉴定后获得【神秘陨石】，与见证者对话
-					else if(thisobj.data.jobObj.job == '鉴定士'){
+					else if (thisobj.data.jobObj.job == '鉴定士') {
 
 					}
 					// 进入（92.85）处传至白色方舟第三层，通过（121.124）的传送石进入第二层或第三层的随机无遇敌区域；寻找该区域的黄色传送石继续进行随机传送（有概率被传回究明者面前）；
 					// 通过随机传送抵达第二层特定区域，调查（115.114）处宝箱获得【侦探眼镜】，返回与见证者对话
-					else if(thisobj.data.jobObj.job == '侦探'){
+					else if (thisobj.data.jobObj.job == '侦探') {
 
 					}
 					// 进入（92.85）处传至白色方舟第三层，通过（121.124）的传送石进入第二层或第三层的随机无遇敌区域；寻找该区域的黄色传送石继续进行随机传送（有概率被传回究明者面前）；
 					// 通过随机传送抵达第二层特定区域，调查（115.85）处宝箱获得【仙花】，再返回与见证者对话
-					else if(thisobj.data.jobObj.job == '仙人'){
+					else if (thisobj.data.jobObj.job == '仙人') {
 
 					}
 					// 药剂师、厨师、矿工、樵夫、猎人以及所有绿组，直接交付需要的10级物品即可
-					else{
+					else {
 						if (cga.getItemCount(thisobj.data.productDict[thisobj.data.jobObj.job].item) > 0) {
 							console.log('你已持有晋级物品【' + thisobj.data.productDict[thisobj.data.jobObj.job].item + '】，具备晋级资格')
 							cga.askNpcForObj(obj, () => {
@@ -287,47 +289,41 @@ var thisobj = {
 			}
 		},
 		{//11
-			intro: '12.与露比（99.15）对话。',
+			intro: '12.白色方舟最终区域逻辑',
 			workFunc: function (cb2) {
-
-				// 四色组obj各不相同，以绿组为默认
-				let obj = { act: 'map', target: 59934, npcpos: [99, 15] }
+				// 未四转时与露比对话obj
+				let Ruby = { act: 'map', target: 59505, npcpos: [99, 15] }
+				// 已四转时与露比对话obj
+				let RubyAgain = { act: 'map', target: 59934, npcpos: [99, 15], pos: [77, 96] }
+				// 与传授者对话获得11级配方。传授者说是要玩家做出东西给露比看，难道要再来第3次？我没有验证过什么效果
+				let initiator = { act: 'map', target: 59934, npcpos: [64, 60], pos: [51, 126] }
+				// 不断与唤醒者对话，直至传送至光之路。如果没有11格技能，他会在首次对话按确认后给予。
+				let awakener = { act: 'map', target: 59505, npcpos: [51, 132] }
 				// 解散队伍
 				cga.disbandTeam(() => {
 					// 已四转人物再重解本任务的逻辑，战斗系技能栏升11格，生产系获得11级物品制作配方
 					if (thisobj.data.jobObj.jobLv > 3) {
-						// 被传送至59934中学技能、11格技能栏的地图区域落地坐标
-						obj.pos = [77, 96]
-						// ◆红蓝组：已四转人物再重解本任务，至第6步与露比对话切换地图，与唤醒者（51.132）对话，技能栏上限增加至11格，再与唤醒者对话传送回光之路
-						// 魔力百科上面写着红蓝组依然与传授者对话，但是实际并没有意义啊，这里将逻辑去除
-						if (thisobj.data.groupName == '红组' || thisobj.data.groupName == '蓝组') {
-							// 与露比对话
-							cga.askNpcForObj(obj, () => {
-								// 与唤醒者对话，传送至光之路
-								cga.askNpcForObj({ act: 'map', target: 59505, npcpos: [51,132] }, () => {
+						// UNAecho:已验证，4个组都可以共用一套逻辑。只不过红蓝组要绕路和传授者对话一次，被传送至唤醒者面前，然后继续逻辑。
+						let XY = cga.GetMapXY();
+						// 露比
+						if(XY.x > 90 && XY.x < 102 && XY.y > 9 && XY.x < 21){
+							cga.askNpcForObj(RubyAgain, () => {
+								setTimeout(cb2, 1000, 'restart stage');
+							})
+							return
+						}else if(XY.x > 44 && XY.x < 84 && XY.y > 53 && XY.x < 137){// 传授者、觉醒者
+							cga.askNpcForObj(initiator, () => {
+								cga.askNpcForObj(awakener, () => {
 									cb2(true)
 								})
 							})
 							return
-						}
-						// ◆黄绿组：已四转人物再重解本任务，至第6步与露比对话切换地图，与传授者（64.60）对话获得本职业Lv.11物品制作法，再与唤醒者（51.132）对话，技能栏上限增加至11，再与唤醒者或传授者对话传送回光之路
-						else{
-							// 与露比对话
-							cga.askNpcForObj(obj, () => {
-								// 与传授者对话，获得11级配方 TODO 完善逻辑
-								cga.askNpcForObj({ act: 'msg', target: 59505, npcpos: [64,60] }, () => {
-									// 与唤醒者对话，传送至光之路
-									cga.askNpcForObj({ act: 'map', target: 59505, npcpos: [51,132] }, () => {
-										cb2(true)
-									})
-								})
-							})
-							return
+						}else{// 可能为仙人、侦探任务或其它区域 TODO
+							throw new Error('UNAecho未探索过的区域，请联系我更新')
 						}
 					} else {// 未四转人物的正常逻辑
 						// 一直与露比对话至传送回光之路为止
-						obj.target = 59505
-						cga.askNpcForObj(obj, () => {
+						cga.askNpcForObj(Ruby, () => {
 							cb2(true)
 						})
 					}
@@ -406,11 +402,9 @@ var thisobj = {
 			return false;
 		},
 		function () {//11.红蓝组进入黑色方舟寻找BOSS并击败，传送回白色方舟，持有【龙心】的角色与目送者对话。黄组完成各自不同的考试。绿组提交道具。四组最终都会传送至露比房间。
-			var index = cga.GetMapIndex().index3;
-			var XY = cga.GetMapXY();
-			return (index == 59934 && XY.x > 41 && XY.x < 86 && XY.y > 53 && XY.y < 137) ? true : false;
+			return cga.GetMapIndex().index3 == 59934
 		},
-		function () {//12.与见证者对话，生产系需要提前准备好晋级物品。
+		function () {//12.白色方舟最终区域逻辑。
 			return false
 		},
 	],
@@ -503,7 +497,7 @@ var thisobj = {
 			'鉴定士': { item: '神秘陨石', count: 1 },
 			'侦探': { item: '侦探眼镜', count: 1 },
 			'仙人': { item: '仙花', count: 1 },
-			'药剂师': { item: '生命回复药（1000）', count: 1 },
+			'药剂师': { item: '生命力回复药（1000）', count: 1 },
 			'厨师': { item: '鳖料理', count: 1 },
 			'矿工': { item: '奥利哈钢', count: 20 },
 			'樵夫': { item: '梣', count: 20 },
