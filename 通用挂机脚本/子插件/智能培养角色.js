@@ -8,7 +8,7 @@ var rootdir = cga.getrootdir()
 const getprofessionalInfos = require(rootdir + '/常用数据/ProfessionalInfo.js');
 const professionalArray = getprofessionalInfos.Professions
 // 不能通过转职保证书烧声望的战斗系职业
-const specialJob = ['暗黑骑士','教团骑士']
+const specialJob = ['暗黑骑士', '教团骑士']
 // 学习必要技能任务对象，用于获取需要学习的任务技能，统一静态变量，防止多处数据不统一。
 const learnSkillMission = require(rootdir + '/常用数据/missions/学习必要技能.js');
 var transferMode = require('../主插件/传咒驯互转');
@@ -20,9 +20,9 @@ var thisobj = {
 		let playerInfo = cga.GetPlayerInfo();
 		let curJobObj = cga.job.getJob();
 		let config = cga.loadPlayerConfig();
-		if(!config)
+		if (!config)
 			config = {};
-		if(!config.hasOwnProperty("mission")){
+		if (!config.hasOwnProperty("mission")) {
 			config["mission"] = {}
 		}
 		// 小号到达一定等级才开始自行做任务，方便赶路和过门禁。
@@ -93,8 +93,8 @@ var thisobj = {
 			}
 		}
 
-		// 如果满足目标职业的晋级条件
-		if (thisobj.finalJob.job == curJobObj.job &&
+		// 如果满足目标职业的晋级条件，驯兽师即使不是最终职业，也需要晋级，因为可能会需要晋级兽王学完美调教术
+		if ((thisobj.finalJob.job == curJobObj.job || curJobObj.job == '驯兽师') &&
 			(
 				(curJobObj.jobType == '战斗系' && curJobObj.jobLv < 5)
 				|| (curJobObj.jobType == '生产系' && curJobObj.jobLv < 4)
@@ -106,6 +106,16 @@ var thisobj = {
 			// 如果完成了对应的进阶任务，则初步判定可能需要晋级，进入判断得意技是否达标的逻辑。
 			if (promoteObj.mission[curJobObj.jobType].some(m => { return config.mission[m] })) {
 				console.log('你完成了晋级必要的任务:', promoteObj.mission[curJobObj.jobType])
+
+				// 如果是驯兽师这种特殊情况
+				// 重置flag，在晋级逻辑结束时会用到
+				let jobNameCache = null
+				// 暂时将thisobj.finalJob赋值为驯兽师，便于逻辑复用
+				if (curJobObj.job == '驯兽师') {
+					jobNameCache = thisobj.finalJob.job
+					thisobj.finalJob = cga.job.getJob()
+				}
+
 				/**
 				 * 职业技能的晋级合格要求，以下二者选其一，满足即可通过：
 				 * 1、该职业没有得意技，或没有技能等级的限制
@@ -120,6 +130,10 @@ var thisobj = {
 					if (curJobObj.reputationLv >= promoteObj.reputationLv) {
 						console.log('当前声望【' + curJobObj.reputation + '】满足晋级要求。')
 						cga.askNpcForObj({ act: 'promote', target: curJobObj.jobLv + 1, npcpos: thisobj.finalJob.npcpos }, () => {
+							// 如果是驯兽师特殊情况，则需要复原
+							if (jobNameCache != null) {
+								thisobj.finalJob = cga.job.getJob(jobNameCache)
+							}
 							thisobj.prepare(cb)
 						})
 						return
@@ -140,11 +154,22 @@ var thisobj = {
 										// 重置状态
 										thisobj.hasRefreshReputation = false
 
+										// 如果是驯兽师特殊情况，则需要复原
+										if (jobNameCache != null) {
+											thisobj.finalJob = cga.job.getJob(jobNameCache)
+										}
+
 										thisobj.prepare(cb)
 									})
 									return
 								} else {
 									console.log('刷新后，不满足晋级条件，退出晋级模块')
+
+									// 如果是驯兽师特殊情况，则需要复原
+									if (jobNameCache != null) {
+										thisobj.finalJob = cga.job.getJob(jobNameCache)
+									}
+
 									thisobj.prepare(cb)
 								}
 							})
@@ -153,32 +178,42 @@ var thisobj = {
 						console.log('已经与刷新NPC(阿蒙、阿姆等)对过话，依然不满足声望，退出晋级模块')
 						// 重置状态
 						thisobj.hasRefreshReputation = false
+
+						// 如果是驯兽师特殊情况，则需要复原
+						if (jobNameCache != null) {
+							thisobj.finalJob = cga.job.getJob(jobNameCache)
+						}
 					}
 				} else {
 					console.log('你不满足晋级需求，', thisobj.finalJob.skill, '中必须满足至少1个技能大于等于', promoteObj.skillLv, '级')
+
+					// 如果是驯兽师特殊情况，则需要复原
+					if (jobNameCache != null) {
+						thisobj.finalJob = cga.job.getJob(jobNameCache)
+					}
 				}
 			} else {
 				console.log('你不满足晋级需求，需要完成任务', promoteObj.mission[curJobObj.jobType], '的其中之一项，方可晋级。')
 				// 如果是生产系，可自行完成晋级任务
-				if(curJobObj.jobType == '生产系'){
-					if(curJobObj.jobLv == 0){
+				if (curJobObj.jobType == '生产系') {
+					if (curJobObj.jobLv == 0) {
 						targetObj.missionName = '咖哩任务'
-					}else if(curJobObj.jobLv == 1){
+					} else if (curJobObj.jobLv == 1) {
 						targetObj.missionName = '起司的任务'
 						let config = cga.loadPlayerConfig();
-						if(config && config["mission"]){
+						if (config && config["mission"]) {
 							let item = '好像很好吃的起司'
-							if(cga.findItem(item) != -1 && config["mission"][item]){
-								console.log('检测到你身上有【' + item +'】，现在继续流程。')
+							if (cga.findItem(item) != -1 && config["mission"][item]) {
+								console.log('检测到你身上有【' + item + '】，现在继续流程。')
 								targetObj.param.timestamp = config["mission"][item]
 							}
 							item = '好像很好喝的酒'
-							if(cga.findItem(item) != -1 && config["mission"][item]){
-								console.log('检测到你身上有【' + item +'】，现在继续流程。')
+							if (cga.findItem(item) != -1 && config["mission"][item]) {
+								console.log('检测到你身上有【' + item + '】，现在继续流程。')
 								targetObj.param.timestamp = config["mission"][item]
 							}
 						}
-					}else if(curJobObj.jobLv == 2){
+					} else if (curJobObj.jobLv == 2) {
 						// TODO
 						// targetObj.missionName = '魔法大学'
 					}
