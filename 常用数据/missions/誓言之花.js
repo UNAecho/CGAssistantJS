@@ -201,11 +201,17 @@ var thisobj = {
 								identify: (obj) => { return obj.name == '暗黑龙' },
 								act: (obj, cb) => {
 									if (obj.name == '暗黑龙') {
+										/**
+										 * 不论队长还是队员，notalk()均返回true，实现全员走到NPC面前，但会等待玩家手动操作进入战斗
+										 * 这样可以达到玩家手动准备好之后，再与BOSS作战的效果。
+										 * 此时玩家可以先补血、调整装备等等，但战斗配置已经因为target.battle读取完毕，不建议再次调整
+										 */
+										console.log('等待手动与BOSS交战，脚本会在战斗结束后自动继续。提示：你现在可以补充状态、换BOSS战需要的装备、宠物。')
 										cga.askNpcForObj({
 											act: 'battle', target: {
 												battle: thisobj.data.battleFile,
 												normal: thisobj.data.normalFile,
-											}, npcpos: [obj.x, obj.y]
+											}, npcpos: [obj.x, obj.y], notalk: () => { return true }
 										}, () => {
 											cb(false)
 										})

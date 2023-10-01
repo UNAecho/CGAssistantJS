@@ -15,7 +15,7 @@
     ],
     "finalJob": "格斗士",
     "roleObj": {
-        "part": "队长",
+        "part": "队员",
         "role": "输出"
     },
     "leaderFilter": "bus",
