@@ -13074,60 +13074,104 @@ module.exports = function(callback){
 		return
 	}
 
-	cga.getRandomMazeEntrance = (args, cb, index = 0)=>{
+	/**
+	 * UNAecho:此API有一个bug，就是如果过远侦测到随机迷宫入口，其实是游戏内部的缓存。
+	 * 如果迷宫已经刷新，则实际入口与cga.getMapObjects()远距离侦测到的入口不一致。
+	 * 此时如果使用cga.walklist去进入迷宫，就会出现在错误的坐标站着等待进入迷宫，直至超时，cga.walklist()抛出寻路卡住的Error
+	 * 
+	 * 这里加一个逻辑：
+	 * 1、走到侦测到的迷宫附近，重新执行cga.getMapObjects()。
+	 * 2、如果第2次的cga.getMapObjects()的迷宫坐标与在远处侦测到的迷宫入口坐标一致，则进入
+	 * 3、如果不一致，则使用第最近一次获取的迷宫坐标。
+	 * 其余逻辑不变
+	 * 
+	 * @param {*} args 
+	 * @param {*} cb 
+	 * @param {*} index 
+	 */
+	cga.getRandomMazeEntrance = (args, cb, index = 0) => {
 
-		if(index == undefined)
+		if (index == undefined)
 			index = 0;
 
-		if(args.table[index] == undefined)
-		{
+		if (args.table[index] == undefined) {
 			cb(new Error('所有区域都已搜索完毕，没有找到迷宫入口！'));
 		}
 
-		console.log('前往区域['+(args.table[index])+']搜索迷宫入口..');
-	
+		console.log('前往区域[' + (args.table[index]) + ']搜索迷宫入口..');
+
 		cga.walkList([
 			args.table[index]
-		], ()=>{
-			console.log('正在区域['+(args.table[index])+']搜索迷宫入口...');
-			var entrance = cga.getMapObjects().find((obj)=>{
-	
-				if(args.blacklist && args.blacklist.find((e)=>{
+		], () => {
+			console.log('正在区域[' + (args.table[index]) + ']搜索迷宫入口...');
+			var entrance = cga.getMapObjects().find((obj) => {
+
+				if (args.blacklist && args.blacklist.find((e) => {
 					return e.mapx == obj.mapx && e.mapy == obj.mapy;
-				}) != undefined)
-				{
+				}) != undefined) {
 					return false;
 				}
-	
+
 				return args.filter(obj);
 			});
 
-			if(entrance == undefined){
+			if (entrance == undefined) {
 				console.log('未找到迷宫入口,尝试下一区域...');
-				cga.getRandomMazeEntrance(args, cb, index+1);
+				cga.getRandomMazeEntrance(args, cb, index + 1);
 			} else {
-				if(args.expectmap)
-				{
+				if (args.expectmap) {
 					var originalmap = cga.GetMapName();
+					let entranceNearby = cga.getRandomSpace(entrance.mapx, entrance.mapy)
 					cga.walkList([
-						[entrance.mapx, entrance.mapy, args.expectmap]
-					], (err)=>{
-						if(err && err.message == 'Unexcepted map changed.'){
-							var xy = cga.GetMapXY();
-							args.blacklist.push(entrance);
+						entranceNearby
+					], () => {
+						let curEntrance = cga.getMapObjects().find((obj) => {
+							// 黑名单依然需要生效
+							if (args.blacklist && args.blacklist.find((e) => {
+								return e.mapx == obj.mapx && e.mapy == obj.mapy;
+							}) != undefined) {
+								return false;
+							}
+
+							return args.filter(obj);
+						});
+
+						// 如果远处看到了，走近却消失了，可能是迷宫在远处走近的过程中刚好刷新。继续下一个区域寻找
+						if (curEntrance == undefined) {
+							console.log('未找到迷宫入口,尝试下一区域...');
+							cga.getRandomMazeEntrance(args, cb, index + 1);
+						} else {// 如果近处侦测到了迷宫，则继续逻辑
+
+							// 如果两次迷宫坐标一致，则视为入口坐标正确
+							if (entrance.mapx == curEntrance.mapx && entrance.mapy == curEntrance.mapy) {
+								console.log('远、近2次获取迷宫的坐标[' + entrance.mapx + ',' + entrance.mapy + ']一致，视为可进入迷宫..')
+							} else {// 如果两次迷宫入口坐标不一致，则以最近一次获取为准
+								console.log('远处获取迷宫的坐标[' + entrance.mapx + ',' + entrance.mapy + ']与近处获取的迷宫坐标[' + curEntrance.mapx + ',' + curEntrance.mapy + ']不一致')
+							}
+
+							// 无论远处、近处侦测到的迷宫是否一致，都要尝试进入近处侦测到的迷宫
 							cga.walkList([
-								[xy.x, xy.y, originalmap],
-							], ()=>{
-								console.log('未找到迷宫入口,尝试下一区域...');
-								cga.getRandomMazeEntrance(args, cb, index+1);
+								[curEntrance.mapx, curEntrance.mapy, args.expectmap]
+							], (err) => {
+								if (err && err.message == 'Unexcepted map changed.') {
+									console.log('坐标[' + curEntrance.mapx + ',' + curEntrance.mapy + ']的迷宫不是预期迷宫，将其加入黑名单..')
+									var xy = cga.GetMapXY();
+									args.blacklist.push(curEntrance);
+									cga.walkList([
+										[xy.x, xy.y, originalmap],
+									], () => {
+										console.log('未找到迷宫入口,尝试下一区域...');
+										cga.getRandomMazeEntrance(args, cb, index + 1);
+									});
+									return;
+								}
+								// 如果是预期迷宫，则结束API
+								cb(curEntrance);
 							});
-							return;
 						}
-						cb(entrance);
 					});
-				}
-				else
-				{
+				}else {
+					// 如果没有传入预期进入的地图，则结束API
 					cb(entrance);
 				}
 			}
