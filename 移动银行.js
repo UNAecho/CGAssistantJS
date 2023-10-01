@@ -141,6 +141,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 			if (matchObj[4] == '^') {
 				result.count = matchObj[5]
 			}
+			// 如果是道具，获取对方告知此道具的堆叠数量
 			if (matchObj[6] == '&') {
 				result.maxcount = matchObj[7]
 			}
@@ -285,8 +286,9 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 				if (resObj.resTradeType == 'draw' && resObj.resTargetType == 'item') {
 					stuffs.itemFilter = (item) => {
 						// 没有堆叠数量的道具，count默认是0，这里统计时要人为改为1，便于计算
-						if (item.name == resObj.resTarget && stuffCnt < resObj.resCount) {
-							stuffCnt += (item.count > 0 ? item.count : 1)
+						let itemCnt = item.count > 0 ? item.count : 1
+						if (item.name == resObj.resTarget && (stuffCnt + itemCnt) <= resObj.resCount) {
+							stuffCnt += itemCnt
 							return true
 						}
 						return false
@@ -332,8 +334,12 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 											console.log('【' + lockPlayerName + '】的金币数【' + receivedStuffs.gold + '】未通过暗号识别！拒绝交易')
 											return false
 										}
-										// 检查数量。注意，客户端可能会多给（数量除以堆叠数出现余数情况）
-										if (received && receivedCount >= resObj.resCount && received.length == Math.ceil(resObj.resCount / (resObj.resTargetMaxcount > 0 ? resObj.resTargetMaxcount : 1))) {
+										/**
+										 * 检查数量。【注意】客户端可能会少给。
+										 * 举例：服务端回复可以存15个堆叠数为3，而客户端有1个物品堆叠数不足3，为2。
+										 * 那么最终客户端会给出5个格子的物品，但是有1个格子count为2，那么就是2+3+3+3+3=14个，小于15个
+										 */
+										if (received && receivedCount <= resObj.resCount && received.length == Math.ceil(resObj.resCount / (resObj.resTargetMaxcount > 0 ? resObj.resTargetMaxcount : 1))) {
 											return true
 										}
 										console.log('【' + lockPlayerName + '】动作【' + resObj.resTradeType + '】【' + resObj.resTarget + '】验证失败！拒绝交易')

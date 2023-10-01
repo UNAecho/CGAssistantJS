@@ -255,8 +255,10 @@ var thisobj = {
 				stuffs.itemFilter = (item) => {
 					// 没有堆叠数量的道具，count默认是0，这里统计时要人为改为1，便于计算
 					// matchObj[5]为对方告知你最多能存/取多少
-					if (item.name == matchObj[3] && stuffCnt < matchObj[5]) {
-						stuffCnt += (item.count > 0 ? item.count : 1)
+					// 必须要stuffCnt+=item.count <= matchObj[5]才行，举例：stuffCnt目前累积为8，matchObj[5]=9，那么8+3=11>9了，此时该道具不能return true。
+					let itemCnt = item.count > 0 ? item.count : 1
+					if (item.name == matchObj[3] && (stuffCnt + itemCnt) <= matchObj[5]) {
+						stuffCnt += itemCnt
 						return true
 					}
 					return false
