@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "智能练级",
+    "mainPlugin": "五转碎片",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
@@ -42,7 +42,7 @@
     "autoRing": {
         "flag": true,
         "part": "队员",
-        "aim": "无限循环",
+        "aim": "一次性",
         "leaderX": 50,
         "leaderY": 77,
         "leaderFilter": "ring"
