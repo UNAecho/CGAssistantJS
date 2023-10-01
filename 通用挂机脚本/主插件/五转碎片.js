@@ -50,43 +50,15 @@ var getSellObject = (map, mapindex)=>{
 }
 
 var loadBattleConfig = ()=>{
+	let fileName = '练级'
+	let jobObj = cga.job.getJob()
 
-	var settingpath = cga.getrootdir() + '\\战斗配置\\'
-	// 因为传教士可能还有正在刷声望的小号，这样可以区分是保姆还是小号
-	if (professionalInfo.name == '传教士'){
-		if(cga.GetPlayerInfo().job.indexOf('见习') != -1){
-			settingpath = settingpath + '营地组队普攻刷声望.json'
-		}else{
-			settingpath = settingpath + '传教打隐秘徽记.json'
-		}
-	}else if(professionalInfo.name == '格斗士'){
-		settingpath = settingpath + '格斗士清怪.json'
-	}else if(professionalInfo.name == '弓箭手'){
-		settingpath = settingpath + '弓箭练级.json'
-	}else if(professionalInfo.name == '剑士'){
-		settingpath = settingpath + '剑士练级.json'
-	}else if(professionalInfo.name == '战斧斗士'){
-		settingpath = settingpath + '战斧练级.json'
-	}else if(professionalInfo.name == '魔术师'){
-		settingpath = settingpath + '法师练级.json'
-	}else if(professionalInfo.name == '巫师'){
-		settingpath = settingpath + '巫师练级.json'
-	}else if(professionalInfo.name == '封印师'){
-		settingpath = settingpath + '封印师练级.json'
-	}else{
-		settingpath = settingpath + '营地组队普攻刷声望.json'
+	if(jobObj.job == '传教士' && jobObj.jobLv >= 1){
+		fileName = '传教士练级'
+	}else if(jobObj.job == '格斗士'){
+		fileName = '格斗士练级'
 	}
-
-	var setting = JSON.parse(fs.readFileSync(settingpath))
-
-	cga.gui.LoadSettings(setting, (err, result)=>{
-		if(err){
-			console.log(err);
-			return;
-		}else{
-			console.log('读取战斗配置【'+settingpath+'】成功')
-		}
-	})
+	cga.loadBattleConfig(fileName)
 	return
 }
 
