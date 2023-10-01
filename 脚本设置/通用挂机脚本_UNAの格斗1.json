@@ -1,5 +1,5 @@
 {
-    "mainPlugin": "智能练级",
+    "mainPlugin": "五转碎片",
     "subPlugins": [
         "受伤宠物医院治疗",
         "受伤飞碟治疗",
@@ -68,5 +68,10 @@
             }
         ],
         "pet": []
-    }
+    },
+    "supplyMode": 2,
+    "teamMode": 0,
+    "teammates": ["UNAの格斗1","UNAの巫师","UNAの咒术师","UNAの格斗3","UNAの传教士"],
+    "battleArea": 0,
+    "layerLevel": 1
 }

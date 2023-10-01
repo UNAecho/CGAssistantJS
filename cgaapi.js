@@ -8105,7 +8105,7 @@ module.exports = function(callback){
 				}
 				else
 				{
-					cb(new Error('保存到银行失败，可能银行格子已满、未与柜员对话或网络问题'));
+					cb(new Error('保存到银行失败，可能银行格子已满、未与柜员对话或网络问题。注意：批量存入时，在银行未满的时候也可能报此错误，有空需要优化逻辑'));
 				}
 			}, 1000);
 		});
@@ -12123,6 +12123,20 @@ module.exports = function(callback){
 	 * suffix:迷宫楼层的名称后缀，所有迷宫前缀+楼层+后缀。以诅咒的迷宫举例，后缀为【楼】
 	 * forwardEntryTile:在cga.buildMapCollisionRawMatrix()及其同类API中，其属性matrix矩阵对应的xy数值。此数值代表迷宫中的楼梯功能是楼层+1
 	 * backEntryTile:同forwardEntryTile，只不过此值对应的是楼层-1
+	 * 
+	 * tile:迷宫地板数据的大致取值范围，数据采集来自cga.buildMapTileMatrix()。数据为Array格式。如【奇怪的洞窟】的pictureTile为[7845,7997]
+	 * 因为部分迷宫，如4个隐秘之洞，仅靠地图名字无法得知是哪一个迷宫，需要靠地板的图像数据来分辨是哪一个迷宫。
+	 * 
+	 * 此数据可由CGA的【玩家信息】选项卡中的【显示游戏内文本】快捷查看。
+	 * 我们以里谢里雅堡[30,92]的石狮子单位数据说明：
+	 * （30，92）[13AA,1,28A0,C000]
+	 * 此数据采集的是【鼠标指向】地板的数据，而非人物所在地板的数据。
+	 * 前面括号代表鼠标指向的坐标，后面的数组每一个代表：
+	 * 1、第0位13AA，就是tile的16进制数据；
+	 * 2、第1位1，0代表不可通行，1可通行；猜测为cga.buildMapCollisionMatrix()的colraw值
+	 * 3、第2位28A0，在cga.buildMapCollisionRawMatrix()的colraw16进制数值。也就是forwardEntryTile和backEntryTile的16进制数值
+	 * 4、第3位一直为C000或C100，暂时不知道是什么数据。但是传送水晶为C003，猜测为cell值
+	 * 
 	 * backTopPosList:迷宫出口水晶所在的坐标，用于返回迷宫。如黑龙的顶层不是固定的，可以由此坐标返回黑龙的顶层
 	 */
 	cga.mazeInfo = {
@@ -12137,6 +12151,7 @@ module.exports = function(callback){
 			suffix:'楼',
 			forwardEntryTile : 12002,
 			backEntryTile : 12000,
+			tile : [7845,7997],
 			backTopPosList : [[40, 6,'']],
 		},
 		/**
@@ -12402,6 +12417,143 @@ module.exports = function(callback){
 			backEntryTile : 17981,
 			backTopPosList : [[26, 72,'']],// TODO
 		},
+		/**
+		 * 战斗五转，隐秘之洞（地）
+		 * 由于每个洞都有2个部分，我自定义取了名字，方便辨别：
+		 * 隐秘之[地水火风]洞[上下]层
+		 */
+		'隐秘之地洞上层' : {
+			name : '隐秘之地洞上层',
+			entryMap : 61000,
+			exitMap : 27303,
+			posList : [[504, 300], [485, 272], [461, 259], [449, 247], [462, 222], [506, 235], [538, 257], [521, 269], [547, 284]],
+			xLimit : [450,600],
+			yLimit : [200,300],
+			prefix:'隐秘之洞地下',
+			suffix:'层',
+			forwardEntryTile : 17971,
+			backEntryTile : 17970,
+			tile : [9523,9538],
+			backTopPosList : [[26, 72,'']],// TODO
+		},
+		'隐秘之地洞下层' : {
+			name : '隐秘之地洞下层',
+			entryMap : 27303,
+			exitMap : 27304,
+			posList : [[16, 38]],
+			xLimit : [16,16],
+			yLimit : [38,38],
+			prefix:'隐秘之洞地下',
+			suffix:'层',
+			forwardEntryTile : 17971,
+			backEntryTile : 17970,
+			tile : [9523,9538],
+			backTopPosList : [[26, 72,'']],// TODO
+		},
+		'隐秘之水洞上层' : {
+			name : '隐秘之水洞上层',
+			entryMap : 61000,
+			exitMap : 27306,
+			posList : [[379, 459], [358, 488]],
+			xLimit : [300,400],
+			yLimit : [500,550],
+			prefix:'隐秘之洞地下',
+			suffix:'层',
+			forwardEntryTile : 17967,
+			backEntryTile : 17966,
+			tile : [9491,9506],
+			backTopPosList : [[26, 72,'']],// TODO
+		},
+		'隐秘之水洞下层' : {
+			name : '隐秘之水洞下层',
+			entryMap : 27306,
+			exitMap : 27307,
+			posList : [[43,16]],
+			xLimit : [43,43],
+			yLimit : [16,16],
+			prefix:'隐秘之洞地下',
+			suffix:'层',
+			forwardEntryTile : 17967,
+			backEntryTile : 17966,
+			tile : [9491,9506],
+			backTopPosList : [[26, 72,'']],// TODO
+		},
+		'隐秘之火洞上层' : {
+			name : '隐秘之火洞上层',
+			entryMap : 61000,
+			exitMap : 27309,
+			posList : [[422, 417], [412, 439]],
+			xLimit : [400,450],
+			yLimit : [400,450],
+			prefix:'隐秘之洞地下',
+			suffix:'层',
+			forwardEntryTile : 17983,
+			backEntryTile : 17982,
+			tile : [9618,9633],
+			backTopPosList : [[26, 72,'']],// TODO
+		},
+		'隐秘之火洞下层' : {
+			name : '隐秘之火洞下层',
+			entryMap : 27309,
+			exitMap : 27310,
+			posList : [[39,27]],
+			xLimit : [39,39],
+			yLimit : [27,27],
+			prefix:'隐秘之洞地下',
+			suffix:'层',
+			forwardEntryTile : 17983,
+			backEntryTile : 17982,
+			tile : [9618,9633],
+			backTopPosList : [[26, 72,'']],// TODO
+		},
+		'隐秘之风洞上层' : {
+			name : '隐秘之风洞上层',
+			entryMap : 61000,
+			exitMap : 27312,
+			posList : [[396, 250], [395, 224], [399, 204]],
+			xLimit : [300,450],
+			yLimit : [150,300],
+			prefix:'隐秘之洞地下',
+			suffix:'层',
+			forwardEntryTile : 17991,
+			backEntryTile : 17990,
+			tile : [9682,9697],
+			backTopPosList : [[26, 72,'']],// TODO
+		},
+		'隐秘之风洞下层' : {
+			name : '隐秘之风洞下层',
+			entryMap : 27312,
+			exitMap : 27313,
+			posList : [[36,17]],
+			xLimit : [36,36],
+			yLimit : [17,17],
+			prefix:'隐秘之洞地下',
+			suffix:'层',
+			forwardEntryTile : 17991,
+			backEntryTile : 17990,
+			tile : [9682,9697],
+			backTopPosList : [[26, 72,'']],// TODO
+		},
+	}
+
+	cga.getMazeInfo = (mapname)=>{
+		if(!mapname || typeof mapname != 'string'){
+			throw new Error('cga.getMazeInfo():必须输入地图String类型的名称')
+		}
+		
+		for (let obj of Object.values(cga.mazeInfo)) {
+			// 隐秘之洞不能通过前缀判断，因为地水火风4个洞都是一样的名称，必须要加入tile值判断
+			if(mapname.indexOf('隐秘之洞') != -1 && obj.hasOwnProperty('tile')){
+				let XY = cga.GetMapXY()
+				let tile = cga.buildMapTileMatrix().matrix
+				if(tile[XY.y][XY.x] >= obj.tile[0] && tile[XY.y][XY.x] <= obj.tile[1]){
+					return obj
+				}
+			}else if(mapname.indexOf(obj.prefix) != -1){
+				return obj
+			}
+		}
+		throw new Error('无法识别该迷宫，请联系作者https://github.com/UNAecho更新。')
 	}
 
 	//下载地图的部分区域并等待下载完成

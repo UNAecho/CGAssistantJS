@@ -319,7 +319,7 @@ var thisobj = {
 							})
 							return
 						}else{// 可能为仙人、侦探任务或其它区域 TODO
-							throw new Error('UNAecho未探索过的区域，请联系我更新')
+							throw new Error('UNAecho未探索过的区域，请联系作者https://github.com/UNAecho更新。')
 						}
 					} else {// 未四转人物的正常逻辑
 						// 一直与露比对话至传送回光之路为止
