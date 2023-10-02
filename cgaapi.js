@@ -7378,6 +7378,73 @@ module.exports = function(callback){
 			cb(null);
 		}
 	}
+
+	/**
+	 * UNAecho:循环清理背包，将超过的部分丢弃。
+	 * 利用累计数量，让背包中的一个或多个道具不少于某数量
+	 * 
+	 * @param {String|Number|Function} itemFilter 使用方法与cga.findItem()一致，如果想指定多个道具，请使用function类型
+	 * @param {Number|Function} countFilter 可为Number类型数字或者function类型函数：
+	 * 1、Number类型，限制满足itemFilter的所有道具数量。例：countFilter=20，则满足itemFilter的所有道具数量均不得低于20。超过的部分会被丢弃。
+	 * 2、Function类型，限制满足itemFilter的所有道具自定义数量数量。例：countFilter(it) return 20，则满足itemFilter的指定道具数量不得低于20。超过的部分会被丢弃。
+	 * Function类型可以指定多种道具的数量，如指定A最少20个，B最多5个等等
+	 * 
+	 * 【注意】由于没有道具堆叠分割功能，故该API维持的数量会大于等于countFilter的数量。
+	 * 例：itemFilter='牛肉',countFilter=20
+	 * 当人物只有1格牛肉，且count=21时，此API依然会保留此格道具，因为丢弃此格道具，牛肉的count数量则会变为0了。
+	 * @returns 
+	 */
+	cga.maintainItem = (itemFilter,countFilter)=>{
+		
+		// 道具累计缓存
+		let sum = {}
+		let maintainFilter = (it) => {
+			if (typeof itemFilter == 'string' && it.name == itemFilter){
+				return overrun(it)
+			}else if(typeof itemFilter == 'number' && it.itemid == itemFilter){
+				return overrun(it)
+			}else if(typeof itemFilter == 'string' && itemFilter.charAt(0) == '#' && it.itemid == parseInt(itemFilter.substring(1))){
+				return overrun(it)
+			}else if(typeof itemFilter == 'function' && itemFilter(it)){
+				return overrun(it)
+			}else{
+				return false
+			}
+		}
+		
+		// 是否超过维持数量？不超过则累计，超过则丢弃
+		let overrun = (it)=>{
+			if(!sum.hasOwnProperty(it.itemid)){
+				sum[it.itemid] = 0
+			}
+			if(typeof countFilter == 'number' && (sum[it.itemid] + it.count <= countFilter || (sum[it.itemid] + it.count > countFilter && sum[it.itemid] < countFilter))){
+				sum[it.itemid] += it.count
+				// console.log("pos"+it.pos+"小于累计,sum:", sum)
+				return false
+			}else if(typeof countFilter == 'function' && (sum[it.itemid] + it.count <= countFilter(it) || (sum[it.itemid] + it.count > countFilter(it) && sum[it.itemid] < countFilter(it)))){
+				sum[it.itemid] += it.count
+				return false
+			}else{
+				// console.log("pos"+it.pos+"大于丢弃,sum:", sum)
+				return true
+			}
+		}
+
+		let loop = () => {
+			let pos = cga.findItem(maintainFilter)
+			if (pos != -1) {
+				cga.DropItem(pos);
+				sum = {}
+				setTimeout(loop, 1500);
+				return
+			}
+			console.log('cga.maintainItem()清理完毕..')
+			return
+		}
+
+		loop()
+		return
+	}
 	
 	//出售魔石
 	cga.sellStone = (cb)=>{
@@ -10045,7 +10112,7 @@ module.exports = function(callback){
 	 * 统计的方式是使用cga.shareTeammateInfo，具体可以统计的数据类型，参照cga.shareTeammateInfo。
 	 * 本API的主要功能是实现类似SQL中的group功能，可以统计cga.shareTeammateInfo中的各个信息的聚合结果。
 	 * 聚合功能有3种：
-	 * 1、sum：全队持有某信息的家和。比如全队持有承认之戒的总和、长老之证的总和等等。
+	 * 1、sum：全队持有某信息的加和。比如全队持有承认之戒的总和、长老之证的总和等等。
 	 * 2、min：全队人均最低持有数量，比如每人至少拥有1个承认之戒，或者地龙的鳞片等等。
 	 * 3、max：与2逻辑一致，只不过是最多持有数量，不常用。一般不会对道具做最大持有数判断。
 	 * 
@@ -13621,11 +13688,7 @@ module.exports = function(callback){
 		let layerName = cga.GetMapName()
 		// 如果没有迷宫数据或传入对象数据格式不正确，则重新获取
 		if (Object.prototype.toString.call(mazeInfo) == '[object Object]' || !mazeInfo.hasOwnProperty('forwardEntryTile')) {
-			mazeInfo = Object.values(cga.mazeInfo).find((m) => {
-				if (layerName.indexOf(m.prefix) != -1) {
-					return true
-				}
-			})
+			mazeInfo = cga.getMazeInfo(layerName)
 		}
 
 		// 缓存初始化
@@ -13882,11 +13945,7 @@ module.exports = function(callback){
 		let isForward = true
 		// 获取静态地图数据
 		let map = cga.GetMapName();
-		let mazeInfo = Object.values(cga.mazeInfo).find((m) => {
-			if (map.indexOf(m.prefix) != -1) {
-				return true
-			}
-		})
+		let mazeInfo = cga.getMazeInfo(map)
 
 		if (!mazeInfo) {
 			throw new Error('cga.mazeInfo没有此迷宫信息，请联系作者https://github.com/UNAecho更新')
