@@ -230,6 +230,14 @@ var playerThink = () => {
 
 	global.callSubPlugins('think', ctx);
 
+	// 打到的魔石和卡片会占据徽记位置，需要自动丢弃
+	let dropItem = ctx.inventory.find((it) => {
+		return it.name == '魔石' || (it.name == '卡片？' && it.type != 40) || /(.+)的卡片/.exec(it.name)
+	})
+	if(dropItem){
+		cga.DropItem(dropItem.pos);
+	}
+
 	if (cga.isTeamLeaderEx()) {
 		var interruptFromMoveThink = false;
 
