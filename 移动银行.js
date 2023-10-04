@@ -458,6 +458,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 				thisobj.switchAccount(account, cb)
 			} else if (account && account.name == cga.GetPlayerInfo().name) {//如果自己银行仓库满足需求
 				console.log('自己银行账户即可满足需求，去银行..')
+				console.log('【注意】如果个人设置中没有记录银行最大格数量，可能需要先记录一次格子就返回交易地点。再次与客户端对话，才能正常进行来自己银行存东西的逻辑。')
 				// 去当地银行并与柜员对话
 				cga.travel.toBank(() => {
 					if (resObj.resTradeType == 'save') {
@@ -471,7 +472,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 								return true
 							},
 								resObj.resTargetMaxcount,
-								(r) => {
+								(err) => {
 									setTimeout(thisobj.saveOfflineData, 1000, cb);
 								});
 						} else if (resObj.resTargetType == 'gold') {

@@ -647,6 +647,13 @@ module.exports = function(callback){
 		});
 	}
 
+	//获取装备栏里的水晶信息，返回object
+	cga.getEquipCrystal = function(){
+		return cga.GetItemsInfo().find((item)=>{
+			return item.pos == 7
+		});
+	}
+
 	//获取装备耐久，返回数组[当前耐久,最大耐久]
 	cga.getEquipEndurance = (item)=>{
 
@@ -4694,6 +4701,7 @@ module.exports = function(callback){
 			4310,
 			4410,
 			43110,
+			44692,// 圣骑士营地
 			59530,
 		] 
 		if (hospitalList.indexOf(mapindex) == -1){
@@ -4748,6 +4756,9 @@ module.exports = function(callback){
 		}else if(villageName == '艾尔莎岛'){
 			tmplist.push([91, 122])
 			tmpTurnDir = 0
+		}else if(villageName == '圣骑士营地'){
+			tmplist.push(isPro == true ? [10, 12] : [18, 15])
+			tmpTurnDir = 6
 		}else{
 			throw new Error('[UNA脚本警告]:未知地图index，请联系作者https://github.com/UNAecho更新。')
 		}
@@ -4916,7 +4927,7 @@ module.exports = function(callback){
 	}
 
 	cga.travel.isInVillage = () => {
-		var villageArr = ['圣拉鲁卡村', '伊尔村', '亚留特村', '维诺亚村', '奇利村', '加纳村', '杰诺瓦镇','魔法大学','阿巴尼斯村','蒂娜村','曙光骑士团营地'] 
+		var villageArr = ['法兰城','艾尔莎岛','圣拉鲁卡村', '伊尔村', '亚留特村', '维诺亚村', '奇利村', '加纳村', '杰诺瓦镇','魔法大学','阿巴尼斯村','蒂娜村','曙光骑士团营地','圣骑士营地'] 
 		var mainMapName = cga.travel.switchMainMap()
 		if(villageArr.indexOf(mainMapName) != -1){
 			return true
@@ -5248,22 +5259,6 @@ module.exports = function(callback){
 			return true
 		}
 		return false
-	}
-
-	cga.travel.shenglaluka = {}
-	// 去圣拉鲁卡村医院
-	cga.travel.shenglaluka.toHospital = (cb, isPro)=>{
-		cga.travel.autopilot('医院',()=>{
-			cga.walkList(
-				[
-					isPro == true ? [10, 3] : [15, 8]
-				], ()=>{
-					cga.turnDir(isPro == true ? 0 : 6);
-					if(cb){
-						setTimeout(cb, 1000,null);
-					}
-				});
-		})
 	}
 
 	cga.travel.yaliute = {};
@@ -9213,6 +9208,7 @@ module.exports = function(callback){
 	 * TODO: 想办法修复，在此之前，请尽量使用固定组队。
 	 * @param {int} obj.timeout 超时时间，以毫秒为单位。如果填0则视为无限等待。
 	 * @param {Array} obj.pos 可选，队长站立坐标，如果传入，必须为int型数组，长度必须为2。全队会先走至合适的位置，再进行组队逻辑
+	 * @param {Array} obj.dangerLevel 可选，组队所在地图的危险等级，只要大于0，人物在走动时会自动读取逃跑类战斗配置
 	 * @param {*} cb 回调函数，所有队员齐全则传入'ok'，如果不满足条件或没有队伍，会等待至超时，调用cb并传入'timeout'
 	 */
 	cga.buildTeam = (obj, cb) => {
@@ -10907,26 +10903,26 @@ module.exports = function(callback){
 			}
 			return
 		}
-
-		// 为任务物品清理背包中的魔石
-		let dropStoneForMissionItem = (item)=>{
-			// 持续递归，直至背包中存在目标任务物品才结束
-			if(cga.findItem(item) == -1){
-				let inventory = cga.getInventoryItems();
-				let stone = cga.findItem('魔石');
-				if(inventory.length == 20 && stone == -1){
-					throw new Error('错误，请手动清理物品，否则任务无法继续')
-				}
-				if(inventory.length >= 18){
-					console.log('物品大于18个，开始搜索背包中的魔石并丢弃..')
-					if(stone != -1){
-						console.log('丢弃魔石..')
-						cga.DropItem(stone);
-					}
-					setTimeout(dropStoneForMissionItem, 1000);
-				}
-			}
-		}
+		// 取消此逻辑，如果背包已满，则人物会卡在与npc对话中，由玩家自行手动处理背包
+		// // 为任务物品清理背包中的魔石 
+		// let dropStoneForMissionItem = (item)=>{
+		// 	// 持续递归，直至背包中存在目标任务物品才结束
+		// 	if(cga.findItem(item) == -1){
+		// 		let inventory = cga.getInventoryItems();
+		// 		let stone = cga.findItem('魔石');
+		// 		if(inventory.length == 20 && stone == -1){
+		// 			throw new Error('错误，请手动清理物品，否则任务无法继续')
+		// 		}
+		// 		if(inventory.length >= 18){
+		// 			console.log('物品大于18个，开始搜索背包中的魔石并丢弃..')
+		// 			if(stone != -1){
+		// 				console.log('丢弃魔石..')
+		// 				cga.DropItem(stone);
+		// 			}
+		// 			setTimeout(dropStoneForMissionItem, 1000);
+		// 		}
+		// 	}
+		// }
 
 		let checkBattleFailed = ()=>{
 			let teamplayers = cga.getTeamPlayers()
@@ -11066,11 +11062,13 @@ module.exports = function(callback){
 				retry(cb)
 				return
 			}else{// item、msg等模式不离队，依旧用waitTeammateReady
-				// 为任务物品留位置，如果obj.target为func，会导致cga.findItem(obj.target)将obj.target当作item的filter函数来遍历所有道具。
-				// 如果需要清理道具，请在obj.target直接写逻辑
-				if(obj.act != 'function'){
-					dropStoneForMissionItem(obj.target)
-				}
+
+				// 不再自动清理背包，改为由玩家手动清理
+				// // 为任务物品留位置，如果obj.target为func，会导致cga.findItem(obj.target)将obj.target当作item的filter函数来遍历所有道具。
+				// // 如果需要清理道具，请在obj.target直接写逻辑
+				// if(obj.act != 'function'){
+				// 	dropStoneForMissionItem(obj.target)
+				// }
 
 				cga.waitTeammateReady(null, (r)=>{
 					retry(r)
@@ -11730,7 +11728,59 @@ module.exports = function(callback){
 
 		}, timeout);
 	}
-	
+
+	/**
+	 * UNAecho: 维持深蓝药剂生效，如果药剂吃完了，则回调error
+	 * 系统提示信息：
+	 * 1、使用:[使用了香水：深蓝九号！]
+	 * 2、失效:[道具的效果消失了。]
+	 * 3、持续期间遇敌:[感觉到魔族的气息，但是却看不到踪影。]
+	 * 
+	 * 【注意】此API使用的香水：深蓝九号(itemid:18526)，是魔法大学任务NPC交回鉴定师所鉴定出来的道具，并非药剂师做出来的道具。
+	 * 获取方式：药剂师制作香水：深蓝九号，去魔法大学进入考场，将香水：深蓝九号交给考官。考官返回【药？】鉴定后成为此API所需的香水：深蓝九号(itemid:18526)
+	 * 
+	 * 【BUG记录】
+	 * 1、如果吃深蓝的一瞬间遇敌，那么其实是没有吃成功的，此时API将会陷入无限监听，不会再次触发的死循环。
+	 * TODO 可能需要根据使用的系统消息【使用了香水：深蓝九号！】来判断道具是否使用成功
+	 * @param {*} cb 
+	 */
+	cga.keepDeepBlueEffect = (cb)=>{
+		/**
+		 * 由于cga.waitSysMsg无法主动关闭，必须依赖监听到系统消息才能触发cb逻辑，这里设置一个flag来实现间接关闭此API。
+		 * 原理是当loopFlag=false时，只要人物登出、站街等任何触发系统提示的时候，cga.waitSysMsg触发cb，然后根据loopFlag结束监听。
+		 */
+		let loopFlag = true
+
+		let useItem = ()=>{
+			let pos = cga.findItem(18526)
+			if(pos == -1){
+				loopFlag = false
+				cb(new Error('[香水：深蓝九号]已耗尽，请补充'))
+				return
+			}
+			setTimeout(()=>{
+				cga.UseItem(pos);
+			},1000)
+			return
+		}
+
+		// 持续监听
+		cga.waitSysMsg((msg)=>{
+			if(loopFlag == false){
+				console.log('cga.keepDeepBlueEffect()结束监听..')
+				return false
+			}
+			if(msg && msg.indexOf('道具的效果消失了') != -1){
+				useItem()
+			}
+			return true
+		})
+
+		// 首次进入API，先使用1个香水：深蓝九号
+		useItem()
+		return
+	}
+
 	//发送超长聊天信息
 	cga.sayLongWords = (words, color, range, size)=>{
 
@@ -12493,7 +12543,8 @@ module.exports = function(callback){
 			name : '隐秘之地洞上层',
 			entryMap : 61000,
 			exitMap : 27303,
-			posList : [[504, 300], [485, 272], [461, 259], [449, 247], [462, 222], [506, 235], [538, 257], [521, 269], [547, 284]],
+			// 地之洞窟范围超大，经常可能刷在海边，注意探索覆盖度要足够
+			posList : [[504, 300], [485, 272], [461, 259], [449, 247], [462, 222], [506, 235], [538, 257], [521, 269], [547, 284], [545,257]],
 			xLimit : [450,600],
 			yLimit : [200,300],
 			prefix:'隐秘之洞地下',
@@ -12501,7 +12552,7 @@ module.exports = function(callback){
 			forwardEntryTile : 17971,
 			backEntryTile : 17970,
 			tile : [9523,9538],
-			backTopPosList : [[26, 72,'']],// TODO
+			backTopPosList : [[29, 11,'']],
 		},
 		'隐秘之地洞下层' : {
 			name : '隐秘之地洞下层',
@@ -12602,25 +12653,78 @@ module.exports = function(callback){
 			backTopPosList : [[26, 72,'']],// TODO
 		},
 	}
+	/**
+	 * UNAecho:获取当前地图所处的随机迷宫信息
+	 * @param {*} inputObj 地图数据，需要至少包括1个String类信息或Number信息
+	 * 数据格式：
+	 * {
+	 * 		name : '隐秘之洞地下10层',
+	 * 		index : 27303,
+	 * }
+	 * 因为有的地图无法根据mapindex确定（如随机迷宫楼层中的mapindex是随机的），或者根据mapname确定（'隐秘之洞地下10层'无法分辨出是地水火风哪一个迷宫的）
+	 * 所以当出现这种难以分辨信息的时候，要注意传入可以唯一索引的信息。实在不知道传哪个，建议都传。
+	 * @returns 返回cga.mazeInfo中的迷宫Obj信息
+	 */
+	cga.getMazeInfo = (inputObj)=>{
+		if(!inputObj.hasOwnProperty('name') && !inputObj.hasOwnProperty('index')){
+			throw new Error('cga.getMazeInfo():必须输入至少一种类型的信息：1、String类型的地图名称name。2、Number类型的地图index')
+		}
+		if(inputObj.hasOwnProperty('name') && typeof inputObj.name != 'string'){
+			throw new Error('地图名称name必须为String类型')
+		}
+		if(inputObj.hasOwnProperty('index') && typeof inputObj.index != 'number'){
+			throw new Error('地图index必须为Number类型')
+		}
+		// 提取地图层数
+		const regexLayer = (str)=>{
+			var regex = str.match(/([^\d]*)(\d+)([^\d]*)/);
+			var layerIndex = 0;
+	
+			if(regex && regex.length >= 3){
+				layerIndex = parseInt(regex[2]);
+			}
+			
+			if(layerIndex == 0){
+				throw new Error('无法从地图名中解析出楼层');
+			}
+			
+			// 半山特殊数字处理，因为是以100为单位的。
+			if(str.indexOf('通往山顶的路') != -1){
+				layerIndex = Math.floor(layerIndex / 100)
+			}
 
-	cga.getMazeInfo = (mapname)=>{
-		if(!mapname || typeof mapname != 'string'){
-			throw new Error('cga.getMazeInfo():必须输入地图String类型的名称')
+			return layerIndex
 		}
 		
 		for (let obj of Object.values(cga.mazeInfo)) {
+			// 有的时候可以使用迷宫的出口来归纳当前地图属于哪个迷宫，例如隐秘之洞10层其实是上层的出口。而BOSS房间其实是下层的出口
+			// 由于map类型已经在开始就已经检验完毕，这里无需区分是String还是Number，直接判断相等即可。除非String类型的迷宫出口名称有重复（Number类型是不会有重复的）。
+			// 隐秘之洞的第10层其实并非随机迷宫，而是上层的出口地图（固定不变）。会在这里直接返回
+			if((inputObj.name && inputObj.name == obj.exitMap) || (inputObj.index && inputObj.index == obj.exitMap)){
+				return obj
+			}
 			// 隐秘之洞不能通过前缀判断，因为地水火风4个洞都是一样的名称，必须要加入tile值判断
-			if(mapname.indexOf('隐秘之洞') != -1 && obj.hasOwnProperty('tile')){
+			else if(inputObj.name && inputObj.name.indexOf('隐秘之洞') != -1 && obj.hasOwnProperty('tile')){
 				let XY = cga.GetMapXY()
 				let tile = cga.buildMapTileMatrix().matrix
+				// 地板图标匹配后，还要区分是上层还是下层
 				if(tile[XY.y][XY.x] >= obj.tile[0] && tile[XY.y][XY.x] <= obj.tile[1]){
-					return obj
+					// 解析层数
+					let layerIndex = regexLayer(inputObj.name)
+					if(layerIndex < 10 && obj.name.indexOf('上层')){
+						return obj
+					}else if(layerIndex > 10 && obj.name.indexOf('下层')){
+						return obj
+					}
 				}
-			}else if(mapname.indexOf(obj.prefix) != -1){
+			}
+			// 最常见的判断方式，但必须在if逻辑的最后出现，因为会短路其它特殊地图的判断。
+			else if(inputObj.name && inputObj.name.indexOf(obj.prefix) != -1){
 				return obj
 			}
 		}
-		throw new Error('无法识别该迷宫，请联系作者https://github.com/UNAecho更新。')
+		console.warn('你不在迷宫中，或该迷宫的数据暂未收录。')
+		return null
 	}
 
 	//下载地图的部分区域并等待下载完成
@@ -12883,13 +12987,11 @@ module.exports = function(callback){
 	cga.walkRandomMazeAuto = (targetMap, cb) => {
 		// 人物前进方向，true为向楼层增加方向走，false反之。
 		var isForward = null
-		// 获取静态地图数据
-		var mazes = Object.values(cga.mazeInfo)
 		var map = cga.GetMapName();
-		var mazeInfo = mazes.find((m)=>{
-			if(map.indexOf(m.prefix) != -1){
-				return true
-			}
+		var mapindex = cga.GetMapIndex().index3;
+		var mazeInfo = cga.getMazeInfo({
+			name : map,
+			index : mapindex,
 		})
 
 		// 如果运行时，自己在队伍中，且是队员
@@ -12924,8 +13026,8 @@ module.exports = function(callback){
 			}
 			
 			// 半山特殊数字处理，因为是以100为单位的。
-			if(map.indexOf('通往山顶的路') != -1){
-				layerIndex = layerIndex / 100
+			if(str.indexOf('通往山顶的路') != -1){
+				layerIndex = Math.floor(layerIndex / 100)
 			}
 
 			return layerIndex
@@ -13688,7 +13790,7 @@ module.exports = function(callback){
 		let layerName = cga.GetMapName()
 		// 如果没有迷宫数据或传入对象数据格式不正确，则重新获取
 		if (Object.prototype.toString.call(mazeInfo) == '[object Object]' || !mazeInfo.hasOwnProperty('forwardEntryTile')) {
-			mazeInfo = cga.getMazeInfo(layerName)
+			mazeInfo = cga.getMazeInfo({name:layerName})
 		}
 
 		// 缓存初始化
@@ -13944,8 +14046,12 @@ module.exports = function(callback){
 		// 人物前进方向，true为向楼层增加方向走，false反之。默认true
 		let isForward = true
 		// 获取静态地图数据
+		let mapindex = cga.GetMapIndex().index3;
 		let map = cga.GetMapName();
-		let mazeInfo = cga.getMazeInfo(map)
+		let mazeInfo = cga.getMazeInfo({
+			name : map,
+			index : mapindex,
+		})
 
 		if (!mazeInfo) {
 			throw new Error('cga.mazeInfo没有此迷宫信息，请联系作者https://github.com/UNAecho更新')
@@ -13964,7 +14070,7 @@ module.exports = function(callback){
 			}
 			
 			// 半山特殊数字处理，因为是以100为单位的。
-			if(map.indexOf('通往山顶的路') != -1){
+			if(str.indexOf('通往山顶的路') != -1){
 				layerIndex = Math.floor(layerIndex / 100)
 			}
 
