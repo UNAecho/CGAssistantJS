@@ -2,7 +2,7 @@ var cga = global.cga;
 var configTable = global.configTable;
 
 // 需要与移动银行.js中一致
-const tradeReg = new RegExp(/r?([sd]{1})([igp])([\w\u4e00-\u9fa5（）]*)([\^]{1})([\d]+)(\&?)([\d]*)([\S]*)?/)
+const tradeReg = new RegExp(/r?([sd]{1})([igp])([\w\u4e00-\u9fa5（）：「」？]*)([\^]{1})([\d]+)(\&?)([\d]*)([\S]*)?/)
 
 var thisobj = {
 	// 寻找服务玩家的昵称暗号，需要与移动银行.js中一致

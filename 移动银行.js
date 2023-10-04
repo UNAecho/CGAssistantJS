@@ -1,7 +1,7 @@
 var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 
 	// 需要与自动存取.js中一致
-	const tradeReg = new RegExp(/r?([sd]{1})([igp])([\w\u4e00-\u9fa5（）]*)([\^]{1})([\d]+)(\&?)([\d]*)([\S]*)?/)
+	const tradeReg = new RegExp(/r?([sd]{1})([igp])([\w\u4e00-\u9fa5（）：「」？]*)([\^]{1})([\d]+)(\&?)([\d]*)([\S]*)?/)
 
 	var loop = () => {
 		// 如果没有与银行对话缓存数据。
