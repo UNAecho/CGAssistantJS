@@ -314,7 +314,9 @@ var thisobj = {
 		// 检测是否还在队伍中
 		let teaminfo = cga.GetTeamPlayerInfo();
 		if (teaminfo.length == 0) {
-			console.log('移动银行离队，无法继续提供服务，继续等待下一位服务端..')
+			console.log('移动银行离队，无法继续提供服务。中止喊话，并继续等待下一位服务端..')
+			// 离队则不能喊话 TODO 监测禁止喊话的效果是否生效
+			thisobj.speakStatus = 'on'
 			setTimeout(thisobj.findServer, 1000, cb)
 			return
 		}
