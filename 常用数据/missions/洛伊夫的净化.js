@@ -90,15 +90,35 @@
 					}
  * 战斗相关信息：
  * 出发之前记得换克制对应属性的水晶，并备好大量深蓝药剂、血瓶和料理（10级）。
- * 路上敌人很多，消耗巨大。其中深蓝药剂能大幅降低赶路难度。尽量穿上装备，裸体打架相当困难。
- * 其中水洞的怪会超强混乱和中毒，消耗极大，一场战斗可能会出现满血人员直接伤亡。一定要吃深蓝药剂规避战斗。
+ * 路上敌人很多，消耗巨大。其中深蓝药剂能大幅降低赶路难度。尽量穿上装备或提升更高的等级，120级裸体打架相当困难。
+ * 特别提醒：
+ * 1、水洞的难度要远大于其它洞窟。无论是赶路小怪的战斗能力还是BOSS的难缠程度。
+ * 2、水洞的迷宫小怪会超强混乱和中毒，消耗极大，一场战斗可能会出现满血人员直接伤亡。一定要吃深蓝药剂规避战斗。
+ * 3、风洞小怪闪避非常非常高，一场下来虽然没有水洞那么大，但也不小。如果有法师跟队，不要吝啬魔法和料理。
  * 
  * BOSS战：
- * 对方是1元素巨人BOSS+4个对应属性的影子，敌人是W站位。
- * 【注意】BOSS会超强单体连击，裸体不穿装备130级被打一下1000血，连3-7次，全中估计必死。乾坤一掷打1300-2000血，威胁没有连击大。BOSS会用一种特殊的全屏攻击，但只遇到一次，全员掉100-200血，不疼。
- * 其中水属性BOSS会恢复魔法，每回合回复1000+血，而且使用单体连击概率很大，一回合秒人是常事。而且还会超强睡眠，非常能消耗，请迅速击杀避免被拖死。
- * 其中火属性BOSS会气功弹，攻击力不低，收割残血能力很强。但几乎不会使用秒杀的连击，而是使用乾坤和诸刃代替，攻击力很高，但没有连击威胁大。一般会打1000-1900血。
- * 4影子战斗力很弱，但有时候会使用超强补血魔法，优先合击干掉。最后打BOSS。
+ * 共同部分：
+ * 1、对方是1元素巨人BOSS+4个对应属性的影子，敌人是W站位，所有敌人均为2动
+ * 2、4影子战斗力很弱，血量大概6000左右。会对应属性的强力魔法【并且吃咒术的异常魔法】但有时候会使用超强补血魔法，优先合击干掉。最后打BOSS。
+ * 【注意】BOSS大概20000+血。会超强单体连击，裸体不穿装备130级被打一下1000血，连3-7次，全中估计必死。乾坤一掷打1300-2000血，威胁没有连击大。BOSS会用一种特殊的全屏攻击，但只遇到一次，全员掉100-200血，不疼。
+ * 
+ * 地属性BOSS：
+ * 1、最弱BOSS，只注意共同部分的说明就好。
+ * 
+ * 水属性BOSS:
+ * 1、最强BOSS，而且使用单体连击概率很大，一次400-600血，一回合秒人是常事。
+ * 2、会恢复魔法，每回合回复1000+血，非常能消耗，请迅速击杀避免被拖死。
+ * 3、会超强昏睡魔法。
+ * 4、会吸血攻击和吸血魔法，但是这个没有什么威胁。
+ * 
+ * 火属性BOSS：24822血
+ * 1、会气功弹，攻击力不低，收割残血能力很强。但几乎不会使用秒杀的连击，而是使用乾坤和诸刃代替连击。攻击力很高，但没有连击威胁大。一般会打1000-1900血。
+ * 
+ * 风属性BOSS：23730血
+ * 1、会高等级反击，合击的时候要注意自己血量，容易被反死。
+ * 2、会高等级连击，3000血传教被打7下直接打死。
+ * 3、会战栗袭心，但是等级不高。
+ * 4、会超强遗忘魔法。
  */
 var thisobj = {
 	taskName: '洛伊夫的净化',
@@ -115,6 +135,20 @@ var thisobj = {
 					}
 					// 如果有要去的迷宫，更新数据
 					thisobj.data.curElementalObj = thisobj.data.elementalInfo[mazeIndex]
+					// 队长需要备足深蓝药剂
+					if (thisobj.data.isTeamLeader && cga.getItemCount(18526) < 12) {
+						console.log('队长需要备足深蓝药剂')
+						thisobj.func.bankObj.manualPrepare({
+							"item": [{
+								"name": "香水：深蓝九号",
+								"upper": 15,
+								"lower": 12
+							}],
+						}, () => {
+							cb2('restart stage')
+						})
+						return
+					}
 
 					// 补充状态、更换水晶等
 					if (cga.travel.isInVillage()) {
@@ -166,7 +200,7 @@ var thisobj = {
 						return
 					}
 					// 如果净化的碎片没拿到，则准备通过迷宫、打BOSS
-
+					console.log('当前需要打【' + thisobj.data.curElementalObj.name + '】')
 					// 读取准备好的默认或外部传入的战斗配置
 					cga.loadBattleConfig(thisobj.data.normalFile)
 					// 制作playerThink组队监听的例外情况，此坐标1x1内即便队伍异常也不会打断playerThink
@@ -185,7 +219,7 @@ var thisobj = {
 
 					let mapindex = cga.GetMapIndex().index3;
 					let map = cga.GetMapName();
-					let curMaze = cga.getMazeInfo({name:map,index:mapindex})
+					let curMaze = cga.getMazeInfo({ name: map, index: mapindex })
 
 					// 队长逻辑
 					if (thisobj.data.isTeamLeader) {
@@ -194,62 +228,94 @@ var thisobj = {
 						// 本任务人物只会进入隐秘之洞这一种随机迷宫，所以可以靠能否获取到迷宫对象来判断人物是否在隐秘之洞中
 						if (curMaze != null) {
 							console.log('深蓝药剂剩余数量:' + deepBlueCnt)
-							// // 在迷宫时（除BOSS房间），要时刻同步运行此方法，保持深蓝药剂的生效。如果药剂吃完，则抛出异常中止脚本
-							// if (!thisobj.data.listening && mapindex != thisobj.data.curElementalObj.secondMaze.exitMap) {
-							// 	thisobj.data.listening = true
-							// 	cga.keepDeepBlueEffect((err) => {
-							// 		if (err && err.message.indexOf('耗尽') != -1) {
-							// 			thisobj.data.listening = false
-							// 			throw new Error('深蓝药剂耗尽，请携带足够数量再重新执行本脚本')
-							// 		}
-							// 	})
-							// }
+							// 在迷宫时（除BOSS房间），要时刻同步运行此方法，保持深蓝药剂的生效。如果药剂吃完，则抛出异常中止脚本
+							if (!thisobj.data.listening && mapindex != thisobj.data.curElementalObj.secondMaze.exitMap) {
+								thisobj.data.listening = true
+								cga.keepDeepBlueEffect((err) => {
+									if (err && err.message.indexOf('耗尽') != -1) {
+										thisobj.data.listening = false
+										throw new Error('深蓝药剂耗尽，请携带足够数量再重新执行本脚本')
+									}
+								})
+							}
 							// 延迟一下等待深蓝药剂生效再走迷宫
-							setTimeout(()=>{
+							setTimeout(() => {
 								// 带队员走至迷宫出口
 								cga.walkRandomMazeAuto(curMaze.exitMap, () => {
 									let curMapindex = cga.GetMapIndex().index3
 									let curXY = cga.GetMapXY()
-									// 如果出口是上层的出口，并且人物在使用水晶传送前的区域，则使用水晶传送
-									if (curMapindex == thisobj.data.curElementalObj.firstMaze.exitMap && curXY.y <= thisobj.data.curElementalObj.splitAxis) {
-										thisobj.func.useEmblemCrystal(thisobj.data.curElementalObj, () => {
-											cb2('restart stage')
-											return
-										})
-									}
-									// 如果出口是上层的出口，并且人物在使用水晶传送后的区域，则组队
-									else if (curMapindex == thisobj.data.curElementalObj.firstMaze.exitMap && curXY.y > thisobj.data.curElementalObj.splitAxis) {
-										// 传入dangerLevel：2,防止队长调整位置时遇敌导致阵亡
-										cga.buildTeam({ teammates: thisobj.data.teammates, timeout: 0, pos: thisobj.data.curElementalObj.buildTeamPos1_1, dangerLevel: 2 }, (r) => {
-											if (r && r == 'ok') {
-												// 进入隐秘之洞下层，或人物被迷宫刷新甩出来之后重新进入
-												cga.getRandomMazeEntrance({
-													table: thisobj.data.curElementalObj.secondMaze.posList,
-													filter: (obj) => {
-														return obj.cell == 3 && obj.mapx >= thisobj.data.curElementalObj.secondMaze.xLimit[0] && obj.mapx <= thisobj.data.curElementalObj.secondMaze.xLimit[1] && obj.mapy >= thisobj.data.curElementalObj.secondMaze.yLimit[0] && obj.mapy <= thisobj.data.curElementalObj.secondMaze.yLimit[1];
-													},
-													blacklist: [],
-													expectmap: '隐秘之洞地下11层',
-												}, () => {
+									// 如果出口是上层的出口，则判断人物在哪个区域
+									if (curMapindex == thisobj.data.curElementalObj.firstMaze.exitMap) {
+										// 地洞是依靠y坐标判断
+										if (['地'].some(n => { return thisobj.data.curElementalObj.name.indexOf(n) != -1 })) {
+											// 如果人物在使用水晶传送前的区域，则使用水晶传送。
+											if (curXY.y <= thisobj.data.curElementalObj.splitAxis) {
+												thisobj.func.useEmblemCrystal(thisobj.data.curElementalObj, () => {
 													cb2('restart stage')
+													return
 												})
-											} else {
-												throw new Error('cga.buildTeam返回类型错误')
+											} else {// 如果人物在使用水晶传送后的区域，则组队
+												cga.buildTeam({ teammates: thisobj.data.teammates, timeout: 0, pos: thisobj.data.curElementalObj.buildTeamPos1_1 }, (r) => {
+													if (r && r == 'ok') {
+														// 进入隐秘之洞下层，或人物被迷宫刷新甩出来之后重新进入
+														cga.getRandomMazeEntrance({
+															table: thisobj.data.curElementalObj.secondMaze.posList,
+															filter: (obj) => {
+																return obj.cell == 3 && obj.mapx >= thisobj.data.curElementalObj.secondMaze.xLimit[0] && obj.mapx <= thisobj.data.curElementalObj.secondMaze.xLimit[1] && obj.mapy >= thisobj.data.curElementalObj.secondMaze.yLimit[0] && obj.mapy <= thisobj.data.curElementalObj.secondMaze.yLimit[1];
+															},
+															blacklist: [],
+															expectmap: '隐秘之洞地下11层',
+														}, () => {
+															cb2('restart stage')
+														})
+													} else {
+														throw new Error('cga.buildTeam返回类型错误')
+													}
+												})
 											}
-										})
+
+										}
+										// 水洞是靠x坐标判断
+										else if (['水', '火', '风'].some(n => { return thisobj.data.curElementalObj.name.indexOf(n) != -1 })) {
+											// 如果人物在使用水晶传送前的区域，则使用水晶传送。
+											if (curXY.x <= thisobj.data.curElementalObj.splitAxis) {
+												thisobj.func.useEmblemCrystal(thisobj.data.curElementalObj, () => {
+													cb2('restart stage')
+													return
+												})
+											} else {// 如果人物在使用水晶传送后的区域，则组队
+												cga.buildTeam({ teammates: thisobj.data.teammates, timeout: 0, pos: thisobj.data.curElementalObj.buildTeamPos1_1 }, (r) => {
+													if (r && r == 'ok') {
+														// 进入隐秘之洞下层，或人物被迷宫刷新甩出来之后重新进入
+														cga.getRandomMazeEntrance({
+															table: thisobj.data.curElementalObj.secondMaze.posList,
+															filter: (obj) => {
+																return obj.cell == 3 && obj.mapx >= thisobj.data.curElementalObj.secondMaze.xLimit[0] && obj.mapx <= thisobj.data.curElementalObj.secondMaze.xLimit[1] && obj.mapy >= thisobj.data.curElementalObj.secondMaze.yLimit[0] && obj.mapy <= thisobj.data.curElementalObj.secondMaze.yLimit[1];
+															},
+															blacklist: [],
+															expectmap: '隐秘之洞地下11层',
+														}, () => {
+															cb2('restart stage')
+														})
+													} else {
+														throw new Error('cga.buildTeam返回类型错误')
+													}
+												})
+											}
+										} else {
+											throw new Error('逻辑不应该出现在这里，请检查')
+										}
 									}
 									// 如果出口是下层出口，则准备打BOSS 
 									else if (curMapindex == thisobj.data.curElementalObj.secondMaze.exitMap) {
 										// 读取准备好的默认或外部传入的战斗配置
 										cga.loadBattleConfig(thisobj.data.battleFile)
+
 										// 走到BOSS面前，等待玩家手动与BOSS开战
-										cga.askNpcForObj({
-											act: 'battle', target: {
-												battle: thisobj.data.battleFile,
-												normal: thisobj.data.normalFile,
-											}, npcpos: thisobj.data.curElementalObj.bossPos, notalk: () => { return true }
-										}, () => {
-											// 如果战斗失败，则cga.waitForMap还可以实现等待再次战斗胜利继续脚本的效果。如果战斗胜利，cga.waitForMap也不会影响正常逻辑。
+										let bossNearby = cga.getRandomSpace(thisobj.data.curElementalObj.bossPos[0], thisobj.data.curElementalObj.bossPos[1])
+										cga.walkList([
+											bossNearby
+										], () => {
 											cga.waitForMap(thisobj.data.curElementalObj.winMap, () => {
 												// 解散队伍
 												cga.disbandTeam(() => {
@@ -261,12 +327,12 @@ var thisobj = {
 													})
 												})
 											})
-										})
+										});
 									} else {// 出口是意外地图
 										throw new Error('逻辑不应该出现在这里，请检查')
 									}
 								})
-							},2000)
+							}, 2000)
 						} else if (map == '圣骑士营地') {
 							if (deepBlueCnt < 3) {
 								console.warn('【UNAecho脚本警告】你身上深蓝药剂不足3个，预计难以维持到BOSS房间，推荐携带3-9个为宜。当深蓝药剂耗尽时，脚本将停止。')
@@ -290,6 +356,16 @@ var thisobj = {
 							}, () => {
 								cb2('restart stage')
 							})
+						} else if (mapindex == thisobj.data.curElementalObj.winMap) {// BOSS战胜利房间
+							// 解散队伍
+							cga.disbandTeam(() => {
+								// 与BOSS对话，获得对应的净化碎片
+								let obj = { act: 'item', target: thisobj.data.curElementalObj.purifiedShard, npcpos: thisobj.data.curElementalObj.bossPos }
+								cga.askNpcForObj(obj, () => {
+									// 重新执行本方法，会在最初发现已经持有净化碎片，并跳转
+									cb2('restart stage')
+								})
+							})
 						} else {
 							throw new Error('逻辑不应该出现在这里，请检查')
 						}
@@ -300,26 +376,55 @@ var thisobj = {
 							cga.waitForMap(curMaze.exitMap, () => {
 								let curMapindex = cga.GetMapIndex().index3
 								let curXY = cga.GetMapXY()
-								// 如果出口是上层的出口，并且人物在使用水晶传送前的区域，则使用水晶传送
-								if (curMapindex == thisobj.data.curElementalObj.firstMaze.exitMap && curXY.y <= thisobj.data.curElementalObj.splitAxis) {
-									thisobj.func.useEmblemCrystal(thisobj.data.curElementalObj, () => {
-										cb2('restart stage')
-										return
-									})
-								}
-								// 如果出口是上层的出口，并且人物在使用水晶传送后的区域，则组队
-								else if (curMapindex == thisobj.data.curElementalObj.firstMaze.exitMap && curXY.y > thisobj.data.curElementalObj.splitAxis) {
-									cga.buildTeam({ teammates: thisobj.data.teammates, timeout: 0, pos: thisobj.data.curElementalObj.buildTeamPos1_1 }, (r) => {
-										if (r && r == 'ok') {
-											// 等待进入BOSS房间
-											cga.waitForMap(thisobj.data.curElementalObj.secondMaze.exitMap, () => {
+								// 如果出口是上层的出口，则判断人物在哪个区域
+								if (curMapindex == thisobj.data.curElementalObj.firstMaze.exitMap) {
+									// 地洞是依靠y坐标判断
+									if (['地'].some(n => { return thisobj.data.curElementalObj.name.indexOf(n) != -1 })) {
+										// 如果人物在使用水晶传送前的区域，则使用水晶传送。
+										if (curXY.y <= thisobj.data.curElementalObj.splitAxis) {
+											thisobj.func.useEmblemCrystal(thisobj.data.curElementalObj, () => {
 												cb2('restart stage')
 												return
 											})
-										} else {
-											throw new Error('cga.buildTeam返回类型错误')
+										} else {// 如果人物在使用水晶传送后的区域，则组队
+											cga.buildTeam({ teammates: thisobj.data.teammates, timeout: 0, pos: thisobj.data.curElementalObj.buildTeamPos1_1 }, (r) => {
+												if (r && r == 'ok') {
+													// 等待进入BOSS房间
+													cga.waitForMap(thisobj.data.curElementalObj.secondMaze.exitMap, () => {
+														cb2('restart stage')
+														return
+													})
+												} else {
+													throw new Error('cga.buildTeam返回类型错误')
+												}
+											})
 										}
-									})
+
+									}
+									// 水、火、风洞是靠x坐标判断
+									else if (['水', '火', '风'].some(n => { return thisobj.data.curElementalObj.name.indexOf(n) != -1 })) {
+										// 如果人物在使用水晶传送前的区域，则使用水晶传送。
+										if (curXY.x <= thisobj.data.curElementalObj.splitAxis) {
+											thisobj.func.useEmblemCrystal(thisobj.data.curElementalObj, () => {
+												cb2('restart stage')
+												return
+											})
+										} else {// 如果人物在使用水晶传送后的区域，则组队
+											cga.buildTeam({ teammates: thisobj.data.teammates, timeout: 0, pos: thisobj.data.curElementalObj.buildTeamPos1_1 }, (r) => {
+												if (r && r == 'ok') {
+													// 等待进入BOSS房间
+													cga.waitForMap(thisobj.data.curElementalObj.secondMaze.exitMap, () => {
+														cb2('restart stage')
+														return
+													})
+												} else {
+													throw new Error('cga.buildTeam返回类型错误')
+												}
+											})
+										}
+									} else {
+										throw new Error('逻辑不应该出现在这里，请检查')
+									}
 								}
 								// 如果出口是下层出口，则准备打BOSS 
 								else if (curMapindex == thisobj.data.curElementalObj.secondMaze.exitMap) {
@@ -341,6 +446,16 @@ var thisobj = {
 									throw new Error('逻辑不应该出现在这里，请检查')
 								}
 							})
+						} else if (mapindex == thisobj.data.curElementalObj.winMap) {// BOSS战胜利房间
+							// 等待解散队伍
+							cga.disbandTeam(() => {
+								// 与BOSS对话，获得对应的净化碎片
+								let obj = { act: 'item', target: thisobj.data.curElementalObj.purifiedShard, npcpos: thisobj.data.curElementalObj.bossPos }
+								cga.askNpcForObj(obj, () => {
+									// 重新执行本方法，会在最初发现已经持有净化碎片，并跳转
+									cb2('restart stage')
+								})
+							})
 						} else {// 如果不在隐秘之洞中，那么肯定就在营地/肯吉罗岛的路上。那么开启等待进入上层出口（隐秘之洞10层）逻辑
 							cga.waitForMap(thisobj.data.curElementalObj.firstMaze.exitMap, () => {
 								cb2('restart stage')
@@ -353,14 +468,29 @@ var thisobj = {
 		{//2
 			intro: '2.与混乱的古树之灵对话获得晋阶资格并传送回召唤之间，任务完结。',
 			workFunc: function (cb2) {
-				if (cga.GetMapIndex().index3 != 27315) {
-					throw new Error('此步骤仅能在混乱的古树之灵房间完成')
+				let mapindex = cga.GetMapIndex().index3
+				if (mapindex == 27315) {
+					cga.disbandTeam(() => {
+						// 与BOSS对话，直至被传送回召唤之间，任务结束。如果已经5转，并且持有第11个技能栏，这里会赠与第12格技能栏。
+						cga.askNpcForObj({ act: 'map', target: '召唤之间', npcpos: [24, 24] }, () => {
+							cb2(true)
+						})
+					})
+					return
 				}
+
+				thisobj.data.curElementalObj = Object.values(thisobj.data.elementalInfo).find(e => {
+					return e.winMap == mapindex
+				})
+
+				if (!thisobj.data.curElementalObj) {
+					throw new Error('如果不在古树之灵房间，此步骤仅能在4元素BOSS战斗胜利房间运行。')
+				}
+
 				cga.disbandTeam(() => {
 					// 与BOSS对话，直至被传送回召唤之间，任务结束。如果已经5转，并且持有第11个技能栏，这里会赠与第12格技能栏。
-					let obj = { act: 'map', target: '召唤之间', npcpos: [24, 24] }
-					cga.askNpcForObj(obj, () => {
-						cb2(true)
+					cga.askNpcForObj({ act: 'map', target: 27315, npcpos: thisobj.data.curElementalObj.bossPos }, () => {
+						cb2('restart stage')
 					})
 				})
 				return
@@ -402,6 +532,8 @@ var thisobj = {
 		elementalInfo: {
 			// 地 
 			0: {
+				// 名称标记
+				name: '隐秘之地洞',
 				// 隐秘的徽记 itemid
 				emblem: 450949,
 				// 隐秘的水晶 itemid
@@ -430,35 +562,98 @@ var thisobj = {
 				crystal: '火风的水晶（5：5）'
 			},
 			// 水 
-			1: {},
+			1: {
+				// 名称标记
+				name: '隐秘之水洞',
+				// 隐秘的徽记 itemid
+				emblem: 450950,
+				// 隐秘的水晶 itemid
+				emblemCrystal: 450954,
+				// 净化的碎片 itemid
+				purifiedShard: 450958,
+				// 隐秘之洞上层迷宫数据
+				firstMaze: cga.mazeInfo['隐秘之水洞上层'],
+				// 隐秘之洞下层迷宫数据
+				secondMaze: cga.mazeInfo['隐秘之水洞下层'],
+				// 战斗胜利房间
+				winMap: 27308,
+				/**
+				 * 隐秘之洞上层出口，使用水晶传送前后区域的x/y轴分割坐标（大于/小于这个数值则视为传送前/后）
+				 * 使用X/Y坐标、大于/小于以及视为传送前/后，这个逻辑由你自行决定。
+				 * 默认使用x轴数值，小于等于视为传送水晶使用前
+				 */
+				splitAxis: 27,
+				// 隐秘之洞上层出口使用水晶传送后的落地坐标
+				afterUseEmblemCrystal: [29, 15],
+				// 隐秘之洞上层出口使用水晶传送后的组队坐标
+				buildTeamPos1_1: [29, 16],
+				// BOSS坐标
+				bossPos: [24, 28],
+				// 打该属性洞窟需要购买的商店水晶:
+				crystal: '风地的水晶（5：5）'
+			},
 			// 火 
-			2: {},
+			2: {
+				// 名称标记
+				name: '隐秘之火洞',
+				// 隐秘的徽记 itemid
+				emblem: 450951,
+				// 隐秘的水晶 itemid
+				emblemCrystal: 450955,
+				// 净化的碎片 itemid
+				purifiedShard: 450959,
+				// 隐秘之洞上层迷宫数据
+				firstMaze: cga.mazeInfo['隐秘之火洞上层'],
+				// 隐秘之洞下层迷宫数据
+				secondMaze: cga.mazeInfo['隐秘之火洞下层'],
+				// 战斗胜利房间
+				winMap: 27311,
+				/**
+				 * 隐秘之洞上层出口，使用水晶传送前后区域的x/y轴分割坐标（大于/小于这个数值则视为传送前/后）
+				 * 使用X/Y坐标、大于/小于以及视为传送前/后，这个逻辑由你自行决定。
+				 * 默认使用x轴数值，小于等于视为传送水晶使用前
+				 */
+				splitAxis: 23,
+				// 隐秘之洞上层出口使用水晶传送后的落地坐标
+				afterUseEmblemCrystal: [25, 21],
+				// 隐秘之洞上层出口使用水晶传送后的组队坐标
+				buildTeamPos1_1: [26, 21],
+				// BOSS坐标
+				bossPos: [28, 24],
+				// 打该属性洞窟需要购买的商店水晶:
+				crystal: '地水的水晶（5：5）'
+			},
 			// 风 
-			3: {},
-			// 隐秘的徽记（地）
-			450949: 20,
-			// 隐秘的徽记（水）
-			450950: 20,
-			// 隐秘的徽记（火）
-			450951: 20,
-			// 隐秘的徽记（风）
-			450952: 20,
-			// 隐秘的水晶（地）
-			450953: 1,
-			// 隐秘的水晶（水）
-			450954: 1,
-			// 隐秘的水晶（火）
-			450955: 1,
-			// 隐秘的水晶（风）
-			450956: 1,
-			// 净化的大地碎片
-			450957: 1,
-			// 净化的流水碎片
-			450958: 1,
-			// 净化的火焰碎片
-			450959: 1,
-			// 净化的烈风碎片
-			450960: 1,
+			3: {
+				// 名称标记
+				name: '隐秘之风洞',
+				// 隐秘的徽记 itemid
+				emblem: 450952,
+				// 隐秘的水晶 itemid
+				emblemCrystal: 450956,
+				// 净化的碎片 itemid
+				purifiedShard: 450960,
+				// 隐秘之洞上层迷宫数据
+				firstMaze: cga.mazeInfo['隐秘之风洞上层'],
+				// 隐秘之洞下层迷宫数据
+				secondMaze: cga.mazeInfo['隐秘之风洞下层'],
+				// 战斗胜利房间
+				winMap: 27314,
+				/**
+				 * 隐秘之洞上层出口，使用水晶传送前后区域的x/y轴分割坐标（大于/小于这个数值则视为传送前/后）
+				 * 使用X/Y坐标、大于/小于以及视为传送前/后，这个逻辑由你自行决定。
+				 * 默认使用x轴数值，小于等于视为传送水晶使用前
+				 */
+				splitAxis: 26,
+				// 隐秘之洞上层出口使用水晶传送后的落地坐标
+				afterUseEmblemCrystal: [32, 31],
+				// 隐秘之洞上层出口使用水晶传送后的组队坐标
+				buildTeamPos1_1: [32, 30],
+				// BOSS坐标
+				bossPos: [24, 20],
+				// 打该属性洞窟需要购买的商店水晶:
+				crystal: '水火的水晶（5：5）'
+			},
 		},
 	},
 	func: {// 任务自定义函数
@@ -581,6 +776,7 @@ var thisobj = {
 			if (curCrystalObj == undefined || curCrystalObj.name != thisobj.data.curElementalObj.crystal) {
 				// 如果水晶不是需要的属性，则边走边丢弃。
 				if (curCrystalObj && curCrystalObj.name != thisobj.data.curElementalObj.crystal) {
+					console.log('当前需要【' + thisobj.data.curElementalObj.crystal + '】，丢弃现有水晶（如果有），并去购买需要的水晶')
 					cga.DropItem(curCrystalObj.pos);
 				}
 				cga.travel.autopilot('商店', () => {
@@ -673,27 +869,23 @@ var thisobj = {
 				console.log('地图切换首末组队阶段，暂时阻止playerthink的组队监测..')
 			} else {
 				console.log('队伍与预设值', thisobj.param.teammates, '不符，中断任务')
-				// TODO 开发过程中暂时改为 return false
-				return false
-				// return function (cb) {
-				// 	// 返回任务的第index步
-				// 	cb(0)
-				// }
+				return function (cb) {
+					// 返回任务的第index步
+					cb(0)
+				}
 			}
 		}
 
-		// 受伤则中止任务
-		if (ctx.playerinfo.health > 0 || ctx.playerinfo.souls > 0) {
-			console.log('人物受伤，中断任务')
-			// TODO 开发过程中暂时改为 return false
-			return false
-			// return function (cb) {
-			// 	// 治疗、招魂
-			// 	healMode.func(() => {
-			// 		// 返回任务的第index步
-			// 		cb(0)
-			// 	})
-			// }
+		// 只有掉魂中止任务，受伤无视。因为走一回迷宫非常艰难
+		if (ctx.playerinfo.souls > 0) {
+			console.log('人物掉魂，中断任务')
+			return function (cb) {
+				// 治疗、招魂
+				healMode.func(() => {
+					// 返回任务的第index步
+					cb(0)
+				})
+			}
 		}
 
 		return true

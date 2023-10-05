@@ -11017,11 +11017,6 @@ module.exports = function(callback){
 					return
 				}
 
-				// 与NPC互动前，如果是战斗，则需要读取battle战斗配置
-				if(obj.act == "battle"){
-					cga.loadBattleConfig(obj.target.battle)
-				}
-
 				// 自定义与NPC交谈的内容
 				if(obj.say){
 					if (turnToFlag){
@@ -11071,6 +11066,10 @@ module.exports = function(callback){
 				// }
 
 				cga.waitTeammateReady(null, (r)=>{
+					// 与NPC互动前，如果是战斗，则需要读取battle战斗配置
+					if(obj.act == "battle"){
+						cga.loadBattleConfig(obj.target.battle)
+					}
 					retry(r)
 				}, (r)=>{
 					cb(r)
@@ -11410,7 +11409,9 @@ module.exports = function(callback){
 				 * 由于NPC周围只有1格可站立，部分队员无法在不离队的情况下与NPC对话。所以这里要考虑队员离队与NPC对话的做法。
 				 */
 				let spaceList2 = cga.getRandomSpace(spaceList[0],spaceList[1])
-				carryTeamToPosArr(npcpos,spaceList,spaceList2,true,cb)
+				// 如果是对话战斗的情况，不要离开队伍。例如战斗系五转的隐秘之洞最底层BOSS处，BOSS周围只有1格，但不可以解散队伍。
+				// 如果不是战斗，则离开或解散队伍。例如去咒术导师处，海里洞窟里与透明NPC对话说【咒术】那里
+				carryTeamToPosArr(npcpos,spaceList,spaceList2,(obj.act == 'battle' ? false : true),cb)
 			}else if(spaceList[0] instanceof Array){// 正常情况，NPC周围有2格或以上可站立
 				carryTeamToPosArr(npcpos,spaceList[0],spaceList[1],false,cb)
 			}
@@ -12566,7 +12567,7 @@ module.exports = function(callback){
 			forwardEntryTile : 17971,
 			backEntryTile : 17970,
 			tile : [9523,9538],
-			backTopPosList : [[26, 72,'']],// TODO
+			backTopPosList : [[17, 17,'']],
 		},
 		'隐秘之水洞上层' : {
 			name : '隐秘之水洞上层',
@@ -12594,7 +12595,7 @@ module.exports = function(callback){
 			forwardEntryTile : 17967,
 			backEntryTile : 17966,
 			tile : [9491,9506],
-			backTopPosList : [[26, 72,'']],// TODO
+			backTopPosList : [[17, 31,'']],
 		},
 		'隐秘之火洞上层' : {
 			name : '隐秘之火洞上层',
@@ -12608,7 +12609,7 @@ module.exports = function(callback){
 			forwardEntryTile : 17983,
 			backEntryTile : 17982,
 			tile : [9618,9633],
-			backTopPosList : [[26, 72,'']],// TODO
+			backTopPosList : [[9, 14,'']],
 		},
 		'隐秘之火洞下层' : {
 			name : '隐秘之火洞下层',
@@ -12622,7 +12623,7 @@ module.exports = function(callback){
 			forwardEntryTile : 17983,
 			backEntryTile : 17982,
 			tile : [9618,9633],
-			backTopPosList : [[26, 72,'']],// TODO
+			backTopPosList : [[31, 31,'']],
 		},
 		'隐秘之风洞上层' : {
 			name : '隐秘之风洞上层',
@@ -12636,21 +12637,21 @@ module.exports = function(callback){
 			forwardEntryTile : 17991,
 			backEntryTile : 17990,
 			tile : [9682,9697],
-			backTopPosList : [[26, 72,'']],// TODO
+			backTopPosList : [[7, 14,'']],
 		},
 		'隐秘之风洞下层' : {
 			name : '隐秘之风洞下层',
 			entryMap : 27312,
 			exitMap : 27313,
-			posList : [[36,17]],
-			xLimit : [36,36],
-			yLimit : [17,17],
+			posList : [[35,16]],
+			xLimit : [35,35],
+			yLimit : [16,16],
 			prefix:'隐秘之洞地下',
 			suffix:'层',
 			forwardEntryTile : 17991,
 			backEntryTile : 17990,
 			tile : [9682,9697],
-			backTopPosList : [[26, 72,'']],// TODO
+			backTopPosList : [[31, 17,'']],
 		},
 	}
 	/**
@@ -12711,11 +12712,12 @@ module.exports = function(callback){
 				if(tile[XY.y][XY.x] >= obj.tile[0] && tile[XY.y][XY.x] <= obj.tile[1]){
 					// 解析层数
 					let layerIndex = regexLayer(inputObj.name)
-					if(layerIndex < 10 && obj.name.indexOf('上层')){
+					if(layerIndex < 10 && obj.name.indexOf('上层') != -1){
 						return obj
-					}else if(layerIndex > 10 && obj.name.indexOf('下层')){
+					}else if(layerIndex > 10 && obj.name.indexOf('下层') != -1){
 						return obj
 					}
+					// layerIndex == 10的情况会在上面的exitMap被短路，这里不需要再写逻辑
 				}
 			}
 			// 最常见的判断方式，但必须在if逻辑的最后出现，因为会短路其它特殊地图的判断。

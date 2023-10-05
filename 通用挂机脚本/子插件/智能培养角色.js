@@ -102,6 +102,21 @@ var thisobj = {
 			)
 		) {
 			console.log('你没有达到职业的顶级，进入晋级判定..')
+			// 服务系需要特殊处理，将jobType改为战斗系或者生产系，这里记录是否改过jobType
+			let resetFlag = false
+			let jobTypeCache = null
+			if(curJobObj.jobType == '服务系'){
+				// 标记改过jobType，之后要还原
+				resetFlag = true
+				jobTypeCache = curJobObj.jobType
+				if(curJobObj.job == '医师' || curJobObj.job == '护士'){
+					console.log('医师和护士，将在晋级逻辑中改为战斗系')
+					curJobObj.jobType = '战斗系'
+				}else{
+					console.log('除了医师和护士，其余服务系将改为生产系，方便之后的分类判断')
+					curJobObj.jobType = '生产系'
+				}
+			}
 			let promoteObj = cga.job.promoteInfo[curJobObj.jobLv]
 			// 如果完成了对应的进阶任务，则初步判定可能需要晋级，进入判断得意技是否达标的逻辑。
 			if (promoteObj.mission[curJobObj.jobType].some(m => { return config.mission[m] })) {
@@ -218,6 +233,13 @@ var thisobj = {
 						// targetObj.missionName = '魔法大学'
 					}
 				}
+			}
+
+			// 如果改过服务系的jobType，这里要还原。以免日后新增逻辑出现bug
+			if(resetFlag){
+				console.log('智能培养角色的晋级逻辑判断完毕，还原改过的数据')
+				curJobObj.jobType = jobTypeCache
+				resetFlag = false
 			}
 		}
 

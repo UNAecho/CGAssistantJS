@@ -367,8 +367,8 @@ var thisobj = {
 									}
 									return false
 								})
-								// 检查数量。注意，服务端可能会多给（数量除以堆叠数出现余数情况）
-								if (received && receivedCount >= matchObj[5]) {
+								// 检查数量。注意，服务端可能会少给（当前手上已经有少于堆叠数的部分道具，如手上有1个深蓝药剂，想要14个凑满15个药剂。但服务端只会给你12个，因为给15个就会变成16个，超出1个）
+								if (received && receivedCount <= matchObj[5]) {
 									return true
 								}
 								console.log('【' + lockPlayerName + '】动作【' + reqObj.tradeType + '】【' + reqObj.name + '】验证失败！拒绝交易')

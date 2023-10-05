@@ -1,6 +1,5 @@
 var fs = require('fs');
 var Async = require('async');
-const { min } = require('moment');
 var cga = global.cga;
 var configTable = global.configTable;
 var socket = null;
