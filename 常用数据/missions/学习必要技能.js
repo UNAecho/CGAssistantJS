@@ -30,8 +30,17 @@ var thisobj = {
 		},
 	],
 	data: {// 任务数据，可自定义，方便使用
-		battleTypeSkills: ['调教', '气绝回复', '抗石化', '抗昏睡', '抗混乱',],
-		productTypeSkills: ['调教', '治疗',],
+		battleTypeSkills: [
+			'调教',
+			'气绝回复',
+			'抗石化',
+			// '抗昏睡', 
+			'抗混乱',
+		],
+		productTypeSkills: [
+			'调教',
+			'治疗',
+		],
 	},
 	func: {// 任务自定义函数
 		needLearn: (job) => {
@@ -43,7 +52,7 @@ var thisobj = {
 						// 先查询一下该技能是否能学
 						let reason = cga.skill.ableToLearn(thisobj.data.battleTypeSkills[i])
 						if (reason.indexOf('slot') != -1) {
-							console.log('【UNAecho脚本警告】人物剩余技能栏位不足，无法学习【'+thisobj.data.battleTypeSkills[i]+'】技能，跳过')
+							console.log('【UNAecho脚本警告】人物剩余技能栏位不足，无法学习【' + thisobj.data.battleTypeSkills[i] + '】技能，跳过')
 							continue
 						}
 						if (thisobj.data.battleTypeSkills[i].indexOf('抗') != -1 && cga.GetPlayerInfo().level < 40) {
@@ -71,6 +80,13 @@ var thisobj = {
 			if (targetSkill === null) {
 				if (jobObj.job == '格斗士' && cga.findPlayerSkill('气功弹') == null) {
 					targetSkill = '气功弹'
+				} else if (cga.findPlayerSkill('完美调教术') == null) {
+					// 如果当前职业是兽王，并且没有完美调教术，则学习
+					let curJobObj = cga.job.getJob()
+					if (curJobObj.job == '驯兽师' && curJobObj.jobLv == 5) {
+						targetSkill = '完美调教术'
+						console.log('【UNAecho脚本提醒】注意，完美调教术学习完毕后需要重新登录，宠物的忠诚才会发生变化。')
+					}
 				}
 			}
 
