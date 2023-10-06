@@ -465,13 +465,45 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 						if (resObj.resTargetType == 'item') {
 							/**
 							 * 说明：
-							 * 我在cga.findBankEmptySlot()中修改了部分逻辑，现在filter直接返回true，即可实现将身上任何道具都存入，腾出足够空间
-							 * filter直接return true即可
+							 * 这里的本意为【将身上的所有道具存到银行，腾出背包中的格子】
+							 * 但执行逻辑使用的是cga.saveToBankAll()，使用一个filter实现这个逻辑判断。
+							 * 受限于filter()的方法还要同时给cga.findBankEmptySlot()来辨别某一个格子是否可以存储或者继续堆叠存储（如银行本来有2个，现在放进去1个也可以）
+							 * filter()要实现的逻辑就很复杂：既要满足背包中的道具全部return true，也要对银行中的道具根据条件return true还是false。
+							 * 银行中的道具，如果是可以堆叠的，就要return true。如果是未鉴定的、count=0的、堆叠数叠加后超过目前要存的道具的，都要return false
+							 * 
+							 * 那么如何使用一个filter()满足所有逻辑呢？
+							 * 目前使用的解决办法：
+							 * 1、关于如何鉴别当前迭代的物品是背包物品还是银行物品：
+							 * 银行中的item pos从100（含）开始，那么将pos<100的物品，视为背包中的物品，pos>=100的物品，视为银行中的物品。这样filter()可以实现一个方法识别
+							 * 2、如何辨别当前迭代物品能否在银行中堆叠而不是使用新的空格子？
+							 * 在filter()的外部调用区域，定义一个item name的缓存。遍历背包时，如果决定要存该物品（return true）之前，缓存这个物品的name
+							 * 然后在cga.findBankEmptySlot()遍历银行中的可用格子时，如果遍历到的物品name与缓存name相等，视为可能会叠加的物品，然后根据maxcount判断是否可以往此格叠加。
+							 * 
+							 * TODO:已知bug，由于cga.saveToBankAll()以及相关的银行API，maxcount是在调用时就固定死的，所以当背包要存的东西manxcount不固定时，只能按照1种manxcount来执行
+							 * 就比如当你传入manxcount=3时，药剂、料理虽然适用，但狩猎、木材、矿物等manxcount=40的物品，也会被视为3个即占满一个格子。
+							 * 此问题的解决方案：cga.findBankEmptySlot()中的maxcount修改逻辑，变成可适配function类型和Number类型。
+							 * 当maxcount传入function类型时，会根据function return的数值来动态识别当前迭代的银行物品的堆叠数。
+							 * function目前使用cga.getItemMaxcount()来获取物品的maxcount值，请保持其数据健壮。
+							 * 
+							 * 目前投入生产环节使用，注意观察使用情况
 							 */
+
+							let itemNameCache = null
 							cga.saveToBankAll((it) => {
-								return true
+								// pos小于100视为身上物品
+								if (it.pos < 100) {
+									itemNameCache = it.name
+									return true
+								} else {// pos大于等于100银行物品，PS:银行第1格的pos就是100
+									if (it.name == itemNameCache) {
+										return true
+									}
+									return false
+								}
 							},
-								resObj.resTargetMaxcount,
+								(it) => {
+									return cga.getItemMaxcount(it)
+								},
 								(err) => {
 									setTimeout(thisobj.saveOfflineData, 1000, cb);
 								});

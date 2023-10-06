@@ -8010,11 +8010,15 @@ module.exports = function(callback){
 	 * 也就是当银行中的装备只有count>0时，才考虑在上面叠加，否则视为不可往上面叠加目标道具
 	 * 
 	 * @param {*} filter 
-	 * @param {*} maxcount 
+	 * @param {Number|Function} maxcount 
 	 * @param {*} maxslots 
 	 * @returns 
 	 */
 	cga.findBankEmptySlot = (filter, maxcount, maxslots = 20) => {
+
+		if(typeof maxcount != 'number' && typeof maxcount != 'function'){
+			throw new Error('maxcount类型必须为Number或Function类型')
+		}
 		
 		var banks = cga.GetBankItemsInfo();
 
@@ -8023,23 +8027,23 @@ module.exports = function(callback){
 		for(var i = 0; i < banks.length; ++i){
 			arr[banks[i].pos-100] = banks[i];
 		}
-		
+
 		for(var i = 0; i < maxslots; ++i){
 			if(typeof arr[i] != 'undefined'){
 				// UNAecho:count=0的装备无法继续堆叠，跳过此格
 				if(arr[i].count == 0){
 					continue
 				}
-				if(typeof filter == 'string' && maxcount > 0){
-					if(arr[i].name == filter && arr[i].count < maxcount)
+				if(typeof filter == 'string' && (typeof maxcount == 'function' ? maxcount(arr[i]) : maxcount) > 0){
+					if(arr[i].name == filter && arr[i].count < (typeof maxcount == 'function' ? maxcount(arr[i]) : maxcount))
 						return 100+i;
 				}
-				else if(typeof filter == 'number' && maxcount > 0){
-					if(arr[i].itemid == filter && arr[i].count < maxcount)
+				else if(typeof filter == 'number' && (typeof maxcount == 'function' ? maxcount(arr[i]) : maxcount) > 0){
+					if(arr[i].itemid == filter && arr[i].count < (typeof maxcount == 'function' ? maxcount(arr[i]) : maxcount))
 						return 100+i;
 				}
-				else if(typeof filter == 'function' && maxcount > 0){
-					if(filter(arr[i]) && arr[i].count < maxcount)
+				else if(typeof filter == 'function' && (typeof maxcount == 'function' ? maxcount(arr[i]) : maxcount) > 0){
+					if(filter(arr[i]) && arr[i].count < (typeof maxcount == 'function' ? maxcount(arr[i]) : maxcount))
 						return 100+i;
 				}
 			} else {
@@ -16562,7 +16566,8 @@ module.exports = function(callback){
 			if (item.name.startsWith('隐秘的徽记')) return 20;
 			return 40;
 		}
-		console.warn('【UNAecho脚本警告】物品【' + item.name + '】没有查询到堆叠数，默认返回0。如需完善，请联系作者https://github.com/UNAecho。')
+		if (['铜钥匙','白钥匙','黑钥匙'].indexOf(item.name) >= 0) return 999;
+		console.warn('【UNAecho脚本警告】物品' , item , '没有查询到堆叠数，默认返回0。如需完善，请联系作者https://github.com/UNAecho。')
 		return 0
 	}
 
