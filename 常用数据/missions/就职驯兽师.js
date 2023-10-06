@@ -155,6 +155,11 @@ var thisobj = {
 		{
 			intro: '5、返回法兰城与相关职业就职人员对话，就职成功，任务完结。',
 			workFunc: (cb2) => {
+				// 如果为true，则任务只进行到获取推荐信就结束
+				if(thisobj.data.letter){
+					cb2(true)
+					return
+				}
 				let obj = { act: 'job', target: thisobj.data.job.job }
 				cga.askNpcForObj(obj, () => {
 					cb2(true)
@@ -184,11 +189,14 @@ var thisobj = {
 			return (cga.getItemCount('驯兽师推荐信') > 0) ? true : false;
 		},
 		function () {
-			return (cga.job.getJob().job == '驯兽师') ? true : false;
+			// 如果已经是驯兽师，并且不是仅为了拿保证书的情况下会返回true
+			return cga.job.getJob().job == '驯兽师' && thisobj.data.letter == false
 		}
 	],
 	data: {// 任务数据，可自定义，方便使用
-		job: cga.job.getJob('驯兽师')
+		job: cga.job.getJob('驯兽师'),
+		// 如果为true，则任务只进行到获取推荐信就结束。默认false
+		letter: false
 	},
 	func: {// 任务自定义函数
 
@@ -198,6 +206,11 @@ var thisobj = {
 		cga.loadBattleConfig('战斗赶路')
 		// 接受外部传入的参数
 		thisobj.param = param
+		// 如果传入了只拿介绍信，则此任务只做到介绍信即停止
+		if(thisobj.param.letter){
+			thisobj.data.letter = true
+			console.log('你选择了任务只进行到拿推荐信即结束，脚本将在就职前结束任务。')
+		}
 		var task = cga.task.Task(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements)
 		task.doTask(cb)
 		return
