@@ -136,38 +136,33 @@ var thisobj = {
 					// 如果有要去的迷宫，更新数据
 					thisobj.data.curElementalObj = thisobj.data.elementalInfo[mazeIndex]
 
-					// 补充状态、更换水晶等
-					if (cga.travel.isInVillage()) {
-						// 全员执行战前物资准备，getPrepareObj()有默认选项，如果外部传入，则使用外部传入代替
-						thisobj.func.bankObj.manualPrepare(thisobj.func.getPrepareObj(), () => {
-							thisobj.func.healObj.func(() => {
-								cga.travel.falan.toCamp(() => {
-									// 接任务，以及换对应属性的隐秘水晶
-									let obj = { act: 'item', target: thisobj.data.curElementalObj.emblemCrystal, npcpos: [100, 84], waitLocation: 44690 }
-									cga.askNpcForObj(obj, () => {
-										// 再补血一次，防止人物在来营地过程中耗血耗蓝
-										cga.travel.toHospital(() => {
-											// 水晶符合要求则跳过，不符合则购买
-											thisobj.func.buyCrystal(() => {
-												// 组队出发
-												cga.travel.autopilot('主地图', () => {
-													cga.buildTeam({ teammates: thisobj.data.teammates, timeout: 0, pos: [96, 87] }, (r) => {
-														if (r && r == 'ok') {
-															cb2(true)
-														} else {
-															throw new Error('cga.buildTeam返回类型错误')
-														}
-													})
+					// 全员执行战前物资准备，getPrepareObj()有默认选项，如果外部传入，则使用外部传入代替
+					thisobj.func.bankObj.manualPrepare(thisobj.func.getPrepareObj(), () => {
+						thisobj.func.healObj.func(() => {
+							cga.travel.falan.toCamp(() => {
+								// 接任务，以及换对应属性的隐秘水晶
+								let obj = { act: 'item', target: thisobj.data.curElementalObj.emblemCrystal, npcpos: [100, 84], waitLocation: 44690 }
+								cga.askNpcForObj(obj, () => {
+									// 再补血一次，防止人物在来营地过程中耗血耗蓝
+									cga.travel.toHospital(() => {
+										// 水晶符合要求则跳过，不符合则购买
+										thisobj.func.buyCrystal(() => {
+											// 组队出发
+											cga.travel.autopilot('主地图', () => {
+												cga.buildTeam({ teammates: thisobj.data.teammates, timeout: 0, pos: [96, 87] }, (r) => {
+													if (r && r == 'ok') {
+														cb2(true)
+													} else {
+														throw new Error('cga.buildTeam返回类型错误')
+													}
 												})
 											})
 										})
 									})
-								});
-							})
+								})
+							});
 						})
-					} else {
-						console.log('当前不在城镇内，脚本停止，请自行回到城内，重新启动脚本。')
-					}
+					})
 				})
 			}
 		},
@@ -725,39 +720,6 @@ var thisobj = {
 				}
 			}, delayTime)
 			return
-		},
-		// 检查本次需要打哪一个洞窟。如果传入特定称号，则检查传入的参数。如果没传入，则检查全队或个人
-		getMazeIndex: (nick) => {
-			// 如果有参数传入，检查参数
-			if (nick && typeof nick == 'string') {
-				for (let nickIdx in nick) {
-					if (nick[nickIdx] == '0') {
-						return parseInt(nickIdx)
-					}
-				}
-				return -1
-			}
-
-			// 如果参数没传或不合规，则检查全队称号或个人称号
-			let teamplayers = cga.getTeamPlayers()
-			// 如果在队伍中，检查全队
-			if (teamplayers.length) {
-				for (let i in teamplayers) {
-					for (let nickIdx in teamplayers[i].nick) {
-						if (teamplayers[i].nick[nickIdx] == '0') {
-							return parseInt(nickIdx)
-						}
-					}
-				}
-			} else {// 如果不在队伍中，则检查自己个人
-				let playerInfo = cga.GetPlayerInfo()
-				for (let nickIdx in playerInfo.nick) {
-					if (playerInfo.nick[nickIdx] == '0') {
-						return parseInt(nickIdx)
-					}
-				}
-			}
-			return -1
 		},
 		// 隐秘之洞10层使用水晶传送
 		useEmblemCrystal: (elementalMazeInfo, cb) => {
