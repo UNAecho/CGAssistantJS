@@ -135,46 +135,35 @@ var thisobj = {
 					}
 					// 如果有要去的迷宫，更新数据
 					thisobj.data.curElementalObj = thisobj.data.elementalInfo[mazeIndex]
-					// 队长需要备足深蓝药剂
-					if (thisobj.data.isTeamLeader && cga.getItemCount(18526) < 12) {
-						console.log('队长需要备足深蓝药剂')
-						thisobj.func.bankObj.manualPrepare({
-							"item": [{
-								"name": "香水：深蓝九号",
-								"upper": 15,
-								"lower": 12
-							}],
-						}, () => {
-							cb2('restart stage')
-						})
-						return
-					}
 
 					// 补充状态、更换水晶等
 					if (cga.travel.isInVillage()) {
-						thisobj.func.healObj.func(() => {
-							cga.travel.falan.toCamp(() => {
-								// 接任务，以及换对应属性的隐秘水晶
-								let obj = { act: 'item', target: thisobj.data.curElementalObj.emblemCrystal, npcpos: [100, 84], waitLocation: 44690 }
-								cga.askNpcForObj(obj, () => {
-									// 再补血一次，防止人物在来营地过程中耗血耗蓝
-									cga.travel.toHospital(() => {
-										// 水晶符合要求则跳过，不符合则购买
-										thisobj.func.buyCrystal(() => {
-											// 组队出发
-											cga.travel.autopilot('主地图', () => {
-												cga.buildTeam({ teammates: thisobj.data.teammates, timeout: 0, pos: [96, 87] }, (r) => {
-													if (r && r == 'ok') {
-														cb2(true)
-													} else {
-														throw new Error('cga.buildTeam返回类型错误')
-													}
+						// 全员执行战前物资准备，getPrepareObj()有默认选项，如果外部传入，则使用外部传入代替
+						thisobj.func.bankObj.manualPrepare(thisobj.func.getPrepareObj(), () => {
+							thisobj.func.healObj.func(() => {
+								cga.travel.falan.toCamp(() => {
+									// 接任务，以及换对应属性的隐秘水晶
+									let obj = { act: 'item', target: thisobj.data.curElementalObj.emblemCrystal, npcpos: [100, 84], waitLocation: 44690 }
+									cga.askNpcForObj(obj, () => {
+										// 再补血一次，防止人物在来营地过程中耗血耗蓝
+										cga.travel.toHospital(() => {
+											// 水晶符合要求则跳过，不符合则购买
+											thisobj.func.buyCrystal(() => {
+												// 组队出发
+												cga.travel.autopilot('主地图', () => {
+													cga.buildTeam({ teammates: thisobj.data.teammates, timeout: 0, pos: [96, 87] }, (r) => {
+														if (r && r == 'ok') {
+															cb2(true)
+														} else {
+															throw new Error('cga.buildTeam返回类型错误')
+														}
+													})
 												})
 											})
 										})
 									})
-								})
-							});
+								});
+							})
 						})
 					} else {
 						console.log('当前不在城镇内，脚本停止，请自行回到城内，重新启动脚本。')
@@ -660,6 +649,21 @@ var thisobj = {
 		bankObj: require('../../通用挂机脚本/子插件/自动存取.js'),
 		healObj: require('../../通用挂机脚本/公共模块/治疗和招魂.js'),
 		configMode: require('../../通用挂机脚本/公共模块/读取战斗配置.js'),
+		// 任务默认需要准备的物品，需要通过移动银行.js和自动存取.js实现。
+		getPrepareObj: () => {
+			// 队长
+			if (thisobj.data.isTeamLeader) {
+				return {
+					"item": [{
+						"name": "香水：深蓝九号",
+						"upper": 15,
+						"lower": 12
+					}],
+				}
+			}
+			// 队员
+			return {}
+		},
 		// 更新当前各元素净化碎片的持有状态，将自己的称号打上标记，并将该标记返回。
 		refreshProgress: (cb) => {
 			let nick = ''
@@ -921,6 +925,14 @@ var thisobj = {
 			thisobj.data.normalFile = thisobj.param.normal
 		} else {
 			console.log('【UNAecho脚本提醒】你没有传入赶路时所使用的战斗配置文件名，脚本使用默认文件【' + thisobj.data.normalFile + '】来战斗')
+		}
+
+		// 外部传入的战前物资调整函数
+		if (thisobj.param.hasOwnProperty('prepare')) {
+			console.log('【UNAecho脚本提醒】你传入了战前物资调整函数，将按照自定义函数准备物资')
+			thisobj.func.getPrepareObj = thisobj.param.prepare
+		} else {
+			console.log('【UNAecho脚本提醒】你没有传入战前物资调整函数prepare，脚本使用默认配置进行调整')
 		}
 
 		var task = cga.task.TaskWithThink(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements, thisobj.taskPlayerThink)
