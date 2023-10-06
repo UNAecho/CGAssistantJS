@@ -1,4 +1,3 @@
-var fs = require('fs');
 var Async = require('async');
 
 var cga = global.cga;
@@ -34,31 +33,32 @@ var thisobj = {
 			return
 		}
 
-		// 初始化任务对象，missionName不能初始化，后续使用hasOwnProperty('missionName')来判断是否需要运行任务。
-		let targetObj = { param: {} }
+		// 任务对象，后续使用targetObj!=null来判断是否需要运行任务。
+		let targetObj = null
 		// 未就职小号
 		if (curJobObj.curJob == '游民') {
 			if (thisobj.finalJob.jobType == '战斗系' || thisobj.finalJob.jobType == '服务系') {
 				if (cga.getItemCount('驯兽师推荐信') > 0) {
 					console.log('战斗系或服务系拿完驯兽推荐信之后，先就职矿工练级，方便单人开传送。在刷声望前，随便转职。')
-					targetObj.missionName = '就职矿工'
+					targetObj = { mission: '就职矿工', param: {} }
 				} else {
-					targetObj.missionName = '拿驯兽师推荐信'
+					// 传入letter=true意为只拿推荐信，不就职
+					targetObj = { mission: '就职驯兽师', param: {letter : true} }
 				}
 			} else {
 				if (thisobj.finalJob.job == '猎人') {
-					targetObj.missionName = '就职猎人'
+					targetObj = { mission: '就职猎人', param: {} }
 				} else if (thisobj.finalJob.job == '樵夫') {
-					targetObj.missionName = '就职樵夫'
+					targetObj = { mission: '就职樵夫', param: {} }
 				} else if (thisobj.finalJob.job == '矿工') {
-					targetObj.missionName = '就职矿工'
+					targetObj = { mission: '就职矿工', param: {} }
 				}
 			}
 		}
 
 		// 生产系自行开启所有传送，至少40级才能过海，最好再高级一点，否则40级容易被飞
-		if (!targetObj.hasOwnProperty('missionName') && playerInfo.level >= 70 && curJobObj.jobType == '生产系' && !config.allstonedone) {
-			targetObj.missionName = '单人开全部传送'
+		if (targetObj != null && playerInfo.level >= 70 && curJobObj.jobType == '生产系' && !config.allstonedone) {
+			targetObj = { mission: '单人开全部传送', param: {} }
 		}
 
 		/**
@@ -105,14 +105,14 @@ var thisobj = {
 			// 服务系需要特殊处理，将jobType改为战斗系或者生产系，这里记录是否改过jobType
 			let resetFlag = false
 			let jobTypeCache = null
-			if(curJobObj.jobType == '服务系'){
+			if (curJobObj.jobType == '服务系') {
 				// 标记改过jobType，之后要还原
 				resetFlag = true
 				jobTypeCache = curJobObj.jobType
-				if(curJobObj.job == '医师' || curJobObj.job == '护士'){
+				if (curJobObj.job == '医师' || curJobObj.job == '护士') {
 					console.log('医师和护士，将在晋级逻辑中改为战斗系')
 					curJobObj.jobType = '战斗系'
-				}else{
+				} else {
 					console.log('除了医师和护士，其余服务系将改为生产系，方便之后的分类判断')
 					curJobObj.jobType = '生产系'
 				}
@@ -212,9 +212,9 @@ var thisobj = {
 				// 如果是生产系，可自行完成晋级任务
 				if (curJobObj.jobType == '生产系') {
 					if (curJobObj.jobLv == 0) {
-						targetObj.missionName = '咖哩任务'
+						targetObj = { mission: '咖哩任务', param: {} }
 					} else if (curJobObj.jobLv == 1) {
-						targetObj.missionName = '起司的任务'
+						targetObj = { mission: '起司的任务', param: {} }
 						let config = cga.loadPlayerConfig();
 						if (config && config["mission"]) {
 							let item = '好像很好吃的起司'
@@ -236,7 +236,7 @@ var thisobj = {
 			}
 
 			// 如果改过服务系的jobType，这里要还原。以免日后新增逻辑出现bug
-			if(resetFlag){
+			if (resetFlag) {
 				console.log('智能培养角色的晋级逻辑判断完毕，还原改过的数据')
 				curJobObj.jobType = jobTypeCache
 				resetFlag = false
@@ -244,21 +244,20 @@ var thisobj = {
 		}
 
 		// 如果没有职业晋级或切换需求，开始检查技能情况
-		if (!targetObj.hasOwnProperty('missionName')) {
+		if (targetObj == null) {
 			let needLearn = learnSkillMission.func.needLearn(thisobj.finalJob.job)
 			if (needLearn != null && cga.skill.ableToLearn(needLearn) == 'able to learn') {
-				targetObj.missionName = '学习必要技能'
-				targetObj.param.job = thisobj.finalJob.job
+				targetObj = { mission: '学习必要技能', param: { job: thisobj.finalJob.job } }
 			}
 		}
 
 		// 任务制作
-		if (targetObj.hasOwnProperty('missionName')) {
-			console.log('你需要运行【', targetObj.missionName, '】脚本')
-			let missionObj = require(rootdir + '/常用数据/missions/' + targetObj.missionName + '.js');
+		if (targetObj != null) {
+			console.log('你需要运行【', targetObj.mission, '】脚本')
+			let missionObj = require(rootdir + '/常用数据/missions/' + targetObj.mission + '.js');
 			// 调用任务自己的dotask方法，目的是传入参数。否则cga.task.Task无法接收外部参数，只能在任务里写死，不够灵活。
 			missionObj.doTask(targetObj.param, () => {
-				console.log('【', targetObj.missionName, '】结束，返回prepare中重新判断是否需要其它行为..')
+				console.log('【', targetObj.mission, '】结束，返回prepare中重新判断是否需要其它行为..')
 				thisobj.prepare(cb)
 			})
 			return
