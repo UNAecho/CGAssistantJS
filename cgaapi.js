@@ -6298,7 +6298,7 @@ module.exports = function(callback){
 		}, cb回调)
 		
 		// UNAecho:【回避路径上NPC的方式】
-		// 在第6个参数传入true，则回避路径上可能碰撞的NPC，防止进入不必要的战斗，例如随即迷宫中的NPC
+		// 在index 6的地方传入true，则回避路径上可能碰撞的NPC，防止进入不必要的战斗，例如随即迷宫中的NPC
 		cga.walkList({
 			[坐标x, 坐标y, 地图索引(可为null), 传送目标x(可为null), 传送目标y(可为null),[],true]
 		}, cb回调)
@@ -13836,13 +13836,16 @@ module.exports = function(callback){
 	 * @param {*} cb 
 	 * @returns 
 	 */
-	cga.thoroughSearchMap = (mazeInfo,cache={},checkObj,cb) => {
+	cga.thoroughSearchMap = (mazeInfo, cache = {}, checkObj, cb) => {
 
 		// 本层迷宫名称
 		let layerName = cga.GetMapName()
+		// 本层迷宫是否刷新，没有刷新则可以沿用缓存数据
+		let refresh = null
+
 		// 如果没有迷宫数据或传入对象数据格式不正确，则重新获取
 		if (Object.prototype.toString.call(mazeInfo) == '[object Object]' || !mazeInfo.hasOwnProperty('forwardEntryTile')) {
-			mazeInfo = cga.getMazeInfo({name:layerName})
+			mazeInfo = cga.getMazeInfo({ name: layerName })
 		}
 
 		// 缓存初始化
@@ -13896,25 +13899,25 @@ module.exports = function(callback){
 
 		// 计算周围8点有多少碰撞点
 		// 注意游戏坐标的xy在cga.buildMapCollisionMatrix().matrix这里要反着用，因为matrix中y是1维坐标，x是2维坐标
-		let calCnt = (walls,x,y) => {
+		let calCnt = (walls, x, y) => {
 			let cnt = 0
-			if(walls[y][x-1] == 1)
+			if (walls[y][x - 1] == 1)
 				cnt += 1
-			if(walls[y][x+1] == 1)
+			if (walls[y][x + 1] == 1)
 				cnt += 1
-			if(walls[y-1][x] == 1)
+			if (walls[y - 1][x] == 1)
 				cnt += 1
-			if(walls[y+1][x] == 1)
+			if (walls[y + 1][x] == 1)
 				cnt += 1
-			if(walls[y+1][x+1] == 1)
+			if (walls[y + 1][x + 1] == 1)
 				cnt += 1
-			if(walls[y+1][x-1] == 1)
+			if (walls[y + 1][x - 1] == 1)
 				cnt += 1
-			if(walls[y-1][x+1] == 1)
+			if (walls[y - 1][x + 1] == 1)
 				cnt += 1
-			if(walls[y-1][x-1] == 1)
+			if (walls[y - 1][x - 1] == 1)
 				cnt += 1
-			
+
 			return cnt;
 		}
 
@@ -13927,57 +13930,64 @@ module.exports = function(callback){
 			let walls = cga.buildMapCollisionMatrix(true)
 
 			// 识别可通行的点与不可通行的墙壁，注意这里必须用cga.buildMapCollisionMatrix()来识别墙（而不是cga.buildMapCollisionRawMatrix()），否则会出现墙体被识别为可通行的bug
-			let foundedPoints = getFoundedPoints(walls,current)
+			let foundedPoints = getFoundedPoints(walls, current)
 			// 将视野范围内的信息记录到缓存中
-			view(current,foundedPoints,colraw)
+			view(current, foundedPoints, colraw)
+
+			// 如果view()中将refresh置为false，并且地图的complete已经标记为true（完全探索）则中止探索。
+			if (refresh === false && cache[mazeInfo.name][layerName].complete) {
+				console.log('cga.thoroughSearchMap()判断本层迷宫没有刷新，可以沿用缓存数据')
+				cb(cache,'no refresh')
+				return
+			}
 
 			// view()过后，执行识别函数与动作函数，如果有中断信号，则中断搜索迷宫。
-			cga.checkMazeCacheInternal(cache[mazeInfo.name][layerName],checkObj,(result)=>{
+			cga.checkMazeCacheInternal(cache[mazeInfo.name][layerName], checkObj, (result) => {
 				// 如果继续探索
-				if(result === true || result === null){
+				if (result === true || result === null) {
 					// 开始探索，先看看缓存中有没有未探索区域，如果有，则优先探索
 					for (let keyPoint in viewCache) {
-						if(viewCache[keyPoint] === false){
+						if (viewCache[keyPoint] === false) {
 							let next = keyPoint.split('-').map(Number)
-							// 第6个参数传入true，代表躲避NPC走路
-							next = next.concat([null,null,null,[],true])
-							if(cga.isPathAvailable(current.x, current.y, next[0], next[1])){
+							// 第6个index传入true，代表躲避NPC走路
+							next = next.concat([null, null, null, [], true])
+							if (cga.isPathAvailable(current.x, current.y, next[0], next[1])) {
 								cga.walkList(
-									[next], 
+									[next],
 									() => {
 										findNext(cb)
 									}
-								)	
+								)
 								return
-							}else{
-								console.log('未探索区域:', next,'，但是无法抵达，舍弃')
+							} else {
+								console.log('未探索区域:', next, '，但是无法抵达，舍弃')
 							}
 						}
 					}
-		
+
 					// 再看看有没有未探索墙壁，如果有，则探索其附近可通行格子
 					for (let w in foundedPoints.wall) {
 						// 一个wall point周围有至少5个wall point，视为未探索wall point
-						if(calCnt(colraw.matrix,foundedPoints.wall[w].x,foundedPoints.wall[w].y) > 4){
-							let next = cga.getRandomSpace(w.x,w.y)
+						if (calCnt(colraw.matrix, foundedPoints.wall[w].x, foundedPoints.wall[w].y) > 4) {
+							let next = cga.getRandomSpace(w.x, w.y)
 							// 第6个参数传入true，代表躲避NPC走路
-							next = next.concat([null,null,null,[],true])
+							next = next.concat([null, null, null, [], true])
 							console.log('未探索墙壁:', next)
 							cga.walkList(
-								[next], 
+								[next],
 								() => {
 									findNext(cb)
 								}
-							);	
+							);
 							return
 						}
 					}
-			
+
 					console.log('本层已全部探索完毕..')
 					// 如果既没有未探索领域，也没有未探索墙壁，则视为本层已探索完毕，callback返回缓存与非中断信号true，退出API
 					cb(cache, true)
 					return
-				}else if(result === false){// 如果中断探索
+				} else if (result === false) {// 如果中断探索，callback返回缓存与中断信号false，退出API
 					cb(cache, false)
 				}
 			})
@@ -13994,39 +14004,73 @@ module.exports = function(callback){
 		 * 
 		 * 建议外部调用的函数，在进入地图时，记录起始位置，来分别到底是后退楼梯还是出口
 		 */
-		let view = (current,foundedPoints,colraw) => {
+		let view = (current, foundedPoints, colraw) => {
 			// 获取碰撞类单位，如楼梯、boss、传送水晶等
 			let mapObjs = cga.getMapObjects(true)
 			// 记录视野范围内的单位，如NPC、宝箱等。视野范围为11格（含）投影距离。游戏设定即为如此。
 			let units = cga.GetMapUnits()
 			// 当前楼层唯一识别id(mapindex + '_' + layerName)
 			let id = cga.GetMapIndex().index3 + '_' + layerName
-			// 分析迷宫是否刷新
-			if(cache[mazeInfo.name][layerName].hasOwnProperty('id')){
-				if(cache[mazeInfo.name][layerName].id != id){
-					console.warn('【UNAecho脚本警告】当前迷宫mapindex与缓存不符，判定为迷宫已经刷新，初始化本迷宫所有数据..')
-					// 仅删除此迷宫数据，其它迷宫数据不动
-					cache[mazeInfo.name] = {}
-					// 刷新id
-					cache[mazeInfo.name][layerName] = {id:id}
+			
+			// 分析迷宫是否刷新，先判断当前楼层有没有唯一识别id。如果有，并且没有判断过迷宫是否刷新，则进行进一步判断
+			if (cache[mazeInfo.name][layerName].hasOwnProperty('id')) {
+				// 如果没有确认过迷宫是否刷新
+				if(refresh === null){
+					// 如果唯一识别id与缓存中一致，则进行进一步判断
+					if (cache[mazeInfo.name][layerName].id == id) {
+						// 获取所有水晶或楼梯单位的坐标，进行判断。如果目前地图上所有的水晶或楼梯均与缓存中一致，则视为迷宫未刷新，可继续沿用缓存数据。中止view()，停止探索。
+						if (mapObjs.every(m => {
+							let doorOrStair = cache[mazeInfo.name][layerName][m.mapx + '_' + m.mapy]
+							if (!doorOrStair) {
+								return false
+							}
+							// 不是水晶或楼梯的单位跳过，避免逻辑混乱
+							if(!['door','forward','back'].includes(doorOrStair.type)){
+								return true
+							}
+							return m.mapx == doorOrStair.x && m.mapy == doorOrStair.y
+						})) {
+							console.log('当前地图的楼梯与水晶单位均与缓存中一致，视为迷宫未刷新，可继续沿用缓存数据。')
+							refresh = false
+							return
+						} else {// 小概率事件，如果地图唯一识别id与缓存一致，但水晶或楼梯的坐标却发生的变化，则视为迷宫已经变化，初始化本迷宫所有数据
+							console.warn('【UNAecho脚本警告】当前迷宫mapindex虽然与缓存中一致，但水晶或楼梯的坐标发生了变化。判定为迷宫已经刷新，初始化本迷宫所有数据..')
+							// 迷宫已经刷新，标记状态
+							refresh = true
+							// 仅删除此迷宫数据，其它迷宫数据不动
+							cache[mazeInfo.name] = {}
+							// 刷新id
+							cache[mazeInfo.name][layerName] = { id: id }
+						}
+					} else {// 如果唯一识别id与缓存中不同，则视为迷宫已经刷新
+						console.warn('【UNAecho脚本警告】当前迷宫mapindex与缓存不符，判定为迷宫已经刷新，初始化本迷宫所有数据..')
+						// 迷宫已经刷新，标记状态
+						refresh = true
+						// 仅删除此迷宫数据，其它迷宫数据不动
+						cache[mazeInfo.name] = {}
+						// 初始化id
+						cache[mazeInfo.name][layerName] = { id: id }
+					}
 				}
-			}else{
+			} else {// 如果没有唯一识别id，则初始化
 				cache[mazeInfo.name][layerName].id = id
+				// 迷宫没有探索过，refresh标记为true防止重置数据
+				refresh = true
 			}
 
 			for (let u of units) {
-				if(u.valid != 2){
-					console.log('无效目标',u,'的valid!=2，跳过')
+				if (u.valid != 2) {
+					console.log('无效目标', u, '的valid!=2，跳过')
 					continue
 				}
 				let uid = u.xpos + '_' + u.ypos
 				// 宝箱
 				if (u.type == 2 && u.model_id != 0 && (u.flags & 1024) != 0) {
-					if(cache[mazeInfo.name][layerName].hasOwnProperty(uid)){
+					if (cache[mazeInfo.name][layerName].hasOwnProperty(uid)) {
 						continue
 					}
 					// 额外记录一下model_id，观察宝箱的model_id是否在一定范围内。否则无法判断一个物体是丢弃在地上的道具，还是宝箱
-					cache[mazeInfo.name][layerName][uid] = { name: u.item_name, type: 'box', x: u.xpos, y: u.ypos ,model_id : u.model_id}
+					cache[mazeInfo.name][layerName][uid] = { name: u.item_name, type: 'box', x: u.xpos, y: u.ypos, model_id: u.model_id }
 				}
 				/**
 				 * NPC或者碰撞类单位
@@ -14038,23 +14082,23 @@ module.exports = function(callback){
 				 * 5、我个人推测type=1的NPC是可以被击倒一定时间后重生的，而type = 2的宝箱，开过了就是没有了 TODO有待验证
 				 */
 				if (u.type == 1 && (u.flags & 4096) != 0) {
-					if(cache[mazeInfo.name][layerName].hasOwnProperty(uid)){
+					if (cache[mazeInfo.name][layerName].hasOwnProperty(uid)) {
 						continue
 					}
 					// 楼梯或传送水晶
 					if (mapObjs.some(m => { return m.cell == 3 && m.x == u.xpos && m.y == u.ypos })) {
 						if (u.model_id == 0) {// 楼梯
 							let stairType = 'unknown'
-							if(colraw.matrix[u.ypos][u.xpos] == mazeInfo.forwardEntryTile){
+							if (colraw.matrix[u.ypos][u.xpos] == mazeInfo.forwardEntryTile) {
 								stairType = 'forward'
-							}else if(colraw.matrix[u.ypos][u.xpos] == mazeInfo.backEntryTile){
+							} else if (colraw.matrix[u.ypos][u.xpos] == mazeInfo.backEntryTile) {
 								stairType = 'back'
 							}
 							cache[mazeInfo.name][layerName][uid] = { name: '楼梯', type: stairType, x: u.xpos, y: u.ypos, colraw: colraw.matrix[u.ypos][u.xpos] }
 						} else if (u.model_id != 0) {// 传送水晶，colraw其实是0，可以不加
-							cache[mazeInfo.name][layerName][uid] = { name: '水晶', type: 'door', x: u.xpos, y: u.ypos}
+							cache[mazeInfo.name][layerName][uid] = { name: '水晶', type: 'door', x: u.xpos, y: u.ypos }
 						}
-					}else if (mapObjs.some(m => {return m.cell == 2 && m.x == u.xpos && m.y == u.ypos})) {// boss
+					} else if (mapObjs.some(m => { return m.cell == 2 && m.x == u.xpos && m.y == u.ypos })) {// boss
 						cache[mazeInfo.name][layerName][uid] = { name: u.unit_name, type: 'boss', x: u.xpos, y: u.ypos }
 					} else {//NPC
 						cache[mazeInfo.name][layerName][uid] = { name: u.unit_name, type: 'npc', x: u.xpos, y: u.ypos }
@@ -14063,13 +14107,13 @@ module.exports = function(callback){
 			}
 			// 然后记录已探索和未探索坐标
 			for (let key in foundedPoints.available) {
-				if(viewCache[key] === true){
+				if (viewCache[key] === true) {
 					continue
 				}
 				// 人物只能看到小于等于11格的东西
-				if(cga.projectDistance(current.x,current.y,foundedPoints.available[key].x,foundedPoints.available[key].y) < 12){
+				if (cga.projectDistance(current.x, current.y, foundedPoints.available[key].x, foundedPoints.available[key].y) < 12) {
 					viewCache[key] = true
-				}else{
+				} else {
 					viewCache[key] = false
 				}
 			}
@@ -14106,8 +14150,8 @@ module.exports = function(callback){
 		let mapindex = cga.GetMapIndex().index3;
 		let map = cga.GetMapName();
 		let mazeInfo = cga.getMazeInfo({
-			name : map,
-			index : mapindex,
+			name: map,
+			index: mapindex,
 		})
 
 		if (!mazeInfo) {
@@ -14116,22 +14160,22 @@ module.exports = function(callback){
 
 		let file = 'mazeCache.json';
 		// 读取缓存文件，如果不存在则初始化
-        let cache = cga.fileObj.load(file)
+		let cache = cga.fileObj.load(file)
 		// 解析当前迷宫层数
-		let regexLayer = (str)=>{
+		let regexLayer = (str) => {
 			var regex = str.match(/([^\d]*)(\d+)([^\d]*)/);
 			var layerIndex = 0;
-	
-			if(regex && regex.length >= 3){
+
+			if (regex && regex.length >= 3) {
 				layerIndex = parseInt(regex[2]);
 			}
-			
+
 			// 半山特殊数字处理，因为是以100为单位的。
-			if(str.indexOf('通往山顶的路') != -1){
+			if (str.indexOf('通往山顶的路') != -1) {
 				layerIndex = Math.floor(layerIndex / 100)
 			}
 
-			if(layerIndex == 0){
+			if (layerIndex == 0) {
 				throw new Error('无法从地图名中解析出楼层');
 			}
 
@@ -14183,7 +14227,7 @@ module.exports = function(callback){
 					 * 怀疑是服务器刷新水晶入口的时间大于脚本获取的时间，导致获取到错误的坐标。
 					 * 也就是说，迷宫刷新，角色被强制返回入口地图。而此时新迷宫还未刷新出来
 					 */
-					setTimeout(()=>{
+					setTimeout(() => {
 						let randomMazeArgs = {
 							table: mazeInfo.posList,
 							filter: (obj) => {
@@ -14201,7 +14245,7 @@ module.exports = function(callback){
 							cb(null)
 							return
 						});
-					},3000)
+					}, 3000)
 				}
 
 				// 预期进入的地图，前进+1，后退-1
@@ -14241,12 +14285,12 @@ module.exports = function(callback){
 								nextStep(layerName, cb)
 							});
 							return
-						} else if(map == targetLayer) {// 正常进入预期地图
+						} else if (map == targetLayer) {// 正常进入预期地图
 							console.log('正常进入预期地图，继续探索..')
 							cb(null)
 							return
-						} else{// 进入预期之外的地图，抛出异常
-							throw new Error('进入预期以外的地图:'+map)
+						} else {// 进入预期之外的地图，抛出异常
+							throw new Error('进入预期以外的地图:' + map)
 						}
 					});
 				});
@@ -14258,52 +14302,46 @@ module.exports = function(callback){
 				let mapindex = cga.GetMapIndex().index3
 				let layerName = cga.GetMapName()
 
-				// 每层楼的唯一识别id。由于迷宫每层楼的名称不会变，而mapindex会变，所以使用拼接形式来制作唯一辨识符
-				let id = mapindex + '_' + layerName
-				// 如果缓存已经有记录，并且迷宫没有刷新、本层数据也被标记为完全探索
-				if (cache[mazeInfo.name] && cache[mazeInfo.name][layerName] && cache[mazeInfo.name][layerName].id && cache[mazeInfo.name][layerName].id == id && cache[mazeInfo.name][layerName].complete == true) {
-					console.log('缓存已有记录，并且迷宫mapindex没有变化，直接利用..')
-					// 先对缓存中的对象进行处理，并处理act()之后该对象的去留。如开过的宝箱，要从缓存中删除
-					cga.checkMazeCacheInternal(cache[mazeInfo.name][layerName],checkObj,(result)=>{
-						// 如果继续在本层探索
-						if(result === true){
-							// 落盘更新状态，如开过的箱子要删除掉
-							cga.fileObj.save(file,cache)
-							loop()
-						}else if(result === null){// 如果checkObj.identify没有检测到需要执行动作的对象
-							nextStep(layerName, loop)
-						}else if(result === false){// 如果中断探索
-							// 落盘更新状态，如开过的箱子要删除掉
-							cga.fileObj.save(file,cache)
-							// 调用cb，返回缓存数据，结束此API
-							cb(cache)
-						}else{
-							throw new Error('cga.checkMazeCacheInternal返回的参数错误:',result)
-						}
-					})
-					return
-				}else{// 如果缓存没有记录，或迷宫已经刷新，或者上一次探索中断被标记为非完全探索，则需要探索地图
-					cga.thoroughSearchMap(mazeInfo,cache, checkObj, (_, r) => {
-						// 如果返回true则继续探索
-						if (r) {
-							// 将本层地图标记为完全探索
-							cache[mazeInfo.name][layerName].complete = true
-							// 将数据落盘
-							cga.fileObj.save(file,cache)
-							// 下一步动作
-							nextStep(layerName, loop)
-						} else {// 如果返回false则终止探索
-							console.log('cga.thoroughSearchMap()返回', r, '中断探索迷宫')
-							// 将本层地图标记为非完全探索
-							cache[mazeInfo.name][layerName].complete = false
-							// 将数据落盘
-							cga.fileObj.save(file,cache)
-							// 调用cb，返回缓存数据，结束此API
-							cb(cache)
-						}
-					})
-					return
-				}
+				cga.thoroughSearchMap(mazeInfo, cache, checkObj, (_, r) => {
+					// 如果返回true则继续探索
+					if (r === true) {
+						// 将本层地图标记为完全探索
+						cache[mazeInfo.name][layerName].complete = true
+						// 将数据落盘
+						cga.fileObj.save(file, cache)
+						// 下一步动作
+						nextStep(layerName, loop)
+					} else if (r === false) {// 如果返回false则终止探索
+						console.log('cga.thoroughSearchMap()返回', r, '中断探索迷宫')
+						// 将本层地图标记为非完全探索
+						cache[mazeInfo.name][layerName].complete = false
+						// 将数据落盘
+						cga.fileObj.save(file, cache)
+						// 调用cb，返回缓存数据，结束此API
+						cb(cache)
+					} else if (typeof r == 'string' && r == 'no refresh') {// 如果迷宫没有刷新，还可沿用缓存数据
+						// 对缓存中的对象进行处理，并处理act()之后该对象的去留。如开过的宝箱，要从缓存中删除
+						cga.checkMazeCacheInternal(cache[mazeInfo.name][layerName], checkObj, (result) => {
+							// 如果继续在本层探索
+							if (result === true) {
+								// 落盘更新状态，如开过的箱子要删除掉
+								cga.fileObj.save(file, cache)
+								loop()
+							} else if (result === null) {// 如果checkObj.identify没有检测到需要执行动作的对象
+								nextStep(layerName, loop)
+							} else if (result === false) {// 如果中断探索
+								// 落盘更新状态，如开过的箱子要删除掉
+								cga.fileObj.save(file, cache)
+								// 调用cb，返回缓存数据，结束此API
+								cb(cache)
+							} else {
+								throw new Error('cga.checkMazeCacheInternal返回的参数错误:', result)
+							}
+						})
+					} else {
+						throw new Error('cga.thoroughSearchMap()返回的参数错误:', r)
+					}
+				})
 			});
 		}
 
