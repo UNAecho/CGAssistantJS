@@ -6312,7 +6312,7 @@ module.exports = function(callback){
 	* 如果目标名称地图使用String类型，而非Number类型时，此bug出现的概率会略微降低。
 	* 
 	* 另外，我在参数list中，新增了一个参数，来实现躲避NPC走路的问题,具体格式见上面的调用方式
-	* 【注意】当进行非探索性质的走路时（如去迷宫上下楼梯进入下一层），不要使用躲避NPC的方式行走。
+	* 【注意】当进行非探索性质的走路时（如去迷宫上下楼梯进入下一层），【不要使用】躲避NPC的方式行走。因为本身进入门的这个路程，就是踩在某个NPC单位然后检测被传送的。
 	* 具体原因见cga.calculatePathAvoidNpc()的注解
 	*/
 	cga.walkList = (list, cb)=>{
@@ -13771,14 +13771,8 @@ module.exports = function(callback){
 		}
 
 		for (let key of unitKeys) {
-			// id类数据与checkObj无关，跳过
-			if(key == 'id'){
-				// console.log('id类型数据跳过..')
-				continue
-			}
-			// 地图是否完全探索数据与checkObj无关，跳过
-			if(key == 'complete'){
-				// console.log('complete数据跳过..')
+			// 跳过无关数据
+			if(key == 'id' || key == 'complete'){
 				continue
 			}
 			// 如果识别函数返回true，则将目标对象传入动作函数，并执行。
@@ -13937,10 +13931,10 @@ module.exports = function(callback){
 			// 如果view()中将refresh置为false，并且地图的complete已经标记为true（完全探索）则中止探索。
 			if (refresh === false && cache[mazeInfo.name][layerName].complete) {
 				console.log('cga.thoroughSearchMap()判断本层迷宫没有刷新，可以沿用缓存数据')
-				cb(cache,'no refresh')
+				cb(cache, 'no refresh')
 				return
 			}
-
+			
 			// view()过后，执行识别函数与动作函数，如果有中断信号，则中断搜索迷宫。
 			cga.checkMazeCacheInternal(cache[mazeInfo.name][layerName], checkObj, (result) => {
 				// 如果继续探索
@@ -13949,7 +13943,7 @@ module.exports = function(callback){
 					for (let keyPoint in viewCache) {
 						if (viewCache[keyPoint] === false) {
 							let next = keyPoint.split('-').map(Number)
-							// 第6个index传入true，代表躲避NPC走路
+							// index 6处传入true，代表躲避NPC走路。
 							next = next.concat([null, null, null, [], true])
 							if (cga.isPathAvailable(current.x, current.y, next[0], next[1])) {
 								cga.walkList(
@@ -13970,7 +13964,7 @@ module.exports = function(callback){
 						// 一个wall point周围有至少5个wall point，视为未探索wall point
 						if (calCnt(colraw.matrix, foundedPoints.wall[w].x, foundedPoints.wall[w].y) > 4) {
 							let next = cga.getRandomSpace(w.x, w.y)
-							// 第6个参数传入true，代表躲避NPC走路
+							// index 6处传入true，代表躲避NPC走路
 							next = next.concat([null, null, null, [], true])
 							console.log('未探索墙壁:', next)
 							cga.walkList(
@@ -13983,10 +13977,39 @@ module.exports = function(callback){
 						}
 					}
 
-					console.log('本层已全部探索完毕..')
-					// 如果既没有未探索领域，也没有未探索墙壁，则视为本层已探索完毕，callback返回缓存与非中断信号true，退出API
-					cb(cache, true)
-					return
+					/**
+					 * 没发现没探索过的地板或墙壁，开始检测数据是否完整。
+					 * 遍历缓存数据，如果本层的水晶+上/下楼梯数量等于2的时候，才算数据合格。否则视为地图探索不正确，重新探索。
+					 * 这么做的理由：
+					 * 1、可能走了一半迷宫地图没下载完毕，这边直接就会变成视野范围内全部探索完毕，因为视野内的都探索过了，没探索过的还没下载完毕。
+					 * 
+					 * 【注意】有时候上下楼梯加和本身就是2，需要测试性进入才能辨别是出口还是楼梯。例如狗洞顶层或旧日之塔顶层，不要在这里判断是否上下楼梯齐全。
+					 */
+					let doorCnt = 0
+					for (let key in cache[mazeInfo.name][layerName]) {
+						// 跳过无用数据
+						if (key == 'id' || key == 'complete') {
+							continue
+						}
+						if (['door', 'forward', 'back'].includes(cache[mazeInfo.name][layerName][key].type)) {
+							doorCnt += 1
+							console.log(cache[mazeInfo.name][layerName][key],'是楼梯或水晶，当前累计数量:',doorCnt)
+						}
+					}
+					// 如果水晶和楼梯的总计为2，视为数据合格
+					if (doorCnt == 2) {
+						console.log('本层已全部探索完毕..')
+						// 如果既没有未探索领域，也没有未探索墙壁，则视为本层已探索完毕，callback返回缓存与非中断信号true，退出API
+						cb(cache, true)
+						return
+					} else {// 异常情况，重新探索
+						console.warn('【UNAecho脚本提醒】本层探索之后数据不完整:', cache[mazeInfo.name][layerName], '重新再探索一遍本楼层')
+						// 情况已经探索过的区域记录，否则无限循环了
+						viewCache = {}
+						// 重新探索
+						findNext(cb)
+						return
+					}
 				} else if (result === false) {// 如果中断探索，callback返回缓存与中断信号false，退出API
 					cb(cache, false)
 				}
@@ -14003,6 +14026,10 @@ module.exports = function(callback){
 		 * 狗洞（奇怪的洞窟）出口是一个后退单位，和后退的楼梯无论从外观还是cell、colraw值都一模一样，无法分辨
 		 * 
 		 * 建议外部调用的函数，在进入地图时，记录起始位置，来分别到底是后退楼梯还是出口
+		 * 
+		 * TODO 已知bug：
+		 * 1、宝箱居然可以压在楼梯上，也就是宝箱坐标与楼梯重合了。由于逻辑是先判断宝箱，赋值。再判断楼梯，赋值。楼梯信息会覆盖掉宝箱
+		 * 虽然不会出现严重问题，但是宝箱的信息会被遗漏。修改起来太麻烦，要动整个数据结构。很麻烦，有空再改吧。
 		 */
 		let view = (current, foundedPoints, colraw) => {
 			// 获取碰撞类单位，如楼梯、boss、传送水晶等
@@ -14011,11 +14038,11 @@ module.exports = function(callback){
 			let units = cga.GetMapUnits()
 			// 当前楼层唯一识别id(mapindex + '_' + layerName)
 			let id = cga.GetMapIndex().index3 + '_' + layerName
-			
+
 			// 分析迷宫是否刷新，先判断当前楼层有没有唯一识别id。如果有，并且没有判断过迷宫是否刷新，则进行进一步判断
 			if (cache[mazeInfo.name][layerName].hasOwnProperty('id')) {
 				// 如果没有确认过迷宫是否刷新
-				if(refresh === null){
+				if (refresh === null) {
 					// 如果唯一识别id与缓存中一致，则进行进一步判断
 					if (cache[mazeInfo.name][layerName].id == id) {
 						// 获取所有水晶或楼梯单位的坐标，进行判断。如果目前地图上所有的水晶或楼梯均与缓存中一致，则视为迷宫未刷新，可继续沿用缓存数据。中止view()，停止探索。
@@ -14025,7 +14052,7 @@ module.exports = function(callback){
 								return false
 							}
 							// 不是水晶或楼梯的单位跳过，避免逻辑混乱
-							if(!['door','forward','back'].includes(doorOrStair.type)){
+							if (!['door', 'forward', 'back'].includes(doorOrStair.type)) {
 								return true
 							}
 							return m.mapx == doorOrStair.x && m.mapy == doorOrStair.y
@@ -14134,11 +14161,6 @@ module.exports = function(callback){
 	 * 
 	 * checkObj()的写法，参考参考cga.checkMazeCacheInternal()的注释
 	 * 
-	 * TODO:已知bug：
-	 * 1、mapindex+mapname并不能辨别迷宫是否刷新，黑色的祈祷地图我见过121_黑色的祈祷地下1楼在刷新前后都是1楼。、
-	 * 2、有的时候，宝箱居然能压在上下楼梯上，而我使用的xy坐标代表一个单位，默认单位是不能叠加的
-	 * 3、严重bug：罕见情况，角色探索一半，则直接保存1个楼梯开始折返探索了。猜测是因为地图没来得及下载完，这边就判定没有未探索的地点了。
-	 * 导致一个楼层只会有一个楼梯的数据。
 	 * @param {*} checkObj 
 	 * @param {*} cb 
 	 * @returns 
