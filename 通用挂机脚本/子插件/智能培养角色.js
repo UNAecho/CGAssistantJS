@@ -62,7 +62,7 @@ var thisobj = {
 		}
 
 		/**
-		 * 进入转职保证书、传咒驯互转、烧声望循环的前提条件：角色在2转或以下（防止将高阶职业误转）、角色培养目标职业是战斗系、服务系、大于80级（方便战斗）、声望小于无尽星空。
+		 * 进入转职保证书、传咒驯互转、烧声望循环的前提条件：角色没有【完美调教术】、角色在2转或以下（防止将高阶职业误转）、角色培养目标职业是战斗系、服务系、大于80级（方便战斗）、声望小于无尽星空。
 		 * 这里暂时使用脚本跳转的方式，因为逻辑太复杂，没有做解耦。
 		 * 【暗黑骑士】【教团骑士】由于官方设定，无法进行转职保证书方式烧声望，故排除。
 		 * 
@@ -73,23 +73,28 @@ var thisobj = {
 		 * 2、当前职业与目标职业不一致，并且不是驯兽师（驯兽师要靠练级刷，因为技能比称号更难刷满）的情况。
 		 * 或者无论是什么职业，手中没有转职保证书，而当前职业并不是目标职业时，需要进入刷声望环节。
 		 */
-		if ((thisobj.finalJob.jobType == '战斗系' || thisobj.finalJob.jobType == '服务系') && playerInfo.level >= 80 && !specialJob.includes(curJobObj.job)) {
-			let transfer = () => {
-				console.log('你的角色培养目标是战斗系或服务系职业，并且声望小于无尽星空，开始进入烧声望环节。包含【转职保证书】【烧声望】【传咒驯互转】3个部分')
-				setTimeout(() => {
-					updateConfig.update_config({ 'mainPlugin': '转职保证书' })
-				}, 2000)
-			}
-			// 安全起见，2转以后的角色不参与烧声望流程，以防误转。
-			if (curJobObj.jobLv > 2) {
-				console.log('【UNAecho脚本警告】你目标职业是战斗系或服务系，但你已经3转或以上，保险起见，禁止脚本转职，如果需要烧声望，请手动转职一次，再运行脚本。')
-			} else if (thisobj.finalJob.job != curJobObj.job && cga.getItemCount('转职保证书') == 0) {// 如果不是目标职业，必须去拿一份转职保证书。因为你终究需要一份转职保证书去转成目标职业的
-				console.log('【UNAecho脚本提醒】必须去拿一份转职保证书。因为你终究需要一份转职保证书去转成目标职业的。')
-				transfer()
-				return
-			} else if (thisobj.finalJob.job == curJobObj.job && curJobObj.reputationLv < 8) {// 如果不是刚转完目标职业（声望小于奔跑的春风，肯定不是无尽星空转来的）
-				transfer()
-				return
+		let perfectTrainSkill = cga.findPlayerSkill('完美调教术');
+		if(perfectTrainSkill){
+			console.log('【UNAecho脚本提醒】持有【'+perfectTrainSkill.name+'】的角色不参与【转职保证书】【传咒驯互转】【烧声望】环节。')
+		}else{
+			if ((thisobj.finalJob.jobType == '战斗系' || thisobj.finalJob.jobType == '服务系') && playerInfo.level >= 80 && !specialJob.includes(curJobObj.job)) {
+				let transfer = () => {
+					console.log('你的角色培养目标是战斗系或服务系职业，并且声望小于无尽星空，开始进入烧声望环节。包含【转职保证书】【烧声望】【传咒驯互转】3个部分')
+					setTimeout(() => {
+						updateConfig.update_config({ 'mainPlugin': '转职保证书' })
+					}, 2000)
+				}
+				// 安全起见，2转以后的角色不参与烧声望流程，以防误转。
+				if (curJobObj.jobLv > 2) {
+					console.log('【UNAecho脚本警告】你目标职业是战斗系或服务系，但你已经3转或以上，保险起见，禁止脚本转职，如果需要烧声望，请手动转职一次，再运行脚本。')
+				} else if (thisobj.finalJob.job != curJobObj.job && cga.getItemCount('转职保证书') == 0) {// 如果不是目标职业，必须去拿一份转职保证书。因为你终究需要一份转职保证书去转成目标职业的
+					console.log('【UNAecho脚本提醒】必须去拿一份转职保证书。因为你终究需要一份转职保证书去转成目标职业的。')
+					transfer()
+					return
+				} else if (thisobj.finalJob.job == curJobObj.job && curJobObj.reputationLv < 8) {// 如果不是刚转完目标职业（声望小于奔跑的春风，肯定不是无尽星空转来的）TODO:有严重bug，需要使用落盘的方式来记录角色是否满声望。
+					transfer()
+					return
+				}
 			}
 		}
 
