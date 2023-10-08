@@ -809,7 +809,7 @@ module.exports = function(callback){
 			result = '静谧之间'
 		}else if(mapindex >= 27001 && mapindex <= 27999){
 			result = '曙光骑士团营地'
-		}else if(mapindex >= 1000 && mapindex <= 32830){
+		}else if((mapindex >= 1000 &&  mapindex <= 1899) || [11015,21011,32830].indexOf(mapindex) != -1){
 			result = '法兰城'
 		}else if(mapindex == 33000){
 			result = '米内葛尔岛'
@@ -4666,8 +4666,8 @@ module.exports = function(callback){
 		var mapindex = cga.GetMapIndex().index3
 		// 获取当前主地图名称
 		var villageName = cga.travel.switchMainMap()
-		// 法兰城直接在里谢里雅堡回补，效率高
-		if(villageName == '法兰城'){
+		// 法兰城和艾尔莎岛直接在里谢里雅堡回补，效率高
+		if(villageName == '法兰城' || villageName == '艾尔莎岛'){
 			cga.travel.falan.toStone('C', (r)=>{
 				cga.walkList([
 					[34, 89]
@@ -4930,6 +4930,7 @@ module.exports = function(callback){
 		var villageArr = ['法兰城','艾尔莎岛','圣拉鲁卡村', '伊尔村', '亚留特村', '维诺亚村', '奇利村', '加纳村', '杰诺瓦镇','魔法大学','阿巴尼斯村','蒂娜村','曙光骑士团营地','圣骑士营地'] 
 		var mainMapName = cga.travel.switchMainMap()
 		if(villageArr.indexOf(mainMapName) != -1){
+			console.log('当前【'+mainMapName+'】属于城镇村庄内')
 			return true
 		}
 		return false
@@ -7878,23 +7879,19 @@ module.exports = function(callback){
 	}
 
 	/**
-	 * UNAecho: 与刷新称号的NPC对话，获得与目前声望相符的称号
+	 * UNAecho: 与刷新称号的NPC对话，获得与目前声望相符的称号。
+	 * TODO：适配其它国家的NPC
 	 * @param {*} cb 
 	 */
 	cga.refreshReputation = (cb) => {
-		let villageName = cga.travel.switchMainMap()
-		if (villageName == '法兰城' || villageName == '艾尔莎岛') {
-			cga.travel.falan.toStone('E2', () => {
-				cga.walkList([
-					[230, 82],
-				], () => {
-					cga.turnDir(2);
-					setTimeout(cb, 2000);
-				});
+		cga.travel.falan.toStone('E2', () => {
+			cga.walkList([
+				[230, 82],
+			], () => {
+				cga.turnDir(2);
+				setTimeout(cb, 2000);
 			});
-		} else {
-			throw new Error('当前区域的主地图未知，无法刷新称号')
-		}
+		});
 	}
 
 	/**
@@ -9196,7 +9193,7 @@ module.exports = function(callback){
 	 * @param {Object} obj API所需参数，具体如下：
 	 * 
 	 * @param {Array} obj.teammates 队伍成员信息，数据结构为String数组，但可以实现固定组队与自由组队
-	 * 1、固定组队：数组的元素必须为String，且均为队员名称。长度必须为1-5
+	 * 1、固定组队：数组的元素必须为String，且均为队员名称。长度小于等于5
 	 * 2、自由组队：与固定组队相同，但是从第2个名称开始，数组元素可以为null，代表不限制除队长以外的人加入队伍。长度必须为1-5
 	 * 
 	 * 【注意】
@@ -9216,6 +9213,16 @@ module.exports = function(callback){
 	 * @param {*} cb 回调函数，所有队员齐全则传入'ok'，如果不满足条件或没有队伍，会等待至超时，调用cb并传入'timeout'
 	 */
 	cga.buildTeam = (obj, cb) => {
+		if(!obj.teammates instanceof Array || obj.teammates.length > 5){
+			throw new Error('obj.teammates必须为String数组，且长度小于等于5')
+		}
+		// 先获取自己的人物信息
+		var playerInfo = cga.GetPlayerInfo();
+		if(obj.teammates.length == 0 || (obj.teammates.length == 1 && ((obj.teammates[0] == playerInfo.name) || (obj.teammates[0] == null)))){
+			console.warn('obj.teammates为空数组，或数组中只有自己的名字或只有1个null。视为不组队。退出cga.buildTeam()逻辑，callback传入ok。')
+			cb('ok')
+			return
+		}
 		// 由于cga.waitTeammates判定组队ready延迟2秒return，所以本API需要至少3秒延迟。
 		// 如果延迟为0，则视为无限等待
 		if (obj.hasOwnProperty('timeout') && obj.timeout > 0 && obj.timeout < 2000) {
@@ -9231,7 +9238,6 @@ module.exports = function(callback){
 			}
 		}
 
-		var playerInfo = cga.GetPlayerInfo();
 		var isLeader = obj.teammates[0] == playerInfo.name ? true : false
 		var mapXY = cga.GetMapXY();
 		var start = Date.now()
@@ -10611,7 +10617,11 @@ module.exports = function(callback){
 					continue
 				}
 				
-				var memberNick = curTeamplayers[t].nick.match(reg)
+				var memberNick = curTeamplayers[t].nick
+				if(!memberNick){
+					continue
+				}
+				memberNick = memberNick.match(reg)
 				if(!memberNick){
 					continue
 				}
@@ -11125,6 +11135,7 @@ module.exports = function(callback){
 			}
 
 			if (cga.needSupplyInitial({}) && cga.travel.isInVillage()) {
+				console.log('当前在城镇，并且需要补充状态。')
 				cga.travel.toHospital(() => {
 					setTimeout(go, 3000, cb);
 				})
@@ -11155,7 +11166,20 @@ module.exports = function(callback){
 						cga.travel.falan.toCamp(cb,true)
 					}
 				}
-			}  else {
+			}else if (tmpObj.npcMainMap == '圣骑士营地') {
+				startFunc = (cb)=>{
+					if(cga.travel.switchMainMap() == '圣骑士营地'){
+						cb(null)
+					}else{
+						cga.travel.falan.toCamp(cb)
+					}
+				}
+			}else if (tmpObj.npcMainMap == '其它') {// 无法通过走路直接抵达的地图，startFunc执行跳过。如：只有做任务才能抵达。
+				console.log('其它地图需要自定义如何寻路')
+				startFunc = (cb)=>{
+					cb(null)
+				}
+			}else {
 				throw new Error('API未支持的npcMainMap领域【'+tmpObj.npcMainMap+'】请联系作者https://github.com/UNAecho更新')
 			}
 
@@ -11259,6 +11283,15 @@ module.exports = function(callback){
 							})
 						}
 					})
+				}
+			}else if(tmpObj.npcMap == 3351 || tmpObj.npcMap == 3354){// 攻击/魔法吸收
+				console.log('攻击/魔法吸收')
+				walkFunc = (cb)=>{
+					cga.askNpcForObj({
+						act : 'map', 
+						target : tmpObj.npcMap,
+						npcpos : tmpObj.npcMap == 3351 ? [22, 16] : [25, 16],
+					},cb)
 				}
 			}else {
 				walkFunc = (cb)=>{
@@ -11998,7 +12031,7 @@ module.exports = function(callback){
 	/**
 	 * UNAecho:一个简单的地图判断封装，判断角色是否在当前地图中
 	 * @param {String|Number} map 地图名称或地图index。
-	 * @param {Boolean} fuzzy 是否模糊查询，如诅咒之迷宫，输入【诅咒】或者【迷宫】也返回true。
+	 * @param {Boolean} fuzzy 是否模糊查询，map为String时生效。例如：诅咒之迷宫，输入【诅咒】或者【迷宫】也返回true。
 	 */
 	cga.isInMap = (map,fuzzy=false) => {
 		if (typeof map == 'string') {
@@ -12656,6 +12689,19 @@ module.exports = function(callback){
 			backEntryTile : 17990,
 			tile : [9682,9697],
 			backTopPosList : [[31, 17,'']],
+		},
+		'黑色的祈祷' : {
+			name : '黑色的祈祷',
+			entryMap : 16507,
+			exitMap : 16508,
+			posList : [[14,14]],
+			xLimit : [14,14],
+			yLimit : [14,14],
+			prefix:'黑色的祈祷地下',
+			suffix:'楼',
+			forwardEntryTile : 17975,
+			backEntryTile : 17974,
+			backTopPosList : [[39, 5,'']],
 		},
 	}
 	/**
@@ -14044,6 +14090,11 @@ module.exports = function(callback){
 	 * 
 	 * checkObj()的写法，参考参考cga.checkMazeCacheInternal()的注释
 	 * 
+	 * TODO:已知bug：
+	 * 1、mapindex+mapname并不能辨别迷宫是否刷新，黑色的祈祷地图我见过121_黑色的祈祷地下1楼在刷新前后都是1楼。、
+	 * 2、有的时候，宝箱居然能压在上下楼梯上，而我使用的xy坐标代表一个单位，默认单位是不能叠加的
+	 * 3、严重bug：罕见情况，角色探索一半，则直接保存1个楼梯开始折返探索了。猜测是因为地图没来得及下载完，这边就判定没有未探索的地点了。
+	 * 导致一个楼层只会有一个楼梯的数据。
 	 * @param {*} checkObj 
 	 * @param {*} cb 
 	 * @returns 
