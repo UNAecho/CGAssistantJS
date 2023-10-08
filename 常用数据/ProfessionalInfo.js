@@ -281,8 +281,9 @@ const Professions = [
 		],
 		titles: ['见习巫师', '巫师', '王宫巫师', '巫术大师', '巫王', '幻之巫王'],
 		category: '魔法系',
-        npcMainMap: '其它',
-		npcMap: '冯奴的家',
+        npcMainMap: '奇利村',
+		npcMap: 3352,
+		npcpos : [9, 9],
 	}, {
 		name: '咒术师',
 		// 咒术师晋级没有得意技要求，故置空
