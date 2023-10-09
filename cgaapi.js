@@ -11285,13 +11285,29 @@ module.exports = function(callback){
 					})
 				}
 			}else if(tmpObj.npcMap == 3351 || tmpObj.npcMap == 3354){// 攻击/魔法吸收
-				console.log('攻击/魔法吸收')
 				walkFunc = (cb)=>{
 					cga.askNpcForObj({
 						act : 'map', 
 						target : tmpObj.npcMap,
 						npcpos : tmpObj.npcMap == 3351 ? [22, 16] : [25, 16],
 					},cb)
+				}
+			}else if(tmpObj.npcMap == 3353){// 洁净/恢复魔法
+				walkFunc = (cb)=>{
+					if(cga.job.getJob().job != '巫师'){
+						throw new Error('冯奴的家只有巫师职业才可以学习洁净、恢复魔法')
+					}
+					cga.travel.autopilot('东门', () => {
+						cga.walkList([
+							[349, 261, 3350]
+						], () => {
+							cga.askNpcForObj({
+								act : 'map', 
+								target : tmpObj.npcMap,
+								npcpos : [11, 14],
+							},cb)
+						});
+					})
 				}
 			}else {
 				walkFunc = (cb)=>{
