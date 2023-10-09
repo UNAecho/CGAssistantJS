@@ -13927,14 +13927,14 @@ module.exports = function(callback){
 			let foundedPoints = getFoundedPoints(walls, current)
 			// 将视野范围内的信息记录到缓存中
 			view(current, foundedPoints, colraw)
-
+			
 			// 如果view()中将refresh置为false，并且地图的complete已经标记为true（完全探索）则中止探索。
 			if (refresh === false && cache[mazeInfo.name][layerName].complete) {
 				console.log('cga.thoroughSearchMap()判断本层迷宫没有刷新，可以沿用缓存数据')
 				cb(cache, 'no refresh')
 				return
 			}
-			
+
 			// view()过后，执行识别函数与动作函数，如果有中断信号，则中断搜索迷宫。
 			cga.checkMazeCacheInternal(cache[mazeInfo.name][layerName], checkObj, (result) => {
 				// 如果继续探索
@@ -14003,8 +14003,7 @@ module.exports = function(callback){
 						cb(cache, true)
 						return
 					} else {// 异常情况，重新探索
-						console.warn('【UNAecho脚本提醒】本层探索之后数据不完整:', cache[mazeInfo.name][layerName], '重新再探索一遍本楼层')
-						// 情况已经探索过的区域记录，否则无限循环了
+						// 清空已经探索过的区域记录，否则无限循环了
 						viewCache = {}
 						// 重新探索
 						findNext(cb)
@@ -14028,8 +14027,11 @@ module.exports = function(callback){
 		 * 建议外部调用的函数，在进入地图时，记录起始位置，来分别到底是后退楼梯还是出口
 		 * 
 		 * TODO 已知bug：
-		 * 1、宝箱居然可以压在楼梯上，也就是宝箱坐标与楼梯重合了。由于逻辑是先判断宝箱，赋值。再判断楼梯，赋值。楼梯信息会覆盖掉宝箱
-		 * 虽然不会出现严重问题，但是宝箱的信息会被遗漏。修改起来太麻烦，要动整个数据结构。很麻烦，有空再改吧。
+		 * 1、宝箱居然可以压在楼梯上，也就是宝箱坐标与楼梯重合了。有空再改吧
+		 * 2、【严重bug，已解决并上线，生产环境测试中】cga.GetMapUnits()居然会有不小的概率抓取不到楼梯的数据，哪怕楼梯就在眼前(11个坐标以内)
+		 * 甚至踩在楼梯上（刚刚传送过来）都无法获取。
+		 * 测试：我在狗洞和黑色的祈祷随机迷宫中都曾遇到过，人物无论如何都获取不到楼梯的信息。但手动上下楼一次，就恢复正常。
+		 * 由于是封装的C++类API，不好改其代码，这里只得使用cga.getMapObjects()来获取门的数据，不然会经常导致迷宫探索失败。
 		 */
 		let view = (current, foundedPoints, colraw) => {
 			// 获取碰撞类单位，如楼梯、boss、传送水晶等
@@ -14085,6 +14087,10 @@ module.exports = function(callback){
 				refresh = true
 			}
 
+			/**
+			 * 先整理cga.GetMapUnits()所看到的单位。
+			 * 目前有bug，对水晶、楼梯单位可能会遗漏，这里只抓取宝箱、NPC（不包括boss）、地面道具等单位。
+			 */
 			for (let u of units) {
 				if (u.valid != 2) {
 					console.log('无效目标', u, '的valid!=2，跳过')
@@ -14099,39 +14105,62 @@ module.exports = function(callback){
 					// 额外记录一下model_id，观察宝箱的model_id是否在一定范围内。否则无法判断一个物体是丢弃在地上的道具，还是宝箱
 					cache[mazeInfo.name][layerName][uid] = { name: u.item_name, type: 'box', x: u.xpos, y: u.ypos, model_id: u.model_id }
 				}
-				/**
-				 * NPC或者碰撞类单位
-				 * 【注意】经过【奇怪的洞窟】的手持【实验药】与【人类？】NPC对话并发生战斗，我发现了一些事情：
-				 * 1、【人类？】被击倒后，cga.GetMapUnits()仍然能捕获其存在，但是游戏中看不见，也无法对话
-				 * 2、虽然【人类？】被击倒后一定时间内看不见，但是过一会，游戏内又能看见了。
-				 * 3、无论1还是2的情况，cga.GetMapUnits()能一直捕获其存在
-				 * 4、也就是说，只是游戏中使用了某种方法隐藏了NPC，而不是真的消失了，否则一个玩家击倒后，全服玩家等着刷新，不现实
-				 * 5、我个人推测type=1的NPC是可以被击倒一定时间后重生的，而type = 2的宝箱，开过了就是没有了 TODO有待验证
-				 */
+
 				if (u.type == 1 && (u.flags & 4096) != 0) {
 					if (cache[mazeInfo.name][layerName].hasOwnProperty(uid)) {
 						continue
 					}
-					// 楼梯或传送水晶
-					if (mapObjs.some(m => { return m.cell == 3 && m.x == u.xpos && m.y == u.ypos })) {
-						if (u.model_id == 0) {// 楼梯
-							let stairType = 'unknown'
-							if (colraw.matrix[u.ypos][u.xpos] == mazeInfo.forwardEntryTile) {
-								stairType = 'forward'
-							} else if (colraw.matrix[u.ypos][u.xpos] == mazeInfo.backEntryTile) {
-								stairType = 'back'
-							}
-							cache[mazeInfo.name][layerName][uid] = { name: '楼梯', type: stairType, x: u.xpos, y: u.ypos, colraw: colraw.matrix[u.ypos][u.xpos] }
-						} else if (u.model_id != 0) {// 传送水晶，colraw其实是0，可以不加
-							cache[mazeInfo.name][layerName][uid] = { name: '水晶', type: 'door', x: u.xpos, y: u.ypos }
-						}
-					} else if (mapObjs.some(m => { return m.cell == 2 && m.x == u.xpos && m.y == u.ypos })) {// boss
-						cache[mazeInfo.name][layerName][uid] = { name: u.unit_name, type: 'boss', x: u.xpos, y: u.ypos }
-					} else {//NPC
+					// 碰撞类单位信息跳过，不在这处理
+					if (mapObjs.some(m => { return m.x == u.xpos && m.y == u.ypos })) {
+						continue
+					}else {//NPC
 						cache[mazeInfo.name][layerName][uid] = { name: u.unit_name, type: 'npc', x: u.xpos, y: u.ypos }
 					}
 				}
 			}
+
+			/**
+			 * cga.getMapObjects()，NPC或者碰撞类单位（迷宫中可以攻击的NPC、哈洞熊男等）信息整理
+			 * 此API稳定性较高，使用它的数据代替cga.GetMapUnits()的NPC或者碰撞类单位信息。
+			 * 
+			 * 关于迷宫中的碰撞类boss，如奇怪的洞窟里的【僵尸】、持有实验药可以攻击的【人类？】等说明：
+			 * 1、cga.getMapObjects()中的cell=2或cell=5是描述此类NPC的数据。
+			 * 2、cell=2是可以被攻击的情况，如果与其战斗并击败它，cell则会变为5
+			 * 3、cell=5是不可被攻击的情况，游戏中无法看到，也无法与其进行战斗。也就是实现了对某类玩家隐身的特性，可能是防止玩家疯狂刷boss吧
+			 * 4、无论是cell=2还是cell=5的状态，cga.GetMapUnits()也可以获取，但无法辨别他是什么状态。唯一作用是使用它获取boss的名称
+			 */
+			for (let m of mapObjs) {
+				let uid = m.mapx + '_' + m.mapy
+				if (cache[mazeInfo.name][layerName].hasOwnProperty(uid)) {
+					// 如果没有名称，则不能跳过。因为boss类信息可能会由于在远处获取而不知道其名称，需要借助cga.GetMapUnits()更新
+					if(cache[mazeInfo.name][layerName][uid].name != 'unknown'){
+						continue
+					}
+				}
+				// 楼梯或传送水晶，注意colraw.matrix的xy坐标与游戏相反
+				if(m.cell == 3){
+					// 楼层+1的楼梯
+					if (colraw.matrix[m.mapy][m.mapx] == mazeInfo.forwardEntryTile) {
+						cache[mazeInfo.name][layerName][uid] = { name: '楼梯', type: 'forward', x: m.mapx, y: m.mapy, colraw: colraw.matrix[m.mapy][m.mapx] }
+					} else if (colraw.matrix[m.mapy][m.mapx] == mazeInfo.backEntryTile) {// 楼层-1的楼梯
+						cache[mazeInfo.name][layerName][uid] = { name: '楼梯', type: 'back', x: m.mapx, y: m.mapy, colraw: colraw.matrix[m.mapy][m.mapx] }
+					}else{// 传送水晶，colraw其实是0，可以不加
+						cache[mazeInfo.name][layerName][uid] = { name: '水晶', type: 'door', x: m.mapx, y: m.mapy, colraw: colraw.matrix[m.mapy][m.mapx] }
+					}
+				}else if(m.cell == 2 || m.cell == 5){// 碰撞类boss，2是可见、可攻击。5是不可见、不可攻击。
+					// cga.getMapObjects()没有名称信息，只能暂定unknown
+					cache[mazeInfo.name][layerName][uid] = { name: 'unknown', type: 'boss', x: m.mapx, y: m.mapy }
+
+					// 如果在cga.GetMapUnits()视野范围内，则获取其名字
+					// cell=3的楼梯可能与宝箱重叠，但cell=2或5的NPC不会，可以放心为其赋值。
+					for (let u of units) {
+						if (u.xpos == m.mapx && u.ypos == m.mapy) {
+							cache[mazeInfo.name][layerName][uid].name = u.unit_name
+						}
+					}
+				}
+			}
+
 			// 然后记录已探索和未探索坐标
 			for (let key in foundedPoints.available) {
 				if (viewCache[key] === true) {
