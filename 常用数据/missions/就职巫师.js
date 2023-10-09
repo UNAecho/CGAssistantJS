@@ -27,7 +27,8 @@
  * 巫师导师房间index 3352，出口[9 ,16]
  * 
  * BOSS战：
- * 
+ * Lv.50露比，2动，血量约3000，邪魔系，属性：全50，抗咒；技能：圣盾、攻击吸收/无效/反弹、强力恢复魔法、强力补血魔法（HP<25%追加）、喽啰<3只后追加：超强陨石魔法、超强冰冻魔法、超强混乱魔法
+ * ◇打法建议：留下3个以上的血腥之刃后，再合击露比。BOSS超强混乱魔法
  */
 var thisobj = {
 	taskName: '就职巫师',
@@ -287,11 +288,13 @@ var thisobj = {
 			intro: '5.战斗胜利后一定几率随机获得【怠惰的罪书】、【魔族的水晶】。与巫师亚莉安娜（22.16）（左）或者巫师玛其（25.16）（右）对话，交出【希望的蜡烛】并传送至2个不同的冯奴的房间。',
 			workFunc: function (cb2) {
 				// 香蒂的房间，注意：不同的BOSS，香蒂房间的mapindex不同，这也解释了为什么购买的图纸不一样。 购买完直接回到冯奴的家，无法转职、学技能
-				let obj1 = { act: 'map', target: 5011, npcpos: [21, 26] }
+				let obj1 = { act: 'map', target: 5011, npcpos: [33, 13] }
 				// 香蒂
-				let obj2 = { act: 'map', target: 3350, npcpos: [10, 6] }
+				let obj2 = { act: 'map', target: 3350, npcpos: [7, 6] }
 				// 朵葡
-				let obj3 = { act: 'map', target: 3350, npcpos: [10, 7] }
+				let obj3 = { act: 'map', target: 3350, npcpos: [7, 6] }
+				// 由此回去
+				let obj4 = { act: 'map', target: 16509, npcpos: [8, 4] }
 
 				let mapindex = cga.GetMapIndex().index3
 
@@ -360,7 +363,16 @@ var thisobj = {
 		{//6
 			intro: '6.与巫师卡莫西（14.9）对话，选“是”传送至冯奴的家。与巫师冯奴（9.9）对话即可就职巫师。',
 			workFunc: function (cb2) {
-				console.log('【UNAecho脚本提醒】就职、转职巫师，不需要推荐信，与导师对话即可。')
+				if(thisobj.data.needjob){
+					console.log('【UNAecho脚本提醒】就职、转职巫师，不需要推荐信，与导师对话即可。')
+					cga.askNpcForObj({ act: 'job', target: thisobj.data.job.job }, () => {
+						cb2(true)
+					})
+					return
+				}
+				console.log('【UNAecho脚本提醒】不需要就职/转职巫师，跳过此步骤')
+				cb2(true)
+				return
 			}
 		},
 		{//7
@@ -416,6 +428,8 @@ var thisobj = {
 		normalFile: '任务',
 		// 本次任务要学的技能名称。注意：一次任务只能学习攻击/魔法吸收的其中1种
 		learn: null,
+		// 本次任务是否需要就职/转职为巫师，默认false
+		needjob : false,
 		// 任务道具名称
 		itemName1_1: '希望的蜡烛',
 		itemName1_2: '恐怖旅团之证',
@@ -577,12 +591,20 @@ var thisobj = {
 			}
 		}
 
-		// 外部传入的战前物资调整函数
+		// 外部传入要学习的技能信息。如果不传则不学习
 		if (thisobj.param.hasOwnProperty('learn') && ['攻击吸收', '魔法吸收'].includes(thisobj.param.learn)) {
 			thisobj.data.learn = thisobj.param.learn
 			console.log('【UNAecho脚本提醒】本次任务你想学习【' + thisobj.data.learn + '】')
 		} else {
 			console.log('【UNAecho脚本提醒】你没有传入你想学习的攻击吸收或魔法吸收技能，本次任务跳过学习步骤。')
+		}
+
+		// 外部传入是否要就职/转职，注意：转职是敏感动作，请确认好。
+		if (thisobj.param.hasOwnProperty('needjob') && thisobj.param.needjob === true) {
+			thisobj.data.needjob = thisobj.param.needjob
+			console.log('【UNAecho脚本提醒】本次任务你想就职/转职成为巫师，转职是敏感操作，请确认好。')
+		} else {
+			console.log('【UNAecho脚本提醒】本次任务你没传入想就职/转职成为巫师的参数needjob。默认不转职')
 		}
 
 		var task = cga.task.TaskWithThink(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements, thisobj.taskPlayerThink)

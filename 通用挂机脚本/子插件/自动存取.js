@@ -307,7 +307,11 @@ var thisobj = {
 			// 离开队伍
 			cga.DoRequest(cga.REQUEST_TYPE_LEAVETEAM);
 			// 结束此子插件，稍微延迟，给离开队伍一点时间
-			setTimeout(cb, 2000)
+			setTimeout(() => {
+				// 关闭交易
+				cga.EnableFlags(cga.ENABLE_FLAG_TRADE, false)
+				cb(null)
+			}, 2000)
 			return
 		}
 
@@ -440,7 +444,9 @@ var thisobj = {
 			thisobj.speakStr = ''
 			thisobj.speakStatus = 'off'
 
-			cb(null)
+			// 关闭交易
+			cga.EnableFlags(cga.ENABLE_FLAG_TRADE, false)
+			setTimeout(cb, 1000)
 			return
 		}
 		console.log('有自动存取需求:', order)
@@ -475,7 +481,9 @@ var thisobj = {
 			thisobj.speakStr = ''
 			thisobj.speakStatus = 'off'
 
-			cb(null)
+			// 关闭交易
+			cga.EnableFlags(cga.ENABLE_FLAG_TRADE, false)
+			setTimeout(cb, 1000)
 			return
 		}
 		console.log('有自动存取需求:', order)
