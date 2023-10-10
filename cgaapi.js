@@ -10737,49 +10737,49 @@ module.exports = function(callback){
 		 */
 
 		// 检查输入类型
-		if(Object.prototype.toString.call(obj) != '[object Object]'){
+		if (Object.prototype.toString.call(obj) != '[object Object]') {
 			throw new Error('参数obj必须为object类型')
 		}
-		if(obj.hasOwnProperty('waitLocation') && typeof obj.waitLocation != 'string' && typeof obj.waitLocation != 'number'){
+		if (obj.hasOwnProperty('waitLocation') && typeof obj.waitLocation != 'string' && typeof obj.waitLocation != 'number') {
 			throw new Error('obj.map必须为String或Number类型')
 		}
-		if(obj.hasOwnProperty('notalk') && typeof obj.notalk != 'function'){
+		if (obj.hasOwnProperty('notalk') && typeof obj.notalk != 'function') {
 			throw new Error('obj.notalk必须为function类型')
 		}
-		if(obj.hasOwnProperty('npcpos') && (!Array.isArray(obj.npcpos) || obj.npcpos.length != 2)){
+		if (obj.hasOwnProperty('npcpos') && (!Array.isArray(obj.npcpos) || obj.npcpos.length != 2)) {
 			throw new Error('obj.npcpos如果传入，必须为Int型数组，长度为2')
 		}
-		if(typeof obj != 'object' || !obj.hasOwnProperty("act") || !obj.hasOwnProperty("target")){
+		if (typeof obj != 'object' || !obj.hasOwnProperty("act") || !obj.hasOwnProperty("target")) {
 			throw new Error('obj格式有误，见API注释')
 		}
-		if(obj.act == 'job' && (typeof obj.target != 'string')){
+		if (obj.act == 'job' && (typeof obj.target != 'string')) {
 			throw new Error('obj.act为job时，obj.target必须为string类型的职业统称。')
 		}
-		if(obj.act =='promote' && (typeof obj.target != 'number')){
+		if (obj.act == 'promote' && (typeof obj.target != 'number')) {
 			throw new Error('obj.act为promote时，obj.target必须为int类型的职业level。')
 		}
-		if((obj.act =='skill' || obj.act =='forget') && (typeof obj.target != 'string')){
+		if ((obj.act == 'skill' || obj.act == 'forget') && (typeof obj.target != 'string')) {
 			throw new Error('obj.act为skill或forget时，obj.target必须为string类型的技能名称。')
 		}
-		if(obj.hasOwnProperty("pos") && (!Array.isArray(obj.pos) || obj.pos.length != 2)){
+		if (obj.hasOwnProperty("pos") && (!Array.isArray(obj.pos) || obj.pos.length != 2)) {
 			throw new Error('obj.pos格式必须为长度为2的Number数组')
 		}
-		if(obj.hasOwnProperty("say") && (typeof obj.say != 'string' || obj.say.length == 0)){
+		if (obj.hasOwnProperty("say") && (typeof obj.say != 'string' || obj.say.length == 0)) {
 			throw new Error('obj.say格式必须为长度大于0的字符串')
 		}
-		if(obj.hasOwnProperty("battle") && Object.prototype.toString.call(obj.target) != '[object Object]'){
+		if (obj.hasOwnProperty("battle") && Object.prototype.toString.call(obj.target) != '[object Object]') {
 			throw new Error('obj.act为battle时，obj.target必须为Object，包含战斗前后的战斗配置文件名。具体格式见API注释')
 		}
-		if(obj.act == 'function' && typeof obj.target != 'function'){
+		if (obj.act == 'function' && typeof obj.target != 'function') {
 			throw new Error('obj.act为function时，obj.target必须为function()')
 		}
 
 		// 如果是学技能，判断技能栏剩余数和金币剩余数是否充足
-		if(obj.hasOwnProperty('skill')){
+		if (obj.hasOwnProperty('skill')) {
 			let reason = cga.skill.ableToLearn(obj.target)
 			if (reason.indexOf('slot') != -1) {
 				throw new Error('技能栏位不足')
-			}else if(reason.indexOf('gold') != -1) {
+			} else if (reason.indexOf('gold') != -1) {
 				throw new Error('学习技能金币不足')
 			}
 		}
@@ -10791,12 +10791,12 @@ module.exports = function(callback){
 		// console打印信息的防刷屏flag
 		let mute = false
 
-		const dialogHandler = (err, dlg)=>{
+		const dialogHandler = (err, dlg) => {
 			var actNumber = -1
-			if(dlg && dlg.options == 0){
+			if (dlg && dlg.options == 0) {
 				// 转职、晋级确认画面，需要消耗一定数量的金币，选项：【好的】(cga.ClickNPCDialog(0, 0))，【算了】cga.ClickNPCDialog(0, 1)
 				// UNAecho:已经确定，无论是转职还是晋级，options都是0，type都是2。
-				if(dlg.type == 2){
+				if (dlg.type == 2) {
 					actNumber = 0
 					cga.ClickNPCDialog(0, actNumber);
 					cga.AsyncWaitNPCDialog(dialogHandler);
@@ -10808,58 +10808,58 @@ module.exports = function(callback){
 				 * 2、想遗忘技能
 				 * 3、不用了
 				 */
-				else if(dlg.type == 16){
-					if(obj.act == 'skill'){
+				else if (dlg.type == 16) {
+					if (obj.act == 'skill') {
 						actNumber = 0
 						cga.ClickNPCDialog(0, actNumber);
 						cga.AsyncWaitNPCDialog(dialogHandler);
 						return;
-					}else if(obj.act == 'forget'){
+					} else if (obj.act == 'forget') {
 						actNumber = 1
 						cga.ClickNPCDialog(0, actNumber);
 						cga.AsyncWaitNPCDialog(dialogHandler);
 						return;
 					}
-				}else if(dlg.type == 18){// 从dlg.options == 0 && dlg.type == 16跳转进来。遗忘技能的详细栏，选择index直接进入确定界面
-					var skillIndex = cga.GetSkillsInfo().sort((a,b) => a.pos - b.pos).findIndex(s => s.name == obj.target);
+				} else if (dlg.type == 18) {// 从dlg.options == 0 && dlg.type == 16跳转进来。遗忘技能的详细栏，选择index直接进入确定界面
+					var skillIndex = cga.GetSkillsInfo().sort((a, b) => a.pos - b.pos).findIndex(s => s.name == obj.target);
 					actNumber = skillIndex
 					cga.ClickNPCDialog(0, actNumber);
 					cga.AsyncWaitNPCDialog(dialogHandler);
 					return;
 				}
 			}
-			else if(dlg && dlg.options == 1){
+			else if (dlg && dlg.options == 1) {
 				cga.ClickNPCDialog(1, 0);
-				if(obj.act == "msg" && dlg.message.indexOf(obj.target) != -1){
+				if (obj.act == "msg" && dlg.message.indexOf(obj.target) != -1) {
 					repeatFlag = false
 					return
-				}else if(obj.act == "skill" && cga.findPlayerSkill(obj.target)){
+				} else if (obj.act == "skill" && cga.findPlayerSkill(obj.target)) {
 					repeatFlag = false
 					return
-				}else if(obj.act == "forget" && !cga.findPlayerSkill(obj.target)){
+				} else if (obj.act == "forget" && !cga.findPlayerSkill(obj.target)) {
 					repeatFlag = false
 					return
 				}
 				cga.AsyncWaitNPCDialog(dialogHandler);
 				return;
 			}
-			else if(dlg && dlg.options == 2){
+			else if (dlg && dlg.options == 2) {
 				// 职业导师对话列表，就职、转职、晋级
-				if(dlg.type == 2){
+				if (dlg.type == 2) {
 					let curJobObj = cga.job.getJob()
 					// 就职
-					if(obj.act == 'job'){
-						if(curJobObj.curJob == '游民'){
+					if (obj.act == 'job') {
+						if (curJobObj.curJob == '游民') {
 							actNumber = 0
 							cga.ClickNPCDialog(0, actNumber);
 							cga.AsyncWaitNPCDialog(dialogHandler);
 							return;
-						}else{// 转职
+						} else {// 转职
 							// 如果战斗系转战斗系没有转职保证书，则禁止转职。防止声望归零
 							let targetJobObj = cga.job.getJob(obj.target)
-							if(!targetJobObj){
-								throw new Error('目标职业【'+obj.target+'】不存在数据库中')
-							}else if(curJobObj.jobType == '战斗系' && targetJobObj.jobType == '战斗系' && cga.getItemCount('转职保证书') == 0){
+							if (!targetJobObj) {
+								throw new Error('目标职业【' + obj.target + '】不存在数据库中')
+							} else if (curJobObj.jobType == '战斗系' && targetJobObj.jobType == '战斗系' && cga.getItemCount('转职保证书') == 0) {
 								throw new Error('你是战斗系转战斗系，但背包里没有【转职保证书】')
 							}
 							actNumber = 1
@@ -10868,13 +10868,13 @@ module.exports = function(callback){
 							return;
 						}
 					}
-					else if(obj.act == 'promote'){
+					else if (obj.act == 'promote') {
 						actNumber = 2
 						cga.ClickNPCDialog(0, actNumber);
 						cga.AsyncWaitNPCDialog(dialogHandler);
 						return;
 					}
-					else if(obj.act == 'forget'){
+					else if (obj.act == 'forget') {
 						console.log('进入' + obj.act)
 						actNumber = 1
 						cga.ClickNPCDialog(0, actNumber);
@@ -10883,34 +10883,34 @@ module.exports = function(callback){
 					}
 				}
 				// 从dlg.options == 0 && dlg.type == 16跳转进来。学习技能的详细栏，cga.ClickNPCDialog(0, 0)直接学习，cga.ClickNPCDialog(-1, 0)取消
-				else if(dlg.type == 17){
+				else if (dlg.type == 17) {
 					actNumber = 0
 					cga.ClickNPCDialog(actNumber, 0);
 					cga.AsyncWaitNPCDialog(dialogHandler);
 					return;
 				}
 			}
-			else if(dlg && dlg.options == 3){
+			else if (dlg && dlg.options == 3) {
 				actNumber = (obj.hasOwnProperty("neg") && dlg.message.indexOf(obj.neg) != -1) ? 2 : 1
 				cga.ClickNPCDialog(actNumber, 0);
-				if(obj.act == "msg" && dlg.message.indexOf(obj.target) != -1){
+				if (obj.act == "msg" && dlg.message.indexOf(obj.target) != -1) {
 					repeatFlag = false
 					return
 				}
 				cga.AsyncWaitNPCDialog(dialogHandler);
 				return;
 			}
-			else if(dlg && ((dlg.options & 4) == 4 || dlg.options == 12)){
+			else if (dlg && ((dlg.options & 4) == 4 || dlg.options == 12)) {
 				actNumber = (obj.hasOwnProperty("neg") && dlg.message.indexOf(obj.neg) != -1) ? 8 : 4
 				cga.ClickNPCDialog(actNumber, 0);
-				if(obj.act == "msg" && dlg.message.indexOf(obj.target) != -1){
+				if (obj.act == "msg" && dlg.message.indexOf(obj.target) != -1) {
 					repeatFlag = false
 					return
 				}
 				cga.AsyncWaitNPCDialog(dialogHandler);
 				return;
 			}
-			else if(dlg && (dlg.options & 32) == 32){
+			else if (dlg && (dlg.options & 32) == 32) {
 				cga.ClickNPCDialog(32, 0);
 				cga.AsyncWaitNPCDialog(dialogHandler);
 				return;
@@ -10938,92 +10938,92 @@ module.exports = function(callback){
 		// 	}
 		// }
 
-		let checkBattleFailed = ()=>{
+		let checkBattleFailed = () => {
 			let teamplayers = cga.getTeamPlayers()
 			// 如果是单人，并且血量已经是1，判断战斗失败
-			if(!teamplayers.length){
+			if (!teamplayers.length) {
 				return cga.GetPlayerInfo().hp == 1
 			}
 			// 如果是组队的情况，sum所有血量为1的队友，如果sum等于队员数，则判断战斗失败
 			let failCnt = 0
 			for (let i = 0; i < teamplayers.length; i++) {
-				if(teamplayers[i].maxhp > 0 && teamplayers[i].hp == 1){
+				if (teamplayers[i].maxhp > 0 && teamplayers[i].hp == 1) {
 					failCnt++
-					console.log('队员',teamplayers[i].name,'体力为1')
+					console.log('队员', teamplayers[i].name, '体力为1')
 				}
 			}
 
 			return failCnt == teamplayers.length
 		}
 
-		let askAndCheck = (npcpos,cb)=>{
+		let askAndCheck = (npcpos, cb) => {
 			// 监测与NPC对话是否有战斗
 			let battleFlag = false
 
-			let retry = (cb)=>{
+			let retry = (cb) => {
 				// 地图判断的时候，可能涉及到BOSS战的切图，这里加入cga.isInNormalState()，等战斗结束再判断
-				if(!cga.isInNormalState()){
+				if (!cga.isInNormalState()) {
 					battleFlag = true
 					setTimeout(retry, 1000, cb);
 					return
 				}
 				// 如果判断已经完成此次API的逻辑，进入调用cb环节
-				if(!repeatFlag){
+				if (!repeatFlag) {
 					// 如果是就职或者转职，晋级任务的状态需要重置。但战斗系5转和UD则不用，一生做一次即可全程有效
-					if(obj.act == 'job'){
+					if (obj.act == 'job') {
 						cga.refreshMissonStatus({
-							"树精长老" : false ,
-							"挑战神兽" : false ,
-							"诅咒的迷宫" : false ,
-							"誓言之花" : false ,
-							"咖哩任务" : false ,
-							"起司的任务" : false ,
-							"魔法大学" : false ,
-						},()=>{
+							"树精长老": false,
+							"挑战神兽": false,
+							"诅咒的迷宫": false,
+							"誓言之花": false,
+							"咖哩任务": false,
+							"起司的任务": false,
+							"魔法大学": false,
+						}, () => {
 							// 调用cb，API结束
 							cb("ok")
 						})
 						return
 					}
 					// 如果是战斗，则需要恢复normal战斗配置
-					if(obj.act == "battle"){
+					if (obj.act == "battle") {
 						cga.loadBattleConfig(obj.target.normal)
 					}
 					// 调用cb，API结束
 					cb("ok")
 					return
 				}
-				if(obj.act == "item" && cga.findItem(obj.target) != -1){
+				if (obj.act == "item" && cga.findItem(obj.target) != -1) {
 					repeatFlag = false
 					setTimeout(retry, 1000, cb);
 					return
-				}else if(obj.act == "map" && (obj.target == cga.GetMapName() || obj.target == cga.GetMapIndex().index3) && (!obj.pos || (cga.GetMapXY().x == obj.pos[0] && cga.GetMapXY().y == obj.pos[1]))){
+				} else if (obj.act == "map" && (obj.target == cga.GetMapName() || obj.target == cga.GetMapIndex().index3) && (!obj.pos || (cga.GetMapXY().x == obj.pos[0] && cga.GetMapXY().y == obj.pos[1]))) {
 					repeatFlag = false
 					setTimeout(retry, 1000, cb);
 					return
-				}else if(obj.act == "skill" && (cga.findPlayerSkill(obj.target))){
+				} else if (obj.act == "skill" && (cga.findPlayerSkill(obj.target))) {
 					repeatFlag = false
 					setTimeout(retry, 1000, cb);
 					return
-				}else if(obj.act == "forget" && (!cga.findPlayerSkill(obj.target))){
+				} else if (obj.act == "forget" && (!cga.findPlayerSkill(obj.target))) {
 					repeatFlag = false
 					setTimeout(retry, 1000, cb);
 					return
-				}else if(obj.act == "job" && cga.job.getJob(obj.target).job == cga.job.getJob().job){
+				} else if (obj.act == "job" && cga.job.getJob(obj.target).job == cga.job.getJob().job) {
 					repeatFlag = false
 					setTimeout(retry, 1000, cb);
 					return
-				}else if(obj.act == "promote" && cga.job.getJob().jobLv >= obj.target){
+				} else if (obj.act == "promote" && cga.job.getJob().jobLv >= obj.target) {
 					repeatFlag = false
 					setTimeout(retry, 1000, cb);
 					return
-				}else if(obj.act == "battle" && battleFlag){// 如果是战斗，并且战斗flag已经置为true。由于逻辑走到这里已经是非战斗状态，那么battleFlag=true则代表已经战斗完毕。
+				} else if (obj.act == "battle" && battleFlag) {// 如果是战斗，并且战斗flag已经置为true。由于逻辑走到这里已经是非战斗状态，那么battleFlag=true则代表已经战斗完毕。
 					repeatFlag = false
 					setTimeout(retry, 1000, cb);
 					return
-				}else if(obj.act == "function"){// 自定义function，拥有最高自由度。
-					obj.target((r)=>{
-						if(r === false){
+				} else if (obj.act == "function") {// 自定义function，拥有最高自由度。
+					obj.target((r) => {
+						if (r === false) {
 							repeatFlag = false
 						}
 						setTimeout(retry, 1000, cb);
@@ -11032,23 +11032,23 @@ module.exports = function(callback){
 				}
 
 				// 自定义与NPC交谈的内容
-				if(obj.say){
-					if (turnToFlag){
+				if (obj.say) {
+					if (turnToFlag) {
 						cga.turnTo(npcpos[0], npcpos[1])
 						turnToFlag = false
 					}
 					setTimeout(() => {
 						cga.SayWords(obj.say, 0, 3, 1);
 					}, 500);
-				}else{
+				} else {
 					// 如果传入了notalk函数，return true的情况下不与NPC对话，只监测结果。
-					if(obj.hasOwnProperty('notalk') && obj.notalk()){
+					if (obj.hasOwnProperty('notalk') && obj.notalk()) {
 						console.log('notalk函数不允许自己与NPC对话..')
-					}else{
-						if(battleFlag && checkBattleFailed()){
+					} else {
+						if (battleFlag && checkBattleFailed()) {
 							cga.gui.LoadScript({
-								autorestart : false,
-							}, (err, result)=>{
+								autorestart: false,
+							}, (err, result) => {
 								throw new Error('战斗失败，全队血量为1，请检查队伍整体战斗力，或战斗配置。安全起见，终止自动重启脚本。')
 							})
 							throw new Error('战斗失败，全队血量为1，请检查队伍整体战斗力，或战斗配置。安全起见，终止自动重启脚本。')
@@ -11066,11 +11066,11 @@ module.exports = function(callback){
 
 			// 如果目标是map，切换地图会导致人物离队，其他队员无法通过称号监测到你的完成情况，故用其他逻辑代替
 			// 如果目标是技能相关，则无需组队，可单人完成逻辑
-			if(obj.act == "map" || obj.act == "skill" || obj.act == "forget" || obj.act == "job" || obj.act == "promote"){
+			if (obj.act == "map" || obj.act == "skill" || obj.act == "forget" || obj.act == "job" || obj.act == "promote") {
 				// 注意：map模式没有人物队内监测，所以不会有队内消息在cb中被返回。item、msg模式则有
 				retry(cb)
 				return
-			}else{// item、msg等模式不离队，依旧用waitTeammateReady
+			} else {// item、msg等模式不离队，依旧用waitTeammateReady
 
 				// 不再自动清理背包，改为由玩家手动清理
 				// // 为任务物品留位置，如果obj.target为func，会导致cga.findItem(obj.target)将obj.target当作item的filter函数来遍历所有道具。
@@ -11079,35 +11079,35 @@ module.exports = function(callback){
 				// 	dropStoneForMissionItem(obj.target)
 				// }
 
-				cga.waitTeammateReady(null, (r)=>{
+				cga.waitTeammateReady(null, (r) => {
 					// 与NPC互动前，如果是战斗，则需要读取battle战斗配置
-					if(obj.act == "battle"){
+					if (obj.act == "battle") {
 						cga.loadBattleConfig(obj.target.battle)
 					}
 					retry(r)
-				}, (r)=>{
+				}, (r) => {
 					cb(r)
 					return
 				})
 			}
 		}
 
-		let go = (cb) =>{
+		let go = (cb) => {
 
 			// 队员等待函数，因为队员需要等待队长把自己带到obj.waitLocation地图中，再执行逻辑
-			let memberWait = (cb) =>{
+			let memberWait = (cb) => {
 				let waitObj = {}
-				if(typeof obj.waitLocation == 'string'){
+				if (typeof obj.waitLocation == 'string') {
 					waitObj.mapname = obj.waitLocation
-				}else if(typeof obj.waitLocation == 'number'){
+				} else if (typeof obj.waitLocation == 'number') {
 					waitObj.mapindex = obj.waitLocation
-				}else{
-					if(!isLeader()){
+				} else {
+					if (!isLeader()) {
 						throw new Error('此次是组队模式，必须传入队员等待专用的waitLocation值，否则队员行为会发生异常')
 					}
 				}
-	
-				cga.waitForLocation(waitObj, ()=>{
+
+				cga.waitForLocation(waitObj, () => {
 					console.log('检测到队长已经带队至NPC目标地图..')
 					cb(null)
 				})
@@ -11115,21 +11115,21 @@ module.exports = function(callback){
 			}
 			// 判断此次act是否需要特殊走路引导，如就职、学技能等
 			let tmpObj = null
-			if(obj.act == 'job'){
+			if (obj.act == 'job') {
 				tmpObj = cga.job.getJob(obj.target)
-			}else if(obj.act == 'promote'){
+			} else if (obj.act == 'promote') {
 				tmpObj = cga.job.getJob()
-			}else if(obj.act == 'skill'){
+			} else if (obj.act == 'skill') {
 				tmpObj = cga.skill.getSkill(obj.target)
-			}else{// 如果没有特殊走路引导，进入队长队员判断
+			} else {// 如果没有特殊走路引导，进入队长队员判断
 				// 队长带队
-				if(isLeader()){
-					walkToNPC(obj.npcpos,cb)
+				if (isLeader()) {
+					walkToNPC(obj.npcpos, cb)
 					return
 				}
 				// 队员等待队长带队至指定地图
-				memberWait(()=>{
-					walkToNPC(obj.npcpos,cb)
+				memberWait(() => {
+					walkToNPC(obj.npcpos, cb)
 				})
 				return
 			}
@@ -11141,7 +11141,7 @@ module.exports = function(callback){
 				})
 				return
 			}
-			
+
 			// 常用的可传送村镇
 			const teleVillages = ['圣拉鲁卡村', '伊尔村', '亚留特村', '维诺亚村', '奇利村', '加纳村', '杰诺瓦镇', '阿巴尼斯村', '蒂娜村']
 
@@ -11150,151 +11150,151 @@ module.exports = function(callback){
 			let searchFunc = null
 
 			// 首先装载登出起点函数
-			if(tmpObj.npcMainMap == '法兰城'){
-				startFunc = (cb)=>{
+			if (tmpObj.npcMainMap == '法兰城') {
+				startFunc = (cb) => {
 					cga.travel.falan.toStone('C', cb)
 				}
-			}else if (teleVillages.indexOf(tmpObj.npcMainMap) != -1) {
-				startFunc = (cb)=>{
+			} else if (teleVillages.indexOf(tmpObj.npcMainMap) != -1) {
+				startFunc = (cb) => {
 					cga.travel.toVillage(tmpObj.npcMainMap, cb)
 				}
-			}else if (tmpObj.npcMainMap == '曙光骑士团营地') {
-				startFunc = (cb)=>{
-					if(cga.travel.switchMainMap() == '曙光骑士团营地'){
+			} else if (tmpObj.npcMainMap == '曙光骑士团营地') {
+				startFunc = (cb) => {
+					if (cga.travel.switchMainMap() == '曙光骑士团营地') {
 						cb(null)
-					}else{
-						cga.travel.falan.toCamp(cb,true)
+					} else {
+						cga.travel.falan.toCamp(cb, true)
 					}
 				}
-			}else if (tmpObj.npcMainMap == '圣骑士营地') {
-				startFunc = (cb)=>{
-					if(cga.travel.switchMainMap() == '圣骑士营地'){
+			} else if (tmpObj.npcMainMap == '圣骑士营地') {
+				startFunc = (cb) => {
+					if (cga.travel.switchMainMap() == '圣骑士营地') {
 						cb(null)
-					}else{
+					} else {
 						cga.travel.falan.toCamp(cb)
 					}
 				}
-			}else if (tmpObj.npcMainMap == '其它') {// 无法通过走路直接抵达的地图，startFunc执行跳过。如：只有做任务才能抵达。
+			} else if (tmpObj.npcMainMap == '其它') {// 无法通过走路直接抵达的地图，startFunc执行跳过。如：只有做任务才能抵达。
 				console.log('其它地图需要自定义如何寻路')
-				startFunc = (cb)=>{
+				startFunc = (cb) => {
 					cb(null)
 				}
-			}else {
-				throw new Error('API未支持的npcMainMap领域【'+tmpObj.npcMainMap+'】请联系作者https://github.com/UNAecho更新')
+			} else {
+				throw new Error('API未支持的npcMainMap领域【' + tmpObj.npcMainMap + '】请联系作者https://github.com/UNAecho更新')
 			}
 
 			// 其次装载赶往NPC地图的函数
 			// 咒术师相关。
 			// 注意：如果你不携带咒术师推荐信，跟门童小孩对话，进入的是15011房间，这个房间的职业导师只是一个普通NPC，没有职业功能。对话会让你做咒术师就职任务
 			// 如果持有咒术师推荐信，则进入正常的15012职业导师房间
-			if(tmpObj.npcMap >= 15009 && tmpObj.npcMap <= 15012){
-				walkFunc = (cb)=>{
+			if (tmpObj.npcMap >= 15009 && tmpObj.npcMap <= 15012) {
+				walkFunc = (cb) => {
 					cga.walkList([
 						[17, 53, '法兰城'],
 						[22, 88, '芙蕾雅'],
 					], () => {
-						cga.askNpcForObj({ act: 'map', target: 15000 , npcpos : [201, 165]}, () => {
+						cga.askNpcForObj({ act: 'map', target: 15000, npcpos: [201, 165] }, () => {
 							cga.walkList([
 								[20, 8, '莎莲娜海底洞窟 地下2楼'],
 							], () => {
-								cga.askNpcForObj({ act: 'map', target: 15006, say: '咒术', npcpos : [31, 22] }, () => {
+								cga.askNpcForObj({ act: 'map', target: 15006, say: '咒术', npcpos: [31, 22] }, () => {
 									cga.walkList([
 										[38, 37, '咒术师的秘密住处'],
 										[10, 0, 15008],
-									], ()=>{
+									], () => {
 										// 职业相关
-										if(tmpObj.npcMap == 15012){
-											cga.askNpcForObj({ act: 'map', target: 15012, npcpos : [11, 0]}, cb)
+										if (tmpObj.npcMap == 15012) {
+											cga.askNpcForObj({ act: 'map', target: 15012, npcpos: [11, 0] }, cb)
 											return
 										}
 										// 技能相关
 										let roomWalkList = null
-										if(tmpObj.npcMap == 15010){// 强力咒术魔法相关
+										if (tmpObj.npcMap == 15010) {// 强力咒术魔法相关
 											roomWalkList = [1, 10, 15010]
-										}else{// 抗性技能相关
+										} else {// 抗性技能相关
 											roomWalkList = [19, 10, 15009]
 										}
 										cga.walkList([
 											roomWalkList,
 										], cb);
-										});
+									});
 								})
 							});
 						})
 					})
 				}
-			}else if(tmpObj.npcMap == 100){// 芙蕾雅全域
-				walkFunc = (cb)=>{
+			} else if (tmpObj.npcMap == 100) {// 芙蕾雅全域
+				walkFunc = (cb) => {
 					cga.walkList([
 						[65, 53, '法兰城'],
-						[281, 88,'芙蕾雅'],
+						[281, 88, '芙蕾雅'],
 					], cb)
 				}
-			}else if(tmpObj.npcMap == 23603){// 格斗士
-				walkFunc = (cb)=>{
+			} else if (tmpObj.npcMap == 23603) {// 格斗士
+				walkFunc = (cb) => {
 					cga.travel.autopilot('东门', () => {
 						cga.walkList([
 							[318, 336],// 防止走路在石头中卡住
 							[356, 334, '角笛大风穴'],
 							[133, 26, '索奇亚'],
 							[380, 324, 23600],
-						], ()=>{
+						], () => {
 							let obj = { act: 'map', target: tmpObj.npcMap, npcpos: [23, 23] }
 							cga.askNpcForObj(obj, cb)
 						})
 					})
 				}
-			}else if(tmpObj.npcMap == '小村正之洞窟'){// 铸剑工、武器修理工
-				walkFunc = (cb)=>{
+			} else if (tmpObj.npcMap == '小村正之洞窟') {// 铸剑工、武器修理工
+				walkFunc = (cb) => {
 					cga.travel.autopilot('西门', () => {
 						cga.walkList([
 							[446, 101, '小村正之洞窟'],
 						], cb)
 					})
 				}
-			}else if(tmpObj.npcMap == '小备前之洞窟'){// 铠甲工、防具修理工
-				walkFunc = (cb)=>{
+			} else if (tmpObj.npcMap == '小备前之洞窟') {// 铠甲工、防具修理工
+				walkFunc = (cb) => {
 					cga.travel.autopilot('南门', () => {
 						cga.walkList([
 							[421, 308, '小备前之洞窟'],
 						], cb)
 					})
 				}
-			}else if(tmpObj.npcMap == 27015){// 教团骑士，由于肯吉罗岛相关的地图很多都是一个mapindex多个房间，这里自定义一下func
-				walkFunc = (cb)=>{
+			} else if (tmpObj.npcMap == 27015) {// 教团骑士，由于肯吉罗岛相关的地图很多都是一个mapindex多个房间，这里自定义一下func
+				walkFunc = (cb) => {
 					cga.travel.autopilot(27015, () => {
 						let XY = cga.GetMapXY()
-						if (XY.x < 15){
+						if (XY.x < 15) {
 							cb(null)
-						}else if(XY.x >= 15 && XY.x < 85){
+						} else if (XY.x >= 15 && XY.x < 85) {
 							cga.walkList([
 								[69, 70, '曙光营地指挥部', 85, 3],
-							], ()=>{
+							], () => {
 								walkFunc(cb)
 							})
-						}else{
+						} else {
 							cga.askNpcForObj({
-								act : 'map', 
-								target : 27015,
-								npcpos : [97, 14],
-								pos:[11,0],
-							},()=>{
+								act: 'map',
+								target: 27015,
+								npcpos: [97, 14],
+								pos: [11, 0],
+							}, () => {
 								walkFunc(cb)
 							})
 						}
 					})
 				}
-			}else if(tmpObj.npcMap == 3351 || tmpObj.npcMap == 3354){// 攻击/魔法吸收
-				walkFunc = (cb)=>{
+			} else if (tmpObj.npcMap == 3351 || tmpObj.npcMap == 3354) {// 攻击/魔法吸收
+				walkFunc = (cb) => {
 					cga.askNpcForObj({
-						act : 'map', 
-						target : tmpObj.npcMap,
-						npcpos : tmpObj.npcMap == 3351 ? [22, 16] : [25, 16],
-					},cb)
+						act: 'map',
+						target: tmpObj.npcMap,
+						npcpos: tmpObj.npcMap == 3351 ? [22, 16] : [25, 16],
+					}, cb)
 				}
-			}else if(tmpObj.npcMap == 3353){// 洁净/恢复魔法
-				walkFunc = (cb)=>{
-					if(cga.job.getJob().job != '巫师'){
+			} else if (tmpObj.npcMap == 3352 || tmpObj.npcMap == 3353) {// 巫师职业导师房间、洁净/恢复魔法房间
+				walkFunc = (cb) => {
+					if (cga.job.getJob().job != '巫师') {
 						throw new Error('冯奴的家只有巫师职业才可以学习洁净、恢复魔法')
 					}
 					cga.travel.autopilot('东门', () => {
@@ -11302,93 +11302,93 @@ module.exports = function(callback){
 							[349, 261, 3350]
 						], () => {
 							cga.askNpcForObj({
-								act : 'map', 
-								target : tmpObj.npcMap,
-								npcpos : [11, 14],
-							},cb)
+								act: 'map',
+								target: tmpObj.npcMap,
+								npcpos: tmpObj.npcMap == 3352 ? [14, 1] : [11, 14],
+							}, cb)
 						});
 					})
 				}
-			}else {
-				walkFunc = (cb)=>{
+			} else {
+				walkFunc = (cb) => {
 					cga.travel.autopilot(tmpObj.npcMap, cb)
 				}
 			}
 
 			// 然后装载NPC寻找函数，因为某些NPC出现位置不是固定的，例如狩猎技能NPC猎人拉修
-			if(tmpObj.npcpos instanceof Array){
-				searchFunc = (cb)=>{
+			if (tmpObj.npcpos instanceof Array) {
+				searchFunc = (cb) => {
 					cb(tmpObj.npcpos)
 				}
-			}else if(tmpObj.name == '狩猎'){
-				searchFunc = (cb)=>{
+			} else if (tmpObj.name == '狩猎') {
+				searchFunc = (cb) => {
 					let npc = cga.findNPC('猎人拉修')
-					if (npc){
-						cb([npc.xpos,npc.ypos])
+					if (npc) {
+						cb([npc.xpos, npc.ypos])
 						return
-					}else{
-						if(!isLeader()){
-							setTimeout(searchFunc, 1000,cb);
+					} else {
+						if (!isLeader()) {
+							setTimeout(searchFunc, 1000, cb);
 							return
 						}
-						let ranX = Math.trunc(Math.random()*(500-472)+472)
-						let ranY = Math.trunc(Math.random()*(220-198)+198)
-						let target = cga.getRandomSpace(ranX,ranY);
+						let ranX = Math.trunc(Math.random() * (500 - 472) + 472)
+						let ranY = Math.trunc(Math.random() * (220 - 198) + 198)
+						let target = cga.getRandomSpace(ranX, ranY);
 						cga.walkList([
 							target,
-						], ()=>{
+						], () => {
 							searchFunc(cb)
 						});
 					}
 				}
 			} else {
-				throw new Error('API未支持的npcpos领域【'+tmpObj.npcpos+'】请联系作者https://github.com/UNAecho更新')
+				throw new Error('API未支持的npcpos领域【' + tmpObj.npcpos + '】请联系作者https://github.com/UNAecho更新')
 			}
 
 			// 制作好3种导航函数之后，顺序执行
 			// 但要区分是队长还是队员
 
-			if(isLeader()){
+			if (isLeader()) {
 				// 曙光骑士团营地（27015）是新地图结构，不能跳过赶路模块。
-				if(cga.isInMap(tmpObj.npcMap) && tmpObj.npcMainMap != '曙光骑士团营地'){
+				if (cga.isInMap(tmpObj.npcMap) && tmpObj.npcMainMap != '曙光骑士团营地') {
 					console.log('已经在目标地图，跳过赶路模块')
-					searchFunc((npcpos)=>{
-						walkToNPC(npcpos,cb)
+					searchFunc((npcpos) => {
+						walkToNPC(npcpos, cb)
 					})
 					return
 				}
-				startFunc(()=>{
-					walkFunc(()=>{
-						searchFunc((npcpos)=>{
-							walkToNPC(npcpos,cb)
+				startFunc(() => {
+					walkFunc(() => {
+						searchFunc((npcpos) => {
+							walkToNPC(npcpos, cb)
 						})
 					})
 				})
-			}else{
-				memberWait(()=>{
-					searchFunc((npcpos)=>{
-						walkToNPC(npcpos,cb)
+			} else {
+				memberWait(() => {
+					searchFunc((npcpos) => {
+						walkToNPC(npcpos, cb)
 					})
 				})
 			}
 		}
 
-		let walkToNPC = (npcpos,cb) => {
+		let walkToNPC = (npcpos, cb) => {
 			// 如果NPC周围只有1格空闲地形，改用cga.getRandomSpace
 			let spaceList = null
 			try {
-				spaceList = cga.get2RandomSpace(npcpos[0],npcpos[1])
+				spaceList = cga.get2RandomSpace(npcpos[0], npcpos[1])
 			} catch (error) {
-				if(error.message.indexOf('只有一格') != -1){
-					spaceList = cga.getRandomSpace(npcpos[0],npcpos[1])
-				}else{
+				if (error.message.indexOf('只有一格') != -1) {
+					spaceList = cga.getRandomSpace(npcpos[0], npcpos[1])
+				} else {
 					throw new Error('未知错误,error:' + error)
 				}
 			}
 			// 如果NPC周围1x1均无法抵达，尝试检测隔墙的空闲位置，例如驯兽师导师
-			if(spaceList === null){
+			if (spaceList === null) {
 				// console.log('NPC pos:',npcpos,'，周围1x1均无法抵达，尝试检测隔墙的空闲位置，例如驯兽师导师')
-				spaceList = cga.getRandomSpaceThroughWall(npcpos[0],npcpos[1])
+				spaceList = cga.getRandomSpaceThroughWall(npcpos[0], npcpos[1])
 			}
 
 			let carryTeamToPosArr = (npcpos, arr1, arr2, leaveteam, cb) => {
@@ -11443,17 +11443,17 @@ module.exports = function(callback){
 			}
 			// 如果是队员：目标NPC的附近无法抵达，可能是有墙阻隔。需要等待队长将自己带至无阻隔位置，再继续逻辑。
 			// 如果是队长：不处理，后续代码会抛出异常。因为队长必须有逻辑支持他抵达NPC附近，否则逻辑无法进行
-			if(!isLeader() && spaceList === null){
-				if(!mute){
-					console.log('你是队员，且NPC',npcpos,'无法抵达。等待队长将自己带至可抵达NPC的位置再继续逻辑..')
+			if (!isLeader() && spaceList === null) {
+				if (!mute) {
+					console.log('你是队员，且NPC', npcpos, '无法抵达。等待队长将自己带至可抵达NPC的位置再继续逻辑..')
 					mute = true
 				}
-				setTimeout(walkToNPC, 1000,npcpos,cb);
+				setTimeout(walkToNPC, 1000, npcpos, cb);
 				return
 			}
-			
+
 			// NPC周围只有1格可站立。cga.getRandomSpace返回是1维数组，cga.get2RandomSpace返回是2维数组
-			if(typeof spaceList[0] == 'number'){
+			if (typeof spaceList[0] == 'number') {
 				console.log('NPC周围只有1格，改为cga.getRandomSpace来计算。')
 				/**
 				 * UNAecho: 这里考虑到类似海底说【咒术】的透明NPC周围仅有1格可站立，且组队的情况。
@@ -11461,18 +11461,18 @@ module.exports = function(callback){
 				 * 队长先使用NPC周围仅存的1格来获取另外1格空闲格子，使用此空闲格子+NPC周围空闲格子做成walklist，这样减少了队员离队自行走路的危险性。
 				 * 由于NPC周围只有1格可站立，部分队员无法在不离队的情况下与NPC对话。所以这里要考虑队员离队与NPC对话的做法。
 				 */
-				let spaceList2 = cga.getRandomSpace(spaceList[0],spaceList[1])
+				let spaceList2 = cga.getRandomSpace(spaceList[0], spaceList[1])
 				// 如果是对话战斗的情况，不要离开队伍。例如战斗系五转的隐秘之洞最底层BOSS处，BOSS周围只有1格，但不可以解散队伍。
 				// 如果不是战斗，则离开或解散队伍。例如去咒术导师处，海里洞窟里与透明NPC对话说【咒术】那里
-				carryTeamToPosArr(npcpos,spaceList,spaceList2,(obj.act == 'battle' ? false : true),cb)
-			}else if(spaceList[0] instanceof Array){// 正常情况，NPC周围有2格或以上可站立
-				carryTeamToPosArr(npcpos,spaceList[0],spaceList[1],false,cb)
+				carryTeamToPosArr(npcpos, spaceList, spaceList2, (obj.act == 'battle' ? false : true), cb)
+			} else if (spaceList[0] instanceof Array) {// 正常情况，NPC周围有2格或以上可站立
+				carryTeamToPosArr(npcpos, spaceList[0], spaceList[1], false, cb)
 			}
 
 		}
 
 		// 实时判断是否为队长
-		let isLeader = ()=>{
+		let isLeader = () => {
 			let playerInfo = cga.GetPlayerInfo();
 			let teamplayers = cga.getTeamPlayers();
 			return ((teamplayers.length && teamplayers[0].name == playerInfo.name) || teamplayers.length == 0)
