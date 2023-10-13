@@ -27,7 +27,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 		}
 
 		let teamplayers = cga.getTeamPlayers()
-		if (teaminfo.length) {
+		if (teamplayers.length) {
 			for (let i = 0; i < teamplayers.length; i++) {
 				if (teamplayers[i].is_me) {
 					continue
