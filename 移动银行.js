@@ -26,11 +26,8 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 			cga.ChangeNickName(thisobj.serverCipher)
 		}
 
-		// GetTeamPlayerInfo()属于C++类API，节约在等待存/取物品时的CPU消耗。
-		let teaminfo = cga.GetTeamPlayerInfo();
+		let teamplayers = cga.getTeamPlayers()
 		if (teaminfo.length) {
-			// 有人进队再获取更多信息，节约性能。
-			let teamplayers = cga.getTeamPlayers()
 			for (let i = 0; i < teamplayers.length; i++) {
 				if (teamplayers[i].is_me) {
 					continue
@@ -438,7 +435,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 				return
 			}
 			// 先解散队伍
-			if (cga.GetTeamPlayerInfo().length) {
+			if (cga.getTeamPlayers().length) {
 				// 重置昵称并延迟几秒解散队伍，防止其它等待玩家在解散队伍瞬间再次加入
 				cga.ChangeNickName('')
 				setTimeout(() => {
