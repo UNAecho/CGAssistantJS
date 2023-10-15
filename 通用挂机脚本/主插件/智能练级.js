@@ -21,6 +21,7 @@ var teamMode = require('../公共模块/智能组队');
 var configMode = require('../公共模块/读取战斗配置');
 var update = require('../公共模块/修改配置文件');
 
+var healMode = require('../公共模块/治疗和招魂');
 var spawnOfAmber4Mode = require('./转职保证书');
 var transferMode = require('./传咒驯互转');
 
@@ -152,7 +153,7 @@ var autoRing = (cb) => {
 	if (cga.getItemCount('信') >= 1) {
 		cga.travel.falan.toStone('C', (r) => {
 			cga.travel.autopilot('谒见之间', () => {
-				var obj = { act: 'item', target: '承认之戒', npcpos : [5, 3]}
+				var obj = { act: 'item', target: '承认之戒', npcpos: [5, 3] }
 				cga.askNpcForObj(obj, () => {
 					setTimeout(autoRing, 1000, cb);
 				})
@@ -175,7 +176,7 @@ var autoRing = (cb) => {
 					[52, 68, '曙光营地指挥部'],
 					[69, 69, '曙光营地指挥部', 85, 2],
 				], () => {
-					var obj = { act: 'item', target: '信', npcpos : [95, 7] }
+					var obj = { act: 'item', target: '信', npcpos: [95, 7] }
 					cga.askNpcForObj(obj, () => {
 						setTimeout(autoRing, 1000, cb);
 					})
@@ -191,7 +192,7 @@ var autoRing = (cb) => {
 		rollBack(() => {
 			cga.disbandTeam(() => {
 				// 异常情况可能有：背包满了。魔石以及神之金需要自动丢弃，这部分功能在战斗配置中设置。
-				var obj = { act: 'item', target: '怪物碎片', npcpos : [14, 14] }
+				var obj = { act: 'item', target: '怪物碎片', npcpos: [14, 14] }
 				cga.askNpcForObj(obj, () => {
 					setTimeout(autoRing, 1000, cb);
 				})
@@ -287,11 +288,11 @@ var autoRing = (cb) => {
 
 	if (cga.needSupplyInitial({})) {
 		// 小号在交任务信件时可能会在法兰城和营地之间掉一点血，此时无需回城补血，直接在营地内补血即可。不然队长容易等待超时
-		if(cga.travel.switchMainMap() == '曙光骑士团营地'){
+		if (cga.travel.switchMainMap() == '曙光骑士团营地') {
 			cga.travel.toHospital(() => {
 				autoRing(cb)
 			})
-		}else{
+		} else {
 			supplyMode.func(() => {
 				autoRing(cb)
 			});
@@ -307,7 +308,7 @@ var autoRing = (cb) => {
 			cga.DropItem(letter);
 		}
 
-		let go =()=>{
+		let go = () => {
 			// 加少许延迟，防止过图过快，一部分人流程已经走完，而另一部分人流程还未走完。典型的bug在于过栅栏，一些人已经检测到坐标变化，另一部分人没有检测到
 			setTimeout(() => {
 				if (thisobj.autoRing.part == '队长') {
@@ -326,7 +327,7 @@ var autoRing = (cb) => {
 		}
 
 		// 如果已经过了栅栏
-		if(mapindex == 27101 && cga.GetMapXY().x > 40 && cga.getTeamPlayers().length){
+		if (mapindex == 27101 && cga.GetMapXY().x > 40 && cga.getTeamPlayers().length) {
 			go()
 			return
 		}
@@ -334,13 +335,19 @@ var autoRing = (cb) => {
 		// 如果没过栅栏，开始等待队伍人齐
 		cga.travel.autopilot('主地图', () => {
 			// 任务超时时间稍微设置长点，5分钟
-			cga.buildTeam({teammates : thisobj.autoRing.teammates, timeout:300000, pos : [53, 47]}, (r) => {
+			cga.buildTeam({ teammates: thisobj.autoRing.teammates, timeout: 300000, pos: [53, 47] }, (r) => {
 				if (r && r == 'ok') {
 					cga.travel.autopilot(27101, () => {
 						// 在本任务cga.buildCustomerTeam中，已经规定了必须有1人是没有承认之戒的。
 						// 也就是仅有且必有1人会拿到团长证明。
-						// 全队与NPC对话，持有【团长的证明】的人会自动将全队带入栅栏(指定坐标)，所以不需要判断各自的【团长的证明】持有情况
-						var obj = { act: 'map', target: 27101, pos: [42, 22], npcpos : [40, 22], waitLocation: 27101 }
+						var obj = {
+							act: 'map', target: 27101, pos: [42, 22], npcpos: [40, 22], notalk: () => {
+								if (cga.getItemCount('团长的证明') == 0) {
+									return true
+								}
+								return false
+							}, waitLocation: 27101
+						}
 						cga.askNpcForObj(obj, go)
 					})
 					return
@@ -369,7 +376,7 @@ var autoRing = (cb) => {
 				[52, 68, '曙光营地指挥部'],
 				[69, 69, '曙光营地指挥部', 85, 2],
 			], () => {
-				var obj = { act: 'item', target: '团长的证明', npcpos : [95, 7] }
+				var obj = { act: 'item', target: '团长的证明', npcpos: [95, 7] }
 				cga.askNpcForObj(obj, () => {
 					setTimeout(autoRing, 1000, cb);
 				})
@@ -378,22 +385,26 @@ var autoRing = (cb) => {
 		return
 	}
 
-	// 正常做任务的号去接任务
-	if (cga.getItemCount('承认之戒', true) == 0) {
-		cga.travel.falan.toStone('C', (r) => {
-			cga.travel.autopilot('谒见之间', () => {
-				var obj = { act: 'item', target: '信笺', npcpos : [5, 3] }
-				cga.askNpcForObj(obj, () => {
-					setTimeout(autoRing, 1000, cb);
+	// 治疗自己、宠物以及招魂
+	healMode.func(() => {
+		// 正常做任务的号去接任务
+		if (cga.getItemCount('承认之戒', true) == 0) {
+			cga.travel.falan.toStone('C', (r) => {
+				cga.travel.autopilot('谒见之间', () => {
+					var obj = { act: 'item', target: '信笺', npcpos: [5, 3] }
+					cga.askNpcForObj(obj, () => {
+						setTimeout(autoRing, 1000, cb);
+					})
 				})
-			})
-		});
-		return
-	} else {// 陪打队员直接去曙光骑士团营地
-		cga.travel.falan.toCamp(() => {
-			setTimeout(autoRing, 1000, cb);
-		}, true)
-	}
+			});
+			return
+		} else {// 陪打队员直接去曙光骑士团营地
+			cga.travel.falan.toCamp(() => {
+				setTimeout(autoRing, 1000, cb);
+			}, true)
+		}
+	})
+
 	return
 }
 
@@ -481,7 +492,7 @@ var moveThink = (arg) => {
 
 	if (moveThinkInterrupt.hasInterrupt())
 		return false;
-	
+
 	if (arg == 'freqMoveMapChanged') {
 		playerThinkInterrupt.requestInterrupt();
 		return false;
@@ -496,19 +507,19 @@ var playerThink = () => {
 		// 在切换地图时（包括迷宫上下楼），cga.isInNormalState()其实也是false，但这时无法判断战斗情况。所以这里还是要判断是否在战斗中
 		if (cga.isInBattle()) {
 			// 战斗中的ctx
-			let ctx = {result : null,reason : null}
+			let ctx = { result: null, reason: null }
 			teamMode.battleThink(ctx)
 			// 如果遭遇智能组队.js中logBackForceEnemy指定回避的敌人，则在战斗中直接登出，避免伤亡。playerThink中断
-			if(ctx.result == 'logback_forced'){
+			if (ctx.result == 'logback_forced') {
 				console.log('【UNAecho脚本提醒】' + ctx.reason)
 				// 需要打断movethink，否则cga.walklist会出现地图、坐标识别错误，或者走路冲突。因为遇敌之前一定是处于走动的。
 				if (cga.isTeamLeaderEx()) {
-					moveThinkInterrupt.requestInterrupt(()=>{
-						logbackEx.func(loop,ctx.result);
+					moveThinkInterrupt.requestInterrupt(() => {
+						logbackEx.func(loop, ctx.result);
 						return true
 					});
-				}else{
-					logbackEx.func(loop,ctx.result);
+				} else {
+					logbackEx.func(loop, ctx.result);
 				}
 				return false
 			}
@@ -516,11 +527,11 @@ var playerThink = () => {
 		return true;
 	}
 	// 承认之戒任务，若抵达BOSS房间，则中断playerthink，防止BOSS战受伤后，进入BOSS胜利房间的一瞬间触发回补登出。
-	if(cga.GetMapIndex().index3 == 44707){
+	if (cga.GetMapIndex().index3 == 44707) {
 		console.log('抵达遗迹BOSS房间，playerThink终止')
 		return false
 	}
-	
+
 	// 重置战斗思考flag
 	teamMode.hasBattleThink = false
 
@@ -821,7 +832,7 @@ var loop = () => {
 			teamMode.doTask(loop)
 			return
 		}
-		
+
 		// 播报练级效率与练级路上的敌人数据分布
 		teamMode.getEfficiency()
 		if (Object.keys(teamMode.statInfo).length > 0) {
@@ -852,7 +863,7 @@ var loop = () => {
 		}
 	}
 
-	if (cga.needSupplyInitial({ })) {
+	if (cga.needSupplyInitial({})) {
 		var supplyObject = getSupplyObject(map, mapindex);
 		if (supplyObject) {
 			supplyObject.func(loop, '人物未组队，自行在loop中回补。');
