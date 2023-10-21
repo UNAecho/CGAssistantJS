@@ -11284,7 +11284,7 @@ module.exports = function(callback){
 						}
 					})
 				}
-			} else if (tmpObj.npcMap == 3351 || tmpObj.npcMap == 3354) {// 攻击/魔法吸收
+			} else if (tmpObj.npcMap == 3351 || tmpObj.npcMap == 3354) {// 攻击吸收/魔法吸收。在露比战斗胜利房间才能执行
 				walkFunc = (cb) => {
 					cga.askNpcForObj({
 						act: 'map',
@@ -11292,7 +11292,7 @@ module.exports = function(callback){
 						npcpos: tmpObj.npcMap == 3351 ? [22, 16] : [25, 16],
 					}, cb)
 				}
-			} else if (tmpObj.npcMap == 3352 || tmpObj.npcMap == 3353) {// 巫师职业导师房间、洁净/恢复魔法房间
+			} else if (tmpObj.npcMap == 3352 || tmpObj.npcMap == 3353) {// 巫师职业导师房间、洁净魔法/恢复魔法房间
 				walkFunc = (cb) => {
 					if (cga.job.getJob().job != '巫师') {
 						throw new Error('冯奴的家只有巫师职业才可以学习洁净、恢复魔法')
