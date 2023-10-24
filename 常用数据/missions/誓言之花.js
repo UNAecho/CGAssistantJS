@@ -312,19 +312,19 @@ var thisobj = {
 						// UNAecho:已验证，4个组都可以共用一套逻辑。只不过红蓝组要绕路和传授者对话一次，被传送至唤醒者面前，然后继续逻辑。
 						let XY = cga.GetMapXY();
 						// 露比
-						if(XY.x > 90 && XY.x < 102 && XY.y > 9 && XY.x < 21){
+						if (XY.x > 90 && XY.x < 102 && XY.y > 9 && XY.x < 21) {
 							cga.askNpcForObj(RubyAgain, () => {
 								setTimeout(cb2, 1000, 'restart stage');
 							})
 							return
-						}else if(XY.x > 44 && XY.x < 84 && XY.y > 53 && XY.x < 137){// 传授者、觉醒者
+						} else if (XY.x > 44 && XY.x < 84 && XY.y > 53 && XY.x < 137) {// 传授者、觉醒者
 							cga.askNpcForObj(initiator, () => {
 								cga.askNpcForObj(awakener, () => {
 									cb2(true)
 								})
 							})
 							return
-						}else{// 可能为仙人、侦探任务或其它区域 TODO
+						} else {// 可能为仙人、侦探任务或其它区域 TODO
 							throw new Error('UNAecho未探索过的区域，请联系作者https://github.com/UNAecho更新。')
 						}
 					} else {// 未四转人物的正常逻辑
@@ -1020,7 +1020,10 @@ var thisobj = {
 		// 此任务的锚点清晰，无需落盘辅助记录任务进度
 		// task.anyStepDone = false;
 		task.doTask(() => {
-			cga.refreshMissonStatus({ '誓言之花': true }, cb)
+			cga.refreshMissonStatus({ '誓言之花': true }, () => {
+				// 归还王冠
+				thisobj.func.bankObj.manualPrepare({ "item": [{ "name": "王冠", "upper": 0, "lower": 0 },], }, cb)
+			})
 		});
 		return
 	},
