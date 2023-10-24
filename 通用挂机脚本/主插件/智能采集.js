@@ -17,6 +17,10 @@ var mine = require('./../公共模块/挖矿.js').mineArray;
 // 合并信息
 var actionarr = flower.concat(food).concat(wood).concat(mine)
 
+// 采集员自动适配制造者的坐标以及朝向
+var workerPos = cga.getStaticOrientationPosition(craftPlayerPos, craftPlayerTurnDir, 1)
+var workerTurnDir = cga.tradeDir(craftPlayerTurnDir)
+
 var socket = null;
 
 var isFabricName = (name) => {

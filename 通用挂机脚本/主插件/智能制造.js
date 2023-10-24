@@ -55,14 +55,6 @@ if (!myCraftSkill) {
 	throw new Error('职业数据中没有你的职业技能信息，请检查')
 }
 
-// 制造者交易时的站立坐标以及朝向坐标
-var craftPlayerPos = [34, 89]
-var craftPlayerTurnDir = 4
-
-// 采集员自动适配制造者的坐标以及朝向
-var workerPos = cga.getStaticOrientationPosition(craftPlayerPos, craftPlayerTurnDir, 1)
-var workerTurnDir = cga.tradeDir(craftPlayerTurnDir)
-
 var healObject = require(rootdir + '/通用挂机脚本/公共模块/治疗自己');
 
 const isFabricName = (name) => {
@@ -140,7 +132,7 @@ var waitStuffs = (name, materials, cb) => {
 			return;
 		}
 
-		var s = io.in('buddy_' + name).sockets;
+		var s = io.sockets.sockets;
 		var find_player = null;
 		for (var key in s) {
 			if (s[key].cga_data &&
@@ -291,14 +283,20 @@ var waitStuffs = (name, materials, cb) => {
 		setTimeout(repeat, 1000);
 	}
 
-	cga.travel.falan.toStone('C', () => {
-		cga.walkList([
-			craftPlayerPos
-		], () => {
-			cga.turnDir(craftPlayerTurnDir);
-			setTimeout(repeat, 500);
+	// 获取交易地点
+	let address = getAddress()
+	if(address.country == '法兰王国' && address.mainmap == '法兰城'){
+		cga.travel.falan.toStone('C', () => {
+			cga.walkList([
+				address.pos
+			], () => {
+				cga.turnDir(address.turndir);
+				setTimeout(repeat, 500);
+			});
 		});
-	});
+	}else{
+		throw new Error('需要开发其它地点的逻辑')
+	}
 }
 
 var getBestCraftableItem = () => {
@@ -473,6 +471,37 @@ var getOrders = (materials) => {
 	return orderArr
 }
 
+/**
+ * 获取客户端采集材料后交付的收件人。
+ * 目前默认是自己，为日后可能开发的多人协同做扩展准备
+ * @returns 
+ */
+var getRecipient = () => {
+	return myname
+}
+
+/**
+ * 获取客户端采集材料后交付的收件人交易地址（国家、主地图、mapindex3、坐标、站立朝向）
+ * 日后可能添加根据不同的制造物品，去不同的国家，不同主地图等交易地点
+ * 国家名称参考：
+ * 1、法兰王国
+ * 2、苏国（阿凯鲁法）
+ * 3、艾尔巴尼亚王国（哥拉尔）
+ * 4、天界之域（辛梅尔）
+ * 5、神圣大陆（艾尔莎岛）
+ * @returns 
+ */
+var getAddress = () => {
+	let defaultAddress = {
+		country: '法兰王国',
+		mainmap: '法兰城',
+		mapindex: 1500,
+		pos: [34, 89],
+		turndir: 4,
+	}
+	return defaultAddress
+}
+
 var chooseWorker = (materials) => {
 	// 获取要派发的订单列表
 	let orders = getOrders(materials)
@@ -488,13 +517,25 @@ var chooseWorker = (materials) => {
 					for (let method of orderObj.gather_method) {
 						for (let abilityObj of io.sockets.sockets[key].cga_data.ability) {
 							if (abilityObj.job == method.skill && abilityObj.level >= method.level) {
-								io.sockets.sockets[key].cga_data.state = 'confirm';
-								io.sockets.sockets[key].emit('order', {
-									craft_player: cga.GetPlayerInfo().name,
-									craft_player_pos: craftPlayerPos,
+								// 制作派单信息
+								let recipient = getRecipient()
+								let address = getAddress()
+								let emitData = {
+									recipient: recipient,
+									country: address.country,
+									mainmap: address.mainmap,
+									mapindex: address.mapindex,
+									pos: address.pos,
+									turndir: address.turndir,
 									craft_name: orderObj.name,
 									craft_count: orderObj.count,
-								});
+									gather_type: thisobj.gatherType,
+								}
+
+								io.sockets.sockets[key].cga_data.state = 'confirm';
+								io.sockets.sockets[key].emit('order',);
+								console.log('给玩家【' + io.sockets.sockets[key].cga_data.player_name + '】派发订单【' + emitData.craft_name + ' x ' + emitData.craft_count + '】，采集方式【' + emitData.gather_type + '】')
+								console.log('收件人【' + emitData.recipient + '】，地址【' + emitData.country + '】主地图【' + emitData.mainmap + '】地图【' + emitData.mapindex + '】坐标【' + emitData.pos + '】朝向【' + emitData.turndir + '】')
 								// 派发一次订单后，不能继续遍历，因为所有的分工数据都要重新计算
 								return
 							}
@@ -532,8 +573,39 @@ var sellFilter = (item) => {
 	}
 }
 
-var cleanUseless = (cb)=>{
+var cleanUseless = (cb) => {
+	if (thisobj.craftAim == '刷钱' || thisobj.craftAim == '烧技能') {
+		var sellarray = cga.findItemArray((item) => {
+			// 考虑到堆叠数没叠满不可以售卖，如果是料理和血瓶，只卖足够一组的格子。如果是装备，count=0即可售卖
+			if (item.name == thisobj.craft_target.name && (item.count == 0 || item.count == 3)) {
+				return true
+			}
+			return false
+		});
 
+		// 只要进入cleanUseless()，则物品必须清理，如果没找到物品，则视为逻辑bug，必须解决，否则人物会背包会满。
+		if (!sellarray.length) {
+			throw new Error('cleanUseless()没有识别出要售卖的东西，请检查')
+		}
+		// 调整售卖数量，因为卖店的count与装备的堆叠数count不是一个含义
+		sellarray = sellarray.map((item) => {
+			if (item.count == 3) {
+				item.count /= 3;
+			}
+			return item;
+
+		});
+		cga.travel.falan.toStone('B2', () => {
+			cga.turnTo(157, 122);
+			cga.sellArray(sellarray, cb, 8000);
+		});
+	} else if (thisobj.craftAim == '制造') {
+		// 默认全部存至移动银行
+		saveAndDraw.manualPrepare({
+			"item": [{ "name": thisobj.craft_target.name, "upper": 0, "lower": 0 },],
+		}, cb)
+	}
+	// 不会出现else情况，因为loadconfig已经将else情况规避
 }
 
 // 本方法需要多层if来避免循环判断带来的循环浪费
@@ -558,7 +630,6 @@ var loop = () => {
 	var craftSkillList = cga.GetSkillsInfo().filter((sk) => {
 		return (sk.name.indexOf('制') == 0 || sk.name.indexOf('造') == 0 || sk.name.indexOf('铸') == 0 || sk.name.indexOf('料理') == 0 || sk.name.indexOf('制药') == 0);
 	});
-	console.log("🚀 ~ file: 智能制造.js:553 ~ craftSkillList ~ craftSkillList:", craftSkillList)
 	/**
 	 * 选择要烧的制造系技能逻辑：
 	 * 1、如果发现是自己本职技能低于上限，停止遍历，优先选择。
@@ -587,10 +658,18 @@ var loop = () => {
 		trainMode.prepare(() => {
 			// 其它子插件的运行
 			callSubPluginsAsync('prepare', () => {
-				// 学技能动作，要在保证金币充足的地方才能调用
+				// 如果没找到要烧的技能，判断一下是什么情况
 				if (!thisobj.craftSkill) {
-					forgetAndLearn(loop);
-					return;
+					// 如果有本职技能，那么判断是已经烧满，可能是暂时烧满（声望不够晋级），也可能是最终烧满（技能10级）。
+					let craftSkillObj = cga.findPlayerSkill(myCraftSkill)
+					if (craftSkillObj) {
+						// 不管是暂时烧满还是最终烧满，都将制造技能改为本职技能刷钱，直至声望变化去晋级/玩家手动介入。
+						thisobj.craftSkill = craftSkillObj
+						thisobj.craftItemList = cga.GetCraftsInfo(thisobj.craftSkill.index);
+					} else {// 如果没找到本职技能，判断是没学，或者处于刷双百过程中，刚刚忘记本职技能。去学习
+						forgetAndLearn(loop);
+						return;
+					}
 				}
 				// 一定要使用getBestCraftableItem()的最终结果来为thisobj.craft_target赋值。
 				// 因为如果在getBestCraftableItem()内部直接给thisobj.craft_targe赋值，就有可能在搜索过程中，同步的广播函数会将未搜索完全的制造列表播放出去。
@@ -607,12 +686,19 @@ var loop = () => {
 				 */
 				if (thisobj.double && thisobj.craftSkill.lv >= 5) {
 					var curDetail = cga.GetPlayerInfo()['detail']
-					var CurrentEndurance = curDetail.manu_endurance
-					var CurrentSkillful = curDetail.manu_skillful
-					if (CurrentEndurance < 100 || CurrentSkillful < 100) {
-						console.log('【UNAecho脚本提醒】人物当前耐力：【' + CurrentEndurance + '】')
-						console.log('【UNAecho脚本提醒】人物当前灵巧：【' + CurrentSkillful + '】')
-						console.log('【UNAecho脚本提醒】耐力或灵巧不满足双百条件，需要忘记技能重新刷级')
+					var curEndurance = curDetail.manu_endurance
+					var curSkillful = curDetail.manu_skillful
+					var curIntelligence = curDetail.manu_intelligence
+					if (['治疗', '急救'].includes(myCraftSkill) && (curEndurance < 100 || curIntelligence < 100)) {
+						console.log('【UNAecho脚本提醒】人物当前耐力【' + curEndurance + '】智力【' + curIntelligence + '】不满足双百条件，忘记本职技能，重新学习。')
+						forgetAndLearn(loop);
+						return;
+					} else if (['料理', '制药', '鉴定'].includes(myCraftSkill) && (curSkillful < 100 || curIntelligence < 100)) {
+						console.log('【UNAecho脚本提醒】人物当前灵巧【' + curSkillful + '】智力【' + curIntelligence + '】不满足双百条件，忘记本职技能，重新学习。')
+						forgetAndLearn(loop);
+						return;
+					} else if (curEndurance + curSkillful + curIntelligence < 200) {// 武器/防具制造技能过多，偷懒的写法
+						console.log('【UNAecho脚本提醒】人物当前耐力【' + curEndurance + '】灵巧【' + curSkillful + '】不满足双百条件，忘记本职技能，重新学习。')
 						forgetAndLearn(loop);
 						return;
 					}
@@ -621,9 +707,9 @@ var loop = () => {
 				var playerInfo = cga.GetPlayerInfo();
 				// UNAecho:当制作物品消耗低于35耗魔，而角色蓝量低于35并且受伤的时候，脚本会陷入无限等待的状态。添加一个35耗魔的补魔判断
 				if (playerInfo.mp < 35 || playerInfo.mp < thisobj.craft_target.cost) {
-					cga.travel.falan.toCastleHospital(() => {
+					cga.travel.toHospital(() => {
 						setTimeout(loop, 3000);
-					});
+					}, false, false);
 					return;
 				}
 
@@ -645,14 +731,6 @@ var loop = () => {
 				// 	worker_pos: workerPos,
 				// 	worker_turn_dir: workerTurnDir,
 				// });
-
-				io.sockets.emit('init', {
-					craft_player: myname,
-					craft_materials: thisobj.craft_target ? thisobj.craft_target.materials : [],
-					craft_player_pos: craftPlayerPos,
-					worker_pos: workerPos,
-					worker_turn_dir: workerTurnDir,
-				});
 
 				var lackStuffs = null;
 				thisobj.craft_target.materials.forEach((mat) => {
@@ -719,7 +797,12 @@ var loop = () => {
 
 var thisobj = {
 	// 此脚本的几种运行模式
-	craftAimArr : ['刷钱','烧技能','制造'],
+	craftAimArr: ['刷钱', '烧技能', '制造'],
+	// 客户端采集的方式
+	gatherTypeDict: {
+		'利润': '舍弃效率，采取利润最大的方式采集。刷钱请用这个模式。',
+		'效率': '舍弃利润，采取效率最高的方式采集。追求速度，不计成本，请用这个模式。',
+	},
 	getDangerLevel: () => {
 		return 0;
 	},
@@ -753,12 +836,20 @@ var thisobj = {
 			console.error('读取配置：是否刷双百失败！');
 			return false;
 		}
-		
+
 		configTable.craftAim = obj.craftAim;
 		thisobj.craftAim = obj.craftAim;
 
 		if (!thisobj.craftAimArr.includes(thisobj.craftAim)) {
 			console.error('读取配置：制造目的失败！');
+			return false;
+		}
+
+		configTable.gatherType = obj.gatherType;
+		thisobj.gatherType = obj.gatherType;
+
+		if (!thisobj.gatherTypeDict[thisobj.gatherType]) {
+			console.error('读取配置：客户端采集方式失败！');
 			return false;
 		}
 
@@ -791,7 +882,6 @@ var thisobj = {
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, index) => {
 				if (index !== null && index >= 1 && craftSkillList[index - 1]) {
-					configTable.craftType = craftSkillList[index - 1].name;
 					thisobj.craftSkill = craftSkillList[index - 1];
 					thisobj.craftItemList = cga.GetCraftsInfo(thisobj.craftSkill.index);
 
