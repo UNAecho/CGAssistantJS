@@ -483,6 +483,20 @@ var thisobj = {
 			cga.savePlayerConfig(config, cb);
 			return
 		},
+		// 任务结束时，删除道具时间戳。
+		delTimestamp: (cb) => {
+			let config = cga.loadPlayerConfig();
+
+			if (!config)
+				config = {};
+			if (!config["mission"])
+				config["mission"] = {}
+
+			delete config["mission"][thisobj.data.itemName1_1]
+
+			cga.savePlayerConfig(config, cb);
+			return
+		},
 		// 拿取蜡烛，并落盘计时
 		getCandle: (cb) => {
 			let obj = { act: 'item', target: thisobj.data.itemName1_1, npcpos: [12, 4] }
@@ -610,7 +624,9 @@ var thisobj = {
 		var task = cga.task.TaskWithThink(thisobj.taskName, thisobj.taskStages, thisobj.taskRequirements, thisobj.taskPlayerThink)
 		// 此任务的锚点清晰，无需落盘辅助记录任务进度
 		// task.anyStepDone = false;
-		task.doTask(cb);
+		task.doTask(()=>{
+			thisobj.func.delTimestamp(cb)
+		});
 		return
 	},
 };
