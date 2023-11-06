@@ -7050,6 +7050,59 @@ module.exports = function(callback){
 		return this;
 	}
 
+	/**
+	 * UNAecho:采集技能采集某等级物品所获经验的二维矩阵
+	 * 不打卡
+	 */
+	cga.gather.experience = [
+		[2, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+		[-1, 2, 1, 1, 1, 1, 1, 1, 0, 0],
+		[-1, -1, 2, 1, 1, 1, 1, 1, 1, 0],
+		[-1, -1, -1, 2, 1, 1, 1, 1, 1, 0],
+		[-1, -1, -1, -1, 2, 1, 1, 1, 1, 0],
+		[-1, -1, -1, -1, -1, 2, 1, 1, 1, 0],
+		[-1, -1, -1, -1, -1, -1, 2, 1, 1, 0],
+		[-1, -1, -1, -1, -1, -1, -1, 2, 1, 0],
+		[-1, -1, -1, -1, -1, -1, -1, -1, 2, 0],
+		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	]
+
+	/**
+	 * UNAecho:采集技能采集某等级物品所获经验的二维矩阵
+	 * 打卡
+	 */
+	cga.gather.experiencePunchclock = [
+		[4, 2, 1, 1, 1, 1, 1, 1, 0, 0],
+		[-1, 4, 2, 2, 1, 1, 1, 1, 1, 0],
+		[-1, -1, 4, 3, 2, 2, 1, 1, 1, 0],
+		[-1, -1, -1, 4, 3, 2, 2, 2, 1, 0],
+		[-1, -1, -1, -1, 4, 3, 2, 2, 2, 0],
+		[-1, -1, -1, -1, -1, 4, 3, 3, 2, 0],
+		[-1, -1, -1, -1, -1, -1, 4, 3, 3, 0],
+		[-1, -1, -1, -1, -1, -1, -1, 4, 3, 0],
+		[-1, -1, -1, -1, -1, -1, -1, -1, 4, 0],
+		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	]
+
+	/**
+	 * 
+	 * UNAecho:获取采集目标物品所得经验
+	 * @param {*} itemLv 目标物品等级
+	 * @param {*} skillLv 采集等级
+	 * @param {*} punchclock 是否打卡
+	 */
+	cga.gather.getExperience = (itemLv, skillLv, punchclock = false) => {
+		if (itemLv < 1 || skillLv < 1) {
+			throw new Error('物品等级或技能等级不能小于1')
+		}
+
+		// 技能10级或以上不会再获得经验，返回0
+		if (skillLv >= 10) {
+			return 0
+		}
+		return punchclock ? cga.gather.experiencePunchclock[itemLv - 1][skillLv - 1] : cga.gather.experience[itemLv - 1][skillLv - 1]
+	}
+
 	cga.craft = {}
 		
 	cga.craft.buyFabricLv1Multi = (arr, cb)=>{

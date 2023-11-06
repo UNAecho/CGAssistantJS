@@ -88,7 +88,7 @@ io.on('connection', (socket) => {
 		socket.cga_data = data;
 		// 由socket.js的join源码可知，如果已经加入过此房间，则直接跳过。可以放心重复join同一个房间，不会出现异常。
 		// 注意：加入房间是属于服务端行为，与客户端不发生任何关系。是服务端自己索引（客户端）缓存数据的一种方式。
-		socket.join('buddy_' + data.job_name);
+		// socket.join('buddy_' + data.job_name);
 		console.log(socket.cga_data.player_name + ' 已加入节点');
 	});
 
@@ -633,7 +633,8 @@ var loop = () => {
 	/**
 	 * 选择要烧的制造系技能逻辑：
 	 * 1、如果发现是自己本职技能低于上限，停止遍历，优先选择。
-	 * 2、
+	 * 2、如果其它技能低于上限，暂时选择该技能，但不能停止遍历，因为可能本职技能的顺序在此技能之后
+	 * 3、如果遍历所有制造系技能后依然没有发现能烧的技能，后面会将逻辑改为刷钱。
 	 */
 	for (var i in craftSkillList) {
 		if (craftSkillList[i].name == myCraftSkill && craftSkillList[i].lv < craftSkillList[i].maxlv) {

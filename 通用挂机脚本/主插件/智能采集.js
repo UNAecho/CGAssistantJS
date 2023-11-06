@@ -114,9 +114,23 @@ var getRefreshData = () => {
 	// 自己当前的等级
 	resultDict.player_level = playerInfo.level
 
+	/**
+	 * 购买等级的粗略定义
+	 * 以能去部分村镇购买物品为基准，这里使用购买布料的村镇为例
+	 * 魔法大学能买到10级布，而去魔法大学至少要40级（战斗系必须40级，生产系跑路安全）
+	 * 人物40级视为购买等级为10级，20级视为购买等级6级
+	 * 
+	 */
+	let buyLevel = 1
+	if(resultDict.player_level >= 40){
+		buyLevel = 10
+	}else if (resultDict.player_level >= 20) {
+		buyLevel = 6
+	}
+
 	// 自己所掌握的工作技能
 	let arr = [
-		{ job: '购买', level: 10 }// job为购买时，level固定为10级。因为购买不限制等级，按照最高级看待。
+		{ job: '购买', level: buyLevel }
 	]
 	let skills = cga.GetSkillsInfo()
 	for (let s of skills) {
