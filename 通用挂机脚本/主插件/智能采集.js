@@ -17,9 +17,9 @@ var mine = require('./../公共模块/挖矿.js').mineArray;
 // 合并信息
 var actionarr = flower.concat(food).concat(wood).concat(mine)
 
-// 采集员自动适配制造者的坐标以及朝向
-var workerPos = cga.getStaticOrientationPosition(craftPlayerPos, craftPlayerTurnDir, 1)
-var workerTurnDir = cga.tradeDir(craftPlayerTurnDir)
+// // 采集员自动适配制造者的坐标以及朝向
+// var workerPos = cga.getStaticOrientationPosition(craftPlayerPos, craftPlayerTurnDir, 1)
+// var workerTurnDir = cga.tradeDir(craftPlayerTurnDir)
 
 var socket = null;
 
@@ -304,7 +304,7 @@ var thisobj = {
 		thisobj.serverPort = obj.serverPort;
 
 		if (!thisobj.serverPort) {
-			console.error('读取配置：监听服务端口失败！');
+			console.error('读取配置：服务端口失败！');
 			return false;
 		}
 
@@ -321,10 +321,10 @@ var thisobj = {
 			cga.sayLongWords(sayString, 0, 3, 1);
 			cga.waitForChatInput((msg, val) => {
 				if (val !== null && val >= 1000 && val <= 65535) {
-					configTable.listenPort = val;
-					thisobj.listenPort = val;
+					configTable.serverPort = val;
+					thisobj.serverPort = val;
 
-					var sayString2 = '当前已选择:监听端口=' + thisobj.listenPort + '。';
+					var sayString2 = '当前已选择:连接的服务端口=' + thisobj.serverPort + '。';
 					cga.sayLongWords(sayString2, 0, 3, 1);
 
 					cb2(null);

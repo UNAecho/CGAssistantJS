@@ -285,7 +285,7 @@ var waitStuffs = (name, materials, cb) => {
 
 	// 获取交易地点
 	let address = getAddress()
-	if(address.country == '法兰王国' && address.mainmap == '法兰城'){
+	if (address.country == '法兰王国' && address.mainmap == '法兰城') {
 		cga.travel.falan.toStone('C', () => {
 			cga.walkList([
 				address.pos
@@ -294,7 +294,7 @@ var waitStuffs = (name, materials, cb) => {
 				setTimeout(repeat, 500);
 			});
 		});
-	}else{
+	} else {
 		throw new Error('需要开发其它地点的逻辑')
 	}
 }
@@ -505,6 +505,15 @@ var getAddress = () => {
 var chooseWorker = (materials) => {
 	// 获取要派发的订单列表
 	let orders = getOrders(materials)
+	// 由于order已经按照材料的需求度排名，取排名第1的物品作为本次分配的任务目标
+	// 因为分配一次任务后，所有材料的需求度都会重新计算，所以只需取1个需求分数最高的物品即可。
+	let orderObj = orders[0]
+	if (!orderObj) {
+		throw new Error('订单列表数据异常，请检查')
+	}
+
+	// 用于派单的排序数组，所有关于order的技能损失以及收益的数据会存放在这里
+	let rankArr = []
 
 	/**
 	 * 根据订单的难易度以及排序分数，给空闲人员派发工作单。
@@ -513,32 +522,42 @@ var chooseWorker = (materials) => {
 	for (var key in io.sockets.sockets) {
 		if (io.sockets.sockets[key].cga_data) {
 			if (io.sockets.sockets[key].cga_data.state == 'idle') {
-				for (let orderObj of orders) {
-					for (let method of orderObj.gather_method) {
-						for (let abilityObj of io.sockets.sockets[key].cga_data.ability) {
-							if (abilityObj.job == method.skill && abilityObj.level >= method.level) {
-								// 制作派单信息
-								let recipient = getRecipient()
-								let address = getAddress()
-								let emitData = {
-									recipient: recipient,
-									country: address.country,
-									mainmap: address.mainmap,
-									mapindex: address.mapindex,
-									pos: address.pos,
-									turndir: address.turndir,
-									craft_name: orderObj.name,
-									craft_count: orderObj.count,
-									gather_type: thisobj.gatherType,
-								}
-
-								io.sockets.sockets[key].cga_data.state = 'confirm';
-								io.sockets.sockets[key].emit('order',);
-								console.log('给玩家【' + io.sockets.sockets[key].cga_data.player_name + '】派发订单【' + emitData.craft_name + ' x ' + emitData.craft_count + '】，采集方式【' + emitData.gather_type + '】')
-								console.log('收件人【' + emitData.recipient + '】，地址【' + emitData.country + '】主地图【' + emitData.mainmap + '】地图【' + emitData.mapindex + '】坐标【' + emitData.pos + '】朝向【' + emitData.turndir + '】')
-								// 派发一次订单后，不能继续遍历，因为所有的分工数据都要重新计算
-								return
+				for (let method of orderObj.gather_method) {
+					for (let abilityObj of io.sockets.sockets[key].cga_data.ability) {
+						if (abilityObj.job == method.skill && abilityObj.level >= method.level) {
+							// 每采集一次目标物品所获经验，默认为0
+							let tmpExp = 0
+							if (['狩猎', '伐木', '挖掘'].includes(abilityObj.job)) {
+								tmpExp = cga.gather.getExperience(method.level,abilityObj.level,false)
 							}
+							rankArr.push({
+								player_name: io.sockets.sockets[key].cga_data.player_name,
+								skill: abilityObj.job,
+								skill_lost: abilityObj.level - method.level,
+								exp: tmpExp,
+							})
+
+							// // 制作派单信息
+							// let recipient = getRecipient()
+							// let address = getAddress()
+							// let emitData = {
+							// 	recipient: recipient,
+							// 	country: address.country,
+							// 	mainmap: address.mainmap,
+							// 	mapindex: address.mapindex,
+							// 	pos: address.pos,
+							// 	turndir: address.turndir,
+							// 	craft_name: orderObj.name,
+							// 	craft_count: orderObj.count,
+							// 	gather_type: thisobj.gatherType,
+							// }
+
+							// io.sockets.sockets[key].cga_data.state = 'confirm';
+							// io.sockets.sockets[key].emit('order',);
+							// console.log('给玩家【' + io.sockets.sockets[key].cga_data.player_name + '】派发订单【' + emitData.craft_name + ' x ' + emitData.craft_count + '】，采集方式【' + emitData.gather_type + '】')
+							// console.log('收件人【' + emitData.recipient + '】，地址【' + emitData.country + '】主地图【' + emitData.mainmap + '】地图【' + emitData.mapindex + '】坐标【' + emitData.pos + '】朝向【' + emitData.turndir + '】')
+							// // 派发一次订单后，不能继续遍历，因为所有的分工数据都要重新计算
+							// return
 						}
 					}
 				}
@@ -547,6 +566,8 @@ var chooseWorker = (materials) => {
 			}
 		}
 	}
+
+	return
 }
 
 var broadcast = (period) => {
@@ -816,6 +837,18 @@ var thisobj = {
 			return true;
 		}
 
+		if (pair.field == 'gatherType') {
+			pair.field = '采集方式';
+			pair.value = pair.value;
+			pair.translated = true;
+			return true;
+		}
+		if (pair.field == 'double') {
+			pair.field = '是否刷双百';
+			pair.value = pair.value ? '是' : '否';
+			pair.translated = true;
+			return true;
+		}
 		if (pair.field == 'listenPort') {
 			pair.field = '监听端口';
 			pair.value = pair.value;
@@ -826,6 +859,9 @@ var thisobj = {
 		if (healObject.translate(pair))
 			return true;
 
+		if (trainMode.translate(pair))
+			return true;
+		
 		return false;
 	},
 	loadconfig: (obj) => {
@@ -865,6 +901,9 @@ var thisobj = {
 		if (!healObject.loadconfig(obj))
 			return false;
 
+		if (!trainMode.loadconfig(obj))
+			return false;
+
 		return true;
 	},
 	inputcb: (cb) => {
@@ -898,6 +937,81 @@ var thisobj = {
 		}
 
 		var stage2 = (cb2) => {
+			var sayString = '【智能制造】请选择制造目的:';
+			for (var i in thisobj.craftAimArr) {
+				if (i != 0)
+					sayString += ', ';
+				sayString += '(' + (parseInt(i) + 1) + ')' + thisobj.craftAimArr[i];
+			}
+			cga.sayLongWords(sayString, 0, 3, 1);
+			cga.waitForChatInput((msg, index) => {
+				if (index !== null && index >= 1 && thisobj.craftAimArr[index - 1]) {
+					configTable.craftAim = thisobj.craftAimArr[index - 1]
+					thisobj.craftAim = thisobj.craftAimArr[index - 1]
+
+					var sayString2 = '当前已选择:[' + thisobj.craftAim + ']。';
+					cga.sayLongWords(sayString2, 0, 3, 1);
+
+					cb2(null);
+
+					return false;
+				}
+
+				return true;
+			});
+		}
+
+		var stage3 = (cb2) => {
+			var sayString = '【智能制造】请选择采集目标物品的方式:';
+			var arr = Object.keys(thisobj.gatherTypeDict)
+			for (var i in arr) {
+				if (i != 0)
+					sayString += ', ';
+				sayString += '(' + (parseInt(i) + 1) + ')' + arr[i];
+			}
+			cga.sayLongWords(sayString, 0, 3, 1);
+			cga.waitForChatInput((msg, index) => {
+				if (index !== null && index >= 1 && arr[index - 1]) {
+					configTable.gatherType = arr[index - 1]
+					thisobj.gatherType = arr[index - 1]
+
+					var sayString2 = '当前已选择:[' + thisobj.gatherType + ']。';
+					cga.sayLongWords(sayString2, 0, 3, 1);
+
+					cb2(null);
+
+					return false;
+				}
+
+				return true;
+			});
+		}
+
+		var stage4 = (cb2) => {
+
+			var sayString = '【智能制造】请选择是否需要刷双百，0不需要1需要。';
+			cga.sayLongWords(sayString, 0, 3, 1);
+			cga.waitForChatInput((msg, value) => {
+				if (value !== null && (value == 0 || value == 1)) {
+
+					let saveValue = value == 1
+					let strValue = value == 1 ? '需要' : '不需要'
+
+					configTable.double = saveValue;
+					thisobj.double = saveValue
+
+					sayString = '当前已选择:[' + strValue + ']刷双百。';
+					cga.sayLongWords(sayString, 0, 3, 1);
+
+					cb2(null)
+					return false;
+				}
+
+				return true;
+			});
+		}
+
+		var stage5 = (cb2) => {
 
 			var sayString = '【智能制造】请选择服务监听端口: 1000~65535';
 			cga.sayLongWords(sayString, 0, 3, 1);
@@ -917,8 +1031,7 @@ var thisobj = {
 				return true;
 			});
 		}
-
-		Async.series([stage1, stage2, healObject.inputcb], cb);
+		Async.series([stage1, stage2, stage3, stage4, stage5, healObject.inputcb, trainMode.inputcb], cb);
 	},
 	execute: () => {
 		io.listen(thisobj.listenPort);
