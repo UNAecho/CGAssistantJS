@@ -122,21 +122,21 @@ var getRefreshData = () => {
 	 * 
 	 */
 	let buyLevel = 1
-	if(resultDict.player_level >= 40){
+	if (resultDict.player_level >= 40) {
 		buyLevel = 10
-	}else if (resultDict.player_level >= 20) {
+	} else if (resultDict.player_level >= 20) {
 		buyLevel = 6
 	}
 
 	// 自己所掌握的工作技能
 	let arr = [
-		{ job: '购买', level: buyLevel }
+		{ job: '购买', level: buyLevel, maxLevel: buyLevel }
 	]
 	let skills = cga.GetSkillsInfo()
 	for (let s of skills) {
 		if (thisobj.commonJobs.includes(s.name)) {
 			// 常用工作技能，以当前等级为准
-			arr.push({ job: s.name, level: s.lv })
+			arr.push({ job: s.name, level: s.lv, maxLevel: s.maxlv })
 		}
 	}
 	resultDict.ability = arr
@@ -260,13 +260,13 @@ var thisobj = {
 	// 人物可以胜任的常用工作列表
 	commonJobs: ['狩猎', '伐木', '挖掘'],
 	// 自己的人物名称
-	myname : cga.GetPlayerInfo().name,
+	myname: cga.GetPlayerInfo().name,
 	// 当前工作对象
 	object: {
 		// 任务目标物品名称
-		name : null,
+		name: null,
 		// 任务目标自定义名称，example:鱼翅哥拉尔
-		display_name : null,
+		display_name: null,
 		// 当前人物状态
 		state: 'idle',
 	},
@@ -350,7 +350,7 @@ var thisobj = {
 		});
 
 		socket.on('order', (data) => {
-			console.log('接收到订单:',data);
+			console.log('接收到订单:', data);
 			// 由于派单的时候服务端已经有自己的各种信息，所以派来的订单是一定可以接的
 			// 更新自己的工作内容
 			thisobj.object.name = data.craft_name

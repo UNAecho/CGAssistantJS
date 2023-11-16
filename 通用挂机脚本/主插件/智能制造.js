@@ -126,8 +126,8 @@ var waitStuffs = (name, materials, cb) => {
 	var repeat = () => {
 
 		//修复：防止面向方向不正确导致无法交易
-		if (cga.GetPlayerInfo().direction != craftPlayerTurnDir) {
-			cga.turnDir(craftPlayerTurnDir)
+		if (cga.GetPlayerInfo().direction != thisobj.address.turndir) {
+			cga.turnDir(thisobj.address.turndir)
 			setTimeout(repeat, 500);
 			return;
 		}
@@ -502,6 +502,73 @@ var getAddress = () => {
 	return defaultAddress
 }
 
+/**
+ * 寻找某个socket对象
+ * @param {*} obj filter对象，包括：
+ * 1、playerName：玩家名称filter
+ * 2、state：状态filter，可选值：'gathering'，'idle'，'done'等
+ * 
+ * 可自行增减条件逻辑
+ * @returns 
+ */
+var findSocket = (obj) => {
+	for (var key in io.sockets.sockets) {
+		// io.sockets.sockets有自己的大量数据，我们只用自定义的cga_data来判断业务逻辑
+		if (io.sockets.sockets[key].cga_data) {
+			// 符合filter的flag
+			let passCheck = true;
+			// 名称filter
+			if (typeof obj.playerName == 'string') {
+				if (io.sockets.sockets[key].cga_data.player_name != obj.playerName) {
+					passCheck = false;
+				}
+			}
+			// 状态filter
+			if (typeof obj.state == 'string') {
+				if (io.sockets.sockets[key].cga_data.state != obj.state) {
+					passCheck = false;
+				}
+			}
+			// 如果满足所有条件，返回此socket，否则继续遍历
+			if (passCheck) {
+				return io.sockets.sockets[key]
+			}
+		}
+	}
+	// 没有符合filter的人，返回null
+	return null
+}
+
+/**
+ * socket的简易封装
+ * @param {String} playerName 要发送的玩家名称
+ * @param {String} changeState 发送时是否需要修改状态，可不填
+ * @param {String} emitKey 发送key，如refresh
+ * @param {Object} data 要发送的数据
+ */
+var emitFunc = (playerName, changeState, emitKey, data) => {
+
+	if (!playerName || typeof emitKey != 'string' || typeof data != 'object') {
+		throw new Error('emit数据格式有误，请检查')
+	}
+
+	let socketObj = findSocket({ playerName: playerName })
+	// 没找到则不进行emit
+	if (!socketObj) {
+		console.warn('向【' + playerName + '】发送数据失败，可能已离线')
+		return
+	}
+
+	// 找到了则正常发送emit
+	// 如果有状态变更需求
+	if (typeof changeState == 'string') {
+		socketObj.cga_data.state = changeState
+	}
+	// 发送
+	socketObj.emit(emitKey, data);
+	return
+}
+
 var chooseWorker = (materials) => {
 	// 获取要派发的订单列表
 	let orders = getOrders(materials)
@@ -515,6 +582,9 @@ var chooseWorker = (materials) => {
 	// 用于派单的排序数组，所有关于order的技能损失以及收益的数据会存放在这里
 	let rankArr = []
 
+	// 是否存在技能未达到上限的空闲人员。如果有，则优先把订单派给经验获取最高的人
+	let skillNotMax = false
+
 	/**
 	 * 根据订单的难易度以及排序分数，给空闲人员派发工作单。
 	 * 时间复杂度非常大，但由于数据量较小，所以影响并不是很大。
@@ -527,9 +597,16 @@ var chooseWorker = (materials) => {
 						if (abilityObj.job == method.skill && abilityObj.level >= method.level) {
 							// 每采集一次目标物品所获经验，默认为0
 							let tmpExp = 0
-							if (['狩猎', '伐木', '挖掘'].includes(abilityObj.job)) {
-								tmpExp = cga.gather.getExperience(method.level,abilityObj.level,false)
+							// 如果该技能为采集技能，并且没有达到该职级的最高等级，则获取采集一次目标物品可以获得的经验。
+							if (abilityObj.level < abilityObj.maxLevel && ['狩猎', '伐木', '挖掘'].includes(abilityObj.job)) {
+								tmpExp = cga.gather.getExperience(method.level, abilityObj.level, false)
 							}
+
+							// 如果有人技能等级未烧至当前职级最大，则标记
+							if (!skillNotMax && tmpExp > 0) {
+								skillNotMax = true
+							}
+
 							rankArr.push({
 								player_name: io.sockets.sockets[key].cga_data.player_name,
 								skill: abilityObj.job,
@@ -537,27 +614,6 @@ var chooseWorker = (materials) => {
 								exp: tmpExp,
 							})
 
-							// // 制作派单信息
-							// let recipient = getRecipient()
-							// let address = getAddress()
-							// let emitData = {
-							// 	recipient: recipient,
-							// 	country: address.country,
-							// 	mainmap: address.mainmap,
-							// 	mapindex: address.mapindex,
-							// 	pos: address.pos,
-							// 	turndir: address.turndir,
-							// 	craft_name: orderObj.name,
-							// 	craft_count: orderObj.count,
-							// 	gather_type: thisobj.gatherType,
-							// }
-
-							// io.sockets.sockets[key].cga_data.state = 'confirm';
-							// io.sockets.sockets[key].emit('order',);
-							// console.log('给玩家【' + io.sockets.sockets[key].cga_data.player_name + '】派发订单【' + emitData.craft_name + ' x ' + emitData.craft_count + '】，采集方式【' + emitData.gather_type + '】')
-							// console.log('收件人【' + emitData.recipient + '】，地址【' + emitData.country + '】主地图【' + emitData.mainmap + '】地图【' + emitData.mapindex + '】坐标【' + emitData.pos + '】朝向【' + emitData.turndir + '】')
-							// // 派发一次订单后，不能继续遍历，因为所有的分工数据都要重新计算
-							// return
 						}
 					}
 				}
@@ -567,6 +623,50 @@ var chooseWorker = (materials) => {
 		}
 	}
 
+	// 如果没有空闲的worker，结束此函数
+	if (!rankArr.length) {
+		return
+	}
+
+	/**
+	 * 排序
+	 * 1、如果有人技能未满，则以获得经验量降序排序。
+	 * 2、如果所有人采集技能均满，以技能等级损失（当前技能等级-物品等级）升序排序。
+	 * 这样做的理由：
+	 * 1、有人技能未满时，找到一个收益最大的人来采集此物品，加速全员技能升级速度。
+	 * 2、有一种尴尬情况：所有人技能都满时，2个人，一个10级技能，一个1级技能，10级技能抢了1级物品的订单，而1级技能无法接10级物品的订单。
+	 * 使用技能等级损失，找到损失最小的那个人（采集等级最接近），来规避这种情况发生
+	 */
+	if (skillNotMax) {
+		rankArr.sort((a, b) => { return b.exp - a.exp })
+	} else {
+		rankArr.sort((a, b) => { return a.skill_lost - b.skill_lost })
+	}
+
+	// 制作派单信息
+	// 候选对象
+	let top_1 = rankArr[0]
+	// 收件人名称
+	let recipient = getRecipient()
+	// 收件地址以及其它信息
+	let address = getAddress()
+	// 通信数据
+	let emitData = {
+		recipient: recipient,
+		country: address.country,
+		mainmap: address.mainmap,
+		mapindex: address.mapindex,
+		pos: address.pos,
+		turndir: address.turndir,
+		craft_name: orderObj.name,
+		craft_count: orderObj.count,
+		gather_type: thisobj.gatherType,
+	}
+
+	emitFunc(top_1.player_name, 'confirm', 'order', emitData)
+	console.log('给玩家【' + top_1.player_name + '】派发订单【' + emitData.craft_name + ' x ' + emitData.craft_count + '】，采集方式【' + emitData.gather_type + '】')
+	console.log('收件人【' + emitData.recipient + '】，地址【' + emitData.country + '】主地图【' + emitData.mainmap + '】地图【' + emitData.mapindex + '】坐标【' + emitData.pos + '】朝向【' + emitData.turndir + '】')
+	// 派发一次订单后，不能继续遍历，因为所有的分工数据都要重新计算
 	return
 }
 
@@ -825,6 +925,8 @@ var thisobj = {
 		'利润': '舍弃效率，采取利润最大的方式采集。刷钱请用这个模式。',
 		'效率': '舍弃利润，采取效率最高的方式采集。追求速度，不计成本，请用这个模式。',
 	},
+	// 获取自己的收件地址，同时也是制造地址，建议站在回补NPC旁边。
+	address: getAddress(),
 	getDangerLevel: () => {
 		return 0;
 	},
@@ -861,7 +963,7 @@ var thisobj = {
 
 		if (trainMode.translate(pair))
 			return true;
-		
+
 		return false;
 	},
 	loadconfig: (obj) => {
