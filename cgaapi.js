@@ -2368,6 +2368,11 @@ module.exports = function(callback){
 			mainindex : 1000,
 			minindex : 1000,
 			maxindex : 32830,
+			entrance : {
+				'东门' : [470,196,100],
+				'西门' : [378,195,100],
+				'南门' : [424,253,100],
+			},
 			mapTranslate:{
 				'主地图' : 1000,
 				'法兰城' : 1000,
@@ -3088,6 +3093,10 @@ module.exports = function(callback){
 			mainindex : 2300,
 			minindex : 2300,
 			maxindex : 2399,
+			entrance : {
+				'入口' : [134,218,2300],
+				'北门' : [134,218,2300],
+			},
 			stoneNPCpos: [15, 3],
 			mapTranslate:{
 				'主地图' : 2300,
@@ -3161,6 +3170,10 @@ module.exports = function(callback){
 			mainindex : 2000,
 			minindex : 2000,
 			maxindex : 2099,
+			entrance : {
+				'入口' : [681, 343, 2000],
+				'北门' : [681, 343, 2000],
+			},
 			stoneNPCpos: [21, 10],
 			mapTranslate:{
 				'主地图' : 2000,
@@ -3322,6 +3335,10 @@ module.exports = function(callback){
 			mainindex : 2400,
 			minindex : 2400,
 			maxindex : 2499,
+			entrance : {
+				'北门' : [587, 51, 2400],
+				'东门' : [596,84,2400],
+			},
 			stoneNPCpos: [5, 14],
 			mapTranslate:{
 				'主地图' : 2400,
@@ -3375,6 +3392,10 @@ module.exports = function(callback){
 			mainindex : 2100,
 			minindex : 2100,
 			maxindex : 2199,
+			entrance : {
+				'入口' : [330,480,2100],
+				'东门' : [330,480,2100],
+			},
 			stoneNPCpos: [5, 4],
 			mapTranslate:{
 				'主地图' : 2100,
@@ -3441,6 +3462,10 @@ module.exports = function(callback){
 			mainindex : 3200,
 			minindex : 3200,
 			maxindex : 3299,
+			entrance : {
+				'北门' : [274, 294, 3200],
+				'东门' : [294,325,2100],
+			},
 			stoneNPCpos: [13, 8],
 			mapTranslate:{
 				'主地图' : 3200,
@@ -3518,6 +3543,10 @@ module.exports = function(callback){
 			mainindex : 3000,
 			minindex : 3000,
 			maxindex : 3099,
+			entrance : {
+				'入口' : [702, 147, 3000],
+				'南门' : [702, 147, 3000],
+			},
 			stoneNPCpos: [15, 7],
 			mapTranslate:{
 				'主地图' : 3000,
@@ -3608,6 +3637,11 @@ module.exports = function(callback){
 			mainindex : 4000,
 			minindex : 4000,
 			maxindex : 4099,
+			entrance : {
+				'东门' : [264,434,4000],
+				'西门' : [217,456,4000],
+				'北门' : [224,443,4000],
+			},
 			stoneNPCpos: [7, 7],
 			mapTranslate:{
 				'主地图' : 4000,
@@ -3754,6 +3788,10 @@ module.exports = function(callback){
 			mainindex : 4200,
 			minindex : 4200,
 			maxindex : 4299,
+			entrance : {
+				'南门' : [584, 316, '蒂娜村'],
+				'北门' : [570, 275, '蒂娜村'],
+			},
 			stoneNPCpos: [6, 5],
 			mapTranslate:{
 				'主地图' : 4200,
@@ -3768,6 +3806,8 @@ module.exports = function(callback){
 				},
 				'民家' : 4220,
 				'传送石':4299,
+				'南门':'南门',
+				'北门':'北门',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -3788,6 +3828,8 @@ module.exports = function(callback){
 				4220:[[35, 37, 4220]],
 				// 传送石
 				4299:[[29, 60, 4212],[9, 6, 4213],[7, 12, 4214],[12, 6, 4299],],
+				'南门':[[43, 62, 400],],
+				'北门':[[29, 21, 400],],
 			},
 			walkReverse:{
 				// 酒吧
@@ -3813,6 +3855,10 @@ module.exports = function(callback){
 			mainindex : 4201,
 			minindex : 4201,
 			maxindex : 4299,
+			entrance : {
+				'南门' : [584, 316, '蒂娜村'],
+				'北门' : [570, 275, '蒂娜村'],
+			},
 			mapTranslate:{
 				'主地图' : 4201,
 				'蒂娜村' : 4201,
@@ -3824,6 +3870,8 @@ module.exports = function(callback){
 				},
 				'传送石':4299,
 				'海贼指挥部' : 14018,
+				'南门':'南门',
+				'北门':'北门',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -3857,6 +3905,8 @@ module.exports = function(callback){
 						})
 					}
 				},
+				'南门':[[43, 62, 400],],
+				'北门':[[29, 21, 400],],
 			},
 			walkReverse:{
 				// 酒吧
@@ -3874,6 +3924,10 @@ module.exports = function(callback){
 			mainindex : 4300,
 			minindex : 4300,
 			maxindex : 4399,
+			entrance : {
+				'入口' : [183,161,4300],
+				'南门' : [183,161,4300],
+			},
 			stoneNPCpos: [5, 15],
 			mapTranslate:{
 				'主地图' : 4300,
@@ -3962,6 +4016,10 @@ module.exports = function(callback){
 			mainindex : 4400,
 			minindex : 4400,
 			maxindex : 4499,
+			entrance : {
+				'入口' : [118,100,4400],
+				'南门' : [118,100,4400],
+			},
 			mapTranslate:{
 				'主地图' : 4400,
 				'魔法大学' : 4400,
@@ -3998,6 +4056,8 @@ module.exports = function(callback){
 				'仓库内部' : 4455,
 				'地底湖 地下1楼' : 4456,
 				'地底湖 地下2楼' : 4457,
+				'出口':'南门',
+				'南门':'南门',
 			},
 			walkForward:{// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -4064,6 +4124,8 @@ module.exports = function(callback){
 							})
 						});
 				}, null, 4456],[6, 23, 4457]],
+				// 南门
+				'南门':[[75, 172, 402],],
 			},
 			walkReverse:{
 				// 实验室
@@ -4135,6 +4197,10 @@ module.exports = function(callback){
 			mainindex : 27001,
 			minindex : 27001,
 			maxindex : 27999,
+			entrance : {
+				'入口' : [513, 282, 27001],
+				'西门' : [513, 282, 27001],
+			},
 			mapTranslate:{
 				'主地图' : 27001,
 				'曙光骑士团营地' : 27001,
