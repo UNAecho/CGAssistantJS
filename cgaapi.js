@@ -9821,8 +9821,9 @@ module.exports = function(callback){
 			return
 		}
 
-		// 获取人物原来自定义昵称，函数结束时，需要恢复
-		var originNick = playerInfo.nick ? playerInfo.nick : ''
+		// 不再复原称号，因为会对调用此API的函数产生干扰
+		// var originNick = playerInfo.nick ? playerInfo.nick : ''
+
 		// 队伍信息缓存，也是本函数最终return的变量
 		var teammate_info = {};
 		// 人物称号缓存，记录每个人的当前称号。用于一些逻辑的性能节约
@@ -10118,7 +10119,9 @@ module.exports = function(callback){
 					nickCache = {}
 					// 不再恢复原称号，因为会和一些外层调用的API发生称号修改冲突，导致外层判断出现失误
 					// cga.ChangeNickName(originNick)
-					cga.shareTeammateInfo(memberCnt, reqSequence, cb)
+
+					// 函数结束，回调传入false。在外部可以重新执行此API以继续逻辑
+					setTimeout(cb, 1000, false);
 					return
 				}, delay);
 				return
