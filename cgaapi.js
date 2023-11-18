@@ -2152,86 +2152,51 @@ module.exports = function(callback){
 		}
 	}
 	
-	//从启程之间传送到指定村落
-	//UNAecho:修改逻辑，在对应传送石房间直接跳过本API，而不是登出重新再执行传送一遍。
+	/**
+	 * UNAecho:从法兰城去往各大村镇的API
+	 * 修复一个逻辑：
+	 * 如果你已经在目标村镇内，原来的逻辑依然会登出，重新花钱传送一遍，这完全没有意义。
+	 * 现在新增判断逻辑，如果你已经在目标村镇里，包含村镇里的其它地图，API会直接结束，不会重新再走一次。
+	 * @param {*} villageName 目标村镇名称
+	 * @param {*} cb 
+	 * @returns 
+	 */
 	cga.travel.falan.toTeleRoom = (villageName, cb)=>{
-		let mapindex = cga.GetMapIndex().index3;
+		let mainMap = cga.travel.switchMainMap()
+		// 如果已经在目标村镇（包含内部），则结束此API
+		if (mainMap == villageName){
+			cb(null)
+			return
+		}
 		switch(villageName){
 			case '亚留特村':
-				if (mapindex == 2499){
-					cb(null)
-					return
-				}
 				cga.travel.falan.toTeleRoomTemplate('亚留特村', [43, 23], [43, 22], [44, 22], cb);
 				break;
 			case '伊尔村':
-				if (mapindex == 2099){
-					cb(null)
-					return
-				}
 				cga.travel.falan.toTeleRoomTemplate('伊尔村', [43, 33], [43, 32], [44, 32], cb);
 				break;
 			case '圣拉鲁卡村':
-				if (mapindex == 2399){
-					cb(null)
-					return
-				}
 				cga.travel.falan.toTeleRoomTemplate('圣拉鲁卡村', [43, 44], [43, 43], [44, 43], cb);
 				break;
 			case '维诺亚村':
-				if (mapindex == 2199){
-					cb(null)
-					return
-				}
 				cga.travel.falan.toTeleRoomTemplate('维诺亚村', [9, 22], [9, 23], [8, 22], cb);
 				break;
 			case '奇利村':
-				if (mapindex == 3299){
-					cb(null)
-					return
-				}
 				cga.travel.falan.toTeleRoomTemplate('奇利村', [9, 33], [8, 33], [8, 32], cb);
 				break;
 			case '加纳村':
-				if (mapindex == 3099){
-					cb(null)
-					return
-				}
 				cga.travel.falan.toTeleRoomTemplate('加纳村', [9, 44], [8, 44], [8, 43], cb);
 				break;
 			case '杰诺瓦镇':
-				if (mapindex == 4099){
-					cb(null)
-					return
-				}
 				cga.travel.falan.toTeleRoomTemplate('杰诺瓦镇', [15, 4], [15, 5], [16, 4], cb);
 				break;
 			case '阿巴尼斯村':
-				if (mapindex == 4399){
-					cb(null)
-					return
-				}
 				cga.travel.falan.toTeleRoomTemplate('阿巴尼斯村', [37, 4], [37, 5], [38, 4], cb);
 				break;
 			case '蒂娜村':
-				if (mapindex == 4299){
-					cb(null)
-					return
-				}
 				cga.travel.falan.toTeleRoomTemplate('蒂娜村', [25, 4], [25, 5], [26, 4], cb);
 				break;
 			case '魔法大学':
-				var mapname = cga.GetMapName();
-				if(mapname == '魔法大学'){
-					cb(null);
-					return;
-				}
-				else if(mapname == '魔法大学内部'){
-					cga.walkList([
-					[40, 59, '魔法大学'],
-					], cb);
-					return;
-				}
 				cga.travel.falan.toTeleRoom('阿巴尼斯村', ()=>{
 					cga.walkList([
 					[5, 4, 4313],
@@ -5012,6 +4977,19 @@ module.exports = function(callback){
 	 * @param {*} finalVillage 
 	 */
 	cga.travel.toVillage = (villageName, cb, finalVillage = null) => {
+		// 获取当前所处主地图
+		var mainMapName = cga.travel.switchMainMap()
+
+		/**
+		 * 为了节约性能，如果人物已经在村镇内，跳过cga.travel.saveAndSupply()环节
+		 * 这样可以减少磁盘I/O（因为saveAndSupply()要读取配置文件判断人物是否已经开了传送）
+		 * 只有当人物需要步行赶路抵达目标村庄时，再调用cga.travel.saveAndSupply()来记录开传送状态
+		 */
+		if(mainMapName == villageName || mainMapName == finalVillage){
+			cb(null)
+			return
+		}
+
 		var config = cga.loadPlayerConfig();
 		if(!config){
 			config = {};
@@ -5019,7 +4997,6 @@ module.exports = function(callback){
 		if(finalVillage){
 			console.log('当前目标为【' + villageName+ '】，最终目标为【' + finalVillage + '】')
 		}
-		var mainMapName = cga.travel.switchMainMap()
 
 		if(cga.needSupplyInitial({  })){
 			console.log('人物没有满状态，先回补。')
