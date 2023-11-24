@@ -8724,9 +8724,168 @@ module.exports = function(callback){
 	}
 
 	/**
+	 * UNAecho:解析各种类型的商店，包括：
+	 * 1、购买商店（如法兰城里堡门口桥的2个武器/防具售卖NPC）
+	 * 2、售卖商店（如各种卖石NPC，1的桥头NPC也有售卖商店，他们是同一种）
+	 * 3、兑换商店（如曙光营地，蕃窃兑换小麦粉、葱等）
+	 * 
+	 * 开发笔记：
+	 * 不论什么商店，dlg.message都是主体，需要用正则表达式RegExp(/([^|\n]+)/g)去解析
+	 * 此API使用正则匹配后的长度来判断商店类型。也可以使用dlg的type + dialog_id来判断。
+	 * 各种商店数据:
+	 * 1、购买商店:
+	 * type=6,options=0,dialog_id=335
+	 * dlg.message正则解析后，前5行是商店信息，之后每6行信息是商品信息。
+	 * 2、售卖商店:
+	 * type=7,options=0,dialog_id=334
+	 * dlg.message正则解析后，前3行是商店信息，之后每9行信息是商品信息。
+	 * 3、兑换商店:
+	 * type=28,options=0,dialog_id=345
+	 * dlg.message正则解析后，前7行是商店信息，之后每5行信息是商品信息。
+	 * 
+	 * 【提示】
+	 * 当你不清楚一个道具的最大堆叠数是多少时，可以与售卖商店的NPC(dlg的type=7,options=0,dialog_id=334)对话，
+	 * 其中他发过来的dlg中就包含了官方物品堆叠数的数量
+	 * 使用此cga.parseStoreMsg(dlg)时，也会返回此属性。名字为【maxcount】，可以看到道具的堆叠数
+	 * */
+	cga.parseStoreMsg = (dlg)=>{
+
+		if(!dlg){
+			throw new Error('解析商店失败，可能对话超时!');
+		}
+
+		if(!dlg.message){
+			throw new Error('解析商店内容失败，可能对话超时!');
+		}
+		
+		// 解析商店dlg中的message内容
+		let reg = new RegExp(/([^|\n]+)/g)
+		let match = dlg.message.match(reg);
+		let matchLength = match.length
+
+		if(!matchLength || matchLength < 3){
+			throw new Error('解析商店内容失败，可能并未与商店NPC交谈');
+		}
+
+		// 最终返回结果
+		let resultObj = {
+			// 商店id
+			storeid : match[0],
+			// 商店NPC名称
+			name : match[1],
+			// 欢迎语
+			welcome : match[2],
+			// 商店类型
+			type : null,
+			// 商品件数
+			len : 0,
+		}
+
+		// 开发用变量
+		// 商店信息的长度
+		let storeInfoLen = -1
+		// 物品信息的长度
+		let goodsInfoLen = -1
+
+		// 购买商店
+		if((matchLength - 5) % 6 == 0){
+			resultObj.type = 'buy'
+			storeInfoLen = 5
+			goodsInfoLen = 6
+		}else if((matchLength - 3) % 9 == 0){// 售卖商店
+			resultObj.type = 'sell'
+			storeInfoLen = 3
+			goodsInfoLen = 9
+		}else if((matchLength - 7) % 5 == 0){// 兑换商店
+			resultObj.type = 'exchange'
+			storeInfoLen = 7
+			goodsInfoLen = 5
+
+			// 作为交换筹码的材料不足
+			resultObj.Insufficient_funds = match[3]
+			// 物品栏已满
+			resultObj.Insufficient_inventory = match[4]
+			// 交换筹码的贴图id
+			resultObj.currency_image_id = match[5]
+			// 作为交换筹码的物品，如20个蕃茄换16个小麦，此时蕃茄就是currency
+			resultObj.currency = match[6]
+		}
+
+		if(!resultObj.type){
+			throw new Error('解析商店内容失败，未知商店类型，请联系作者https://github.com/UNAecho更新。');
+		}
+
+		// 商品个数
+		resultObj.len = Math.ceil((matchLength - storeInfoLen) / goodsInfoLen)
+
+		// 遍历每个商品，填充数据
+		resultObj.items = []
+		for(var i = 0; i < resultObj.len; ++i){
+			if(resultObj.type == 'sell'){
+				resultObj.items.push({
+					// 物品名称
+					name : match[storeInfoLen + goodsInfoLen * i + 0],
+					// 物品数量
+					count : parseInt(match[storeInfoLen + goodsInfoLen * i + 1]),
+					// 物品贴图id
+					item_image_id : parseInt(match[storeInfoLen + goodsInfoLen * i + 2]),
+					// 物品一组的售卖单价
+					price_group : parseInt(match[storeInfoLen + goodsInfoLen * i + 3]),
+					// 物品在背包的pos(包括装备，物品第一格从pos = 8开始)
+					pos : parseInt(match[storeInfoLen + goodsInfoLen * i + 4]),
+					// TODO 未知属性，待研究
+					unknown_key : match[storeInfoLen + goodsInfoLen * i + 5],
+					// 商品详细信息，包括名称、等级、描述等。
+					attr : match[storeInfoLen + goodsInfoLen * i + 6],
+					// 该道具能卖多少组，如40个苹果薄荷，就能卖2组。sell_group=2
+					sell_group : parseInt(match[storeInfoLen + goodsInfoLen * i + 7]),
+					// 该道具的堆叠数
+					maxcount : parseInt(match[storeInfoLen + goodsInfoLen * i + 8]),
+				});
+			}else if(resultObj.type == 'buy'){
+				resultObj.items.push({
+					// 商品的index
+					index : i,
+					// 商品名称
+					name : match[storeInfoLen + goodsInfoLen * i + 0],
+					// 物品贴图id
+					item_image_id : parseInt(match[storeInfoLen + goodsInfoLen * i + 1]),
+					// 价格
+					cost : parseInt(match[storeInfoLen + goodsInfoLen * i + 2]),
+					// 商品详细信息，包括名称、等级、描述等。
+					attr : match[storeInfoLen + goodsInfoLen * i + 3],
+					// 最少买多少
+					batch : parseInt(match[storeInfoLen + goodsInfoLen * i + 4]),
+					// 最多买多少
+					max_buy : parseInt(match[storeInfoLen + goodsInfoLen * i + 5]),
+				});
+			}else if(resultObj.type == 'exchange'){
+				resultObj.items.push({
+					// 商品的index
+					index : i,
+					// 由于交换商店，物品名字后面会带一个(堆叠数)，故用正则去掉
+					name : match[storeInfoLen + goodsInfoLen * i + 0].match(new RegExp(/([^\d\(\)]+)/g))[0],
+					// 物品raw名称
+					raw_name : match[storeInfoLen + goodsInfoLen * i + 0],
+					// 物品贴图id
+					item_image_id : parseInt(match[storeInfoLen + goodsInfoLen * i + 1]),
+					// 换算比，count与商品的数量比例是count:1，count是count个resultObj.currency，而1是商店的物品，1可能是数量，也可能是1组。
+					// 如曙光骑士团20个蕃茄换16个小麦，这里count就是20，1就是1组小麦，而小麦的数量为16，每个商店都不同。
+					count : parseInt(match[storeInfoLen + goodsInfoLen * i + 2]),
+					// 该商品的堆叠数量，一个batch数的商品占1个背包格子
+					batch : parseInt(match[storeInfoLen + goodsInfoLen * i + 3]),
+					// 商品详细信息，包括名称、等级、描述等。
+					attr : match[storeInfoLen + goodsInfoLen * i + 4],
+				});
+			}
+		}
+		return resultObj;
+	}
+
+	/**
 	 * UNAecho:封装一个通用的购买API
 	 * @param {*} item 物品名称
-	 * @param {*} count 购买数量，注意是商品+-的数量，而不是几组。想买1组铜，则填20。
+	 * @param {*} count 购买数量，注意是商品+-的数量，和要买物品的数量没有直接关系。
 	 * @param {*} pos 商店NPC的坐标
 	 * @param {*} cb 
 	 */
@@ -16783,6 +16942,12 @@ module.exports = function(callback){
 	/**
 	 * UNAecho : 获取道具叠加数
 	 * 有时无法获取道具type时，只能靠道具名称查询。（比如身上没有此道具时）
+	 * 
+	 * 【提示】
+	 * 当你不清楚一个道具的最大堆叠数是多少时，可以使用我的另一个API【cga.parseStoreMsg()】辅助查询，方法如下：
+	 * 1、找到一个售卖性质的NPC(dlg的type=7,options=0,dialog_id=334)，与其对话，打开商店界面。
+	 * 2、商店界面其实是一个对话dlg，将其传给cga.parseStoreMsg()
+	 * 3、cga.parseStoreMsg()返回的obj中，obj.items会包含背包中的各个道具属性，其中maxcount就是官方堆叠数。
 	 */
 	cga.getItemMaxcount = (item) => {
 		if(!item){
