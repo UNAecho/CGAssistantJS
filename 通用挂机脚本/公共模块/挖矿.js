@@ -1,3 +1,12 @@
+/**
+ * UNAecho:
+ * level:物品等级
+ * name:物品官方名称
+ * display_name:物品自定义名称
+ * func:走到采集此物品地点的函数
+ * back:走回就近可回补城镇的函数。只包含走路，不包含回补行为。
+ * 【注意】不一定所有采集物品对象都有back函数，如果没有则视为登出回补的方式效率更高
+ */
 var mineArray = [
 {
 	level : 1,
@@ -184,6 +193,13 @@ var mineArray = [
 				[11, 47],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			[11, 9, '莎莲娜海底洞窟 地下1楼'],
+			[24, 11, '莎莲娜'],
+			cga.travel.info['杰诺瓦镇'].entrance['西门'],
+		], cb);
 	}
 },
 {
@@ -201,6 +217,13 @@ var mineArray = [
 				[12, 6],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			[11, 9, '莎莲娜海底洞窟 地下1楼'],
+			[24, 11, '莎莲娜'],
+			cga.travel.info['杰诺瓦镇'].entrance['西门'],
+		], cb);
 	}
 },
 {// UNAecho:半山8/死神的降临任务【神圣庇护之衣】挖掘材料
@@ -236,6 +259,13 @@ var mineArray = [
 				[67, 36],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			[57,13,14002],
+			[36,7,402],
+			cga.travel.info['阿巴尼斯村'].entrance['入口'],
+		], cb);
 	}
 },
 {
@@ -254,6 +284,13 @@ var mineArray = [
 				[51, 43],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			[57,13,14002],
+			[36,7,402],
+			cga.travel.info['阿巴尼斯村'].entrance['入口'],
+		], cb);
 	}
 },
 {
@@ -280,60 +317,6 @@ var mineArray = [
 						], cb);
 					});
 				});
-			});
-		})
-	}
-},
-{
-	level : 7,
-	name : '幻之钢',
-	display_name : '幻之钢法兰城',
-	func : (cb)=>{
-		cga.travel.falan.toStone('C', () => {
-			cga.walkList([
-				[17, 53, '法兰城'],
-				[22, 88, '芙蕾雅'],
-				[201, 166],
-			], () => {
-				cga.TurnTo(201, 165);
-				setTimeout(() => {
-					cga.AsyncWaitNPCDialog(() => {
-						cga.ClickNPCDialog(1, -1)
-						cga.AsyncWaitMovement({ map: 15000, delay: 1000, timeout: 5000 }, () => {
-							cga.walkList([
-								[20, 8, '莎莲娜海底洞窟 地下2楼'],
-								[11, 47],
-							], cb);
-						});
-					});
-				}, 1500);
-			});
-		})
-	}
-},
-{
-	level : 8,
-	name : '幻之银',
-	display_name : '幻之银法兰城',
-	func : (cb)=>{
-		cga.travel.falan.toStone('C', () => {
-			cga.walkList([
-				[17, 53, '法兰城'],
-				[22, 88, '芙蕾雅'],
-				[201, 166],
-			], () => {
-				cga.TurnTo(201, 165);
-				setTimeout(() => {
-					cga.AsyncWaitNPCDialog(() => {
-						cga.ClickNPCDialog(1, -1)
-						cga.AsyncWaitMovement({ map: 15000, delay: 1000, timeout: 5000 }, () => {
-							cga.walkList([
-								[20, 8, '莎莲娜海底洞窟 地下2楼'],
-								[12, 6],
-							], cb);
-						});
-					});
-				}, 1500);
 			});
 		})
 	}

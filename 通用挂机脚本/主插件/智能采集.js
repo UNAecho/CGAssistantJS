@@ -10,12 +10,20 @@ var supplyObject = require('./../公共模块/通用登出回补');
 var trainMode = require('./../子插件/智能培养角色');
 
 // 原料采集信息
-var flower = require('./../公共模块/采花.js').mineArray;
-var food = require('./../公共模块/狩猎.js').mineArray;
-var wood = require('./../公共模块/伐木.js').mineArray;
-var mine = require('./../公共模块/挖矿.js').mineArray;
-// 合并信息
-var actionarr = flower.concat(food).concat(wood).concat(mine)
+const flower = require('./../公共模块/采花.js').mineArray;
+const food = require('./../公共模块/狩猎.js').mineArray;
+const wood = require('./../公共模块/伐木.js').mineArray;
+const mine = require('./../公共模块/挖矿.js').mineArray;
+const buy = require('./../公共模块/自定义购买.js').mineArray;
+
+// 整合采集信息
+const gatherDict = {
+	'采花': flower,
+	'狩猎': food,
+	'伐木': wood,
+	'挖掘': mine,
+	'购买': buy,
+}
 
 // // 采集员自动适配制造者的坐标以及朝向
 // var workerPos = cga.getStaticOrientationPosition(craftPlayerPos, craftPlayerTurnDir, 1)
@@ -142,16 +150,121 @@ var getRefreshData = () => {
 	resultDict.ability = arr
 
 	// 自己当前的工作状态
-	resultDict.state = thisobj.object.state
+	resultDict.state = thisobj.state
 
 	// 时间戳，方便统计时使用
 	resultDict.timestamp = Date.now()
 
 	return resultDict
 }
+
+/**
+ * 采集技能的通用工作函数，采集技能包括：
+ * 1、狩猎
+ * 2、挖掘
+ * 3、伐木
+ * @param {*} err 
+ * @param {*} result 
+ * @returns 
+ */
+const gatherWork = (err, result) => {
+
+	check_drop();
+
+	var playerInfo = cga.GetPlayerInfo();
+	if (playerInfo.mp == 0 || (err && err.message == '治疗蓝量不足')) {
+		loop();
+		return;
+	}
+	
+	if (thisobj.object.check_done()) {
+		loop();
+		return;
+	}
+
+	if (playerInfo.health > 0) {
+		healObject.func(gatherWork);
+		return;
+	}
+
+	var pets = cga.GetPetsInfo();
+	for (var i = 0; i < pets.length; ++i) {
+		if (pets[i].health > 0)
+			healPetObject.func(gatherWork, i);
+	}
+
+	cga.StartWork(thisobj.object.skill.index, 0);
+	// cga.AsyncWaitWorkingResult使用方式见开发文档
+	cga.AsyncWaitWorkingResult((err, result) => {
+
+		if (thisobj.logoutTimes > 0 && result !== undefined) {
+			if (thisobj.gatherTimes == undefined)
+				thisobj.gatherTimes = 0;
+
+			if (thisobj.gatherTimes < thisobj.logoutTimes) {
+				thisobj.gatherTimes++;
+				// console.log('已挖'+thisobj.gatherTimes+'次');
+			} else {
+				cga.LogOut();
+				return false;
+			}
+		}
+
+		gatherWork(err, result);
+	}, 10000);
+}
+
+/**
+ * 采集类技能默认的check_done函数
+ * 物品数大于等于20视为背包已满
+ */
+const gatherCheckDone = () => {
+	return cga.getInventoryItems().length >= 20
+}
+
+const getWorkObj = (orderObj) => {
+	let workObj = {
+		// 工作所使用的技能
+		skill: null,
+		// 工作函数，收集物品的主要逻辑
+		work: null,
+		// 完成条件的检查函数
+		check_done: null,
+		// 赶往工作地点的函数
+		forward: null,
+		// 可选，从工作地点徒步返回补给点的函数。如果没有值，则直接登出。
+		back: null,
+	}
+
+	// 采集目标的数据，根据不同的采集技能，获取对应的数据。
+	// if-else的写法是为了以后其它收集物品的可扩展性。例如跑腿、打BOSS拿材料等非采集类的收集物品方式
+	let target = null
+	if (thisobj.commonJobs.includes(orderObj.skill)) {
+		workObj.skill = cga.findPlayerSkill(orderObj.skill)
+		workObj.work = gatherWork
+		workObj.check_done = gatherCheckDone
+
+		target = gatherDict[orderObj.skill].find((o) => { return o.name == orderObj.craft_name })
+
+		workObj.forward = target.func
+		workObj.back = target.back
+
+	} else if (orderObj.skill == '购买') {
+
+	} else {
+		throw new Error('采集技能【' + orderObj.skill + '】数值有误。')
+	}
+}
+
 var loop = () => {
 
-	var skill = null;
+	if (!thisobj.object) {
+		console.log('等待服务端派单..')
+		setTimeout(loop, 2000)
+		return
+	}
+
+	// var skill = null;
 
 	// if (gatherObject.skill !== null) {
 	// 	skill = cga.findPlayerSkill(gatherObject.skill);
@@ -175,6 +288,11 @@ var loop = () => {
 			supplyObject.func(loop);
 		return;
 	}
+
+	setTimeout(loop, 2000)
+	return
+
+
 	// 如果模块有自己的采集完毕的处理逻辑，就执行。
 	// 否则，使用通用模块来处理。
 	if (mineObject.check_done()) {
@@ -189,69 +307,10 @@ var loop = () => {
 		return;
 	}
 
-	var workwork = (err, result) => {
 
-		check_drop();
-
-		var playerInfo = cga.GetPlayerInfo();
-		if (playerInfo.mp == 0 || (err && err.message == '治疗蓝量不足')) {
-			loop();
-			return;
-		}
-
-		if (mineObject.check_done(result)) {
-			loop();
-			return;
-		}
-
-		if (playerInfo.health > 0) {
-			healObject.func(workwork);
-			return;
-		}
-
-		var pets = cga.GetPetsInfo();
-		for (var i = 0; i < pets.length; ++i) {
-			if (pets[i].health > 0)
-				healPetObject.func(workwork, i);
-		}
-
-		if (skill != null && !mineObject.workManager) {
-			cga.StartWork(skill.index, 0);
-			// cga.AsyncWaitWorkingResult使用方式见开发文档
-			cga.AsyncWaitWorkingResult((err, result) => {
-
-				if (thisobj.logoutTimes > 0 && result !== undefined) {
-					if (thisobj.gatherTimes == undefined)
-						thisobj.gatherTimes = 0;
-
-					if (thisobj.gatherTimes < thisobj.logoutTimes) {
-						thisobj.gatherTimes++;
-						// console.log('已挖'+thisobj.gatherTimes+'次');
-					} else {
-						cga.LogOut();
-						return false;
-					}
-				}
-
-				workwork(err, result);
-			}, 10000);
-		} else {// 如果模块有自己的采集方式，就使用自己的采集方式
-			if (mineObject.workManager) {
-				mineObject.workManager((err, result) => {
-					workwork(err, result);
-				});
-			} else {
-				setTimeout(workwork, 1500, null);
-			}
-		}
-	}
 	callSubPluginsAsync('prepare', () => {
-		// 成本统计
-		mineObject.object.startTime = Date.now()
-		mineObject.object.startGold = playerInfo.gold
-		console.log('开始任务,当前时间:' + Date(mineObject.object.startTime) + ',当前金币:' + mineObject.object.startGold)
 		cleanOtherItems(() => {
-			mineObject.func(workwork);
+			mineObject.func(gatherWork);
 		})
 	});
 }
@@ -261,15 +320,10 @@ var thisobj = {
 	commonJobs: ['狩猎', '伐木', '挖掘'],
 	// 自己的人物名称
 	myname: cga.GetPlayerInfo().name,
-	// 当前工作对象
-	object: {
-		// 任务目标物品名称
-		name: null,
-		// 任务目标自定义名称，example:鱼翅哥拉尔
-		display_name: null,
-		// 当前人物状态
-		state: 'idle',
-	},
+	// 当前工作状态
+	state: 'idle',
+	// 当前工作对象，业务核心属性。会在接受订单时赋值。具体数据结构，参考【智能制造】emit发送的'order'数据。
+	object: null,
 	getDangerLevel: () => {
 		var map = cga.GetMapName();
 
@@ -352,48 +406,47 @@ var thisobj = {
 		socket.on('order', (data) => {
 			console.log('接收到订单:', data);
 			// 由于派单的时候服务端已经有自己的各种信息，所以派来的订单是一定可以接的
-			// 更新自己的工作内容
-			thisobj.object.name = data.craft_name
-			thisobj.object.gatherCount = data.craft_count
+			// 更新自己的订单数据
+			thisobj.object = data
 			// 更改工作状态。由于客户端只给空闲人员派单，所以接单后一定可以立即变为采集状态
-			thisobj.object.state = 'gathering'
+			thisobj.state = 'gathering'
 			// 通知客户端自己的工作状态
-			data.state = thisobj.object.state
+			data.state = thisobj.state
 			socket.emit('confirm', data);
 		});
 
-		socket.on('init', (data) => {
-			thisobj.craft_player = data.craft_player;
-			thisobj.craft_materials = data.craft_materials;
-			thisobj.craft_player_pos = data.craft_player_pos;
-			data.craft_materials.forEach((m) => {
-				if (m.name == thisobj.object.name) {
-					thisobj.object.gatherCount = m.count * MATERIALS_MULTIPLE_TIMES;
-					thisobj.object.skuCount = m.count;
-				} else if (m.name.replace("条", "") == thisobj.object.name) {// 需要挖矿并压条的情况
-					thisobj.object.gatherCount = m.count * 20 * MATERIALS_MULTIPLE_TIMES;
-					thisobj.object.skuCount = m.count * 20;
-				}
-			});
-		});
+		// socket.on('init', (data) => {
+		// 	thisobj.craft_player = data.craft_player;
+		// 	thisobj.craft_materials = data.craft_materials;
+		// 	thisobj.craft_player_pos = data.craft_player_pos;
+		// 	data.craft_materials.forEach((m) => {
+		// 		if (m.name == thisobj.object.name) {
+		// 			thisobj.object.gatherCount = m.count * MATERIALS_MULTIPLE_TIMES;
+		// 			thisobj.object.skuCount = m.count;
+		// 		} else if (m.name.replace("条", "") == thisobj.object.name) {// 需要挖矿并压条的情况
+		// 			thisobj.object.gatherCount = m.count * 20 * MATERIALS_MULTIPLE_TIMES;
+		// 			thisobj.object.skuCount = m.count * 20;
+		// 		}
+		// 	});
+		// });
 
 		socket.on('trade', () => {
 
-			thisobj.object.state = 'trading';
+			thisobj.state = 'trading';
 
 			var count = 0;
 			var stuffs =
 			{
 				itemFilter: (item) => {
-					if (count >= thisobj.object.gatherCount)
+					if (count >= thisobj.object.craft_count)
 						return false;
-					if (thisobj.object.skillname == '挖掘') {
-						if (item.name == thisobj.object.name + '条') {
+					if (thisobj.object.skill == '挖掘') {
+						if (item.name == thisobj.object.craft_name + '条') {
 							count += item.count;
 							return true;
 						}
 					} else {
-						if (item.name == thisobj.object.name) {
+						if (item.name == thisobj.object.craft_name) {
 							count += item.count;
 							return true;
 						}
@@ -407,13 +460,13 @@ var thisobj = {
 				if (result && result.success == true)
 					cga.EnableFlags(cga.ENABLE_FLAG_TRADE, false);
 
-				thisobj.object.state = 'done';
+				thisobj.state = 'done';
 			});
 		})
 
 		socket.on('endtrade', () => {
-			if (thisobj.object.state == 'trading') {
-				thisobj.object.state = 'done';
+			if (thisobj.state == 'trading') {
+				thisobj.state = 'done';
 				//cga.EnableFlags(cga.ENABLE_FLAG_TRADE, false);
 			}
 		});
@@ -421,6 +474,9 @@ var thisobj = {
 		socket.on('disconnect', () => {
 			console.log('退出双百节点');
 		});
+
+		// main
+		loop()
 	},
 };
 

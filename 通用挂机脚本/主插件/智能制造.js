@@ -2,27 +2,29 @@ var Async = require('async');
 var cga = global.cga;
 var configTable = global.configTable;
 
-var rootdir = cga.getrootdir()
-
+var healObject = require('./../公共模块/治疗自己');
 // 集成智能培养角色，用于晋级、开传送等
 var trainMode = require('./../子插件/智能培养角色');
 // 集成智能培养角色，用于晋级、开传送等
 var saveAndDraw = require('./../子插件/自动存取');
 
 // 原料采集信息
-var flower = require('./../公共模块/采花.js').mineArray;
-var food = require('./../公共模块/狩猎.js').mineArray;
-var wood = require('./../公共模块/伐木.js').mineArray;
-var mine = require('./../公共模块/挖矿.js').mineArray;
-var buy = require('./../公共模块/自定义购买.js').mineArray;
+const flower = require('./../公共模块/采花.js').mineArray;
+const food = require('./../公共模块/狩猎.js').mineArray;
+const wood = require('./../公共模块/伐木.js').mineArray;
+const mine = require('./../公共模块/挖矿.js').mineArray;
+const buy = require('./../公共模块/自定义购买.js').mineArray;
 // 整合采集信息
-var gatherDict = {
+const gatherDict = {
 	'采花': flower,
 	'狩猎': food,
 	'伐木': wood,
-	'挖矿': mine,
+	'挖掘': mine,
 	'购买': buy,
 }
+
+// 挖掘技能列表，用于各种逻辑判断
+const gatherSkillNames = ['狩猎','伐木','挖掘']
 
 const allowMats = [
 	// 挖掘
@@ -47,7 +49,7 @@ const allowMats = [
 ];
 
 // 自己的名字
-var myname = cga.GetPlayerInfo().name
+const myname = cga.GetPlayerInfo().name
 
 // 本职得意技数组，一般制造系只有唯一一个技能
 var myCraftSkill = cga.job.getJob().skill[0]
@@ -55,7 +57,11 @@ if (!myCraftSkill) {
 	throw new Error('职业数据中没有你的职业技能信息，请检查')
 }
 
-var healObject = require(rootdir + '/通用挂机脚本/公共模块/治疗自己');
+const isMetalName = (name) => {
+	return ['铜', '铁', '银', '铝', '纯银', '金', '白金', '幻之钢', '幻之银', '稀有金属', '勒格耐席鉧', '奥利哈钢',].find(m=>{
+		return name.indexOf(m) != -1
+	}) != undefined
+}
 
 const isFabricName = (name) => {
 	return ['麻布', '木棉布', '毛毡', '绵', '细线', '绢布', '莎莲娜线', '杰诺瓦线', '阿巴尼斯制的线', '阿巴尼斯制的布', '细麻布', '开米士毛线',].indexOf(name) != -1 ? true : false
@@ -430,6 +436,12 @@ var getDivisionOfLabor = () => {
 }
 
 var findGatherMethods = (materialName) => {
+
+	// 需要二次加工的原料需要特殊处理，否则无法找到采集方法
+	if(materialName.indexOf('条') != -1){
+		materialName = materialName.replace('条', '')
+	}
+
 	let arr = []
 	for (let skillName in gatherDict) {
 		for (let obj of gatherDict[skillName]) {
@@ -476,7 +488,7 @@ var getOrders = (materials) => {
  * 目前默认是自己，为日后可能开发的多人协同做扩展准备
  * @returns 
  */
-var getRecipient = () => {
+const getRecipient = () => {
 	return myname
 }
 
@@ -491,7 +503,7 @@ var getRecipient = () => {
  * 5、神圣大陆（艾尔莎岛）
  * @returns 
  */
-var getAddress = () => {
+const getAddress = () => {
 	let defaultAddress = {
 		country: '法兰王国',
 		mainmap: '法兰城',
@@ -575,6 +587,7 @@ var chooseWorker = (materials) => {
 	// 由于order已经按照材料的需求度排名，取排名第1的物品作为本次分配的任务目标
 	// 因为分配一次任务后，所有材料的需求度都会重新计算，所以只需取1个需求分数最高的物品即可。
 	let orderObj = orders[0]
+	console.log("🚀 ~ file: 智能制造.js:587 ~ chooseWorker ~ orderObj:", orderObj)
 	if (!orderObj) {
 		throw new Error('订单列表数据异常，请检查')
 	}
@@ -601,17 +614,17 @@ var chooseWorker = (materials) => {
 							if (abilityObj.level < abilityObj.maxLevel && ['狩猎', '伐木', '挖掘'].includes(abilityObj.job)) {
 								tmpExp = cga.gather.getExperience(method.level, abilityObj.level, false)
 							}
-
+							
 							// 如果有人技能等级未烧至当前职级最大，则标记
 							if (!skillNotMax && tmpExp > 0) {
 								skillNotMax = true
 							}
-
+							
 							rankArr.push({
 								player_name: io.sockets.sockets[key].cga_data.player_name,
 								skill: abilityObj.job,
 								skill_lost: abilityObj.level - method.level,
-								exp: tmpExp,
+								skill_exp: tmpExp,
 							})
 
 						}
@@ -627,30 +640,67 @@ var chooseWorker = (materials) => {
 	if (!rankArr.length) {
 		return
 	}
+	console.log("🚀 ~ file: 智能制造.js:637 ~ chooseWorker ~ rankArr:", rankArr)
 
 	/**
 	 * 排序
-	 * 1、如果有人技能未满，则以获得经验量降序排序。
-	 * 2、如果所有人采集技能均满，以技能等级损失（当前技能等级-物品等级）升序排序。
+	 * 
+	 * 自定义名词解释：
+	 * 1、获得经验量：采集技能单次采集物品所获得的经验值
+	 * 2、技能等级损失：当前采集技能等级-物品等级
+	 * 
+	 * 排序逻辑：
+	 * 如果有人技能未满，则以获得经验量降序排序。
+	 * 如果所有人技能都达到当前最高级，则进入以下逻辑：
+	 * 
+	 * 当采集方式为【效率】时
+	 * 1、将【购买】方式置顶，a,b均为购买时，以技能等级损失升序排序。
+	 * 2、其余采集方式以技能等级损失升序排序。
+	 * 
+	 * 当采集方式为【利润】时
+	 * 1、将采集类技能【狩猎】【伐木】【挖掘】方式置顶，a,b均为此类技能时，以技能等级损失升序排序。
+	 * 2、其余采集方式以技能等级损失升序排序。
+	 * 
 	 * 这样做的理由：
 	 * 1、有人技能未满时，找到一个收益最大的人来采集此物品，加速全员技能升级速度。
 	 * 2、有一种尴尬情况：所有人技能都满时，2个人，一个10级技能，一个1级技能，10级技能抢了1级物品的订单，而1级技能无法接10级物品的订单。
 	 * 使用技能等级损失，找到损失最小的那个人（采集等级最接近），来规避这种情况发生
 	 */
 	if (skillNotMax) {
-		rankArr.sort((a, b) => { return b.exp - a.exp })
+		rankArr.sort((a, b) => { return b.skill_exp - a.skill_exp })
 	} else {
-		rankArr.sort((a, b) => { return a.skill_lost - b.skill_lost })
+		rankArr.sort((a, b) => {
+			if(thisobj.gatherType == '效率'){
+				if(a.skill == '购买' && b.skill != '购买'){
+					return -1
+				}else if(a.skill != '购买' && b.skill == '购买'){
+					return 1
+				}
+				return a.skill_lost - b.skill_lost
+			}
+			if(thisobj.gatherType == '利润'){
+				if(gatherSkillNames.includes(a.skill) && !gatherSkillNames.includes(b.skill)){
+					return -1
+				}else if(!gatherSkillNames.includes(a.skill) && gatherSkillNames.includes(b.skill)){
+					return 1
+				}
+				return a.skill_lost - b.skill_lost
+			}
+			
+			// thisobj.gatherType的其余兜底情况，一般不会走到这个逻辑
+			return a.skill_lost - b.skill_lost
+		})
 	}
 
 	// 制作派单信息
 	// 候选对象
 	let top_1 = rankArr[0]
+	console.log("🚀 ~ file: 智能制造.js:658 ~ chooseWorker ~ top_1:", top_1)
 	// 收件人名称
 	let recipient = getRecipient()
 	// 收件地址以及其它信息
 	let address = getAddress()
-	// 通信数据
+	// 要发送的订单数据
 	let emitData = {
 		recipient: recipient,
 		country: address.country,
@@ -660,12 +710,13 @@ var chooseWorker = (materials) => {
 		turndir: address.turndir,
 		craft_name: orderObj.name,
 		craft_count: orderObj.count,
+		skill: top_1.skill,
 		gather_type: thisobj.gatherType,
 	}
 
 	emitFunc(top_1.player_name, 'confirm', 'order', emitData)
 	console.log('给玩家【' + top_1.player_name + '】派发订单【' + emitData.craft_name + ' x ' + emitData.craft_count + '】，采集方式【' + emitData.gather_type + '】')
-	console.log('收件人【' + emitData.recipient + '】，地址【' + emitData.country + '】主地图【' + emitData.mainmap + '】地图【' + emitData.mapindex + '】坐标【' + emitData.pos + '】朝向【' + emitData.turndir + '】')
+	console.log('收件人【' + emitData.recipient + '】，地址【' + emitData.country + '】主地图【' + emitData.mainmap + '】地图index【' + emitData.mapindex + '】坐标【' + emitData.pos + '】朝向【' + emitData.turndir + '】')
 	// 派发一次订单后，不能继续遍历，因为所有的分工数据都要重新计算
 	return
 }
@@ -800,6 +851,8 @@ var loop = () => {
 					throw new Error('没有可制造的物品!');
 				}
 
+				console.log('正在制作【'+thisobj.craft_target.name+'】')
+				
 				/**
 				 * UNAecho:双百判断，使用最简单的是否双百判断。如果不是双百，即在大于等于5级时忘记技能
 				 * 理由：【智能制造】的初衷是尽可能地兼容所有生产情况。

@@ -1,3 +1,12 @@
+/**
+ * UNAecho:
+ * level:物品等级
+ * name:物品官方名称
+ * display_name:物品自定义名称
+ * func:走到采集此物品地点的函数
+ * back:走回就近可回补城镇的函数。只包含走路，不包含回补行为。
+ * 【注意】不一定所有采集物品对象都有back函数，如果没有则视为登出回补的方式效率更高
+ */
 var mineArray = [
 {
 	level : 1,
@@ -120,6 +129,11 @@ var mineArray = [
 				[178, 510],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['杰诺瓦镇'].entrance['西门'],
+		], cb);
 	}
 },
 {
@@ -131,14 +145,19 @@ var mineArray = [
 			cga.walkList([
 				[14, 6, '村长的家'],
 				[1, 9, '杰诺瓦镇'],
-				[71, 18, '莎莲娜'],
+				[71, 19, '莎莲娜'],
 				[329, 455],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['杰诺瓦镇'].entrance['东门'],
+		], cb);
 	}
 },
 {
-	level : 8,
+	level : 9,
 	name : '赛希尔叶',
 	display_name : '赛希尔叶阿凯鲁法',
 	func : (cb)=>{

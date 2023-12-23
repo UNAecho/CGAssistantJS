@@ -8670,7 +8670,7 @@ module.exports = function (callback) {
 	 * UNAecho:解析各种类型的商店，包括：
 	 * 1、购买商店（如法兰城里堡门口桥的2个武器/防具售卖NPC）
 	 * 2、售卖商店（如各种卖石NPC，1的桥头NPC也有售卖商店，他们是同一种）
-	 * 3、兑换商店（如曙光营地，蕃窃兑换小麦粉、葱等）
+	 * 3、兑换商店（如曙光营地，蕃茄兑换小麦粉、葱等）
 	 * 
 	 * 开发笔记：
 	 * 不论什么商店，dlg.message都是主体，需要用正则表达式RegExp(/([^|\n]+)/g)去解析
@@ -8687,9 +8687,10 @@ module.exports = function (callback) {
 	 * dlg.message正则解析后，前7行是商店信息，之后每5行信息是商品信息。
 	 * 
 	 * 【提示】
-	 * 当你不清楚一个道具的最大堆叠数是多少时，可以与售卖商店的NPC(dlg的type=7,options=0,dialog_id=334)对话，
-	 * 其中他发过来的dlg中就包含了官方物品堆叠数的数量
-	 * 使用此cga.parseStoreMsg(dlg)时，也会返回此属性。名字为【maxcount】，可以看到道具的堆叠数
+	 * 当你不清楚一个道具的最大堆叠数是多少时，可以使用此API辅助查询，方法如下：
+	 * 1、找到一个可以购买此道具（如果有的话）的NPC(dlg的type=6,options=0,dialog_id=335)，与其对话，打开商店界面。
+	 * 2、商店界面其实是一个对话dlg，将其传给此API
+	 * 3、cga.parseStoreMsg()返回的obj中，obj.items会包含背包中的各个道具属性，其中maxcount就是官方堆叠数。
 	 * */
 	cga.parseStoreMsg = (dlg) => {
 
@@ -8731,15 +8732,15 @@ module.exports = function (callback) {
 		let goodsInfoLen = -1
 
 		// 购买商店
-		if ((matchLength - 5) % 6 == 0) {
+		if (dlg.type == 6 && dlg.dialog_id == 335 && (matchLength - 5) % 6 == 0) {
 			resultObj.type = 'buy'
 			storeInfoLen = 5
 			goodsInfoLen = 6
-		} else if ((matchLength - 3) % 9 == 0) {// 售卖商店
+		} else if (dlg.type == 7 && dlg.dialog_id == 334 && (matchLength - 3) % 9 == 0) {// 售卖商店
 			resultObj.type = 'sell'
 			storeInfoLen = 3
 			goodsInfoLen = 9
-		} else if ((matchLength - 7) % 5 == 0) {// 兑换商店
+		} else if (dlg.type == 28 && dlg.dialog_id == 345 && (matchLength - 7) % 5 == 0) {// 兑换商店
 			resultObj.type = 'exchange'
 			storeInfoLen = 7
 			goodsInfoLen = 5
@@ -8782,9 +8783,14 @@ module.exports = function (callback) {
 					attr: match[storeInfoLen + goodsInfoLen * i + 6],
 					// 该道具能卖多少组，如40个苹果薄荷，就能卖2组。sell_group=2
 					sell_group: parseInt(match[storeInfoLen + goodsInfoLen * i + 7]),
-					// 该道具的堆叠数
-					maxcount: parseInt(match[storeInfoLen + goodsInfoLen * i + 8]),
+					// 售卖数量的最小单位。如【铜】最少卖20个。
+					sell_unit_count: parseInt(match[storeInfoLen + goodsInfoLen * i + 8]),
 				});
+
+				// 监督unknown_key的值，如果不是0，提醒自己观察数据
+				if (match[storeInfoLen + goodsInfoLen * i + 5] != '0') {
+					console.log('【UNAecho脚本提醒】物品【', match[storeInfoLen + goodsInfoLen * i + 0], '】resultObj.unknown_key = ', match[storeInfoLen + goodsInfoLen * i + 5], '并不是0，请观察。')
+				}
 			} else if (resultObj.type == 'buy') {
 				resultObj.items.push({
 					// 商品的index
@@ -8794,13 +8800,13 @@ module.exports = function (callback) {
 					// 物品贴图id
 					item_image_id: parseInt(match[storeInfoLen + goodsInfoLen * i + 1]),
 					// 价格
-					cost: parseInt(match[storeInfoLen + goodsInfoLen * i + 2]),
+					price: parseInt(match[storeInfoLen + goodsInfoLen * i + 2]),
 					// 商品详细信息，包括名称、等级、描述等。
 					attr: match[storeInfoLen + goodsInfoLen * i + 3],
-					// 最少买多少
+					// 该道具最少买多少
 					batch: parseInt(match[storeInfoLen + goodsInfoLen * i + 4]),
-					// 最多买多少
-					max_buy: parseInt(match[storeInfoLen + goodsInfoLen * i + 5]),
+					// 该道具的堆叠数
+					maxcount: parseInt(match[storeInfoLen + goodsInfoLen * i + 5]),
 				});
 			} else if (resultObj.type == 'exchange') {
 				resultObj.items.push({
@@ -8823,6 +8829,53 @@ module.exports = function (callback) {
 			}
 		}
 		return resultObj;
+	}
+
+	/**
+	 * UNAecho:通用商店API
+	 * 支持购买、出售、兑换等操作。
+	 * 但不支持学技能动作，因为cga.askNpcForObj已经实现此逻辑。
+	 * 
+	 * {
+  type: 5,
+  options: 0,
+  dialog_id: 333,
+  npc_id: 12997,
+  message: '14670|全都卖商人的弟子|欢迎光临，你有什么事吗？|2'
+}{
+  type: 5,
+  options: 0,
+  dialog_id: 333,
+  npc_id: 12117,
+  message: '14535|平民武器贩售处|\\n欢迎光临，\\n你有什么事吗？|3'
+}{
+  type: 27,
+  options: 0,
+  dialog_id: 344,
+  npc_id: 13630,
+  message: '231068|食疗专家小枫|教团骑士们喜欢从蕃茄中摄取他们需要的能量！我可以用小麦粉、鸡蛋、青椒或是葱和你换蕃茄。'
+}
+	 */
+	cga.storeTrade = (obj) => {
+
+		if (typeof obj.type != 'string' || !['buy', 'sell', 'exchange'].includes(obj.type)) {
+			throw new Error('type必须为"buy","sell","exchange"的其中一种')
+		}
+
+		if (!obj.pos instanceof Array) {
+			throw new Error('必须传入商店NPC坐标pos的一维数组')
+		}
+
+		if (obj.type == 'buy') {
+
+		} else if (obj.type == 'sell') {
+
+		} else if (obj.type == 'exchange') {
+
+		}
+
+		let numOpt = dlg.message.charAt(dlg.message.length - 1);
+		cga.ClickNPCDialog(0, numOpt == '3' ? 1 : 0);
 	}
 
 	/**
@@ -10999,6 +11052,91 @@ module.exports = function (callback) {
 					cga.AsyncWaitNPCDialog(dialogHandler);
 					return;
 				}
+				/**	
+				 * 买、卖商店类NPC的第1步对话框
+				 * 商店类NPC的对话有2步，第1步是选择交易类型，第2步才是商店界面
+				 * 但第1步可能有2种情况:
+				 * 1、里堡卖魔石商店老板，或者营地、雪拉威森塔的全都卖老板，选项只有一个【卖】
+				 * 2、里堡门口的桥头武器、防具老板，既能买，又能卖
+				 * 仅通过dlg的属性(options=0,type=5,dialog_id=333)无法判别这两种情况
+				 * 需要使用dlg.message的最后一位String类型数字来判断是哪一种商店:
+				 * 1、如果dlg.message的最后一位String类型数字=2，则代表只有卖【卖】的商店
+				 * 2、如果dlg.message的最后一位String类型数字=3，则代表【买】【卖】均有的商店
+				 */
+				else if (dlg.type == 5) {
+					let numOpt = dlg.message.charAt(dlg.message.length - 1);
+					// 所有的【买】和numOpt == '2'类商店的【卖】均为第1项
+					if ((obj.act == 'buy' && numOpt == '3') || (obj.act == 'sell' && numOpt == '2')) {
+						actNumber = 0
+						cga.ClickNPCDialog(0, actNumber);
+						cga.AsyncWaitNPCDialog(dialogHandler);
+						return;
+					} else if (obj.act == 'sell' && numOpt == '3') {
+						actNumber = 1
+						cga.ClickNPCDialog(0, actNumber);
+						cga.AsyncWaitNPCDialog(dialogHandler);
+						return;
+					}
+				}
+				/**	
+				 * 购买商店的第2步对话框
+				*/
+				else if (dlg.type == 6) {
+					let store = cga.parseStoreMsg(dlg);
+					let items = store.items.filter((it)=>{
+						return obj.target[it.name] > 0
+					})
+					if (!items) {
+						cb(new Error('商店没有目标物品，请检查输入的obj.target对象是否有误。key必须为商品名称，value必须为购买数量'));
+						return;
+					}
+
+					// 购买数组
+					let buyArr = []
+					// 检查空闲格子与金币是否足够
+					let needGold = 0
+					let needSlotCount = 0
+					// log打印
+					let logStr = '购买'
+					items.forEach((it)=>{
+						needGold += it.price * obj.target[it.name]
+						needSlotCount += Math.ceil(obj.target[it.name] / it.maxcount)
+						buyArr.push({index: it.index, count: obj.target[it.name]})
+
+						logStr += '【' + it.name + '】' + obj.target[it.name] + '个，'
+					})
+
+					logStr += '需要【'+needSlotCount+'】格【'+needGold+'】金币。'
+
+					let emptySlotCount = cga.getInventoryEmptySlotCount()
+					let curGold = cga.GetPlayerInfo().gold
+					if (needSlotCount > emptySlotCount || needGold > curGold) {
+						logStr += '条件不满足，请检查空闲格子数量或金币是否充足。'
+						cb(new Error(logStr));
+						return
+					}
+
+					// 底层C++封装的购买API
+					cga.BuyNPCStore(buyArr);
+					cga.AsyncWaitNPCDialog((err, dlg) => {
+						if (dlg && dlg.message.indexOf('谢谢') >= 0) {
+							cb('购买完成');
+							return;
+						} else {
+							cb(new Error('购买失败，可能是网络不好导致的对话超时'));
+							return;
+						}
+					});
+				}
+				/**	
+				 * 售卖商店的第2步对话框
+				 * 不论第1步对话框是2类还是3类商店，售卖商店的第2步对话框都是一样的
+				 */
+				else if (dlg.type == 7) {
+					let store = cga.parseStoreMsg(dlg);
+					// TODO 商店无法获取物品ID，售卖API必须获得物品ID才能售卖
+					
+				}
 				/**
 				 * 列表对话，多数用于学技能NPC的第一句话：
 				 * 1、想学习技能
@@ -11256,8 +11394,14 @@ module.exports = function (callback) {
 						}, cga.getTeamPlayers().length ? 1500 : 0);
 					}
 				}
+
+				// 打开与NPC互动的API
 				cga.AsyncWaitNPCDialog(dialogHandler);
-				setTimeout(retry, 4000, cb);
+
+				// 商店类行为不需要retry循环，1次即可完成逻辑(dialogHandler会执行完整的商店逻辑)
+				if (!['buy', 'sell', 'exchange'].includes(obj.act)) {
+					setTimeout(retry, 4000, cb);
+				}
 				return
 			}
 
@@ -16836,7 +16980,7 @@ module.exports = function (callback) {
 	 * 
 	 * 【提示】
 	 * 当你不清楚一个道具的最大堆叠数是多少时，可以使用我的另一个API【cga.parseStoreMsg()】辅助查询，方法如下：
-	 * 1、找到一个售卖性质的NPC(dlg的type=7,options=0,dialog_id=334)，与其对话，打开商店界面。
+	 * 1、找到一个可以购买此道具（如果有的话）的NPC(dlg的type=6,options=0,dialog_id=335)，与其对话，打开商店界面。
 	 * 2、商店界面其实是一个对话dlg，将其传给cga.parseStoreMsg()
 	 * 3、cga.parseStoreMsg()返回的obj中，obj.items会包含背包中的各个道具属性，其中maxcount就是官方堆叠数。
 	 */

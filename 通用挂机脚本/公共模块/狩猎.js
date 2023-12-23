@@ -1,4 +1,13 @@
-﻿var mineArray = [
+﻿/**
+ * UNAecho:
+ * level:物品等级
+ * name:物品官方名称
+ * display_name:物品自定义名称
+ * func:走到采集此物品地点的函数
+ * back:走回就近可回补城镇的函数。只包含走路，不包含回补行为。
+ * 【注意】不一定所有采集物品对象都有back函数，如果没有则视为登出回补的方式效率更高
+ */
+var mineArray = [
 {
 	level : 1,
 	name : '小麦粉',
@@ -53,6 +62,11 @@
 				[297, 361],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['奇利村'].entrance['东门'],
+		], cb);
 	}
 },
 {
@@ -244,6 +258,11 @@
 				[359, 375],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['奇利村'].entrance['东门'],
+		], cb);
 	}
 },
 {
@@ -275,6 +294,11 @@
 				[182, 487],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['杰诺瓦镇'].entrance['西门'],
+		], cb);
 	}
 },
 {
@@ -333,6 +357,11 @@
 				[286, 512],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['杰诺瓦镇'].entrance['东门'],
+		], cb);
 	}
 },
 {
@@ -363,6 +392,11 @@
 				[309, 446],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['杰诺瓦镇'].entrance['东门'],
+		], cb);
 	}
 },
 {
@@ -392,6 +426,11 @@
 				[268, 430],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['杰诺瓦镇'].entrance['东门'],
+		], cb);
 	}
 },
 {
@@ -407,6 +446,11 @@
 				[318, 503],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['杰诺瓦镇'].entrance['东门'],
+		], cb);
 	}
 },
 {
@@ -455,6 +499,11 @@
 				[95, 112],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['魔法大学'].entrance['入口'],
+		], cb);
 	}
 },
 {
@@ -471,6 +520,11 @@
 				[132, 110],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['魔法大学'].entrance['入口'],
+		], cb);
 	}
 },
 {
@@ -487,6 +541,11 @@
 				[43, 183],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['魔法大学'].entrance['入口'],
+		], cb);
 	}
 },
 {
@@ -503,6 +562,11 @@
 				[67, 135],
 			], cb);
 		});
+	},
+	back : (cb) =>{
+		cga.walkList([
+			cga.travel.info['魔法大学'].entrance['入口'],
+		], cb);
 	}
 },
 {
