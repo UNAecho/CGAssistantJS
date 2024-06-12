@@ -8717,10 +8717,6 @@ module.exports = function (callback) {
 			storeid: match[0],
 			// 商店NPC名称
 			name: match[1],
-			// 欢迎语
-			welcome: match[2],
-			// 商店类型
-			type: null,
 			// 商品件数
 			len: 0,
 		}
@@ -8733,14 +8729,23 @@ module.exports = function (callback) {
 
 		// 购买商店
 		if (dlg.type == 6 && dlg.dialog_id == 335 && (matchLength - 5) % 6 == 0) {
+			// 欢迎语
+			resultObj.welcome = match[2]
+			// 商店类型
 			resultObj.type = 'buy'
 			storeInfoLen = 5
 			goodsInfoLen = 6
 		} else if (dlg.type == 7 && dlg.dialog_id == 334 && (matchLength - 3) % 9 == 0) {// 售卖商店
+			// 欢迎语
+			resultObj.welcome = match[2]
+			// 商店类型
 			resultObj.type = 'sell'
 			storeInfoLen = 3
 			goodsInfoLen = 9
 		} else if (dlg.type == 28 && dlg.dialog_id == 345 && (matchLength - 7) % 5 == 0) {// 兑换商店
+			// 欢迎语
+			resultObj.welcome = match[2]
+			// 商店类型
 			resultObj.type = 'exchange'
 			storeInfoLen = 7
 			goodsInfoLen = 5
@@ -8753,6 +8758,12 @@ module.exports = function (callback) {
 			resultObj.currency_image_id = match[5]
 			// 作为交换筹码的物品，如20个蕃茄换16个小麦，此时蕃茄就是currency
 			resultObj.currency = match[6]
+		} else if (dlg.type == 20 && dlg.dialog_id == 337 && (matchLength - 2) % 5 == 0) {// 鉴定商店
+			resultObj.type = 'appraisal'
+			// 鉴定商店暂时无法获取欢迎语
+			// resultObj.welcome = null
+			storeInfoLen = 2
+			goodsInfoLen = 5
 		}
 
 		if (!resultObj.type) {
@@ -8804,7 +8815,7 @@ module.exports = function (callback) {
 					// 商品详细信息，包括名称、等级、描述等。
 					attr: match[storeInfoLen + goodsInfoLen * i + 3],
 					// 该道具最少买多少
-					batch: parseInt(match[storeInfoLen + goodsInfoLen * i + 4]),
+					buy_unit_count: parseInt(match[storeInfoLen + goodsInfoLen * i + 4]),
 					// 该道具的堆叠数
 					maxcount: parseInt(match[storeInfoLen + goodsInfoLen * i + 5]),
 				});
@@ -8814,17 +8825,33 @@ module.exports = function (callback) {
 					index: i,
 					// 由于交换商店，物品名字后面会带一个(堆叠数)，故用正则去掉
 					name: match[storeInfoLen + goodsInfoLen * i + 0].match(new RegExp(/([^\d\(\)]+)/g))[0],
-					// 物品raw名称
+					// 物品名字的原始数值，保留备用。业务上直接使用上面处理好的name即可
 					raw_name: match[storeInfoLen + goodsInfoLen * i + 0],
 					// 物品贴图id
 					item_image_id: parseInt(match[storeInfoLen + goodsInfoLen * i + 1]),
-					// 换算比，count与商品的数量比例是count:1，count是count个resultObj.currency，而1是商店的物品，1可能是数量，也可能是1组。
-					// 如曙光骑士团20个蕃茄换16个小麦，这里count就是20，1就是1组小麦，而小麦的数量为16，每个商店都不同。
-					count: parseInt(match[storeInfoLen + goodsInfoLen * i + 2]),
+					// 换算比，或者最小兑换数。exchange_unit_count与商品的数量比例是exchange_unit_count:1，exchange_unit_count是exchange_unit_count个resultObj.currency，而1是商店给出的+-数量，具体能获得多少目标物品并不确定。
+					// 如曙光骑士团20个蕃茄换16个小麦，这里exchange_unit_count就是20，1就是1组小麦，而实际20个蕃茄兑换出的小麦的数量为16，每个商店有自己的规则。暂时无法获取这种规则。
+					// 但曙光骑士团20个蕃茄同时还可以换成12个鸡蛋或者8个葱/青椒。所以20个exchange_unit_count能换到多少数量的商品，并不确定。
+					exchange_unit_count: parseInt(match[storeInfoLen + goodsInfoLen * i + 2]),
 					// 该商品的堆叠数量，一个batch数的商品占1个背包格子
-					batch: parseInt(match[storeInfoLen + goodsInfoLen * i + 3]),
+					maxcount: parseInt(match[storeInfoLen + goodsInfoLen * i + 3]),
 					// 商品详细信息，包括名称、等级、描述等。
 					attr: match[storeInfoLen + goodsInfoLen * i + 4],
+				});
+			} else if (resultObj.type == 'appraisal') {
+				resultObj.items.push({
+					// 鉴定商店不需要index，只会和背包内的物品交互
+					// index: i,
+					// 被鉴定的物品名称
+					name: match[storeInfoLen + goodsInfoLen * i + 0],
+					// 物品贴图id
+					item_image_id: parseInt(match[storeInfoLen + goodsInfoLen * i + 1]),
+					// 鉴定价格
+					cost: parseInt(match[storeInfoLen + goodsInfoLen * i + 2]),
+					// 待鉴定物品的pos。注意物品栏的pos是从8开始，0-7为装备。
+					pos: parseInt(match[storeInfoLen + goodsInfoLen * i + 3]),
+					// 商品堆叠数（未确定，猜测）
+					maxcount: parseInt(match[storeInfoLen + goodsInfoLen * i + 4]),
 				});
 			}
 		}
@@ -11011,6 +11038,24 @@ module.exports = function (callback) {
 		if ((obj.act == 'skill' || obj.act == 'forget') && (typeof obj.target != 'string')) {
 			throw new Error('obj.act为skill或forget时，obj.target必须为string类型的技能名称。')
 		}
+		if (['buy','sell','exchange','appraisal'].indexOf(obj.act) != -1) {
+			if (Object.prototype.toString.call(obj.target) != '[object Object]'){
+				throw new Error('obj.act为buy、sell、exchange或appraisal时，obj.target必须为Object类型。')
+			}
+			/**
+			 * 检查value，必须为Number类型。如果为-1，则视为该物品买至包满/全部卖出。buy、exchange如果需要使用-1模式，只允许指定1个商品。否则会有歧义（不能在买满/全部兑换多个商品的前提下继续买/兑换别的商品）。
+			 *  */
+			let objLength = Object.keys(obj.target).length
+			Object.entries(obj.target).forEach(function([key, value]) {
+				if (typeof value != 'number'){
+					throw new Error('obj.act为buy、sell、exchange或appraisal时，key :' + key +'的value必须为Number。') 
+				}
+				// 购买和兑换模式只允许一个商品可以使用-1值。
+				if (['buy','exchange'].indexOf(obj.act) != -1 && value == -1 && objLength > 1){
+					throw new Error('obj.act为buy或exchange时，只能指定唯一一个商品的value为-1。否则会有歧义。') 
+				}
+			});
+		}
 		if (obj.hasOwnProperty("pos") && (!Array.isArray(obj.pos) || obj.pos.length != 2)) {
 			throw new Error('obj.pos格式必须为长度为2的Number数组')
 		}
@@ -11083,10 +11128,11 @@ module.exports = function (callback) {
 				*/
 				else if (dlg.type == 6) {
 					let store = cga.parseStoreMsg(dlg);
-					let items = store.items.filter((it)=>{
-						return obj.target[it.name] > 0
+					// cga.parseStoreMsg()的items初始化为[]，不会为null
+					let items = store.items.filter((it) => {
+						return obj.target.hasOwnProperty(it.name)
 					})
-					if (!items) {
+					if (items.length == 0) {
 						cb(new Error('商店没有目标物品，请检查输入的obj.target对象是否有误。key必须为商品名称，value必须为购买数量'));
 						return;
 					}
@@ -11096,26 +11142,45 @@ module.exports = function (callback) {
 					// 检查空闲格子与金币是否足够
 					let needGold = 0
 					let needSlotCount = 0
-					// log打印
+					// log打印使用
 					let logStr = '购买'
-					items.forEach((it)=>{
-						needGold += it.price * obj.target[it.name]
-						needSlotCount += Math.ceil(obj.target[it.name] / it.maxcount)
-						buyArr.push({index: it.index, count: obj.target[it.name]})
-
-						logStr += '【' + it.name + '】' + obj.target[it.name] + '个，'
-					})
-
-					logStr += '需要【'+needSlotCount+'】格【'+needGold+'】金币。'
 
 					let emptySlotCount = cga.getInventoryEmptySlotCount()
 					let curGold = cga.GetPlayerInfo().gold
+
+					// 如果只有1种商品能购买
+					if (items.length == 1){
+						let it = items[0]
+						let itemCount = 0
+						// 全购买模式，将背包买满
+						if (obj.target[it.name] == -1){
+							itemCount = emptySlotCount * it.maxcount
+							needGold = it.price * itemCount
+							needSlotCount = emptySlotCount
+						}else{// 指定数量模式
+							itemCount = obj.target[it.name]
+							needGold = it.price * itemCount
+							needSlotCount = Math.ceil(itemCount / it.maxcount)
+						}
+						
+						buyArr.push({ index: it.index, count: itemCount })
+						logStr += '【' + it.name + '】' + itemCount + '个，'
+					}else{// 购买多种商品
+						items.forEach((it) => {
+							needGold += it.price * obj.target[it.name]
+							needSlotCount += Math.ceil(obj.target[it.name] / it.maxcount)
+							buyArr.push({ index: it.index, count: obj.target[it.name] })
+
+							logStr += '【' + it.name + '】' + obj.target[it.name] + '个，'
+						})
+					}
+					logStr += '需要【' + needSlotCount + '】格【' + needGold + '】金币。'
 					if (needSlotCount > emptySlotCount || needGold > curGold) {
 						logStr += '条件不满足，请检查空闲格子数量或金币是否充足。'
 						cb(new Error(logStr));
 						return
 					}
-
+					
 					// 底层C++封装的购买API
 					cga.BuyNPCStore(buyArr);
 					cga.AsyncWaitNPCDialog((err, dlg) => {
@@ -11135,7 +11200,28 @@ module.exports = function (callback) {
 				else if (dlg.type == 7) {
 					let store = cga.parseStoreMsg(dlg);
 					// TODO 商店无法获取物品ID，售卖API必须获得物品ID才能售卖
-					
+					var sell = cga.findItemArray(mineObject.name);
+					var sellArray = sell.map((item)=>{
+						item.count /= 20;
+						return item;
+					});
+					cga.getInventoryItems().forEach((item)=>{
+						if(item.name == '魔石' || item.name == '卡片？' || pattern.exec(item.name) ){
+							sellArray.push({
+								itempos : item.pos,
+								itemid : item.itemid,
+								count : (item.count < 1) ? 1 : item.count,
+							});
+						} else if(mineObject && mineObject.extra_selling && mineObject.extra_selling(item)){
+							sellArray.push({
+								itempos : item.pos,
+								itemid : item.itemid,
+								count : item.count / 20,
+							});
+						}
+					})
+
+					cga.SellNPCStore(sellArray);
 				}
 				/**
 				 * 列表对话，多数用于学技能NPC的第一句话：
@@ -11160,6 +11246,37 @@ module.exports = function (callback) {
 					actNumber = skillIndex
 					cga.ClickNPCDialog(0, actNumber);
 					cga.AsyncWaitNPCDialog(dialogHandler);
+					return;
+				}
+				/**	
+				 * 鉴定商店对话框，没有类似买卖、交易的第1步窗口，对话直接进入商店鉴定窗口（如法兰城凯蒂夫人的店）
+				 *   type: 20,options: 0,dialog_id: 337,
+				 */
+				else if (dlg.type == 20) {
+					let store = cga.parseStoreMsg(dlg);
+					console.log("🚀 ~ dialogHandler ~ store:", store)
+					return;
+				}
+				/**	
+				 * 物品兑换商店第1步对话框
+				 *   type: 27,options: 0,dialog_id: 344,
+				 */
+				else if (dlg.type == 27) {
+					actNumber = 0
+					cga.ClickNPCDialog(0, actNumber);
+					cga.AsyncWaitNPCDialog(dialogHandler);
+					return;
+				}
+				/**	
+				 * 物品兑换商店第2步对话框
+				 *   type: 28,options: 0,dialog_id: 345,
+				 */
+				else if (dlg.type == 28) {
+					let store = cga.parseStoreMsg(dlg);
+					console.log("🚀 ~ dialogHandler ~ store:", store)
+					let items = store.items.filter((it) => {
+						return obj.target[it.name] > 0
+					})
 					return;
 				}
 			}
@@ -16290,6 +16407,43 @@ module.exports = function (callback) {
 			count += 1
 		}
 		return temppath
+	}
+
+	// 金属名称
+	cga.METALNAME = ['铜', '铁', '银', '铝', '纯银', '金', '白金', '幻之钢', '幻之银', '稀有金属', '勒格耐席鉧', '奥利哈钢',]
+
+	// 布类名称
+	cga.FABRICNAME = ['麻布', '木棉布', '毛毡', '绵', '细线', '绢布', '莎莲娜线', '杰诺瓦线', '阿巴尼斯制的线', '阿巴尼斯制的布', '细麻布', '开米士毛线',]
+
+	cga.isMetalName = (name) => {
+		return cga.METALNAME.indexOf(name) != -1
+	}
+
+	cga.isRefinedMetalName = (name) => {
+		return cga.isMetalName(name) && name.endsWith('条')
+	}
+
+	cga.isFabricName = (name) => {
+		return cga.FABRICNAME.indexOf(name) != -1
+	}
+
+	/**
+	 * UNAecho:获取制造物品的各种信息。
+	 * 其中raw_name代表物品原材料的名称。暂时只支持1个物品返回1个原材料。例如铜条的原材料是铜。如果没有，则name与raw_name一致
+	 * @param {*} name 
+	 * @returns 
+	 */
+	cga.getMaterialInfo = (name) => {
+		result = {
+			// 物品名称
+			name: name,
+			// 物品原材料名称
+			raw_name: name,
+		}
+		if (cga.isRefinedMetalName(result.name)) {
+			result.raw_name = result.name.replace('条', '')
+		}
+		return result
 	}
 
 	/**
