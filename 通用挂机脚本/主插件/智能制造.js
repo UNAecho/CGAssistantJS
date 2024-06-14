@@ -57,16 +57,6 @@ if (!myCraftSkill) {
 	throw new Error('职业数据中没有你的职业技能信息，请检查')
 }
 
-const isMetalName = (name) => {
-	return ['铜', '铁', '银', '铝', '纯银', '金', '白金', '幻之钢', '幻之银', '稀有金属', '勒格耐席鉧', '奥利哈钢',].find(m=>{
-		return name.indexOf(m) != -1
-	}) != undefined
-}
-
-const isFabricName = (name) => {
-	return ['麻布', '木棉布', '毛毡', '绵', '细线', '绢布', '莎莲娜线', '杰诺瓦线', '阿巴尼斯制的线', '阿巴尼斯制的布', '细麻布', '开米士毛线',].indexOf(name) != -1 ? true : false
-}
-
 /**
  * io.sockets使用小技巧
  * 
@@ -80,7 +70,7 @@ const isFabricName = (name) => {
  * 就像Array的.filter一样，只是筛选出来部分对象，筛选完依然是Array
  * join()、in()、to()等类似局部广播的方法，都是这种实现，只是一种索引指定连接的一种手段
  * 筛选出来sockets后，我们依然可以对其使用emit()方法来广播信息，只不过筛选过后，相当于局部广播了
- * 实际上，私信的原理我猜也是这样，只不过筛选出来唯一的socket吧，这样就做到了只有1个人收到广播信息，相当于私信。
+ * 关于私信的原理，我的猜测也是这样。只不过筛选出来唯一的socket吧，这样就做到了只有1个人收到广播信息，相当于私信。
  * 7、我们可以利用全局性质的io.sockets来保存各种数据（例如都存在cga_data中），只不过提出数据麻烦了一些，就不需要其它对象为我们保存信息了。
  * 这样数据的一致性就有了保障，否则到处定义数据、更新数据，出现数据不同步的现象很麻烦。
  * 8、【注意】io.sockets的各种数据全都属于服务端自身的行为，与客户端不发生任何关系，包括储存的各种数据。只有使用emit()、on()等广播行为，才能与客户端进行数据交互。
@@ -142,7 +132,7 @@ var waitStuffs = (name, materials, cb) => {
 		var find_player = null;
 		for (var key in s) {
 			if (s[key].cga_data &&
-				((s[key].cga_data.job_name == name) || (s[key].cga_data.job_name == '买布' && isFabricName(name))) &&
+				((s[key].cga_data.job_name == name) || (s[key].cga_data.job_name == '买布' && cga.isFabricName(name))) &&
 				s[key].cga_data.state == 'done') {
 				find_player = s[key];
 				break;
@@ -330,7 +320,7 @@ var getBestCraftableItem = () => {
 				return false;
 			}
 
-			if (!isFabricName(mat.name))
+			if (!cga.isFabricName(mat.name))
 				gather_type++;
 
 			if (mat.name.indexOf('条') != -1) {
@@ -409,9 +399,12 @@ var dropUseless = (cb) => {
 }
 
 var getMineObj = (name) => {
+	// 检查是否是可以合成的物品，如果是，提取原材料名称进行搜索，否则可能找不到结果。例如【铜条】是无法在采集资料里搜到的，而【铜】才能。
+	materialObj = cga.getMaterialInfo(name)
+	// 寻找采集资料
 	for (let skill in gatherDict) {
 		for (let mineObj of gatherDict[skill]) {
-			if (mineObj.name == name) {
+			if (mineObj.name == materialObj.raw_name) {
 				return mineObj
 			}
 		}

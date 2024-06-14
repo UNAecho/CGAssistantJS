@@ -8671,6 +8671,7 @@ module.exports = function (callback) {
 	 * 1、购买商店（如法兰城里堡门口桥的2个武器/防具售卖NPC）
 	 * 2、售卖商店（如各种卖石NPC，1的桥头NPC也有售卖商店，他们是同一种）
 	 * 3、兑换商店（如曙光营地，蕃茄兑换小麦粉、葱等）
+	 * 4、鉴定商店（如凯蒂夫人的店）
 	 * 
 	 * 开发笔记：
 	 * 不论什么商店，dlg.message都是主体，需要用正则表达式RegExp(/([^|\n]+)/g)去解析
@@ -8685,6 +8686,28 @@ module.exports = function (callback) {
 	 * 3、兑换商店:
 	 * type=28,options=0,dialog_id=345
 	 * dlg.message正则解析后，前7行是商店信息，之后每5行信息是商品信息。
+	 * 4、鉴定商店：
+	 * dlg.type=28,dialog_id=345
+	 * dlg.message正则解析后，前2行是商店信息，之后每5行信息是商品信息。
+	 * 
+	 * 
+	 * 【sell模式开发提醒】
+	 * 当你持有未鉴定物品、彩票刮刮卡时，sell模式需要特殊处理商店信息。
+	 * 由于使用dlg.type、dialog_id和商店msg正则匹配后的长度取余来判断商店类型，所以物品信息的数量至关重要。
+	 * 普通物品一共8个信息，包括名称、count、pos等。这些信息会在dlg.message正则匹配后的数组中有序存放。
+	 * 而特殊物品不同：
+	 * 1、未鉴定物品由于没有物品描述，所以只有9-1=8个物品信息。
+	 * 2、彩票刮刮卡由于多了一行彩票结果，例如BBDDCA，所以导致有9+1=10个物品信息
+	 * 当你持有这些特殊物品时，他会打乱取余的结果，造成商店信息识别失败。
+	 * 目前实现的解决方式：
+	 * 1、未鉴定物品的名称一定带全角？号。（可能某些物品描述也带问号，但后续售卖单价、堆叠数一般会避免把物品描述当作物品名称）
+	 * 2、未鉴定物品的售卖单价一定是1魔币。
+	 * 3、未鉴定物品的堆叠数count一定是1。
+	 * 4、在整个正则RegExp(/([^|\n]+)/g)匹配的结果array中，使用index偏移来判断这些数值，如name的index+1便是count。其他属性自行在API代码中查找。
+	 * 5、举例，未鉴定物品的name的index+1是count，name的index+3是售卖单价等等。
+	 * 6、在通过上面某种逻辑确定后，可以得到你想插入/删除/修改的index。比如未鉴定物品的name index+6便是需要添加物品描述的index。
+	 * 7、将原数组数据顺序插入新建空数组中，当遇到你想插入/删除/修改的index时，执行你希望的逻辑。建议：彩票卡删除抽奖结果，因为物品描述中已包含。
+	 * 8、这样就达到了修改商店msg的目的，为后续解析商店类型提供辅助。
 	 * 
 	 * 【提示】
 	 * 当你不清楚一个道具的最大堆叠数是多少时，可以使用此API辅助查询，方法如下：
@@ -8705,9 +8728,11 @@ module.exports = function (callback) {
 		// 解析商店dlg中的message内容
 		let reg = new RegExp(/([^|\n]+)/g)
 		let match = dlg.message.match(reg);
+		console.log("🚀 ~ file: cgaapi.js:8708 ~ rawMatch:", match)
 		let matchLength = match.length
 
-		if (!matchLength || matchLength < 3) {
+		// 鉴定商店的信息长度最少，为2。当你空背包时，商店长度只有2。
+		if (!matchLength || matchLength < 2) {
 			throw new Error('解析商店内容失败，可能并未与商店NPC交谈');
 		}
 
@@ -8726,6 +8751,63 @@ module.exports = function (callback) {
 		let storeInfoLen = -1
 		// 物品信息的长度
 		let goodsInfoLen = -1
+
+		/**
+		 * 识别未鉴定物品的函数。
+		 * 如果已经遍历到数组倒数第7位（如果背包最后一个物品是未鉴定物品，那么倒数第8位index一定带？号），还没有发现带有？号的物品，那么遍历结束。后面不可能会有未鉴定物品了。有也只能是带有？的物品描述
+		*/
+		const unknownItemFunc = (i, arr) => {
+			let res = -1
+			// 排除数组越界，当未鉴定物品在道具最后一格，不是name属性（倒数第8位index）直接跳过判别。
+			if (i > arr.len - 8) {
+				return res
+			}
+
+			if (arr[i].indexOf('？') != -1 && arr[i + 1] == '1' && arr[i + 3] == '1' && arr[i + 6] == '1' && arr[i + 7] == '1') {
+				console.log("你身上有未鉴定物品:", arr[i], "对商店数据进行物品描述补齐操作，以免商店解析失败。")
+				// 物品名称+6的偏移是物品描述。此函数目的就在于精确给出要增加物品描述的index位置。
+				res = i + 6
+			}
+			return res
+		}
+
+		const updateMsgArray = (arr, type, checkFunc) => {
+			// 处理后的match数组
+			let result = []
+			// 需要补充物品信息的index，只有身上有未鉴定物品时才会添加元素
+			let updateIndex = []
+			for (var i = 0; i < arr.length; ++i) {
+				let res = checkFunc(i, arr)
+				if (res != -1) {
+					updateIndex.push(res)
+				}
+			}
+
+			if (type == 'add') {
+				for (let i = 0; i < arr.length; i++) {
+					if (updateIndex.indexOf(i) != -1) {
+						result.push('UNAecho:补充未鉴定物品没有的物品描述。')
+					}
+					result.push(arr[i])
+				}
+			} else if (type == 'delete') {
+				for (let i = 0; i < arr.length; i++) {
+					if (updateIndex.indexOf(i) != -1) {
+						continue
+					}
+					result.push(arr[i])
+				}
+			} else {
+				throw new Error('错误的type，请检查。');
+			}
+
+			return result
+		}
+
+
+
+		// 刷新长度
+		matchLength = match.length
 
 		// 购买商店
 		if (dlg.type == 6 && dlg.dialog_id == 335 && (matchLength - 5) % 6 == 0) {
@@ -11038,21 +11120,21 @@ module.exports = function (callback) {
 		if ((obj.act == 'skill' || obj.act == 'forget') && (typeof obj.target != 'string')) {
 			throw new Error('obj.act为skill或forget时，obj.target必须为string类型的技能名称。')
 		}
-		if (['buy','sell','exchange','appraisal'].indexOf(obj.act) != -1) {
-			if (Object.prototype.toString.call(obj.target) != '[object Object]'){
+		if (['buy', 'sell', 'exchange', 'appraisal'].indexOf(obj.act) != -1) {
+			if (Object.prototype.toString.call(obj.target) != '[object Object]') {
 				throw new Error('obj.act为buy、sell、exchange或appraisal时，obj.target必须为Object类型。')
 			}
 			/**
 			 * 检查value，必须为Number类型。如果为-1，则视为该物品买至包满/全部卖出。buy、exchange如果需要使用-1模式，只允许指定1个商品。否则会有歧义（不能在买满/全部兑换多个商品的前提下继续买/兑换别的商品）。
 			 *  */
 			let objLength = Object.keys(obj.target).length
-			Object.entries(obj.target).forEach(function([key, value]) {
-				if (typeof value != 'number'){
-					throw new Error('obj.act为buy、sell、exchange或appraisal时，key :' + key +'的value必须为Number。') 
+			Object.entries(obj.target).forEach(function ([key, value]) {
+				if (typeof value != 'number') {
+					throw new Error('obj.act为buy、sell、exchange或appraisal时，key :' + key + '的value必须为Number。')
 				}
 				// 购买和兑换模式只允许一个商品可以使用-1值。
-				if (['buy','exchange'].indexOf(obj.act) != -1 && value == -1 && objLength > 1){
-					throw new Error('obj.act为buy或exchange时，只能指定唯一一个商品的value为-1。否则会有歧义。') 
+				if (['buy', 'exchange'].indexOf(obj.act) != -1 && value == -1 && objLength > 1) {
+					throw new Error('obj.act为buy或exchange时，只能指定唯一一个商品的value为-1。否则会有歧义。')
 				}
 			});
 		}
@@ -11149,23 +11231,23 @@ module.exports = function (callback) {
 					let curGold = cga.GetPlayerInfo().gold
 
 					// 如果只有1种商品能购买
-					if (items.length == 1){
+					if (items.length == 1) {
 						let it = items[0]
 						let itemCount = 0
 						// 全购买模式，将背包买满
-						if (obj.target[it.name] == -1){
+						if (obj.target[it.name] == -1) {
 							itemCount = emptySlotCount * it.maxcount
 							needGold = it.price * itemCount
 							needSlotCount = emptySlotCount
-						}else{// 指定数量模式
+						} else {// 指定数量模式
 							itemCount = obj.target[it.name]
 							needGold = it.price * itemCount
 							needSlotCount = Math.ceil(itemCount / it.maxcount)
 						}
-						
+
 						buyArr.push({ index: it.index, count: itemCount })
 						logStr += '【' + it.name + '】' + itemCount + '个，'
-					}else{// 购买多种商品
+					} else {// 购买多种商品
 						items.forEach((it) => {
 							needGold += it.price * obj.target[it.name]
 							needSlotCount += Math.ceil(obj.target[it.name] / it.maxcount)
@@ -11180,7 +11262,7 @@ module.exports = function (callback) {
 						cb(new Error(logStr));
 						return
 					}
-					
+
 					// 底层C++封装的购买API
 					cga.BuyNPCStore(buyArr);
 					cga.AsyncWaitNPCDialog((err, dlg) => {
@@ -11199,24 +11281,25 @@ module.exports = function (callback) {
 				 */
 				else if (dlg.type == 7) {
 					let store = cga.parseStoreMsg(dlg);
+					console.log("🚀 ~ dialogHandler ~ store:", store)
 					// TODO 商店无法获取物品ID，售卖API必须获得物品ID才能售卖
 					var sell = cga.findItemArray(mineObject.name);
-					var sellArray = sell.map((item)=>{
+					var sellArray = sell.map((item) => {
 						item.count /= 20;
 						return item;
 					});
-					cga.getInventoryItems().forEach((item)=>{
-						if(item.name == '魔石' || item.name == '卡片？' || pattern.exec(item.name) ){
+					cga.getInventoryItems().forEach((item) => {
+						if (item.name == '魔石' || item.name == '卡片？' || pattern.exec(item.name)) {
 							sellArray.push({
-								itempos : item.pos,
-								itemid : item.itemid,
-								count : (item.count < 1) ? 1 : item.count,
+								itempos: item.pos,
+								itemid: item.itemid,
+								count: (item.count < 1) ? 1 : item.count,
 							});
-						} else if(mineObject && mineObject.extra_selling && mineObject.extra_selling(item)){
+						} else if (mineObject && mineObject.extra_selling && mineObject.extra_selling(item)) {
 							sellArray.push({
-								itempos : item.pos,
-								itemid : item.itemid,
-								count : item.count / 20,
+								itempos: item.pos,
+								itemid: item.itemid,
+								count: item.count / 20,
 							});
 						}
 					})
