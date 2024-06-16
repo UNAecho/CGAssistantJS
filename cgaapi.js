@@ -8692,12 +8692,12 @@ module.exports = function (callback) {
 	 * 
 	 * 
 	 * 【sell模式开发提醒】
-	 * 当你持有未鉴定物品、彩票刮刮卡时，sell模式需要特殊处理商店信息。
+	 * 当你持有未鉴定物品、抽奖闪卡（如火焰鼠闪卡）时，sell模式需要特殊处理商店信息。
 	 * 由于使用dlg.type、dialog_id和商店msg正则匹配后的长度取余来判断商店类型，所以物品信息的数量至关重要。
-	 * 普通物品一共8个信息，包括名称、count、pos等。这些信息会在dlg.message正则匹配后的数组中有序存放。
+	 * 普通物品一共9个信息，包括名称、count、pos等。这些信息会在dlg.message正则匹配后的数组中有序存放。
 	 * 而特殊物品不同：
 	 * 1、未鉴定物品由于没有物品描述，所以只有9-1=8个物品信息。
-	 * 2、彩票刮刮卡由于多了一行彩票结果，例如BBDDCA，所以导致有9+1=10个物品信息
+	 * 2、抽奖闪卡由于多了一行彩票结果，例如BBDDCA，所以导致有9+1=10个物品信息
 	 * 当你持有这些特殊物品时，他会打乱取余的结果，造成商店信息识别失败。
 	 * 目前实现的解决方式：
 	 * 1、未鉴定物品的名称一定带全角？号。（可能某些物品描述也带问号，但后续售卖单价、堆叠数一般会避免把物品描述当作物品名称）
@@ -8728,7 +8728,7 @@ module.exports = function (callback) {
 		// 解析商店dlg中的message内容
 		let reg = new RegExp(/([^|\n]+)/g)
 		let match = dlg.message.match(reg);
-		console.log("🚀 ~ file: cgaapi.js:8708 ~ rawMatch:", match)
+		// console.log("🚀 ~ file: cgaapi.js:8731 ~ match:", match.length)
 		let matchLength = match.length
 
 		// 鉴定商店的信息长度最少，为2。当你空背包时，商店长度只有2。
@@ -8754,18 +8754,48 @@ module.exports = function (callback) {
 
 		/**
 		 * 识别未鉴定物品的函数。
-		 * 如果已经遍历到数组倒数第7位（如果背包最后一个物品是未鉴定物品，那么倒数第8位index一定带？号），还没有发现带有？号的物品，那么遍历结束。后面不可能会有未鉴定物品了。有也只能是带有？的物品描述
+		 * 特点：
+		 * 1、未鉴定物品的名称一定带全角？号。（可能某些物品描述也带问号，但后续售卖单价、堆叠数一般会避免把物品描述当作物品名称）
+		 * 2、未鉴定物品的price_group一定是1魔币。不可卖的物品，price_group也是1。
+		 * 3、未鉴定物品的堆叠数count一定是1。
+		 * 
+		 * 【提醒】未鉴定物品可以用cga.GetItemInfo(item.pos)返回的的Object.assessed == false判断。
+		 * 方法是获得到name的index后，index+4就是pos，如果这个pos存在于item.assessed == false的数组中，则是未鉴定物品。
+		 * 但使用当前方法似乎时间复杂度能少很多，先用着吧。如果判断不准确，再使用item.assessed == false判断。
 		*/
-		const unknownItemFunc = (i, arr) => {
+		const unknownItemCheckFunc = (i, arr) => {
 			let res = -1
 			// 排除数组越界，当未鉴定物品在道具最后一格，不是name属性（倒数第8位index）直接跳过判别。
 			if (i > arr.len - 8) {
 				return res
 			}
 
-			if (arr[i].indexOf('？') != -1 && arr[i + 1] == '1' && arr[i + 3] == '1' && arr[i + 6] == '1' && arr[i + 7] == '1') {
+			if (arr[i].indexOf('？') != -1 && arr[i + 1] == '1' && arr[i + 3] == '1') {
 				console.log("你身上有未鉴定物品:", arr[i], "对商店数据进行物品描述补齐操作，以免商店解析失败。")
-				// 物品名称+6的偏移是物品描述。此函数目的就在于精确给出要增加物品描述的index位置。
+				// 物品名称+6的偏移是物品描述。此函数目的就在于精确给出目标index位置。
+				res = i + 6
+			}
+			return res
+		}
+
+		/**
+		 * 识别抽奖闪卡的函数。
+		 * 特点：
+		 * 1、名称一般会带有【鼠闪卡】
+		 * 2、堆叠数count一定为1
+		 * 3、price_group单价和sell_group最少卖多少组一定为0（无法售卖）。
+		 * 4、物品描述中，种类一定是【彩卷】
+		*/
+		const lottoCheckFunc = (i, arr) => {
+			let res = -1
+			// 排除数组越界，和未鉴定物品一样，遍历到背包最后一格时，name以后的index可以跳过。通过name的偏移来计算要return的index。
+			if (i > arr.len - 8) {
+				return res
+			}
+
+			if (arr[i].indexOf('卡') != -1 && arr[i + 1] == '1' && arr[i + 3] == '0' && arr[i + 7].indexOf('彩卷') != -1 && arr[i + 8] == '0') {
+				console.log("你身上有抽奖闪卡:", arr[i], "对商店数据进行抽奖结果删除操作（物品描述中已经包含，可在其中查看抽奖结果），以免商店解析失败。")
+				// 物品名称+6的偏移是抽奖结果。此函数目的就在于精确给出目标index位置。
 				res = i + 6
 			}
 			return res
@@ -8774,7 +8804,7 @@ module.exports = function (callback) {
 		const updateMsgArray = (arr, type, checkFunc) => {
 			// 处理后的match数组
 			let result = []
-			// 需要补充物品信息的index，只有身上有未鉴定物品时才会添加元素
+			// 需要操作的index
 			let updateIndex = []
 			for (var i = 0; i < arr.length; ++i) {
 				let res = checkFunc(i, arr)
@@ -8782,15 +8812,16 @@ module.exports = function (callback) {
 					updateIndex.push(res)
 				}
 			}
-
+			
+			// 添加操作，遇到目标index则元素
 			if (type == 'add') {
 				for (let i = 0; i < arr.length; i++) {
 					if (updateIndex.indexOf(i) != -1) {
-						result.push('UNAecho:补充未鉴定物品没有的物品描述。')
+						result.push('UNAecho:未鉴定物品，没有物品描述。')
 					}
 					result.push(arr[i])
 				}
-			} else if (type == 'delete') {
+			} else if (type == 'delete') {// 删除操作，遇到目标index直接continue
 				for (let i = 0; i < arr.length; i++) {
 					if (updateIndex.indexOf(i) != -1) {
 						continue
@@ -8804,7 +8835,9 @@ module.exports = function (callback) {
 			return result
 		}
 
-
+		// 必须要每次对商店操作都要调用一次，因为每次操作，商店msg数组的长度会发生变化，每个元素对应的index可能会不同。
+		match = updateMsgArray(match,'add',unknownItemCheckFunc)
+		match = updateMsgArray(match,'delete',lottoCheckFunc)
 
 		// 刷新长度
 		matchLength = match.length
@@ -8866,7 +8899,7 @@ module.exports = function (callback) {
 					count: parseInt(match[storeInfoLen + goodsInfoLen * i + 1]),
 					// 物品贴图id
 					item_image_id: parseInt(match[storeInfoLen + goodsInfoLen * i + 2]),
-					// 物品一组的售卖单价
+					// 物品一组的售卖单价，但不可售卖的未鉴定物品的值也是1，暂不知为何。
 					price_group: parseInt(match[storeInfoLen + goodsInfoLen * i + 3]),
 					// 物品在背包的pos(包括装备，物品第一格从pos = 8开始)
 					pos: parseInt(match[storeInfoLen + goodsInfoLen * i + 4]),
@@ -8876,7 +8909,7 @@ module.exports = function (callback) {
 					attr: match[storeInfoLen + goodsInfoLen * i + 6],
 					// 该道具能卖多少组，如40个苹果薄荷，就能卖2组。sell_group=2
 					sell_group: parseInt(match[storeInfoLen + goodsInfoLen * i + 7]),
-					// 售卖数量的最小单位。如【铜】最少卖20个。
+					// 售卖数量的最小单位。如【铜】最少卖20个。但水晶碎片的此属性，显示是999，暂时不知为何。
 					sell_unit_count: parseInt(match[storeInfoLen + goodsInfoLen * i + 8]),
 				});
 
@@ -8915,7 +8948,7 @@ module.exports = function (callback) {
 					// 如曙光骑士团20个蕃茄换16个小麦，这里exchange_unit_count就是20，1就是1组小麦，而实际20个蕃茄兑换出的小麦的数量为16，每个商店有自己的规则。暂时无法获取这种规则。
 					// 但曙光骑士团20个蕃茄同时还可以换成12个鸡蛋或者8个葱/青椒。所以20个exchange_unit_count能换到多少数量的商品，并不确定。
 					exchange_unit_count: parseInt(match[storeInfoLen + goodsInfoLen * i + 2]),
-					// 该商品的堆叠数量，一个batch数的商品占1个背包格子
+					// 该商品的堆叠数量，一个maxcount数的商品占1个背包格子
 					maxcount: parseInt(match[storeInfoLen + goodsInfoLen * i + 3]),
 					// 商品详细信息，包括名称、等级、描述等。
 					attr: match[storeInfoLen + goodsInfoLen * i + 4],
@@ -10933,7 +10966,7 @@ module.exports = function (callback) {
 		if (!teammates.length) {
 			// console.log('没有队员，退出cga.waitTeammateReady，回调参数传入null')
 			func((res) => {
-				setTimeout(cb, 1000, null);
+				setTimeout(cb, 1000, res);
 			})
 			return
 		}
@@ -11263,6 +11296,7 @@ module.exports = function (callback) {
 						return
 					}
 
+					console.log(logStr)
 					// 底层C++封装的购买API
 					cga.BuyNPCStore(buyArr);
 					cga.AsyncWaitNPCDialog((err, dlg) => {
@@ -11278,32 +11312,22 @@ module.exports = function (callback) {
 				/**	
 				 * 售卖商店的第2步对话框
 				 * 不论第1步对话框是2类还是3类商店，售卖商店的第2步对话框都是一样的
+				 * 【注意】售卖Array中，必须要有物品id，否则底层API cga.SellNPCStore()不会生效。
 				 */
 				else if (dlg.type == 7) {
 					let store = cga.parseStoreMsg(dlg);
-					console.log("🚀 ~ dialogHandler ~ store:", store)
-					// TODO 商店无法获取物品ID，售卖API必须获得物品ID才能售卖
-					var sell = cga.findItemArray(mineObject.name);
-					var sellArray = sell.map((item) => {
-						item.count /= 20;
-						return item;
-					});
-					cga.getInventoryItems().forEach((item) => {
-						if (item.name == '魔石' || item.name == '卡片？' || pattern.exec(item.name)) {
+					let sellArray = []
+					store.items.forEach((it) => {
+						if (obj.target.hasOwnProperty(it.name) && it.sell_group > 0){
+							let item = cga.GetItemInfo(it.pos)
 							sellArray.push({
-								itempos: item.pos,
+								itempos: it.pos,
 								itemid: item.itemid,
-								count: (item.count < 1) ? 1 : item.count,
-							});
-						} else if (mineObject && mineObject.extra_selling && mineObject.extra_selling(item)) {
-							sellArray.push({
-								itempos: item.pos,
-								itemid: item.itemid,
-								count: item.count / 20,
+								// -1模式就全卖，其他数量模式则最大限度卖要求的数量。如果obj.target[it.name]的数量大于持有的数量，以持有数量为准。
+								count: obj.target[it.name] == -1 ? it.sell_group :Math.floor(Math.min(obj.target[it.name],it.count) / it.sell_unit_count),
 							});
 						}
 					})
-
 					cga.SellNPCStore(sellArray);
 				}
 				/**
@@ -11356,11 +11380,62 @@ module.exports = function (callback) {
 				 */
 				else if (dlg.type == 28) {
 					let store = cga.parseStoreMsg(dlg);
-					console.log("🚀 ~ dialogHandler ~ store:", store)
+					// cga.parseStoreMsg()的items初始化为[]，不会为null
 					let items = store.items.filter((it) => {
-						return obj.target[it.name] > 0
+						return obj.target.hasOwnProperty(it.name)
 					})
-					return;
+					if (items.length == 0) {
+						cb(new Error('商店没有目标物品，请检查输入的obj.target对象是否有误。key必须为商品名称，value必须为购买数量'));
+						return;
+					}
+
+					// 该兑换商店所需要的原料物品名称。如铜条商店的铜，曙光骑士团医院2楼的蕃茄
+					let currency = store.currency
+					// 持有的原料数量
+					let currencyCnt = cga.getItemCount(currency)
+					// 本次兑换需要的原料数量。兑换商店似乎会自动处理物品栏满的情况，暂时不对格子进行逻辑处理。
+					let needCurrency = 0
+					// log打印使用
+					let logStr = '兑换'
+
+					// 如果只有1种商品能兑换
+					if (items.length == 1) {
+						let it = items[0]
+						let itemCount = 0
+						// 全兑换模式，将所有材料换完。
+						if (obj.target[it.name] == -1) {
+							itemCount = Math.floor(currencyCnt / it.exchange_unit_count)
+							needCurrency = itemCount * it.exchange_unit_count
+						} else {// 指定数量模式，如果输入数量超过兑换能力，则最大限度兑换。
+							itemCount = Math.min(obj.target[it.name],Math.floor(currencyCnt / it.exchange_unit_count))
+							needCurrency = itemCount * it.exchange_unit_count
+						}
+
+						buyArr.push({ index: it.index, count: itemCount })
+						logStr += '【' + it.name + '】' + itemCount + '单位，'
+					} else {// 兑换多种商品TODO未开发完
+						items.forEach((it) => {
+							needGold += it.price * obj.target[it.name]
+							needSlotCount += Math.ceil(obj.target[it.name] / it.maxcount)
+							buyArr.push({ index: it.index, count: obj.target[it.name] })
+
+							logStr += '【' + it.name + '】' + obj.target[it.name] + '个，'
+						})
+					}
+					logStr += '需要【' + needSlotCount + '】格【' + needGold + '】金币。'
+					if (needSlotCount > emptySlotCount || needGold > curGold) {
+						logStr += '条件不满足，请检查空闲格子数量或金币是否充足。'
+						cb(new Error(logStr));
+						return
+					}
+
+					console.log(logStr)
+					// 底层C++封装的购买API
+					cga.BuyNPCStore(buyArr);
+					cga.AsyncWaitNPCDialog((err, dlg) => {
+						cb('兑换完成');
+						return;
+					});
 				}
 			}
 			else if (dlg && dlg.options == 1) {
@@ -11620,13 +11695,24 @@ module.exports = function (callback) {
 				// 	dropStoneForMissionItem(obj.target)
 				// }
 
-				cga.waitTeammateReady(null, (r) => {
+				/**
+				 * UNAecho:这里逻辑比较绕，说明一下。
+				 * 1、cga.waitTeammateReady()首先等待至ready，并调用其第二个参数func，这个func就包含了retry()逻辑。
+				 * 2、retry(cb2)会反复进行，直至调用cb2并return
+				 * 3、cb2其实是cga.waitTeammateReady()调用第二个参数时传入的callback。
+				 * 4、也就是retry()中，调用cb2就是在执行cga.waitTeammateReady()传入的callback。
+				 * 5、这个callback实际上就是调用cga.waitTeammateReady()时，传入的第三个参数cb。在这里，直接就代表了API的出口cb
+				 * 6、调用此出口cb，结束API。并返回一个参数r，传给askNpcForObj()的调用方。
+				 */
+				cga.waitTeammateReady(null, (cb2) => {
 					// 与NPC互动前，如果是战斗，则需要读取battle战斗配置
 					if (obj.act == "battle") {
 						cga.loadBattleConfig(obj.target.battle)
 					}
-					retry(r)
+					retry(cb2)
 				}, (r) => {
+					// 此API出口
+					console.log("🚀 ~ file: cgaapi.js:11711 ~ cga.waitTeammateReady~ cb:", 'API出口')
 					cb(r)
 					return
 				})
