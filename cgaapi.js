@@ -8728,7 +8728,6 @@ module.exports = function (callback) {
 		// 解析商店dlg中的message内容
 		let reg = new RegExp(/([^|\n]+)/g)
 		let match = dlg.message.match(reg);
-		// console.log("🚀 ~ file: cgaapi.js:8731 ~ match:", match.length)
 		let matchLength = match.length
 
 		// 鉴定商店的信息长度最少，为2。当你空背包时，商店长度只有2。
@@ -8812,7 +8811,7 @@ module.exports = function (callback) {
 					updateIndex.push(res)
 				}
 			}
-			
+
 			// 添加操作，遇到目标index则元素
 			if (type == 'add') {
 				for (let i = 0; i < arr.length; i++) {
@@ -8836,8 +8835,8 @@ module.exports = function (callback) {
 		}
 
 		// 必须要每次对商店操作都要调用一次，因为每次操作，商店msg数组的长度会发生变化，每个元素对应的index可能会不同。
-		match = updateMsgArray(match,'add',unknownItemCheckFunc)
-		match = updateMsgArray(match,'delete',lottoCheckFunc)
+		match = updateMsgArray(match, 'add', unknownItemCheckFunc)
+		match = updateMsgArray(match, 'delete', lottoCheckFunc)
 
 		// 刷新长度
 		matchLength = match.length
@@ -8966,7 +8965,7 @@ module.exports = function (callback) {
 					// 待鉴定物品的pos。注意物品栏的pos是从8开始，0-7为装备。
 					pos: parseInt(match[storeInfoLen + goodsInfoLen * i + 3]),
 					// 商品堆叠数（未确定，猜测）
-					maxcount: parseInt(match[storeInfoLen + goodsInfoLen * i + 4]),
+					'maxcount(未确定，猜测)': parseInt(match[storeInfoLen + goodsInfoLen * i + 4]),
 				});
 			}
 		}
@@ -11301,7 +11300,7 @@ module.exports = function (callback) {
 					cga.BuyNPCStore(buyArr);
 					cga.AsyncWaitNPCDialog((err, dlg) => {
 						if (dlg && dlg.message.indexOf('谢谢') >= 0) {
-							cb('购买完成');
+							cb('购买完毕');
 							return;
 						} else {
 							cb(new Error('购买失败，可能是网络不好导致的对话超时'));
@@ -11316,19 +11315,43 @@ module.exports = function (callback) {
 				 */
 				else if (dlg.type == 7) {
 					let store = cga.parseStoreMsg(dlg);
+					// 身上魔币
+					let curGold = cga.GetPlayerInfo().gold;
+					// 售卖所得魔币
+					let sellGold = 0
+					// log打印使用
+					let logStr = '售卖'
+
 					let sellArray = []
 					store.items.forEach((it) => {
-						if (obj.target.hasOwnProperty(it.name) && it.sell_group > 0){
+						if (obj.target.hasOwnProperty(it.name) && it.sell_group > 0) {
 							let item = cga.GetItemInfo(it.pos)
+							let sellCnt = obj.target[it.name] == -1 ? it.sell_group : Math.floor(Math.min(obj.target[it.name], it.count) / it.sell_unit_count)
 							sellArray.push({
 								itempos: it.pos,
 								itemid: item.itemid,
 								// -1模式就全卖，其他数量模式则最大限度卖要求的数量。如果obj.target[it.name]的数量大于持有的数量，以持有数量为准。
-								count: obj.target[it.name] == -1 ? it.sell_group :Math.floor(Math.min(obj.target[it.name],it.count) / it.sell_unit_count),
+								count: sellCnt,
 							});
+							sellGold += sellCnt
+							logStr += '【' + it.name + '】' + sellCnt + '个，'
 						}
 					})
+
+					logStr += '共收入【' + sellGold + '】金币。'
+					// 如果背包装不下钱，则报错
+					if (curGold + sellGold > 1000000) {
+						logStr += '条件不满足，请检查卖完商品后，魔币大于1000000。'
+						cb(new Error(logStr));
+						return
+					}
+
+					console.log(logStr)
 					cga.SellNPCStore(sellArray);
+					cga.AsyncWaitNPCDialog(() => {
+						cb('售卖完毕');
+					});
+					return
 				}
 				/**
 				 * 列表对话，多数用于学技能NPC的第一句话：
@@ -11358,11 +11381,46 @@ module.exports = function (callback) {
 				/**	
 				 * 鉴定商店对话框，没有类似买卖、交易的第1步窗口，对话直接进入商店鉴定窗口（如法兰城凯蒂夫人的店）
 				 *   type: 20,options: 0,dialog_id: 337,
+				 * 鉴定商品由于不能堆叠，所以value的数量填什么都行。
 				 */
 				else if (dlg.type == 20) {
 					let store = cga.parseStoreMsg(dlg);
-					console.log("🚀 ~ dialogHandler ~ store:", store)
-					return;
+					// 身上魔币
+					let curGold = cga.GetPlayerInfo().gold;
+					// 鉴定所需魔币
+					let needGold = 0
+					// log打印使用
+					let logStr = '鉴定'
+
+					let appraisalArray = []
+					store.items.forEach((it) => {
+						if (obj.target.hasOwnProperty(it.name)) {
+							let item = cga.GetItemInfo(it.pos)
+							let cost = it.cost
+							appraisalArray.push({
+								itempos: it.pos,
+								itemid: item.itemid,
+								// 未鉴定物品数量只能为1
+								count: 1,
+							});
+							needGold += cost
+							logStr += '【' + it.name + '】，'
+						}
+					})
+
+					logStr += '需要【' + needGold + '】金币。'
+					// 如果背包装不下钱，则报错
+					if (needGold > curGold) {
+						logStr += '条件不满足，请检查是否有足够魔币支付鉴定费用。'
+						cb(new Error(logStr));
+						return
+					}
+					console.log(logStr)
+					cga.SellNPCStore(appraisalArray);
+					cga.AsyncWaitNPCDialog(() => {
+						cb('鉴定完毕');
+					});
+					return
 				}
 				/**	
 				 * 物品兑换商店第1步对话框
@@ -11377,6 +11435,7 @@ module.exports = function (callback) {
 				/**	
 				 * 物品兑换商店第2步对话框
 				 *   type: 28,options: 0,dialog_id: 345,
+				 * 【注意】兑换商店，obj.target中value为兑换的组数，而非商品的堆叠数。因为每个商店无法得知兑换比例。
 				 */
 				else if (dlg.type == 28) {
 					let store = cga.parseStoreMsg(dlg);
@@ -11385,7 +11444,7 @@ module.exports = function (callback) {
 						return obj.target.hasOwnProperty(it.name)
 					})
 					if (items.length == 0) {
-						cb(new Error('商店没有目标物品，请检查输入的obj.target对象是否有误。key必须为商品名称，value必须为购买数量'));
+						cb(new Error('商店没有目标物品，请检查输入的obj.target对象是否有误。key必须为商品名称，value必须为兑换件数'));
 						return;
 					}
 
@@ -11398,6 +11457,7 @@ module.exports = function (callback) {
 					// log打印使用
 					let logStr = '兑换'
 
+					let exchangeArr = []
 					// 如果只有1种商品能兑换
 					if (items.length == 1) {
 						let it = items[0]
@@ -11407,33 +11467,32 @@ module.exports = function (callback) {
 							itemCount = Math.floor(currencyCnt / it.exchange_unit_count)
 							needCurrency = itemCount * it.exchange_unit_count
 						} else {// 指定数量模式，如果输入数量超过兑换能力，则最大限度兑换。
-							itemCount = Math.min(obj.target[it.name],Math.floor(currencyCnt / it.exchange_unit_count))
+							itemCount = Math.min(obj.target[it.name], Math.floor(currencyCnt / it.exchange_unit_count))
 							needCurrency = itemCount * it.exchange_unit_count
 						}
 
-						buyArr.push({ index: it.index, count: itemCount })
+						exchangeArr.push({ index: it.index, count: itemCount })
 						logStr += '【' + it.name + '】' + itemCount + '单位，'
 					} else {// 兑换多种商品TODO未开发完
 						items.forEach((it) => {
-							needGold += it.price * obj.target[it.name]
-							needSlotCount += Math.ceil(obj.target[it.name] / it.maxcount)
-							buyArr.push({ index: it.index, count: obj.target[it.name] })
+							needCurrency += obj.target[it.name] * it.exchange_unit_count
+							exchangeArr.push({ index: it.index, count: obj.target[it.name] })
 
 							logStr += '【' + it.name + '】' + obj.target[it.name] + '个，'
 						})
 					}
-					logStr += '需要【' + needSlotCount + '】格【' + needGold + '】金币。'
-					if (needSlotCount > emptySlotCount || needGold > curGold) {
-						logStr += '条件不满足，请检查空闲格子数量或金币是否充足。'
+					logStr += '需要【' + needCurrency + '】个【' + currency + '】。'
+					if (needCurrency > currencyCnt) {
+						logStr += '条件不满足，请检查是否持有充足的原料。'
 						cb(new Error(logStr));
 						return
 					}
 
 					console.log(logStr)
 					// 底层C++封装的购买API
-					cga.BuyNPCStore(buyArr);
+					cga.BuyNPCStore(exchangeArr);
 					cga.AsyncWaitNPCDialog((err, dlg) => {
-						cb('兑换完成');
+						cb('兑换完毕');
 						return;
 					});
 				}
@@ -11674,7 +11733,7 @@ module.exports = function (callback) {
 				cga.AsyncWaitNPCDialog(dialogHandler);
 
 				// 商店类行为不需要retry循环，1次即可完成逻辑(dialogHandler会执行完整的商店逻辑)
-				if (!['buy', 'sell', 'exchange'].includes(obj.act)) {
+				if (!['buy', 'sell', 'exchange', 'appraisal'].includes(obj.act)) {
 					setTimeout(retry, 4000, cb);
 				}
 				return
