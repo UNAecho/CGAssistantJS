@@ -393,7 +393,8 @@ module.exports = function (callback) {
 
 			return true;
 		}, 5000);
-		// UNAecho:登出过快会导致cga.waitSysMsgTimeout还没运行，登出动作已经结束了。这里加个延迟
+		// UNAecho:登出过快会导致cga.waitSysMsgTimeout还没运行，登出动作已经结束了。这里加个延迟。
+		// 注意cga.LogBack和cga.logBack是不同的，区分大小写。cga.logBack是本API，cga.LogBack是另一个非异步API
 		setTimeout(cga.LogBack, 500);
 	}
 
@@ -800,13 +801,13 @@ module.exports = function (callback) {
 			result = '法兰城'
 		} else if (mapindex == 33000) {
 			result = '米内葛尔岛'
-		} else if (mapindex >= 33100 && mapindex < 33300) {// TODO完善范围
+		} else if (mapindex >= 33100 && mapindex < 33300 || [33215, 33220, 40003].indexOf(mapindex) >= 0) {// TODO完善范围
 			result = '阿凯鲁法村'
 		} else if (mapindex >= 30000 && mapindex < 40000) {// TODO完善范围
 			result = '苏国'
 		} else if (mapindex == 43000) {
 			result = '库鲁克斯岛'
-		} else if (mapindex >= 43100 && mapindex < 43300) {// TODO完善范围
+		} else if (mapindex >= 43100 && mapindex < 43300 || [43190, 40006].indexOf(mapindex) >= 0) {// TODO完善范围
 			result = '哥拉尔镇'
 		} else if (mapindex >= 44690 && mapindex < 44700) {//
 			result = '圣骑士营地'
@@ -841,37 +842,205 @@ module.exports = function (callback) {
 		return result
 	}
 
-	// 【UNAecho】:整合切换国家的API，待完善
-	cga.travel.goAbroad = (country, cb) => {
-		var mainMap = cga.travel.switchMainMap()
-		// 去阿凯鲁法
-		if (country == '苏国') {
-			if (mainMap == '阿凯鲁法村') {
-				if (cb) cb(true)
-				return
-			} else if (mainMap == '哥拉尔镇') {// TODO 哥拉尔到阿凯鲁法
+	/**
+	 * UNAecho:获取人物所记录的主城市以及所在国家
+	 * 国家名称参考：
+	 * 1、法兰王国
+	 * 2、苏国（阿凯鲁法）
+	 * 3、艾尔巴尼亚王国（哥拉尔）
+	 * 4、天界之域（辛梅尔）
+	 * 5、神圣大陆（艾尔莎岛）
+	 */
+	cga.travel.getSettled = () => {
+		result = {
+			settledCountry: null,
+			settledCity: null,
+		}
+		let config = cga.loadPlayerConfig();
 
-			}
-			cga.travel.falan.toAKLF(cb);
-			return
-		} else if (country == '艾尔巴尼亚王国') {// 去哥拉尔
-			if (mainMap == '哥拉尔镇') {
-				if (cb) cb(true)
-				return
-			} else if (mainMap == '阿凯鲁法村') {// TODO 阿凯鲁法到哥拉尔
+		if (!config || !config.hasOwnProperty('settledCity')) {
+			console.log('你还未记录，无法判断你的记录点和记录点所在国家。', config)
+			return result
+		}
+		if (config.settledCity == '艾尔莎岛') {
+			result.settledCountry = '神圣大陆'
+			result.settledCity = config.settledCity
+		} else if (config.settledCity == '法兰城') {
+			result.settledCountry = '法兰王国'
+			result.settledCity = config.settledCity
+		} else if (config.settledCity == '阿凯鲁法村') {
+			result.settledCountry = '苏国'
+			result.settledCity = config.settledCity
+		} else if (config.settledCity == '哥拉尔镇') {
+			result.settledCountry = '艾尔巴尼亚王国'
+			result.settledCity = config.settledCity
+		} else if (config.settledCity == '辛梅尔') {
+			result.settledCountry = '天界之域'
+			result.settledCity = config.settledCity
+		}
+		return result;
+	}
 
-			}
-			cga.travel.falan.toGelaer(cb);
-			return
-		} else {// 去法兰城/新城
-			if (mainMap == '阿凯鲁法村') {
-				cga.travel.AKLF.toFalan(cb)
-				return
+	/**
+	 * UNAecho:整合切换国家的API，TODO待完善
+	 * @param {*} country 要去的国家，标准国家名称可以参考cga.travel.getSettled()里面的settledCountry
+	 * @param {*} needSettle 是否需要定居，默认不需要
+	 * @param {*} cb 
+	 * @returns 
+	 */
+	cga.travel.goAbroad = (country, needSettle = false, cb) => {
+
+		// 定居
+		let settle = (cb) => {
+			let rootdir = cga.getrootdir()
+			let mainMap = cga.travel.switchMainMap()
+			let missionObj = null
+			if (mainMap == '艾尔莎岛') {
+				missionObj = require(rootdir + '/常用数据/missions/' + mainMap + '.js');
+			} else if (mainMap == '阿凯鲁法村') {
+
 			} else if (mainMap == '哥拉尔镇') {
-				cga.travel.gelaer.toFalan(cb)
+
+			} else {
+				throw new Error('不支持的地区：', mainMap)
+			}
+
+			missionObj.doTask(targetObj.param, () => {
+				console.log('【', targetObj.mission, '】结束，返回prepare中重新判断是否需要其它行为..')
+				thisobj.prepare(cb)
+			})
+			return
+		}
+
+		/**
+		 * 上下船函数
+		 * obj.getOnPos:上船NPC POS
+		 * obj.getOffPos:下船船员NPC POS
+		 * obj.shipIndex:轮船地图index
+		 * obj.aimIndex:目的地港口index
+		 */
+		let ship = (obj, cb) => {
+			cga.askNpcForObj({ act: 'msg', target: '搭船', npcpos: obj.getOnPos }, () => {
+				cga.askNpcForObj({ act: 'msg', target: obj.shipIndex, npcpos: obj.getOnPos }, () => {
+					cga.askNpcForObj({ act: 'msg', target: '下船', npcpos: obj.getOffPos }, () => {
+						cga.askNpcForObj({ act: 'map', target: obj.aimIndex, npcpos: obj.getOffPos }, cb)
+					})
+				})
+			})
+			return
+		}
+
+		let goAbroad = (country, cb) => {
+			let mainMap = cga.travel.switchMainMap()
+			console.log('🚀 ~ file: cgaapi.js:935 ~ goAbroad ~ mainMap:', mainMap)
+			if (mainMap == '艾尔莎岛') {
+				if (country == '神圣大陆') {
+					if (cb) cb(true)
+					return
+				} else if (country == '法兰王国') {
+					cga.travel.falan.toStone('C', cb);
+					return
+				} else if (country == '苏国') {
+					cga.travel.falan.toStone('C', (r) => {
+						cga.travel.toVillage('伊尔村', () => {
+							cga.travel.autopilot('往阿凯鲁法栈桥', ()=>{
+								ship({
+									getOnPos : [52,50],
+									getOffPos : [71,26],
+									shipIndex : 41001,
+									aimIndex : 40003,
+								},cb)
+							})
+						})
+					});
+					return
+				} else if (country == '艾尔巴尼亚王国') {
+					cga.travel.falan.toStone('C', (r) => {
+						cga.travel.toVillage('伊尔村', () => {
+							cga.travel.autopilot('往哥拉尔栈桥', ()=>{
+								ship({
+									getOnPos : [52,50],
+									getOffPos : [71,26],
+									shipIndex : 41023,
+									aimIndex : 40006,
+								},cb)
+							})
+						})
+					});
+					return
+				}
+				throw new Error('不支持的目的国家:', country)
+			} else if (mainMap == '阿凯鲁法村') {
+				if (country == '神圣大陆') {
+					cga.travel.autopilot('主地图', () => {
+
+					})
+					return
+				} else if (country == '法兰王国') {
+					cga.travel.falan.toCastle(cb);
+					return
+				} else if (country == '苏国') {
+					cga.travel.falan.toCastle(() => {
+						cga.travel.falan.toAKLF(cb)
+					})
+					return
+				} else if (country == '艾尔巴尼亚王国') {
+					cga.travel.gelaer.toFalan(() => {
+						cga.travel.falan.toGelaer(cb)
+					})
+					return
+				}
+				throw new Error('不支持的目的国家:', country)
+			} else if (mainMap == '哥拉尔镇') {
+				if (country == '神圣大陆') {
+					if (cb) cb(true)
+					return
+				} else if (country == '法兰王国') {
+					cga.travel.falan.toCastle(cb);
+					return
+				} else if (country == '苏国') {
+					cga.travel.falan.toCastle(() => {
+						cga.travel.falan.toAKLF(cb)
+					})
+					return
+				} else if (country == '艾尔巴尼亚王国') {
+					cga.travel.gelaer.toFalan(() => {
+						cga.travel.falan.toGelaer(cb)
+					})
+					return
+				}
+				throw new Error('不支持的目的国家:', country)
+			} else if (mainMap == '艾尔巴尼亚王国') {// 去哥拉尔
+				if (mainMap == '哥拉尔镇') {
+					if (cb) cb(true)
+					return
+				} else if (mainMap == '阿凯鲁法村') {// TODO 阿凯鲁法到哥拉尔
+
+				}
+				return
+			} else {// 当前不在主城市里，需要登出检查记录点。cga.logBack()会自动写入记录点。
+				cga.logBack(() => {
+					setTimeout(cga.travel.goAbroad, 1000, country, cb);
+				})
 				return
 			}
 		}
+
+		// 先去目的国家
+		goAbroad(country, (r) => {
+			// 如果需要定居，则执行定居逻辑
+			if (needSettle) {
+				settle((r) => {
+					// 定居完毕，结束API
+					cb(r)
+				})
+				return
+			}
+			// 不需要定居则结束API
+			cb(r)
+			return
+		})
+		return
 	}
 
 	cga.travel.falan = {};
@@ -3104,6 +3273,11 @@ module.exports = function (callback) {
 				2399: [[7, 3, 2312],],
 			},
 		},
+		/**
+		 * 往阿凯鲁法栈桥：上船NPC 52,50,船上地图为【艾欧奇亚号】,index41001,船员NPC 71,26
+		 * 往哥拉尔栈桥：上船NPC 52,50,船上地图为【铁达尼号】,index41023,船员NPC 71,26
+		 * 其实就是地图index不同，NPC位置都一样
+		 */
 		'伊尔村': {
 			mainName: '伊尔村',
 			mainindex: 2000,
@@ -3128,6 +3302,7 @@ module.exports = function (callback) {
 				'伊尔': 33219,
 				'港湾管理处': 33214,
 				'往阿凯鲁法栈桥': 40001,
+				'往哥拉尔栈桥': 40002,
 				'出口': '北门',
 				'北门': '北门',
 			},
@@ -3148,81 +3323,26 @@ module.exports = function (callback) {
 				2014: [[42, 72, 2014],],
 				// 传送石
 				2099: [[47, 83, 2012], [14, 17, 2099],],
-				// 伊尔
-				33219: (r) => {
-					var nowindex = cga.GetMapIndex().index3
-					if (nowindex == 2000) {
-						cga.walkList([
-							[58, 71],
-						], () => {
-							cga.turnTo(60, 71);
-							cga.AsyncWaitNPCDialog(() => {
-								cga.ClickNPCDialog(4, -1);
-								cga.AsyncWaitMovement({ map: '伊尔' }, r);
-							}, 1000);
-						});
-					} else {
-						cga.travel.autopilot('伊尔村', () => {
-							cga.travel.autopilot(33219, r)
-						})
-					}
-				},
 				// 港湾管理处
-				33214: (r) => {
-					var nowindex = cga.GetMapIndex().index3
-					if (nowindex == 2000) {
-						cga.walkList([
-							[58, 71],
-						], () => {
-							cga.turnTo(60, 71);
-							cga.AsyncWaitNPCDialog(() => {
-								cga.ClickNPCDialog(4, -1);
-								cga.AsyncWaitMovement({ map: '伊尔' }, () => {
-									cga.walkList([
-										[30, 21, 33214],
-									], r);
-								});
-							}, 1000);
-						});
-					} else {
-						cga.travel.autopilot('伊尔村', () => {
-							cga.travel.autopilot(33214, r)
-						})
-					}
-				},
+				33214: [[(cb) => {
+					cga.travel.autopilot(33219, cb)
+				}, null, 33219], [30, 21, 33214]],
+				// 伊尔
+				33219: [[(cb) => {
+					cga.askNpcForObj({ act: 'map', target: 33219, npcpos: [59, 71] }, cb)
+				}, null, 33219],],
 				// 往阿凯鲁法栈桥
-				40001: (r) => {
-					var nowindex = cga.GetMapIndex().index3
-					if (nowindex == 2000) {
-						cga.walkList([
-							[58, 71],
-						], () => {
-							cga.turnTo(60, 71);
-							cga.AsyncWaitNPCDialog(() => {
-								cga.ClickNPCDialog(4, -1);
-								cga.AsyncWaitMovement({ map: '伊尔' }, () => {
-									cga.walkList([
-										[30, 21, 33214],
-										[23, 25],
-									], () => {
-										cga.TurnTo(23, 23);
-										cga.AsyncWaitNPCDialog(() => {
-											cga.ClickNPCDialog(32, -1);
-											cga.AsyncWaitNPCDialog(() => {
-												cga.ClickNPCDialog(4, -1);
-												cga.AsyncWaitMovement({ map: '往阿凯鲁法栈桥' }, r);
-											});
-										});
-									});
-								});
-							}, 1000);
-						});
-					} else {
-						cga.travel.autopilot('伊尔村', () => {
-							cga.travel.autopilot(40001, r)
-						})
-					}
-				},
+				40001: [[(cb) => {
+					cga.travel.autopilot(33219, cb)
+				}, null, 33219], [30, 21, 33214],[(cb) => {
+					cga.askNpcForObj({ act: 'map', target: 40001, npcpos: [23, 23] }, cb)
+				}, null, 40001]],
+				// 往阿凯鲁法栈桥
+				40002: [[(cb) => {
+					cga.travel.autopilot(33219, cb)
+				}, null, 33219], [30, 21, 33214],[(cb) => {
+					cga.askNpcForObj({ act: 'map', target: 40002, npcpos: [23, 23] }, cb)
+				}, null, 40002]],
 				// 北门
 				'北门': [[45, 31, 100]]
 			},
@@ -3242,31 +3362,19 @@ module.exports = function (callback) {
 				// 传送石
 				2099: [[12, 17, 2012],],
 				// 伊尔
-				33219: (r) => {
-					cga.walkList([
-						[24, 19],
-					], () => {
-						cga.turnTo(24, 17);
-						cga.AsyncWaitNPCDialog(() => {
-							cga.ClickNPCDialog(4, -1);
-							cga.AsyncWaitMovement({ map: '伊尔村' }, r);
-						}, 1000);
-					});
-				},
+				33219:[[(cb) => {
+					cga.askNpcForObj({ act: 'map', target: 2000, npcpos: [24, 18] }, cb)
+				}, null, 2000],],
 				// 港湾管理处
 				33214: [[9, 22, 33219],],
 				// 往阿凯鲁法栈桥
-				40001: (r) => {
-					cga.walkList([
-						[19, 55],
-					], () => {
-						cga.TurnTo(19, 53);
-						cga.AsyncWaitNPCDialog(() => {
-							cga.ClickNPCDialog(4, -1);
-							cga.AsyncWaitMovement({ map: '港湾管理处' }, r);
-						});
-					});
-				}
+				40001: [[(cb) => {
+					cga.askNpcForObj({ act: 'map', target: 33214, npcpos: [19, 54] }, cb)
+				}, null, 33214],],
+				// 往哥拉尔栈桥
+				40002: [[(cb) => {
+					cga.askNpcForObj({ act: 'map', target: 33214, npcpos: [19, 54] }, cb)
+				}, null, 33214],],
 			},
 		},
 		'亚留特村': {
@@ -4273,6 +4381,67 @@ module.exports = function (callback) {
 
 			},
 		},
+		/**
+		 * 往伊尔栈桥：上船NPC 52,50,船上地图为【艾欧奇亚号】,index41001,船员NPC 71,26
+		 */
+		'阿凯鲁法村': {
+			mainName: '阿凯鲁法村',
+			mainindex: 33200,
+			minindex: 33200,
+			maxindex: 33299,
+			mapTranslate: {
+				'主地图': 33200,
+				// 医院和银行在一个index，叫地图名字是【冒险者旅馆 1楼】
+				'医院': 33207,
+				'银行': 33207,
+				'港湾管理处': 33215,
+				'阿凯鲁法': 33220,
+				'港口':40003,
+				'往伊尔栈桥':40003,
+
+			},
+			walkForward: {// 正向导航坐标，从主地图到对应地图的路线
+				// 主地图
+				33200: [],
+				// 医院
+				33207: [[196, 208, 33207],],
+				// 银行
+				33207: [[196, 208, 33207],],
+				// 港湾管理处
+				33215: [[(cb) => {
+					cga.travel.autopilot(33220, cb)
+				}, null, 33220], [16, 15, 33215]],
+				// 阿凯鲁法
+				33220: [[(cb) => {
+					cga.askNpcForObj({ act: 'map', target: 33220, npcpos: [56, 176] }, cb)
+				}, null, 33220],],
+				// 往伊尔栈桥
+				40003: [[(cb) => {
+					cga.travel.autopilot(33220, cb)
+				}, null, 33220], [16, 15, 33215],[(cb) => {
+					cga.askNpcForObj({ act: 'map', target: 40003, npcpos: [17, 12] }, cb)
+				}, null, 40003]],
+			},
+			walkReverse: {
+				// 医院
+				33207: [[16, 23, 33200],],
+				// 银行
+				33207: [[16, 23, 33200],],
+				// 港湾管理处
+				33215: [[22, 31, 33220],],
+				// 阿凯鲁法
+				33220: [[(cb) => {
+					cga.askNpcForObj({ act: 'map', target: 33200, npcpos: [29, 30] }, cb)
+				}, null, 33200],],
+				// 港湾管理处
+				40003: [[(cb) => {
+					cga.askNpcForObj({ act: 'map', target: 33215, npcpos: [19, 53] }, cb)
+				}, null, 33215],],
+			},
+		},
+		/**
+		 * 往伊尔栈桥：上船NPC 52,50,船上地图为【铁达尼号】,index41023,船员NPC 71,26
+		 */
 		'哥拉尔镇': {
 			mainName: '哥拉尔镇',
 			mainindex: 43100,
@@ -4284,6 +4453,9 @@ module.exports = function (callback) {
 				'银行': 43125,
 				'宠物商店': 43145,
 				'杂货店': 43165,
+				'港湾管理处': 43190,
+				'港口':40006,
+				'往伊尔栈桥':40006,
 			},
 			walkForward: {// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -4296,6 +4468,14 @@ module.exports = function (callback) {
 				43145: [[109, 80, 43145],],
 				// 杂货店
 				43165: [[147, 79, 43165],],
+				// 哥拉尔镇 港湾管理处
+				43190: [[96, 211, 43190],],
+				// 往伊尔栈桥
+				40006: [[(cb) => {
+					cga.travel.autopilot(43190, cb)
+				}, null, 43190], [(cb) => {
+					cga.askNpcForObj({ act: 'map', target: 40006, npcpos: [8, 3] }, cb)
+				}, null, 40006]],
 			},
 			walkReverse: {
 				// 医院
@@ -4306,6 +4486,12 @@ module.exports = function (callback) {
 				43145: [[18, 30, 43100],],
 				// 杂货店
 				43165: [[18, 30, 43100],],
+				// 哥拉尔镇 港湾管理处
+				43190: [[14, 15, 43100],],
+				// 港湾管理处
+				40006: [[(cb) => {
+					cga.askNpcForObj({ act: 'map', target: 43190, npcpos: [84, 54] }, cb)
+				}, null, 43190],],
 			},
 		},
 		'艾尔莎岛': {
@@ -4489,7 +4675,7 @@ module.exports = function (callback) {
 	}
 	/**
 	 * UNA: 写了一个全自动导航的API，可以在城镇地图中任意一个地方去另一个任意的地方，无需登出。
-	 * 由于比较复杂，如果使用起来有问题，请联系https://github.com/UNAecho来优化
+	 * 由于比较复杂，如果使用起来有问题，请联系https://github.com/UNAecho
 	 * @param {*} targetMap 目的地名称或者index3
 	 * @param {*} cb 回调
 	 * @returns 

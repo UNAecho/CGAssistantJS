@@ -264,6 +264,13 @@ var loop = () => {
 		return
 	}
 
+	// 先判断收件人所在国家，以及确认是否需要在对应国家或村镇定居。
+	let settledInfo = cga.travel.getSettled()
+	if (settledInfo.settledCity == null){
+		console.log('【UNAecho警告】你没有定居记录，默认记录点为法兰城。')
+		settledInfo.settledCountry = '法兰王国'
+		settledInfo.settledCity = '法兰城'
+	}
 	// var skill = null;
 
 	// if (gatherObject.skill !== null) {

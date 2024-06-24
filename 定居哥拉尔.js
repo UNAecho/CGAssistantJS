@@ -4,6 +4,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		cga.walkList([
 		[118, 106]
 		], ()=>{
+			// 118，105 npc
 			cga.TurnTo(118, 104);
 			cga.AsyncWaitNPCDialog(()=>{
 				cga.ClickNPCDialog(4, -1);
