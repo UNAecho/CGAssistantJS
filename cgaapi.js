@@ -890,6 +890,11 @@ module.exports = function (callback) {
 	 */
 	cga.travel.goAbroad = (country, needSettle = false, cb) => {
 
+		const falan = cga.travel.info['法兰城']
+		const yier = cga.travel.info['伊尔村']
+		const akailufa = cga.travel.info['阿凯鲁法村']
+		const gelaer = cga.travel.info['哥拉尔镇']
+
 		// 定居
 		let settle = (cb) => {
 			let rootdir = cga.getrootdir()
@@ -913,121 +918,228 @@ module.exports = function (callback) {
 		}
 
 		/**
-		 * 上下船函数
+		 * 离境函数
 		 * obj.getOnPos:上船NPC POS
 		 * obj.getOffPos:下船船员NPC POS
+		 * obj.startIndex:坐船港口index
 		 * obj.shipIndex:轮船地图index
-		 * obj.aimIndex:目的地港口index
+		 * obj.endIndex:目的地港口index
+		 * 
+		 * 逻辑：
+		 * 1、港口处直接等待进入轮船地图index。无论船是否在岗，逻辑都一样
+		 * 2、登船后，act=map类型时，人物在船里面无法判断下船地点，这里使用自定义function来判断船是否出发
+		 * 3、自定义function逻辑：持续与NPC对话出现【离入港还有】或者【将要进港了】，代表船已开出，总不可能刚登船就会瞬间到达下一站。
+		 * 4、当发现开船时，结束自定义function，再次使用cga.askNpcForObj act=map类下船即可。
+		 * 5、下船后，结束上下船函数。因为已经可以使用自动导航cga.travel.autopilot()来行走了（本质上下船已经抵达目标国家）。
 		 */
-		let ship = (obj, cb) => {
-			cga.askNpcForObj({ act: 'msg', target: '搭船', npcpos: obj.getOnPos }, () => {
-				cga.askNpcForObj({ act: 'msg', target: obj.shipIndex, npcpos: obj.getOnPos }, () => {
-					cga.askNpcForObj({ act: 'msg', target: '下船', npcpos: obj.getOffPos }, () => {
-						cga.askNpcForObj({ act: 'map', target: obj.aimIndex, npcpos: obj.getOffPos }, cb)
+		let goAbroad = (obj, cb) => {
+			cga.travel.autopilot(obj.startIndex, () => {
+				cga.askNpcForObj({ act: 'map', target: obj.shipIndex, npcpos: obj.getOnPos }, () => {
+					cga.askNpcForObj({
+						act: 'function', target: (cb) => {
+							// 此处不得不在持续retry的target()里面反复定义dialogHandler
+							// 因为需要在dialogHandler里面调用target(cb)里面的cb，去告知cga.askNpcForObj()是否还需要继续retry
+							let dialogHandler = (err, dlg) => {
+								if (dlg && dlg.message && (dlg.message.indexOf('离入港还有') != -1 || dlg.message.indexOf('将要进港了') != -1)) {
+									cb(false)
+									return;
+								}
+								cb(true)
+								return
+							}
+							cga.AsyncWaitNPCDialog(dialogHandler);
+							cga.turnTo(obj.getOffPos[0], obj.getOffPos[1])
+						}, npcpos: obj.getOffPos
+					}, () => {
+						cga.askNpcForObj({ act: 'map', target: obj.endIndex, npcpos: obj.getOffPos }, () => {
+							cga.travel.autopilot('主地图', cb)
+						})
 					})
 				})
 			})
 			return
 		}
 
-		let goAbroad = (country, cb) => {
+		// 伊尔村回到法兰城里谢里雅堡
+		let yierToCastle = (cb)=>{
+			cga.travel.toVillage(yier.mapTranslate['传送石'], () => {
+				cga.askNpcForObj({ act: 'map', target: falan.mapTranslate['召唤之间'], npcpos: yier.stoneNPCpos }, () => {
+					cga.travel.autopilot('里谢里雅堡', cb)
+				})
+			})
+		}
+
+		let guide = (country, cb) => {
+			// 当前地图，如果当前地图不在支持的始发站，则登出判断当前记录点在哪个始发站。
 			let mainMap = cga.travel.switchMainMap()
-			console.log('🚀 ~ file: cgaapi.js:935 ~ goAbroad ~ mainMap:', mainMap)
+			// 新城始发站
 			if (mainMap == '艾尔莎岛') {
 				if (country == '神圣大陆') {
-					if (cb) cb(true)
+					cb(null)
 					return
 				} else if (country == '法兰王国') {
 					cga.travel.falan.toStone('C', cb);
 					return
 				} else if (country == '苏国') {
-					cga.travel.falan.toStone('C', (r) => {
+					cga.travel.falan.toStone('C', () => {
 						cga.travel.toVillage('伊尔村', () => {
-							cga.travel.autopilot('往阿凯鲁法栈桥', ()=>{
-								ship({
-									getOnPos : [52,50],
-									getOffPos : [71,26],
-									shipIndex : 41001,
-									aimIndex : 40003,
-								},cb)
-							})
+							goAbroad({
+								getOnPos: [52, 50],
+								getOffPos: [71, 26],
+								startIndex: 40001,
+								shipIndex: 41001,
+								endIndex: 40003,
+							},cb)
 						})
 					});
 					return
 				} else if (country == '艾尔巴尼亚王国') {
-					cga.travel.falan.toStone('C', (r) => {
+					cga.travel.falan.toStone('C', () => {
 						cga.travel.toVillage('伊尔村', () => {
-							cga.travel.autopilot('往哥拉尔栈桥', ()=>{
-								ship({
-									getOnPos : [52,50],
-									getOffPos : [71,26],
-									shipIndex : 41023,
-									aimIndex : 40006,
-								},cb)
-							})
+							goAbroad({
+								getOnPos: [52, 50],
+								getOffPos: [71, 26],
+								startIndex: 40002,
+								shipIndex: 41023,
+								endIndex: 40006,
+							},cb)
 						})
 					});
 					return
 				}
-				throw new Error('不支持的目的国家:', country)
-			} else if (mainMap == '阿凯鲁法村') {
+			} else if (mainMap == '法兰城') {// 法兰城始发站
 				if (country == '神圣大陆') {
-					cga.travel.autopilot('主地图', () => {
-
-					})
+					cga.travel.falan.toNewIsland(cb)
 					return
 				} else if (country == '法兰王国') {
-					cga.travel.falan.toCastle(cb);
+					cb(null)
 					return
 				} else if (country == '苏国') {
-					cga.travel.falan.toCastle(() => {
-						cga.travel.falan.toAKLF(cb)
+					cga.travel.toVillage('伊尔村', () => {
+						goAbroad({
+							getOnPos: [52, 50],
+							getOffPos: [71, 26],
+							startIndex: 40001,
+							shipIndex: 41001,
+							endIndex: 40003,
+						},cb)
 					})
 					return
 				} else if (country == '艾尔巴尼亚王国') {
-					cga.travel.gelaer.toFalan(() => {
-						cga.travel.falan.toGelaer(cb)
+					cga.travel.toVillage('伊尔村', () => {
+						goAbroad({
+							getOnPos: [52, 50],
+							getOffPos: [71, 26],
+							startIndex: 40002,
+							shipIndex: 41023,
+							endIndex: 40006,
+						},cb)
 					})
 					return
 				}
-				throw new Error('不支持的目的国家:', country)
-			} else if (mainMap == '哥拉尔镇') {
+			} else if (mainMap == '阿凯鲁法村') {// 阿凯鲁法村始发站
 				if (country == '神圣大陆') {
-					if (cb) cb(true)
+					goAbroad({
+						getOnPos: [52, 50],
+						getOffPos: [71, 26],
+						startIndex: 40003,
+						shipIndex: 41001,
+						endIndex: 40001,
+					},()=>{
+						yierToCastle(()=>{
+							cga.travel.falan.toNewIsland(cb)
+						})
+					})
 					return
 				} else if (country == '法兰王国') {
-					cga.travel.falan.toCastle(cb);
+					goAbroad({
+						getOnPos: [52, 50],
+						getOffPos: [71, 26],
+						startIndex: 40003,
+						shipIndex: 41001,
+						endIndex: 40001,
+					},()=>{
+						yierToCastle(cb)
+					})
 					return
 				} else if (country == '苏国') {
-					cga.travel.falan.toCastle(() => {
-						cga.travel.falan.toAKLF(cb)
+					cb(null)
+					return
+				} else if (country == '艾尔巴尼亚王国') {
+					goAbroad({
+						getOnPos: [52, 50],
+						getOffPos: [71, 26],
+						startIndex: 40003,
+						shipIndex: 41001,
+						endIndex: 40001,
+					},()=>{
+						goAbroad({
+							getOnPos: [52, 50],
+							getOffPos: [71, 26],
+							startIndex: 40002,
+							shipIndex: 41023,
+							endIndex: 40006,
+						},cb)
+					})
+					return
+				}
+			} else if (mainMap == '哥拉尔镇') {// 哥拉尔镇始发站
+				if (country == '神圣大陆') {
+					goAbroad({
+						getOnPos: [52, 50],
+						getOffPos: [71, 26],
+						startIndex: 40006,
+						shipIndex: 41023,
+						endIndex: 40002,
+					},()=>{
+						yierToCastle(()=>{
+							cga.travel.falan.toNewIsland(cb)
+						})
+					})
+					return
+				} else if (country == '法兰王国') {
+					goAbroad({
+						getOnPos: [52, 50],
+						getOffPos: [71, 26],
+						startIndex: 40006,
+						shipIndex: 41023,
+						endIndex: 40002,
+					},()=>{
+						yierToCastle(cb)
+					})
+					return
+				} else if (country == '苏国') {
+					goAbroad({
+						getOnPos: [52, 50],
+						getOffPos: [71, 26],
+						startIndex: 40006,
+						shipIndex: 41023,
+						endIndex: 40002,
+					},()=>{
+						goAbroad({
+							getOnPos: [52, 50],
+							getOffPos: [71, 26],
+							startIndex: 40001,
+							shipIndex: 41001,
+							endIndex: 40003,
+						},cb)
 					})
 					return
 				} else if (country == '艾尔巴尼亚王国') {
-					cga.travel.gelaer.toFalan(() => {
-						cga.travel.falan.toGelaer(cb)
-					})
+					cb(null)
 					return
 				}
-				throw new Error('不支持的目的国家:', country)
-			} else if (mainMap == '艾尔巴尼亚王国') {// 去哥拉尔
-				if (mainMap == '哥拉尔镇') {
-					if (cb) cb(true)
-					return
-				} else if (mainMap == '阿凯鲁法村') {// TODO 阿凯鲁法到哥拉尔
-
-				}
-				return
 			} else {// 当前不在主城市里，需要登出检查记录点。cga.logBack()会自动写入记录点。
 				cga.logBack(() => {
 					setTimeout(cga.travel.goAbroad, 1000, country, cb);
 				})
 				return
 			}
+			throw new Error('不支持的国家:', country)
 		}
 
 		// 先去目的国家
-		goAbroad(country, (r) => {
+		guide(country, (r) => {
 			// 如果需要定居，则执行定居逻辑
 			if (needSettle) {
 				settle((r) => {
@@ -3334,13 +3446,13 @@ module.exports = function (callback) {
 				// 往阿凯鲁法栈桥
 				40001: [[(cb) => {
 					cga.travel.autopilot(33219, cb)
-				}, null, 33219], [30, 21, 33214],[(cb) => {
+				}, null, 33219], [30, 21, 33214], [(cb) => {
 					cga.askNpcForObj({ act: 'map', target: 40001, npcpos: [23, 23] }, cb)
 				}, null, 40001]],
 				// 往阿凯鲁法栈桥
 				40002: [[(cb) => {
 					cga.travel.autopilot(33219, cb)
-				}, null, 33219], [30, 21, 33214],[(cb) => {
+				}, null, 33219], [30, 21, 33214], [(cb) => {
 					cga.askNpcForObj({ act: 'map', target: 40002, npcpos: [23, 23] }, cb)
 				}, null, 40002]],
 				// 北门
@@ -3362,7 +3474,7 @@ module.exports = function (callback) {
 				// 传送石
 				2099: [[12, 17, 2012],],
 				// 伊尔
-				33219:[[(cb) => {
+				33219: [[(cb) => {
 					cga.askNpcForObj({ act: 'map', target: 2000, npcpos: [24, 18] }, cb)
 				}, null, 2000],],
 				// 港湾管理处
@@ -4396,8 +4508,8 @@ module.exports = function (callback) {
 				'银行': 33207,
 				'港湾管理处': 33215,
 				'阿凯鲁法': 33220,
-				'港口':40003,
-				'往伊尔栈桥':40003,
+				'港口': 40003,
+				'往伊尔栈桥': 40003,
 
 			},
 			walkForward: {// 正向导航坐标，从主地图到对应地图的路线
@@ -4418,7 +4530,7 @@ module.exports = function (callback) {
 				// 往伊尔栈桥
 				40003: [[(cb) => {
 					cga.travel.autopilot(33220, cb)
-				}, null, 33220], [16, 15, 33215],[(cb) => {
+				}, null, 33220], [16, 15, 33215], [(cb) => {
 					cga.askNpcForObj({ act: 'map', target: 40003, npcpos: [17, 12] }, cb)
 				}, null, 40003]],
 			},
@@ -4454,8 +4566,8 @@ module.exports = function (callback) {
 				'宠物商店': 43145,
 				'杂货店': 43165,
 				'港湾管理处': 43190,
-				'港口':40006,
-				'往伊尔栈桥':40006,
+				'港口': 40006,
+				'往伊尔栈桥': 40006,
 			},
 			walkForward: {// 正向导航坐标，从主地图到对应地图的路线
 				// 主地图
@@ -11957,7 +12069,7 @@ module.exports = function (callback) {
 					retry(cb2)
 				}, (r) => {
 					// 此API出口
-					console.log("🚀 ~ file: cgaapi.js:11711 ~ cga.waitTeammateReady~ cb:", 'API出口')
+					console.log("🚀 ~ file: cgaapi.js:11974 ~ cga.waitTeammateReady~ cb:", 'API出口')
 					cb(r)
 					return
 				})
