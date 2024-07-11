@@ -25,7 +25,7 @@ var thisobj = {
 			intro: '1.前往阿凯鲁法村与小次郎（119.115）对话，选“是”、“是”获得【清澈水】。',
 			workFunc: function(cb2){
 				cga.travel.autopilot('主地图', ()=>{
-					cga.askNpcForObj({ act: 'item', target: '清澈水', npcpos: [119, 115] }, () => {
+					cga.askNpcForObj({ act: 'item', target: '清澈水', npcpos: [119, 115], showmsg: true  }, () => {
 						setTimeout(cb2, 1000, true);
 					})
 				})
@@ -35,7 +35,7 @@ var thisobj = {
 			intro: '2.前往夏姆吉诊所（121.155）与阿达巴（11.10）对话，交出【清澈水】获得【纪念宝石】。',
 			workFunc: function(cb2){
 				cga.travel.autopilot('夏姆吉诊所', ()=>{
-					cga.askNpcForObj({ act: 'item', target: '纪念宝石', npcpos: [11, 10] }, () => {
+					cga.askNpcForObj({ act: 'item', target: '纪念宝石', npcpos: [11, 10], showmsg: true  }, () => {
 						setTimeout(cb2, 1000, true);
 					})
 				})
@@ -45,7 +45,7 @@ var thisobj = {
 			intro: '3.前往银行（139.136）与银行员（32.17）对话，交出【纪念宝石】获得【黄金箱】。',
 			workFunc: function(cb2){
 				cga.travel.autopilot('银行', ()=>{
-					cga.askNpcForObj({ act: 'item', target: '黄金箱', npcpos: [32, 17] }, () => {
+					cga.askNpcForObj({ act: 'item', target: '黄金箱', npcpos: [32, 17], showmsg: true  }, () => {
 						setTimeout(cb2, 1000, true);
 					})
 				})
@@ -55,7 +55,7 @@ var thisobj = {
 			intro: '4.前往冒险者旅馆（192.208）与利克嘉（21.5）对话，交出【黄金箱】获得【马查招待券】。',
 			workFunc: function(cb2){
 				cga.travel.autopilot('医院', ()=>{
-					cga.askNpcForObj({ act: 'item', target: '马查招待券', npcpos: [21, 5] }, () => {
+					cga.askNpcForObj({ act: 'item', target: '马查招待券', npcpos: [21, 5], showmsg: true  }, () => {
 						setTimeout(cb2, 1000, true);
 					})
 				})
@@ -65,7 +65,7 @@ var thisobj = {
 			intro: '5.前往马查酒吧（192.162）与会长（25.19）对话，交出【马查招待券】获得【马查咖哩饭】。',
 			workFunc: function(cb2){
 				cga.travel.autopilot('马查酒吧', ()=>{
-					cga.askNpcForObj({ act: 'item', target: '马查咖哩饭', npcpos: [25, 19] }, () => {
+					cga.askNpcForObj({ act: 'item', target: '马查咖哩饭', npcpos: [25, 19], showmsg: true  }, () => {
 						setTimeout(cb2, 1000, true);
 					})
 				})
@@ -75,7 +75,7 @@ var thisobj = {
 			intro: '6.与小次郎（119.115）对话，交出【马查咖哩饭】获得【推荐函】。',
 			workFunc: function(cb2){
 				cga.travel.autopilot('主地图', ()=>{
-					cga.askNpcForObj({ act: 'item', target: '推荐函', npcpos: [119, 115] }, () => {
+					cga.askNpcForObj({ act: 'item', target: '推荐函', npcpos: [119, 115], showmsg: true  }, () => {
 						setTimeout(cb2, 1000, true);
 					})
 				})
@@ -85,7 +85,7 @@ var thisobj = {
 			intro: '7.前往阿凯鲁法城（183.104）三楼谒见之间与伦达国王（24.20）对话，交出【推荐函】获得阿凯鲁法村定居权，任务完结。',
 			workFunc: function(cb2){
 				cga.travel.autopilot('谒见之间', ()=>{
-					cga.askNpcForObj({ act: 'msg', target: '登录点', npcpos: [24, 20] }, () => {
+					cga.askNpcForObj({ act: 'msg', target: '登录点', npcpos: [24, 20], showmsg: true  }, () => {
 						setTimeout(cb2, 1000, true);
 					})
 				})
@@ -128,8 +128,14 @@ var thisobj = {
 		()=>{
 			return cga.getItemCount('马查咖哩饭') > 0;
 		},
-		()=>{
+		()=>{// 推荐函
 			return cga.getItemCount('#16223') > 0;
+		},
+		()=>{
+			return false
+		},
+		()=>{
+			return false
 		},
 	],
 	data: {// 任务数据，可自定义，方便使用

@@ -771,7 +771,7 @@ module.exports = function (callback) {
 
 		if (mapindex >= 2300 && mapindex <= 2399) {
 			result = '圣拉鲁卡村'
-		} else if (mapindex >= 2000 && mapindex <= 2099 || [33219, 33214, 40001].indexOf(mapindex) >= 0) {
+		} else if (mapindex >= 2000 && mapindex <= 2099 || [33219, 33214, 40001, 40002].indexOf(mapindex) >= 0) {
 			result = '伊尔村'
 		} else if (mapindex >= 2400 && mapindex <= 2499) {
 			result = '亚留特村'
@@ -900,19 +900,15 @@ module.exports = function (callback) {
 			let rootdir = cga.getrootdir()
 			let mainMap = cga.travel.switchMainMap()
 			let missionObj = null
-			if (mainMap == '艾尔莎岛') {
-				missionObj = require(rootdir + '/常用数据/missions/' + mainMap + '.js');
-			} else if (mainMap == '阿凯鲁法村') {
-
-			} else if (mainMap == '哥拉尔镇') {
-
+			if (mainMap == '艾尔莎岛' || mainMap == '法兰城' || mainMap == '阿凯鲁法村' || mainMap == '哥拉尔镇') {
+				missionObj = require(rootdir + '/常用数据/missions/定居' + mainMap + '.js');
 			} else {
 				throw new Error('不支持的地区：', mainMap)
 			}
 
-			missionObj.doTask(targetObj.param, () => {
-				console.log('【', targetObj.mission, '】结束，返回prepare中重新判断是否需要其它行为..')
-				thisobj.prepare(cb)
+			missionObj.doTask(null, () => {
+				console.log('【', missionObj.taskName, '】结束。')
+				cb(null)
 			})
 			return
 		}
@@ -934,6 +930,7 @@ module.exports = function (callback) {
 		 */
 		let goAbroad = (obj, cb) => {
 			cga.travel.autopilot(obj.startIndex, () => {
+				console.log('准备上船..')
 				cga.askNpcForObj({ act: 'map', target: obj.shipIndex, npcpos: obj.getOnPos }, () => {
 					cga.askNpcForObj({
 						act: 'function', target: (cb) => {
@@ -941,19 +938,20 @@ module.exports = function (callback) {
 							// 因为需要在dialogHandler里面调用target(cb)里面的cb，去告知cga.askNpcForObj()是否还需要继续retry
 							let dialogHandler = (err, dlg) => {
 								if (dlg && dlg.message && (dlg.message.indexOf('离入港还有') != -1 || dlg.message.indexOf('将要进港了') != -1)) {
+									console.log('等待进港..')
 									cb(false)
 									return;
 								}
-								cb(true)
+								// 慢一点结束function，高频问船员下船意义不大
+								setTimeout(cb, 3000, true);
 								return
 							}
 							cga.AsyncWaitNPCDialog(dialogHandler);
 							cga.turnTo(obj.getOffPos[0], obj.getOffPos[1])
 						}, npcpos: obj.getOffPos
 					}, () => {
-						cga.askNpcForObj({ act: 'map', target: obj.endIndex, npcpos: obj.getOffPos }, () => {
-							cga.travel.autopilot('主地图', cb)
-						})
+						console.log('准备下船..')
+						cga.askNpcForObj({ act: 'map', target: obj.endIndex, npcpos: obj.getOffPos }, cb)
 					})
 				})
 			})
@@ -961,7 +959,7 @@ module.exports = function (callback) {
 		}
 
 		// 伊尔村回到法兰城里谢里雅堡
-		let yierToCastle = (cb)=>{
+		let yierToCastle = (cb) => {
 			cga.travel.toVillage(yier.mapTranslate['传送石'], () => {
 				cga.askNpcForObj({ act: 'map', target: falan.mapTranslate['召唤之间'], npcpos: yier.stoneNPCpos }, () => {
 					cga.travel.autopilot('里谢里雅堡', cb)
@@ -986,10 +984,10 @@ module.exports = function (callback) {
 							goAbroad({
 								getOnPos: [52, 50],
 								getOffPos: [71, 26],
-								startIndex: 40001,
+								startIndex: yier.mapTranslate['往阿凯鲁法栈桥'],
 								shipIndex: 41001,
-								endIndex: 40003,
-							},cb)
+								endIndex: akailufa.mapTranslate['往伊尔栈桥'],
+							}, cb)
 						})
 					});
 					return
@@ -999,10 +997,10 @@ module.exports = function (callback) {
 							goAbroad({
 								getOnPos: [52, 50],
 								getOffPos: [71, 26],
-								startIndex: 40002,
+								startIndex: yier.mapTranslate['往哥拉尔栈桥'],
 								shipIndex: 41023,
-								endIndex: 40006,
-							},cb)
+								endIndex: gelaer.mapTranslate['往伊尔栈桥'],
+							}, cb)
 						})
 					});
 					return
@@ -1019,10 +1017,10 @@ module.exports = function (callback) {
 						goAbroad({
 							getOnPos: [52, 50],
 							getOffPos: [71, 26],
-							startIndex: 40001,
+							startIndex: yier.mapTranslate['往阿凯鲁法栈桥'],
 							shipIndex: 41001,
-							endIndex: 40003,
-						},cb)
+							endIndex: akailufa.mapTranslate['往伊尔栈桥'],
+						}, cb)
 					})
 					return
 				} else if (country == '艾尔巴尼亚王国') {
@@ -1030,10 +1028,10 @@ module.exports = function (callback) {
 						goAbroad({
 							getOnPos: [52, 50],
 							getOffPos: [71, 26],
-							startIndex: 40002,
+							startIndex: yier.mapTranslate['往哥拉尔栈桥'],
 							shipIndex: 41023,
-							endIndex: 40006,
-						},cb)
+							endIndex: gelaer.mapTranslate['往伊尔栈桥'],
+						}, cb)
 					})
 					return
 				}
@@ -1042,11 +1040,11 @@ module.exports = function (callback) {
 					goAbroad({
 						getOnPos: [52, 50],
 						getOffPos: [71, 26],
-						startIndex: 40003,
+						startIndex: akailufa.mapTranslate['往伊尔栈桥'],
 						shipIndex: 41001,
-						endIndex: 40001,
-					},()=>{
-						yierToCastle(()=>{
+						endIndex: yier.mapTranslate['往阿凯鲁法栈桥'],
+					}, () => {
+						yierToCastle(() => {
 							cga.travel.falan.toNewIsland(cb)
 						})
 					})
@@ -1055,10 +1053,10 @@ module.exports = function (callback) {
 					goAbroad({
 						getOnPos: [52, 50],
 						getOffPos: [71, 26],
-						startIndex: 40003,
+						startIndex: akailufa.mapTranslate['往伊尔栈桥'],
 						shipIndex: 41001,
-						endIndex: 40001,
-					},()=>{
+						endIndex: yier.mapTranslate['往阿凯鲁法栈桥'],
+					}, () => {
 						yierToCastle(cb)
 					})
 					return
@@ -1069,17 +1067,17 @@ module.exports = function (callback) {
 					goAbroad({
 						getOnPos: [52, 50],
 						getOffPos: [71, 26],
-						startIndex: 40003,
+						startIndex: akailufa.mapTranslate['往伊尔栈桥'],
 						shipIndex: 41001,
-						endIndex: 40001,
-					},()=>{
+						endIndex: yier.mapTranslate['往阿凯鲁法栈桥'],
+					}, () => {
 						goAbroad({
 							getOnPos: [52, 50],
 							getOffPos: [71, 26],
-							startIndex: 40002,
+							startIndex: yier.mapTranslate['往哥拉尔栈桥'],
 							shipIndex: 41023,
-							endIndex: 40006,
-						},cb)
+							endIndex: gelaer.mapTranslate['往伊尔栈桥'],
+						}, cb)
 					})
 					return
 				}
@@ -1088,11 +1086,11 @@ module.exports = function (callback) {
 					goAbroad({
 						getOnPos: [52, 50],
 						getOffPos: [71, 26],
-						startIndex: 40006,
+						startIndex: gelaer.mapTranslate['往伊尔栈桥'],
 						shipIndex: 41023,
-						endIndex: 40002,
-					},()=>{
-						yierToCastle(()=>{
+						endIndex: yier.mapTranslate['往哥拉尔栈桥'],
+					}, () => {
+						yierToCastle(() => {
 							cga.travel.falan.toNewIsland(cb)
 						})
 					})
@@ -1101,10 +1099,10 @@ module.exports = function (callback) {
 					goAbroad({
 						getOnPos: [52, 50],
 						getOffPos: [71, 26],
-						startIndex: 40006,
+						startIndex: gelaer.mapTranslate['往伊尔栈桥'],
 						shipIndex: 41023,
-						endIndex: 40002,
-					},()=>{
+						endIndex: yier.mapTranslate['往哥拉尔栈桥'],
+					}, () => {
 						yierToCastle(cb)
 					})
 					return
@@ -1112,17 +1110,17 @@ module.exports = function (callback) {
 					goAbroad({
 						getOnPos: [52, 50],
 						getOffPos: [71, 26],
-						startIndex: 40006,
+						startIndex: gelaer.mapTranslate['往伊尔栈桥'],
 						shipIndex: 41023,
-						endIndex: 40002,
-					},()=>{
+						endIndex: yier.mapTranslate['往哥拉尔栈桥'],
+					}, () => {
 						goAbroad({
 							getOnPos: [52, 50],
 							getOffPos: [71, 26],
-							startIndex: 40001,
+							startIndex: yier.mapTranslate['往阿凯鲁法栈桥'],
 							shipIndex: 41001,
-							endIndex: 40003,
-						},cb)
+							endIndex: akailufa.mapTranslate['往伊尔栈桥'],
+						}, cb)
 					})
 					return
 				} else if (country == '艾尔巴尼亚王国') {
@@ -1140,16 +1138,19 @@ module.exports = function (callback) {
 
 		// 先去目的国家
 		guide(country, (r) => {
-			// 如果需要定居，则执行定居逻辑
-			if (needSettle) {
-				settle((r) => {
-					// 定居完毕，结束API
-					cb(r)
-				})
+			cga.travel.autopilot('主地图', () => {
+				// 如果需要定居，则执行定居逻辑
+				if (needSettle) {
+					settle((r) => {
+						// 定居完毕，结束API
+						cb(r)
+					})
+					return
+				}
+				// 不需要定居则结束API
+				cb(r)
 				return
-			}
-			// 不需要定居则结束API
-			cb(r)
+			})
 			return
 		})
 		return
@@ -3449,11 +3450,11 @@ module.exports = function (callback) {
 				}, null, 33219], [30, 21, 33214], [(cb) => {
 					cga.askNpcForObj({ act: 'map', target: 40001, npcpos: [23, 23] }, cb)
 				}, null, 40001]],
-				// 往阿凯鲁法栈桥
+				// 往哥拉尔栈桥
 				40002: [[(cb) => {
 					cga.travel.autopilot(33219, cb)
 				}, null, 33219], [30, 21, 33214], [(cb) => {
-					cga.askNpcForObj({ act: 'map', target: 40002, npcpos: [23, 23] }, cb)
+					cga.askNpcForObj({ act: 'map', target: 40002, npcpos: [25, 23] }, cb)
 				}, null, 40002]],
 				// 北门
 				'北门': [[45, 31, 100]]
@@ -4499,13 +4500,21 @@ module.exports = function (callback) {
 		'阿凯鲁法村': {
 			mainName: '阿凯鲁法村',
 			mainindex: 33200,
-			minindex: 33200,
+			minindex: 33100,
 			maxindex: 33299,
 			mapTranslate: {
+				'阿凯鲁法城 1楼': 33100,
+				'阿凯鲁法城 2楼': 33101,// 各种任务NPC房间，例如兰国
+				'谒见之间': 33108,
+				'礼拜堂': 33114,// 招魂NPC [25,14]
+				'阿凯鲁法城地下': 33115,
 				'主地图': 33200,
-				// 医院和银行在一个index，叫地图名字是【冒险者旅馆 1楼】
+				'马查酒吧': 33201,
+				'银行': 33205,
+				// 医院和冒险者旅馆在一个index，叫地图名字是【冒险者旅馆 1楼】
 				'医院': 33207,
-				'银行': 33207,
+				'冒险者旅馆 1楼': 33207,
+				'夏姆吉诊所': 33212,
 				'港湾管理处': 33215,
 				'阿凯鲁法': 33220,
 				'港口': 40003,
@@ -4513,12 +4522,26 @@ module.exports = function (callback) {
 
 			},
 			walkForward: {// 正向导航坐标，从主地图到对应地图的路线
+				// 阿凯鲁法城
+				33100: [[183, 104, 33100],],
+				// 阿凯鲁法城 2楼
+				33101: [[183, 104, 33100], [25, 11, 33101],],
+				// 谒见之间
+				33108: [[183, 104, 33100], [25, 11, 33101], [24, 6, 33108],],
+				// 礼拜堂
+				33114: [[183, 104, 33100], [37, 29, 33115], [25, 8, 33114],],
+				// 阿凯鲁法城地下（有2个地下，另一个没用）
+				33115: [[183, 104, 33100], [37, 29, 33115],],
 				// 主地图
 				33200: [],
-				// 医院
-				33207: [[196, 208, 33207],],
+				// 马查酒吧
+				33201: [[192, 162, 33201],],
 				// 银行
+				33205: [[139, 136, 33205],],
+				// 医院/冒险者旅馆 1楼
 				33207: [[196, 208, 33207],],
+				// 夏姆吉诊所
+				33212: [[121, 155, 33212],],
 				// 港湾管理处
 				33215: [[(cb) => {
 					cga.travel.autopilot(33220, cb)
@@ -4535,10 +4558,24 @@ module.exports = function (callback) {
 				}, null, 40003]],
 			},
 			walkReverse: {
-				// 医院
-				33207: [[16, 23, 33200],],
+				// 阿凯鲁法城 1楼
+				33100: [[25, 45, 33200],],
+				// 阿凯鲁法城 2楼
+				33101: [[24, 8, 33100],],
+				// 谒见之间
+				33108: [[25, 43, 33101],],
+				// 礼拜堂
+				33114: [[26, 38, 33115],],
+				// 阿凯鲁法城地下
+				33115: [[25, 24, 33100],],
+				// 马查酒吧
+				33201: [[4, 32, 33200],],
 				// 银行
+				33205: [[8, 16, 33200],],
+				// 医院/冒险者旅馆 1楼
 				33207: [[16, 23, 33200],],
+				// 夏姆吉诊所
+				33212: [[16, 23, 33220],],
 				// 港湾管理处
 				33215: [[22, 31, 33220],],
 				// 阿凯鲁法
@@ -4565,7 +4602,11 @@ module.exports = function (callback) {
 				'银行': 43125,
 				'宠物商店': 43145,
 				'杂货店': 43165,
+				'民家': 43170,// 定居相关
 				'港湾管理处': 43190,
+				'白之宫殿': 43200,
+				'白之宫殿 1楼': 43210,// 有招魂NPC [63，46]
+				'谒见之间': 43211,// 定居相关
 				'港口': 40006,
 				'往伊尔栈桥': 40006,
 			},
@@ -4580,8 +4621,16 @@ module.exports = function (callback) {
 				43145: [[109, 80, 43145],],
 				// 杂货店
 				43165: [[147, 79, 43165],],
+				// 民家
+				43170: [[89, 64, 43170],],
 				// 哥拉尔镇 港湾管理处
 				43190: [[96, 211, 43190],],
+				// 白之宫殿
+				43200: [[159, 199, 43200],],
+				// 白之宫殿 1楼
+				43210: [[159, 199, 43200],[47, 36, 43210],],
+				// 谒见之间
+				43211: [[159, 199, 43200],[47, 36, 43210],[36, 42, 43211],],
 				// 往伊尔栈桥
 				40006: [[(cb) => {
 					cga.travel.autopilot(43190, cb)
@@ -4598,8 +4647,16 @@ module.exports = function (callback) {
 				43145: [[18, 30, 43100],],
 				// 杂货店
 				43165: [[18, 30, 43100],],
+				// 民家
+				43170: [[9, 19, 43100],],
 				// 哥拉尔镇 港湾管理处
 				43190: [[14, 15, 43100],],
+				// 白之宫殿
+				43200: [[41, 22, 43100],],
+				// 白之宫殿 1楼
+				43210: [[9, 46, 43200],],
+				// 谒见之间
+				43211: [[15, 45, 43210],],
 				// 港湾管理处
 				40006: [[(cb) => {
 					cga.askNpcForObj({ act: 'map', target: 43190, npcpos: [84, 54] }, cb)
@@ -4804,8 +4861,14 @@ module.exports = function (callback) {
 		var customerPos = null
 		// 所有静态信息
 		const info = cga.travel.info[villageName]
+		if (!info) {
+			console.log('错误:【', villageName, '】未找到相关信息，请关注switchMainMap()的mapindex判定规则或是否未收录当前地区地图信息。')
+		}
 		if (typeof targetMap == 'string') {
 			targetindex = info.mapTranslate[targetMap]
+			if (typeof targetindex == 'undefined') {
+				throw new Error('[UNA脚本警告]:targetMap[' + targetMap + ']输入有误，mapTranslate暂未收录此地图信息，联系作者https://github.com/UNAecho添加。')
+			}
 			if (typeof targetindex == 'object') {
 				var sayString = '【UNA脚本提示】您输入的【' + targetMap + '】存在多个，请选择';
 				for (var i in targetindex) {
@@ -11406,6 +11469,7 @@ module.exports = function (callback) {
 	 * [obj.pos] : 可选选项，2维int型数组。仅在obj.act = "map"时生效，人物需要等待被NPC传送至pos这个坐标，函数才结束
 	 * [obj.say] : 可选选项，string类型。人物会在与NPC交互的时候说话，因为有的NPC是需要说出对应的话才会有反应的
 	 * [obj.notalk] : 可选选项，function类型。自定义函数，如果不想让某个条件的队员与NPC对话，在此函数返回true。
+	 * [obj.showmsg] : 可选选项，Boolean类型。如果想在控制台看到NPC说话的内容，请置为true。一般用于查看NPC说话内容或者体验剧情。
 	 * 比如，长老之证的阴影，如果持有7个队员与阴影正在对话时，其它队员同时与阴影对话的话，自己的对话框会被挤掉。
 	 * 将长老之证的少于7的人return true，即可实现让其不与NPC对话。可以减少互相覆盖的概率。
 	 * 
@@ -11434,6 +11498,9 @@ module.exports = function (callback) {
 		}
 		if (obj.hasOwnProperty('notalk') && typeof obj.notalk != 'function') {
 			throw new Error('obj.notalk必须为function类型')
+		}
+		if (obj.hasOwnProperty('showmsg') && typeof obj.showmsg != 'boolean') {
+			throw new Error('obj.showmsg必须为boolean类型')
 		}
 		if (obj.hasOwnProperty('npcpos') && (!Array.isArray(obj.npcpos) || obj.npcpos.length != 2)) {
 			throw new Error('obj.npcpos如果传入，必须为Int型数组，长度为2')
@@ -11500,6 +11567,9 @@ module.exports = function (callback) {
 
 		const dialogHandler = (err, dlg) => {
 			var actNumber = -1
+			if (obj.hasOwnProperty('showmsg') && obj.showmsg == true && dlg && dlg.message) {
+				console.log('NPC:\n' + dlg.message)
+			}
 			if (dlg && dlg.options == 0) {
 				// 转职、晋级确认画面，需要消耗一定数量的金币，选项：【好的】(cga.ClickNPCDialog(0, 0))，【算了】cga.ClickNPCDialog(0, 1)
 				// UNAecho:已经确定，无论是转职还是晋级，options都是0，type都是2。
@@ -12069,7 +12139,7 @@ module.exports = function (callback) {
 					retry(cb2)
 				}, (r) => {
 					// 此API出口
-					console.log("🚀 ~ file: cgaapi.js:11974 ~ cga.waitTeammateReady~ cb:", 'API出口')
+					// console.log("🚀 ~ file: cgaapi.js:11974 ~ cga.waitTeammateReady~ cb:", 'API出口')
 					cb(r)
 					return
 				})
