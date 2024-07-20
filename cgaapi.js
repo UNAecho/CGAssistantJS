@@ -960,8 +960,8 @@ module.exports = function (callback) {
 
 		// 伊尔村回到法兰城里谢里雅堡
 		let yierToCastle = (cb) => {
-			cga.travel.toVillage(yier.mapTranslate['传送石'], () => {
-				cga.askNpcForObj({ act: 'map', target: falan.mapTranslate['召唤之间'], npcpos: yier.stoneNPCpos }, () => {
+			cga.travel.autopilot(yier.mapTranslate['传送石'], () => {
+				cga.askNpcForObj({ act: 'map', target: falan.mapTranslate['启程之间'], npcpos: yier.stoneNPCpos }, () => {
 					cga.travel.autopilot('里谢里雅堡', cb)
 				})
 			})
@@ -1129,7 +1129,7 @@ module.exports = function (callback) {
 				}
 			} else {// 当前不在主城市里，需要登出检查记录点。cga.logBack()会自动写入记录点。
 				cga.logBack(() => {
-					setTimeout(cga.travel.goAbroad, 1000, country, cb);
+					setTimeout(cga.travel.goAbroad, 2000, country, cb);
 				})
 				return
 			}
@@ -9331,53 +9331,6 @@ module.exports = function (callback) {
 			}
 		}
 		return resultObj;
-	}
-
-	/**
-	 * UNAecho:通用商店API
-	 * 支持购买、出售、兑换等操作。
-	 * 但不支持学技能动作，因为cga.askNpcForObj已经实现此逻辑。
-	 * 
-	 * {
-  type: 5,
-  options: 0,
-  dialog_id: 333,
-  npc_id: 12997,
-  message: '14670|全都卖商人的弟子|欢迎光临，你有什么事吗？|2'
-}{
-  type: 5,
-  options: 0,
-  dialog_id: 333,
-  npc_id: 12117,
-  message: '14535|平民武器贩售处|\\n欢迎光临，\\n你有什么事吗？|3'
-}{
-  type: 27,
-  options: 0,
-  dialog_id: 344,
-  npc_id: 13630,
-  message: '231068|食疗专家小枫|教团骑士们喜欢从蕃茄中摄取他们需要的能量！我可以用小麦粉、鸡蛋、青椒或是葱和你换蕃茄。'
-}
-	 */
-	cga.storeTrade = (obj) => {
-
-		if (typeof obj.type != 'string' || !['buy', 'sell', 'exchange'].includes(obj.type)) {
-			throw new Error('type必须为"buy","sell","exchange"的其中一种')
-		}
-
-		if (!obj.pos instanceof Array) {
-			throw new Error('必须传入商店NPC坐标pos的一维数组')
-		}
-
-		if (obj.type == 'buy') {
-
-		} else if (obj.type == 'sell') {
-
-		} else if (obj.type == 'exchange') {
-
-		}
-
-		let numOpt = dlg.message.charAt(dlg.message.length - 1);
-		cga.ClickNPCDialog(0, numOpt == '3' ? 1 : 0);
 	}
 
 	/**
