@@ -39,6 +39,24 @@ var cga = require('./cgaapi')(function () {
                         back : null,
                     },
                     {
+                        // 获取方式为购买
+                        type:'buy',
+                        // 购买NPC所在国家
+                        country : '',
+                        // 购买时，角色需要定居的城市
+                        settlecity : '',
+                        // 购买NPC所在村镇
+                        storecity : '',
+                        // 购买NPC所在mapindex
+                        mapindex : 0,
+                        // 购买NPC坐标
+                        npcpos : [],
+                        // 价格，可自定义，但请统一单位。如商店的+1按钮的单价，还是多少钱一组。
+                        currency : 0,
+                        // 角色从storecity走到购买商店的函数
+                        forward : null,
+                    },
+                    {
                         // 获取方式为商店以物易物兑换
                         type:'exchange',
                         // 兑换NPC所在国家

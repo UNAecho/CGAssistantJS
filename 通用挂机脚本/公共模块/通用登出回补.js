@@ -4,8 +4,10 @@ var configTable = global.configTable;
 var thisobj = {
 	func : (cb)=>{
 		var mapname = cga.GetMapName();
-		if(mapname != '艾尔莎岛' && mapname != '里谢里雅堡' && mapname != '法兰城' && mapname != '阿凯鲁法村' && mapname != '哥拉尔镇')
+		if(mapname != '艾尔莎岛' && mapname != '里谢里雅堡' && mapname != '法兰城' && mapname != '阿凯鲁法村' && mapname != '哥拉尔镇'){
+			console.log('通用登出回补，登出..')
 			cga.LogBack();
+		}
 		
 		setTimeout(()=>{
 			var mapname = cga.GetMapName();

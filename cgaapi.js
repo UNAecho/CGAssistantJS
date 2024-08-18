@@ -4628,9 +4628,9 @@ module.exports = function (callback) {
 				// 白之宫殿
 				43200: [[159, 199, 43200],],
 				// 白之宫殿 1楼
-				43210: [[159, 199, 43200],[47, 36, 43210],],
+				43210: [[159, 199, 43200], [47, 36, 43210],],
 				// 谒见之间
-				43211: [[159, 199, 43200],[47, 36, 43210],[36, 42, 43211],],
+				43211: [[159, 199, 43200], [47, 36, 43210], [36, 42, 43211],],
 				// 往伊尔栈桥
 				40006: [[(cb) => {
 					cga.travel.autopilot(43190, cb)
@@ -7598,6 +7598,59 @@ module.exports = function (callback) {
 
 	cga.craft.buyFabricLv5 = (id, count, cb) => {
 		cga.craft.buyFabricLv5Multi([{ index: id, count: count }], cb);
+	}
+
+	/**
+	 * UNAecho:获取物品收集方式的全部数据。
+	 * 数据来源是【生成物品获取方式数据模板.js】定义模板生成的，请自行查看生成规则以及使用方式。
+	 * 在大多数情况下，在脚本运行时数据不会发生更新。
+	 * 所以使用缓存方式，仅在cga启动时load一次数据文件存入内存即可。
+	 * @returns {Array}
+	 */
+	cga.craft.allGatherData = null
+	cga.craft.getAllGatherData = () => {
+		// 大多数情况下，在脚本运行时数据不会发生更新。使用缓存机制来减少磁盘IO
+		if (cga.craft.allGatherData != null){
+			return cga.craft.allGatherData
+		}
+		// 首次调用时，需要读取文件来获取数据
+		let fileName = 'gatherData.json'
+		let filePath = cga.fileObj.getFileDir() + fileName
+		if (!fs.existsSync(filePath)) {
+			throw new Error('采集文件不存在，请使用【生成物品获取方式数据模板.js】自行生成并定义成本、效率等数据')
+		}
+		cga.craft.allGatherData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+		return cga.craft.allGatherData
+	}
+	/**
+	 * UNAecho:获取目标物品收集方式的API
+	 * @param {*} itemName 目标物品
+	 * @returns {Object}
+	 */
+	cga.craft.findGatherData = (itemName) => {
+		let allData = cga.craft.getAllGatherData()
+		let targetInfo = allData.filter(i => {
+			return i.name == itemName
+		})
+		// 如果没有数据，则此次调用没有意义，并且数据也不正确，需要人工干预疏通。此时需要抛出异常。
+		if (!targetInfo || targetInfo.length == 0) {
+			throw new Error('【UNAecho警告】未找到【' + itemName + '】的物品信息，请手动在【' + filePath + '】文件中添加')
+		}
+		if (targetInfo.length > 1) {
+			throw new Error('【UNAecho错误】【' + itemName + '】的物品信息不唯一，禁止重复添加物品信息')
+		}
+		return targetInfo[0]
+	}
+
+	cga.craft.findGatherMethods = (itemName) => {
+		let itemObj = cga.craft.findGatherData(itemName)
+		let methodArr = itemObj.methods
+
+		let findFunc = (methodArr, hasFind = {}) => {
+
+		}
+
+		return findFunc(methodArr)
 	}
 
 	//搜索第一个可鉴定的物品

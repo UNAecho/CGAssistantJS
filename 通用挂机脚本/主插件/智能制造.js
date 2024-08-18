@@ -489,11 +489,11 @@ const getRecipient = () => {
  * 获取客户端采集材料后交付的收件人交易地址（国家、主地图、mapindex3、坐标、站立朝向）
  * 日后可能添加根据不同的制造物品，去不同的国家，不同主地图等交易地点
  * 国家名称参考：
- * 1、法兰王国
- * 2、苏国（阿凯鲁法）
- * 3、艾尔巴尼亚王国（哥拉尔）
- * 4、天界之域（辛梅尔）
- * 5、神圣大陆（艾尔莎岛）
+ * 1、法兰王国（法兰城所在国家）
+ * 2、苏国（阿凯鲁法村所在国家）
+ * 3、艾尔巴尼亚王国（哥拉尔镇所在国家）
+ * 4、天界之域（辛梅尔所在国家）
+ * 5、神圣大陆（艾尔莎岛所在国家）
  * @returns 
  */
 const getAddress = () => {
@@ -709,7 +709,7 @@ var chooseWorker = (materials) => {
 
 	emitFunc(top_1.player_name, 'confirm', 'order', emitData)
 	console.log('给玩家【' + top_1.player_name + '】派发订单【' + emitData.craft_name + ' x ' + emitData.craft_count + '】，采集方式【' + emitData.gather_type + '】')
-	console.log('收件人【' + emitData.recipient + '】，地址【' + emitData.country + '】主地图【' + emitData.mainmap + '】地图index【' + emitData.mapindex + '】坐标【' + emitData.pos + '】朝向【' + emitData.turndir + '】')
+	console.log('收件人【' + emitData.recipient + '】，所在国家【' + emitData.country + '】主地图【' + emitData.mainmap + '】地图index【' + emitData.mapindex + '】坐标【' + emitData.pos + '】朝向【' + emitData.turndir + '】')
 	// 派发一次订单后，不能继续遍历，因为所有的分工数据都要重新计算
 	return
 }
