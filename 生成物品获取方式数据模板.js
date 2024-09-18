@@ -7,7 +7,9 @@ var cga = require('./cgaapi')(function () {
 
     let file =  './常用数据/gatherData.json';
     const materials = [
-        '小麦粉','牛奶'
+        '小麦粉',
+        '牛奶',
+        '蕃茄',
     ]
     
     let content = []
@@ -23,6 +25,8 @@ var cga = require('./cgaapi')(function () {
                     {
                         // 获取方式为使用技能的采集。
                         type:'gather',
+                        // 采集技能名称
+                        skill : '',
                         // 采集地点所属国家
                         country : '',
                         // 采集时，角色需要定居的城市。如果不需要，请置为空串或null。
@@ -33,7 +37,7 @@ var cga = require('./cgaapi')(function () {
                         mapindex : 0,
                         // 采集效率，自定义单位。如打满一车是几分钟，或者每分钟采集数量等等。但请保证所有物品的单位均一致。否则外部调用API无法比对效率。
                         efficiency : 0,
-                        // 角色从supplycity走到采集地点的函数
+                        // 角色从supplycity走到采集地点的函数，注意，要走到采集的pos，而不是走到采集地图。
                         forward : null,
                         // 角色从采集地点走到supplycity的函数
                         back : null,
@@ -71,6 +75,9 @@ var cga = require('./cgaapi')(function () {
                         npcpos : [],
                         // 兑换商店的源材料在设定上只能是1种。如曙光骑士团医院2楼的蕃茄兑换小麦粉、鸡蛋、青椒、葱都是蕃茄
                         currency : '',
+                        // 兑换比例（简化比例，各自除以最大公约数），默认0:0。需要后续手动填写
+                        // 如曙光骑士团医院2楼的蕃茄兑换商店，20个蕃茄可以换16个小麦粉或是12个鸡蛋或是8根葱或是8个青椒。那么currency为蕃茄，目标为小麦粉时，ratio为20:16=5:4。
+                        ratio : "0:0",
                         // 角色从storecity走到兑换商店的函数
                         forward : null,
                     },
