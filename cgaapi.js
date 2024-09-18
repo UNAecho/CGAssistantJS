@@ -7610,8 +7610,9 @@ module.exports = function (callback) {
 	cga.craft.allGatherData = null
 	cga.craft.getAllGatherData = () => {
 		// 大多数情况下，在脚本运行时数据不会发生更新。使用缓存机制来减少磁盘IO
-		if (cga.craft.allGatherData != null){
-			return cga.craft.allGatherData
+		if (cga.craft.allGatherData != null) {
+			// 利用JSON包的JSON.parse(JSON.stringify())便利功能来执行深度拷贝，防止外部修改数据
+			return JSON.parse(JSON.stringify(cga.craft.allGatherData))
 		}
 		// 首次调用时，需要读取文件来获取数据
 		let fileName = 'gatherData.json'
@@ -7619,7 +7620,56 @@ module.exports = function (callback) {
 		if (!fs.existsSync(filePath)) {
 			throw new Error('采集文件不存在，请使用【生成物品获取方式数据模板.js】自行生成并定义成本、效率等数据')
 		}
-		cga.craft.allGatherData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+		let gatherData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+		// 检查数据是否合规，否则直接报错
+		// 需要检查的必要key
+		const requiredKeys = ['level', 'name', 'sell', 'methods'];
+
+		// 遍历每个物品数据
+		gatherData.forEach(item => {
+			// 检查必要key是否存在
+			requiredKeys.forEach(key => {
+				if (!item.hasOwnProperty(key)) {
+					throw new Error(`物品 "${item.name}" 缺少必要的key: ${key}`)
+				}
+			});
+
+			// 检查methods数组
+			if (Array.isArray(item.methods)) {
+				item.methods.forEach((method, index) => {
+					if (!method.hasOwnProperty('type')) {
+						throw new Error(`警告: 物品 "${item.name}" 的第${index + 1}个method缺少必要的key: type`);
+					}
+
+					// 根据method类型检查其他必要key
+					switch (method.type) {
+						case 'buy':
+							if (!method.hasOwnProperty('currency')) {
+								throw new Error(`警告: 物品 "${item.name}" 的buy方法缺少必要的key: currency`);
+							}
+							break;
+						case 'exchange':
+							if (!method.hasOwnProperty('currency') || !method.hasOwnProperty('ratio')) {
+								throw new Error(`警告: 物品 "${item.name}" 的exchange方法缺少必要的key: currency或ratio`);
+							}
+							break;
+						case 'gather':
+							if (!method.hasOwnProperty('skill')) {
+								throw new Error(`警告: 物品 "${item.name}" 的gather方法缺少必要的key: skill`);
+							}
+							break;
+					}
+				});
+			} else {
+				throw new Error(`物品 "${item.name}" 的methods不是数组`)
+			}
+		});
+
+		// 合规后，将数据缓存到内存中
+		cga.craft.allGatherData = gatherData
+
 		return cga.craft.allGatherData
 	}
 	/**
@@ -7634,7 +7684,7 @@ module.exports = function (callback) {
 		})
 		// 如果没有数据，则此次调用没有意义，并且数据也不正确，需要人工干预疏通。此时需要抛出异常。
 		if (!targetInfo || targetInfo.length == 0) {
-			throw new Error('【UNAecho警告】未找到【' + itemName + '】的物品信息，请手动在【' + filePath + '】文件中添加')
+			throw new Error('【UNAecho警告】未找到【' + itemName + '】的物品信息，请手动添加')
 		}
 		if (targetInfo.length > 1) {
 			throw new Error('【UNAecho错误】【' + itemName + '】的物品信息不唯一，禁止重复添加物品信息')
@@ -7643,14 +7693,30 @@ module.exports = function (callback) {
 	}
 
 	cga.craft.findGatherMethods = (itemName) => {
-		let itemObj = cga.craft.findGatherData(itemName)
-		let methodArr = itemObj.methods
+		let itemObj = cga.craft.findGatherData(itemName);
 
-		let findFunc = (methodArr, hasFind = {}) => {
+		let getMethods = (itemObj, FoundNames = new Set()) => {
 
+			let methods = itemObj.methods
+			// 针对exchange类型进行递归处理
+			for (let i = 0; i < methods.length; i++) {
+				if (methods[i].type !== 'exchange') {
+					continue
+				}
+				let currency = methods[i].currency
+				if (FoundNames.has(currency)) {
+					continue
+				}
+				FoundNames.add(currency)
+				let nextObj = cga.craft.findGatherData(currency)
+				methods[i].subMethods = getMethods(nextObj, FoundNames)
+			}
+
+			return itemObj
 		}
 
-		return findFunc(methodArr)
+		getMethods(itemObj)
+		return itemObj
 	}
 
 	//搜索第一个可鉴定的物品
