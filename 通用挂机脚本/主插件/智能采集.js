@@ -31,10 +31,6 @@ const gatherDict = {
 
 var socket = null;
 
-var isFabricName = (name) => {
-	return ['麻布', '木棉布', '毛毡', '绵', '细线', '绢布', '莎莲娜线', '杰诺瓦线', '阿巴尼斯制的线', '阿巴尼斯制的布', '细麻布', '开米士毛线',].includes(name) ? true : false
-}
-
 var check_drop = () => {
 	var dropItemPos = -1;
 	var pattern = /(.+)的卡片/;
@@ -46,7 +42,7 @@ var check_drop = () => {
 			return;
 		}
 		// 如果是买布，那么不能丢弃布类物品。
-		if (mineObject.object.name.indexOf('布') != -1 && isFabricName(item.name)) {
+		if (mineObject.object.name.indexOf('布') != -1 && cga.isFabricName(item.name)) {
 			return;
 		}
 		// 丢弃物品栏中不属于当前采集目标的物品。注意这里的type 31是布类物品，因为秘文之皮的type也是31，需要丢弃。
@@ -72,7 +68,7 @@ var cleanOtherItems = (cb) => {
 			return false
 		}
 		// 布类无法卖店
-		if (isFabricName(item.name)) {
+		if (cga.isFabricName(item.name)) {
 			return false
 		}
 		// 23料理、43血瓶
@@ -222,6 +218,13 @@ const gatherCheckDone = () => {
 	return cga.getInventoryItems().length >= 20
 }
 
+/**
+ * 获取工作obj的函数
+ * 此函数的意义，在于整合不同种类的获取物品的方式
+ * 如采集、购买、打BOSS等获取物品的方式，而不拘泥于使用技能采集这一种方式
+ * 可自定义如何采集、如何检查物品是否符合交付条件、如何去采集和如何补给等逻辑。
+ * @param {*} orderObj 
+ */
 const getWorkObj = (orderObj) => {
 	let workObj = {
 		// 工作所使用的技能
@@ -236,7 +239,6 @@ const getWorkObj = (orderObj) => {
 		back: null,
 	}
 
-	// 采集目标的数据，根据不同的采集技能，获取对应的数据。
 	// if-else的写法是为了以后其它收集物品的可扩展性。例如跑腿、打BOSS拿材料等非采集类的收集物品方式
 	let target = null
 	if (thisobj.commonJobs.includes(orderObj.skill)) {
@@ -246,7 +248,7 @@ const getWorkObj = (orderObj) => {
 
 		target = gatherDict[orderObj.skill].find((o) => { return o.name == orderObj.craft_name })
 
-		workObj.forward = target.func
+		workObj.forward = target.forward
 		workObj.back = target.back
 
 	} else if (orderObj.skill == '购买') {
@@ -254,6 +256,8 @@ const getWorkObj = (orderObj) => {
 	} else {
 		throw new Error('采集技能【' + orderObj.skill + '】数值有误。')
 	}
+
+	return workObj
 }
 
 var loop = () => {
@@ -288,10 +292,7 @@ var loop = () => {
 	// }
 	var playerInfo = cga.GetPlayerInfo();
 	if (playerInfo.mp < playerInfo.maxmp || playerInfo.hp < playerInfo.maxhp) {
-		if (mineObject.supplyManager)
-			mineObject.supplyManager(loop);
-		else if (supplyObject.func)
-			supplyObject.func(loop);
+		supplyObject.func(loop);
 		return;
 	}
 
@@ -328,7 +329,9 @@ var thisobj = {
 	myname: cga.GetPlayerInfo().name,
 	// 当前工作状态
 	state: 'idle',
-	// 当前工作对象，业务核心属性。会在接受订单时赋值。具体数据结构，参考【智能制造】emit发送的'order'数据。
+	// 订单数据，会在接受订单时赋值。具体数据结构，参考【智能制造】emit发送的'order'数据。
+	order : null,
+	// 当前工作对象，业务核心属性。会根据订单thisobj.order调整。
 	object: null,
 	getDangerLevel: () => {
 		var map = cga.GetMapName();
@@ -413,7 +416,7 @@ var thisobj = {
 			console.log('接收到订单:', data);
 			// 由于派单的时候服务端已经有自己的各种信息，所以派来的订单是一定可以接的
 			// 更新自己的订单数据
-			thisobj.object = data
+			thisobj.order = data
 			// 更改工作状态。由于客户端只给空闲人员派单，所以接单后一定可以立即变为采集状态
 			thisobj.state = 'gathering'
 			// 通知客户端自己的工作状态

@@ -30,6 +30,13 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8+'/cgaapi')(function(){
 		cga.walkList([
 		(entermap && entermap != 3) ? [x, y, ''] : [x, y],
 		], ()=>{
+			var rootdir = cga.getrootdir()
+			cga.gui.LoadScript({
+				path : rootdir + "\\Test.js",
+				autorestart : false, //自动重启脚本开启
+			}, (err, result)=>{
+				console.log(result);
+			})
 			
 		});
 	} else {

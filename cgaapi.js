@@ -7627,7 +7627,7 @@ module.exports = function (callback) {
 		// 需要检查的必要key
 		const requiredKeys = ['level', 'name', 'sell', 'methods'];
 
-		// 遍历每个物品数据
+		// 遍历每个物品数据 TODO:完善所有key和value的检查，目前不够完善。
 		gatherData.forEach(item => {
 			// 检查必要key是否存在
 			requiredKeys.forEach(key => {
@@ -7673,8 +7673,8 @@ module.exports = function (callback) {
 		return cga.craft.allGatherData
 	}
 	/**
-	 * UNAecho:获取目标物品收集方式的API
-	 * @param {*} itemName 目标物品
+	 * UNAecho:获取目标物品单个收集方式的API
+	 * @param {*} itemName 目标物品名称
 	 * @returns {Object}
 	 */
 	cga.craft.findGatherData = (itemName) => {
@@ -7692,10 +7692,17 @@ module.exports = function (callback) {
 		return targetInfo[0]
 	}
 
-	cga.craft.findGatherMethods = (itemName) => {
+	/**
+	 * UNAecho:获取目标物品所有收集方式的API
+	 * 属于cga.craft.findGatherData()的叠加实现方式。主要递归实现了exchange的嵌套兑换方式。
+	 * 例如一个物品的exchange有多种材料，而多种材料也有exchange的兑换方式，如此递归下去。直至所有材料都为gather或buy类型。
+	 * @param {*} itemName 目标物品名称
+	 * @returns {Object}
+	 */
+	cga.craft.findGatherDataRecurse = (itemName) => {
 		let itemObj = cga.craft.findGatherData(itemName);
 
-		let getMethods = (itemObj, FoundNames = new Set()) => {
+		let recurse = (itemObj, FoundNames = new Set()) => {
 
 			let methods = itemObj.methods
 			// 针对exchange类型进行递归处理
@@ -7709,16 +7716,42 @@ module.exports = function (callback) {
 				}
 				FoundNames.add(currency)
 				let nextObj = cga.craft.findGatherData(currency)
-				methods[i].subMethods = getMethods(nextObj, FoundNames)
+				methods[i].subMethods = recurse(nextObj, FoundNames)
 			}
 
 			return itemObj
 		}
 
-		getMethods(itemObj)
+		recurse(itemObj)
 		return itemObj
 	}
 
+	cga.craft.findGatherMethods = (itemName) => {
+		let res = []
+		let itemObj = cga.craft.findGatherDataRecurse(itemName);
+
+		let recurse = (itemObj, res, FoundNames = new Set()) => {
+
+			let methods = itemObj.methods
+			// 针对exchange类型进行递归处理
+			for (let i = 0; i < methods.length; i++) {
+				if (methods[i].type !== 'exchange') {
+					continue
+				}
+				let currency = methods[i].currency
+				if (FoundNames.has(currency)) {
+					continue
+				}
+				FoundNames.add(currency)
+				let nextObj = cga.craft.findGatherData(currency)
+				methods[i].subMethods = recurse(nextObj, FoundNames)
+			}
+
+			return itemObj
+		}
+
+		return res
+	}
 	//搜索第一个可鉴定的物品
 	cga.findAssessableItem = () => {
 		var skill = cga.findPlayerSkill('鉴定');
