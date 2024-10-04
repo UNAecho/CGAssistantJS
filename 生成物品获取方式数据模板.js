@@ -38,6 +38,7 @@ var cga = require('./cgaapi')(function () {
                         // 采集效率，自定义单位。如打满一车是几分钟，或者每分钟采集数量等等。但请保证所有物品的单位均一致。否则外部调用API无法比对效率。
                         efficiency : 0,
                         // 角色从supplycity走到采集地点的函数，注意，要走到采集的pos，而不是走到采集地图。
+                        // 注意：forward和back可以为null。这个做法仅为了占位（让其他逻辑判断这里为null时，可以知道这个method的数据还不完善），在完善所有物品数据之前，是一种无奈之举。
                         forward : null,
                         // 角色从采集地点走到supplycity的函数
                         back : null,

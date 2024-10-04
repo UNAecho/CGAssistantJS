@@ -15,6 +15,89 @@ global.is_array_contain = function (arr, val) {
 }
 
 /**
+ * UNAecho: 检查一个obj的key是否为预期的数据类型，如key不存在或value类型不符，则抛出异常并告知理由
+ * @param {Object} obj 
+ * @param {String} key 
+ * @param {String} type 
+ */
+global.check_key_and_type = function (obj, key, type) {
+	if (!obj || !Object.prototype.toString.call(obj) == '[object Object]') {
+		throw new Error(`obj: ${JSON.stringify(obj, null)} 的类型必须为Object`);
+	}
+	// 先检查key
+	if (typeof key != 'string') {
+		throw new Error(`key ${key} 的类型必须为String`);
+	}
+	if (!obj.hasOwnProperty(key)) {
+		throw new Error(`obj: ${JSON.stringify(obj, null)}, 不存在key : ${key}`);
+	}
+	
+	// 如果type为null，则视为不检查数据类型
+	if (type === null) {
+		console.log(`key : ${key}不检查其value类型`);
+		return true
+	}
+
+	// type只能为null、string和function
+	if (typeof type != 'string' && typeof type != 'function') {
+		throw new Error(`type ${type} 的类型必须为String或function`);
+	}
+
+	// 去除大小写影响
+	if (typeof type == 'string'){
+		type = type.toLowerCase()
+	}
+	
+	// type的合规类型
+	const typeArr = ['bigint', 'boolean', 'function', 'number', 'object', 'string', 'symbol', 'undefined', 'array']
+
+	if (!typeArr.includes(typeof type)) {
+		throw new Error(`type必须为 : ${typeArr}的其中一种, 你输入的是: ${typeof type}`);
+	}
+	// typeof无法处理array类型，特殊处理
+	if (type === 'array') {
+		// array类型符合预期，直接返回
+		if (Array.isArray(obj[key])) {
+			return true
+		}
+		// array类型错误
+		throw new Error(`obj: ${JSON.stringify(obj, null)}, key : ${key}, 的value必须为 : array 类型, 但其实际类型为: ${typeof type}`);
+	}
+	// 如果type直接传了function，而非字符串function，则执行自定义判断函数
+	if (typeof type == 'function') {
+		let res = type(obj[key])
+		if (typeof res == 'boolean' && res) {
+			return true
+		}
+		// 如果function没返回true，视为未通过检查
+		throw new Error(`obj: ${JSON.stringify(obj, null)}, key : ${key}, 的check function return不通过（没有return true）`);
+	}
+	// 其余typeof支持类型，正常判断。
+	if (typeof obj[key] != type) {
+		throw new Error(`obj: ${JSON.stringify(obj, null)}, key : ${key}, 的value必须为 : ${type}类型, 但其实际类型为: ${typeof type}`);
+	}
+	return true
+}
+
+/**
+ * UNAecho:检查一个obj中的多个key是否存在以及对应value是否符合预期
+ * @param {*} obj 
+ * @param {*} check_obj 
+ * @returns 
+ */
+global.check_keys_and_types = function (obj, check_obj) {
+	// 仅需检查check_obj，因为obj在check_key_and_type()中已经有验证逻辑。
+	if (!check_obj || !Object.prototype.toString.call(check_obj) == '[object Object]') {
+		throw new Error(`check_obj: ${JSON.stringify(obj, null)}, 的类型必须为Object`);
+	}
+	const arr = Object.entries(check_obj)
+	for (let i = 0; i < arr.length; i++) {
+		check_key_and_type(obj, arr[i][0], arr[i][1])
+	}
+	return true
+}
+
+/**
  * UNAecho: 定义链表数据结构以及增删改查方法
  */
 class Node {
@@ -7624,50 +7707,116 @@ module.exports = function (callback) {
 		let gatherData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
 		// 检查数据是否合规，否则直接报错
-		// 需要检查的必要key
-		const requiredKeys = ['level', 'name', 'sell', 'methods'];
+		// gather类型key
+		const gatherKeys = [
+			'type',
+			'skill',
+			'country',
+			'settlecity',
+			'supplycity',
+			'mapindex',
+			'efficiency',
+			'forward',
+			'back',
+		]
+		// buy类型key
+		const buyKeys = [
+			'type',
+			'country',
+			'settlecity',
+			'storecity',
+			'mapindex',
+			'npcpos',
+			'currency',
+			'forward',
+		]
+		// exchange类型key
+		const exchangeKeys = [
+			'type',
+			'country',
+			'settlecity',
+			'storecity',
+			'mapindex',
+			'npcpos',
+			'currency',
+			'ratio',
+			'forward',
+		]
 
 		// 遍历每个物品数据 TODO:完善所有key和value的检查，目前不够完善。
 		gatherData.forEach(item => {
-			// 检查必要key是否存在
-			requiredKeys.forEach(key => {
-				if (!item.hasOwnProperty(key)) {
-					throw new Error(`物品 "${item.name}" 缺少必要的key: ${key}`)
+
+			// 使用通用检查方式检查kv是否符合预期
+			check_keys_and_types(item, {
+				level: 'number',
+				name: 'string',
+				sell: 'number',
+				methods: 'array',
+			})
+			// methods数据检查
+			item['methods'].forEach((method, index) => {
+				// 必须获取到type才能进一步检查
+				check_key_and_type(item, 'type', 'string')
+				// gather类型
+				if (method.type == 'gather') {
+					check_keys_and_types(method, {
+						skill: 'string',
+						country: 'string',
+						settlecity: 'string',
+						supplycity: 'string',
+						mapindex: 'number',
+						forward: null,
+						back: null,
+					})
+				} else if (method.type == 'buy') {
+					check_keys_and_types(method, {
+						country: 'string',
+						settlecity: 'string',
+						storecity: 'string',
+						mapindex: 'number',
+						npcpos: 'array',
+						currency: 'number',
+						forward: null,
+					})
+				} else if (method.type == 'exchange') {
+					check_keys_and_types(method, {
+						country: 'string',
+						settlecity: 'string',
+						storecity: 'string',
+						mapindex: 'number',
+						npcpos: 'array',
+						currency: 'string',
+						ratio: (str) => {
+							// 正则表达式用于匹配 "整数:整数" 的形式
+							const ratioRegex = /^(\d+):(\d+)$/;
+
+							// 测试字符串是否符合正则表达式
+							if (!ratioRegex.test(str)) {
+								throw new Error(`ratio输入的字符串必须为类似1:2的比例形式，你的输入是 : ${str}`)
+							}
+
+							// 解析冒号两侧的整数
+							const parts = str.split(':');
+							const firstPart = parseInt(parts[0], 10);
+							const secondPart = parseInt(parts[1], 10);
+
+							// 检查解析后的部分是否为有效的整数
+							if (isNaN(firstPart) || isNaN(secondPart)) {
+								throw new Error('ratio输入的字符串必须为类似1:2的比例形式，且两边均为number型')
+							}
+
+							// 如果所有检查都通过，则返回 true
+							return true;
+						},
+						forward: null,
+					})
 				}
+
+				throw new Error(`错误: 不支持的method.type类型: "${method.type}"`);
 			});
-
-			// 检查methods数组
-			if (Array.isArray(item.methods)) {
-				item.methods.forEach((method, index) => {
-					if (!method.hasOwnProperty('type')) {
-						throw new Error(`警告: 物品 "${item.name}" 的第${index + 1}个method缺少必要的key: type`);
-					}
-
-					// 根据method类型检查其他必要key
-					switch (method.type) {
-						case 'buy':
-							if (!method.hasOwnProperty('currency')) {
-								throw new Error(`警告: 物品 "${item.name}" 的buy方法缺少必要的key: currency`);
-							}
-							break;
-						case 'exchange':
-							if (!method.hasOwnProperty('currency') || !method.hasOwnProperty('ratio')) {
-								throw new Error(`警告: 物品 "${item.name}" 的exchange方法缺少必要的key: currency或ratio`);
-							}
-							break;
-						case 'gather':
-							if (!method.hasOwnProperty('skill')) {
-								throw new Error(`警告: 物品 "${item.name}" 的gather方法缺少必要的key: skill`);
-							}
-							break;
-					}
-				});
-			} else {
-				throw new Error(`物品 "${item.name}" 的methods不是数组`)
-			}
 		});
 
-		// 合规后，将数据缓存到内存中
+		// 所有数据检查完毕，将数据缓存到内存中
 		cga.craft.allGatherData = gatherData
 
 		return cga.craft.allGatherData
