@@ -7,9 +7,12 @@ var cga = require('./cgaapi')(function () {
 
     let file =  './常用数据/gatherData.json';
     const materials = [
-        '小麦粉',
-        '牛奶',
         '蕃茄',
+        '小麦粉',
+        '鸡蛋',
+        '青椒',
+        '牛奶',
+        '葱',
     ]
     
     let content = []
