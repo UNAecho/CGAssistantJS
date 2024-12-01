@@ -34,7 +34,7 @@ global.check_key_and_type = function (obj, key, type) {
 	
 	// 如果type为null，则视为不检查数据类型
 	if (type === null) {
-		console.log(`key : ${key}不检查其value类型`);
+		// console.log(`key : ${key}不检查其value类型`);
 		return true
 	}
 
@@ -7707,42 +7707,6 @@ module.exports = function (callback) {
 		let gatherData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
 		// 检查数据是否合规，否则直接报错
-		// gather类型key
-		const gatherKeys = [
-			'type',
-			'skill',
-			'country',
-			'settlecity',
-			'supplycity',
-			'mapindex',
-			'efficiency',
-			'forward',
-			'back',
-		]
-		// buy类型key
-		const buyKeys = [
-			'type',
-			'country',
-			'settlecity',
-			'storecity',
-			'mapindex',
-			'npcpos',
-			'currency',
-			'forward',
-		]
-		// exchange类型key
-		const exchangeKeys = [
-			'type',
-			'country',
-			'settlecity',
-			'storecity',
-			'mapindex',
-			'npcpos',
-			'currency',
-			'ratio',
-			'forward',
-		]
-
 		// 遍历每个物品数据 TODO:完善所有key和value的检查，目前不够完善。
 		gatherData.forEach(item => {
 
@@ -7756,7 +7720,7 @@ module.exports = function (callback) {
 			// methods数据检查
 			item['methods'].forEach((method, index) => {
 				// 必须获取到type才能进一步检查
-				check_key_and_type(item, 'type', 'string')
+				check_key_and_type(method, 'type', 'string')
 				// gather类型
 				if (method.type == 'gather') {
 					check_keys_and_types(method, {
@@ -7810,9 +7774,9 @@ module.exports = function (callback) {
 						},
 						forward: null,
 					})
+				}else{
+					throw new Error(`错误: 不支持的method.type类型: "${method.type}"`);
 				}
-
-				throw new Error(`错误: 不支持的method.type类型: "${method.type}"`);
 			});
 		});
 
@@ -7827,6 +7791,7 @@ module.exports = function (callback) {
 	 * @returns {Object}
 	 */
 	cga.craft.findGatherData = (itemName) => {
+		
 		let allData = cga.craft.getAllGatherData()
 		let targetInfo = allData.filter(i => {
 			return i.name == itemName
@@ -7844,63 +7809,70 @@ module.exports = function (callback) {
 	/**
 	 * UNAecho:获取目标物品所有收集方式的API
 	 * 属于cga.craft.findGatherData()的叠加实现方式。主要递归实现了exchange的嵌套兑换方式。
-	 * 例如一个物品的exchange有多种材料，而多种材料也有exchange的兑换方式，如此递归下去。直至所有材料都为gather或buy类型。
-	 * @param {*} itemName 目标物品名称
+	 * 例如一个物品的exchange有复数材料，而复数材料也有复数exchange的兑换方式，如此递归下去。直至搜索过每一个物品信息。
+	 * @param {*} inputName 目标物品名称
 	 * @returns {Object}
 	 */
-	cga.craft.findGatherDataRecurse = (itemName) => {
-		let itemObj = cga.craft.findGatherData(itemName);
-
-		let recurse = (itemObj, FoundNames = new Set()) => {
-
-			let methods = itemObj.methods
-			// 针对exchange类型进行递归处理
-			for (let i = 0; i < methods.length; i++) {
-				if (methods[i].type !== 'exchange') {
-					continue
-				}
-				let currency = methods[i].currency
-				if (FoundNames.has(currency)) {
-					continue
-				}
-				FoundNames.add(currency)
-				let nextObj = cga.craft.findGatherData(currency)
-				methods[i].subMethods = recurse(nextObj, FoundNames)
+	cga.craft.findGatherDataRecurse = (inputName) => {
+		// 获取初始物品的数据
+		let itemObj = cga.craft.findGatherData(inputName);
+		
+		// 递归函数,使用Set来防止循环引用
+		let recurse = (itemObj, foundNames = new Set()) => {
+			// 如果这个物品已经处理过,直接返回以防止循环
+			if (foundNames.has(itemObj.name)) {
+				return itemObj;
 			}
-
-			return itemObj
+			
+			// 将当前物品名加入已处理集合
+			foundNames.add(itemObj.name);
+			
+			// 遍历所有获取方法
+			itemObj.methods.forEach(method => {
+				// 只处理exchange类型的方法
+				if (method.type === 'exchange') {
+					// 获取兑换材料的完整数据
+					let currencyData = cga.craft.findGatherData(method.currency);
+					// 递归处理兑换材料，然后只取其methods作为subMethods
+					method.subMethods = recurse(currencyData, foundNames).methods;
+				}
+			});
+			
+			return itemObj;
 		}
-
-		recurse(itemObj)
-		return itemObj
+	
+		// 开始递归处理
+		return recurse(itemObj);
 	}
 
-	cga.craft.findGatherMethods = (itemName) => {
-		let res = []
-		let itemObj = cga.craft.findGatherDataRecurse(itemName);
+	// // 暂时没用，注释一段时间，如果使用没有问题，需要删掉此API
+	// cga.craft.findGatherMethods = (itemName) => {
+	// 	let res = []
+	// 	let itemObj = cga.craft.findGatherDataRecurse(itemName);
 
-		let recurse = (itemObj, res, FoundNames = new Set()) => {
+	// 	let recurse = (itemObj, res, FoundNames = new Set()) => {
 
-			let methods = itemObj.methods
-			// 针对exchange类型进行递归处理
-			for (let i = 0; i < methods.length; i++) {
-				if (methods[i].type !== 'exchange') {
-					continue
-				}
-				let currency = methods[i].currency
-				if (FoundNames.has(currency)) {
-					continue
-				}
-				FoundNames.add(currency)
-				let nextObj = cga.craft.findGatherData(currency)
-				methods[i].subMethods = recurse(nextObj, FoundNames)
-			}
+	// 		let methods = itemObj.methods
+	// 		// 针对exchange类型进行递归处理
+	// 		for (let i = 0; i < methods.length; i++) {
+	// 			if (methods[i].type !== 'exchange') {
+	// 				continue
+	// 			}
+	// 			let currency = methods[i].currency
+	// 			if (FoundNames.has(currency)) {
+	// 				continue
+	// 			}
+	// 			FoundNames.add(currency)
+	// 			let nextObj = cga.craft.findGatherData(currency)
+	// 			methods[i].subMethods = recurse(nextObj, FoundNames)
+	// 		}
 
-			return itemObj
-		}
+	// 		return itemObj
+	// 	}
 
-		return res
-	}
+	// 	return res
+	// }
+
 	//搜索第一个可鉴定的物品
 	cga.findAssessableItem = () => {
 		var skill = cga.findPlayerSkill('鉴定');
