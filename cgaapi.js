@@ -7810,6 +7810,11 @@ module.exports = function (callback) {
 	 * UNAecho:获取目标物品所有收集方式的API
 	 * 属于cga.craft.findGatherData()的叠加实现方式。主要递归实现了exchange的嵌套兑换方式。
 	 * 例如一个物品的exchange有复数材料，而复数材料也有复数exchange的兑换方式，如此递归下去。直至搜索过每一个物品信息。
+	 * 
+	 * 【注意】此API已经测试过套娃情况。
+	 * 假设：小麦粉可以用蕃茄、牛奶、鸡蛋换，而鸡蛋可以用牛奶换，牛奶可以用蕃茄换。也可以生成符合预期的链路。
+	 * 不会出现漏筛或者共用foundNames这个set()导致漏搜索的情况。
+	 * 
 	 * @param {*} inputName 目标物品名称
 	 * @returns {Object}
 	 */
@@ -7817,7 +7822,7 @@ module.exports = function (callback) {
 		// 获取初始物品的数据
 		let itemObj = cga.craft.findGatherData(inputName);
 		
-		// 递归函数,使用Set来防止循环引用
+		// 递归函数,使用Set来防止重复搜索
 		let recurse = (itemObj, foundNames = new Set()) => {
 			// 如果这个物品已经处理过,直接返回以防止循环
 			if (foundNames.has(itemObj.name)) {
