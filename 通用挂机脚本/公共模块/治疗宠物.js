@@ -2,7 +2,8 @@ var cga = global.cga;
 var configTable = global.configTable;
 
 var thisobj = {
-	func : (cb,petindex)=>{
+	func : (cb, petindex)=>{
+		
 		var skill_heal = cga.findPlayerSkill('治疗');
 		if(!skill_heal){
 			throw new Error('你没有治疗技能');
@@ -25,7 +26,7 @@ var thisobj = {
 				cga.UnitMenuSelect(petindex+1);
 				cga.AsyncWaitWorkingResult((err, r)=>{
 					if(pets[petindex].health != 0)
-						thisobj.func(cb);
+						thisobj.func(cb, petindex);
 					else
 						cb(null);
 				});
