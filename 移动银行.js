@@ -648,6 +648,7 @@ var cga = require(process.env.CGA_DIR_PATH_UTF8 + '/cgaapi')(function () {
 		},
 	};
 	// main开始前，先播报当前资产，方便审计
+	console.log('【./离线数据】中，已记录的全局累计资产:')
 	console.log(cga.getSumOfflineData())
 	// main
 	loop()
