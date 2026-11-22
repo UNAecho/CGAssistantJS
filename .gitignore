@@ -5,3 +5,8 @@ XML/
 minidump.mdmp
 *.xml
 *.bat
+
+# customer
+.vscode/
+.compare/
+unalog/
